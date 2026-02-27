@@ -1,0 +1,678 @@
+// =============================================================================
+// USAP HISTORY - Schéma de base de données v2
+// Base de données historique de l'USA Perpignan depuis 1902
+// =============================================================================
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// =============================================================================
+// PAYS / NATIONS
+// Normalisation des pays pour joueurs, adversaires, compétitions, etc.
+// =============================================================================
+
+model Country {
+  id          String   @id @default(cuid())
+  name        String   @unique                     // "France", "Nouvelle-Zélande"
+  code        String   @unique                     // Code ISO 3166 : "FR", "NZ"
+  flagUrl     String?  @map("flag_url")            // URL du drapeau
+  continent   Continent?                           // Europe, Océanie, etc.
+
+  // Relations
+  playersBorn         Player[]  @relation("BirthCountry")
+  playersNationality  Player[]  @relation("Nationality")
+  nationalTeams       NationalTeam[]
+  opponents           Opponent[]
+  venues              Venue[]
+  careerClubs         CareerClub[]
+
+  createdAt DateTime @default(now()) @map("created_at")
+
+  @@map("countries")
+}
+
+enum Continent {
+  EUROPE
+  AFRIQUE
+  AMERIQUE_NORD
+  AMERIQUE_SUD
+  ASIE
+  OCEANIE
+}
+
+// =============================================================================
+// ÉQUIPES NATIONALES
+// Pour référencer les sélections des joueurs internationaux
+// =============================================================================
+
+model NationalTeam {
+  id          String   @id @default(cuid())
+  name        String   @unique                     // "XV de France", "All Blacks"
+  countryId   String   @map("country_id")
+  country     Country  @relation(fields: [countryId], references: [id])
+  logoUrl     String?  @map("logo_url")
+  shortName   String?  @map("short_name")          // "FRA", "NZL"
+
+  // Relations
+  playerCaps  PlayerInternational[]
+
+  createdAt DateTime @default(now()) @map("created_at")
+
+  @@map("national_teams")
+}
+
+// =============================================================================
+// SÉLECTIONS INTERNATIONALES DES JOUEURS
+// Historique détaillé des sélections
+// =============================================================================
+
+model PlayerInternational {
+  id              String   @id @default(cuid())
+  playerId        String   @map("player_id")
+  player          Player   @relation(fields: [playerId], references: [id])
+  nationalTeamId  String   @map("national_team_id")
+  nationalTeam    NationalTeam @relation(fields: [nationalTeamId], references: [id])
+
+  totalCaps       Int      @default(0) @map("total_caps")
+  firstCapDate    DateTime? @map("first_cap_date")
+  lastCapDate     DateTime? @map("last_cap_date")
+  totalPoints     Int?     @map("total_points")
+  totalTries      Int?     @map("total_tries")
+
+  createdAt DateTime @default(now()) @map("created_at")
+
+  @@unique([playerId, nationalTeamId])
+  @@map("player_internationals")
+}
+
+// =============================================================================
+// ADVERSAIRES / CLUBS
+// Table dédiée pour chaque club affronté par l'USAP
+// =============================================================================
+
+model Opponent {
+  id              String   @id @default(cuid())
+  name            String   @unique                  // "Stade Toulousain"
+  shortName       String?  @map("short_name")       // "Toulouse"
+  officialName    String?  @map("official_name")     // "Stade Toulousain Rugby"
+  city            String?
+  countryId       String?  @map("country_id")
+  country         Country? @relation(fields: [countryId], references: [id])
+  logoUrl         String?  @map("logo_url")
+  primaryColor    String?  @map("primary_color")     // #hex
+  secondaryColor  String?  @map("secondary_color")
+  stadiumName     String?  @map("stadium_name")
+  foundedYear     Int?     @map("founded_year")
+  isActive        Boolean  @default(true) @map("is_active")
+  notes           String?  @db.Text
+
+  // Noms historiques (ex: "AS Montferrand" → "ASM Clermont Auvergne")
+  formerNames     OpponentAlias[]
+
+  // Relations
+  matches         Match[]
+  careerClubs     CareerClub[]    // Joueurs ayant joué dans ce club
+
+  // Stats agrégées (cache, recalculées périodiquement)
+  totalMatches      Int?   @default(0) @map("total_matches")
+  totalWins         Int?   @default(0) @map("total_wins")
+  totalDraws        Int?   @default(0) @map("total_draws")
+  totalLosses       Int?   @default(0) @map("total_losses")
+  totalPointsFor    Int?   @default(0) @map("total_points_for")
+  totalPointsAgainst Int?  @default(0) @map("total_points_against")
+
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  @@map("opponents")
+}
+
+// Anciens noms d'un club (normalisation historique)
+model OpponentAlias {
+  id          String   @id @default(cuid())
+  opponentId  String   @map("opponent_id")
+  opponent    Opponent @relation(fields: [opponentId], references: [id], onDelete: Cascade)
+  name        String                                // "AS Montferrand", "Stado Tarbes"
+  usedFrom    Int?     @map("used_from")            // Année début
+  usedUntil   Int?     @map("used_until")           // Année fin
+
+  @@map("opponent_aliases")
+}
+
+// =============================================================================
+// JOUEURS
+// =============================================================================
+
+model Player {
+  id              String   @id @default(cuid())
+  firstName       String   @map("first_name")
+  lastName        String   @map("last_name")
+  birthDate       DateTime? @map("birth_date")
+  deathDate       DateTime? @map("death_date")       // Pour les joueurs historiques
+  birthPlace      String?  @map("birth_place")
+  birthCountryId  String?  @map("birth_country_id")
+  birthCountry    Country? @relation("BirthCountry", fields: [birthCountryId], references: [id])
+  nationalityId   String?  @map("nationality_id")
+  nationality     Country? @relation("Nationality", fields: [nationalityId], references: [id])
+  position        Position?
+  height          Int?                               // cm
+  weight          Int?                               // kg
+  photoUrl        String?  @map("photo_url")
+  biography       String?  @db.Text
+
+  // Relations
+  careerClubs       CareerClub[]
+  usapStints        PlayerStint[]
+  matchAppearances  MatchPlayer[]
+  seasonSquads      SeasonPlayer[]
+  internationalCaps PlayerInternational[]
+  awards            PlayerAward[]
+
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  @@map("players")
+  @@index([lastName, firstName])
+}
+
+// =============================================================================
+// CARRIÈRE COMPLÈTE D'UN JOUEUR (tous clubs confondus)
+// Retrace l'intégralité du parcours d'un joueur, y compris hors USAP
+// =============================================================================
+
+model CareerClub {
+  id              String   @id @default(cuid())
+  playerId        String   @map("player_id")
+  player          Player   @relation(fields: [playerId], references: [id], onDelete: Cascade)
+
+  // Le club
+  clubName        String   @map("club_name")          // "Stade Toulousain", "RC Toulon", etc.
+  opponentId      String?  @map("opponent_id")         // FK vers opponents SI le club est un adversaire connu
+  opponent        Opponent? @relation(fields: [opponentId], references: [id])
+  isUsap          Boolean  @default(false) @map("is_usap") // Passage à l'USAP = true
+  countryId       String?  @map("country_id")
+  country         Country? @relation(fields: [countryId], references: [id])
+  city            String?
+  division        String?                              // "Top 14", "Premiership", "Super Rugby"...
+
+  // Période
+  startDate       DateTime? @map("start_date")         // Date précise d'arrivée (si connue)
+  endDate         DateTime? @map("end_date")            // Date précise de départ
+  startYear       Int       @map("start_year")          // Année d'arrivée (toujours renseignée)
+  endYear         Int?      @map("end_year")            // Année de départ (null = encore au club)
+  displayOrder    Int       @default(0) @map("display_order") // Ordre chronologique d'affichage
+
+  // Type de mouvement
+  transferType    TransferType? @map("transfer_type")   // Comment il est arrivé
+  transferFee     String?  @map("transfer_fee")         // Montant (si connu/public)
+  isLoan          Boolean  @default(false) @map("is_loan") // Prêt ?
+  loanFromClub    String?  @map("loan_from_club")       // Prêté par quel club
+
+  // Stats au club (si connues, sinon null)
+  appearances     Int?                                 // Matchs joués
+  tries           Int?                                 // Essais
+  totalPoints     Int?     @map("total_points")        // Points marqués
+  position        Position?                            // Poste principal dans ce club
+
+  notes           String?  @db.Text                    // Infos complémentaires
+
+  createdAt DateTime @default(now()) @map("created_at")
+
+  @@map("career_clubs")
+  @@index([playerId])
+  @@index([opponentId])
+}
+
+// =============================================================================
+// PASSAGES À L'USAP (détail spécifique des périodes USAP)
+// Complément de CareerClub pour les données propres à l'USAP
+// =============================================================================
+
+model PlayerStint {
+  id              String   @id @default(cuid())
+  playerId        String   @map("player_id")
+  player          Player   @relation(fields: [playerId], references: [id], onDelete: Cascade)
+
+  arrivalDate     DateTime? @map("arrival_date")
+  departureDate   DateTime? @map("departure_date")
+  arrivalType     TransferType? @map("arrival_type")
+  departureType   TransferType? @map("departure_type")
+  transferFee     String?  @map("transfer_fee")
+
+  // Lien vers la carrière pour cohérence
+  careerClubId    String?  @unique @map("career_club_id")
+
+  createdAt DateTime @default(now()) @map("created_at")
+
+  @@map("player_stints")
+  @@index([playerId])
+}
+
+// =============================================================================
+// DISTINCTIONS / RÉCOMPENSES INDIVIDUELLES
+// Oscar du Midi, meilleur joueur du championnat, etc.
+// =============================================================================
+
+model PlayerAward {
+  id          String   @id @default(cuid())
+  playerId    String   @map("player_id")
+  player      Player   @relation(fields: [playerId], references: [id], onDelete: Cascade)
+
+  name        String                                   // "Oscar du Midi Olympique"
+  category    String?                                  // "Meilleur joueur", "Meilleur espoir"...
+  year        Int                                      // Année d'obtention
+  seasonLabel String?  @map("season_label")            // "2008-2009"
+  details     String?  @db.Text
+
+  createdAt DateTime @default(now()) @map("created_at")
+
+  @@map("player_awards")
+  @@index([playerId])
+}
+
+enum TransferType {
+  RECRUTEMENT
+  FORMATION
+  PRET_ENTRANT
+  PRET_SORTANT
+  FIN_CONTRAT
+  RETRAITE
+  RESILIATION
+  RETOUR_PRET
+  PIGISTE           // Contrat court / joker médical
+  ECHANGE           // Échange de joueurs entre clubs
+}
+
+enum Position {
+  PILIER_GAUCHE
+  TALONNEUR
+  PILIER_DROIT
+  DEUXIEME_LIGNE
+  TROISIEME_LIGNE_AILE
+  NUMERO_HUIT
+  DEMI_DE_MELEE
+  DEMI_OUVERTURE
+  AILIER
+  CENTRE
+  ARRIERE
+}
+
+// =============================================================================
+// SAISONS
+// =============================================================================
+
+model Season {
+  id            String   @id @default(cuid())
+  startYear     Int      @map("start_year")
+  endYear       Int      @map("end_year")
+  label         String                              // "2024-2025"
+  division      Division
+  finalRanking  Int?     @map("final_ranking")
+  promoted      Boolean  @default(false)
+  relegated     Boolean  @default(false)
+  champion      Boolean  @default(false)
+  notes         String?  @db.Text
+
+  // Stats agrégées
+  matchesPlayed   Int?   @map("matches_played")
+  wins            Int?
+  draws           Int?
+  losses          Int?
+  pointsFor       Int?   @map("points_for")
+  pointsAgainst   Int?   @map("points_against")
+  bonusOffensif   Int?   @map("bonus_offensif")
+  bonusDefensif   Int?   @map("bonus_defensif")
+  totalPoints     Int?   @map("total_points")
+
+  // Staff
+  coachId       String?  @map("coach_id")
+  coach         Coach?   @relation(fields: [coachId], references: [id])
+  presidentId   String?  @map("president_id")
+  president     President? @relation(fields: [presidentId], references: [id])
+
+  // Relations
+  matches       Match[]
+  seasonPlayers SeasonPlayer[]
+
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  @@unique([startYear, endYear])
+  @@map("seasons")
+}
+
+enum Division {
+  CHAMPIONNAT_1ERE_SERIE
+  CHAMPIONNAT_EXCELLENCE
+  GROUPE_A
+  PREMIERE_DIVISION
+  TOP_16
+  TOP_14
+  PRO_D2
+}
+
+// =============================================================================
+// COMPÉTITIONS
+// =============================================================================
+
+model Competition {
+  id          String          @id @default(cuid())
+  name        String
+  shortName   String?         @map("short_name")
+  type        CompetitionType
+  isActive    Boolean         @default(true) @map("is_active")
+
+  matches     Match[]
+
+  createdAt DateTime @default(now()) @map("created_at")
+
+  @@map("competitions")
+}
+
+enum CompetitionType {
+  CHAMPIONNAT
+  COUPE_EUROPE
+  CHALLENGE_EUROPE
+  COUPE_FRANCE
+  AMICAL
+  BARRAGES
+}
+
+// =============================================================================
+// MATCHS
+// =============================================================================
+
+model Match {
+  id              String   @id @default(cuid())
+  date            DateTime
+  kickoffTime     String?  @map("kickoff_time")
+
+  // Saison et compétition
+  seasonId        String   @map("season_id")
+  season          Season   @relation(fields: [seasonId], references: [id])
+  competitionId   String   @map("competition_id")
+  competition     Competition @relation(fields: [competitionId], references: [id])
+
+  // Journée / Phase
+  matchday        Int?
+  round           String?
+  leg             Int?
+
+  // Lieu
+  isHome          Boolean  @map("is_home")
+  venueId         String?  @map("venue_id")
+  venue           Venue?   @relation(fields: [venueId], references: [id])
+  isNeutralVenue  Boolean  @default(false) @map("is_neutral_venue")
+
+  // Adversaire (FK → opponents)
+  opponentId      String   @map("opponent_id")
+  opponent        Opponent @relation(fields: [opponentId], references: [id])
+
+  // Score
+  scoreUsap       Int      @map("score_usap")
+  scoreOpponent   Int      @map("score_opponent")
+  halfTimeUsap    Int?     @map("half_time_usap")
+  halfTimeOpponent Int?    @map("half_time_opponent")
+
+  // Résultat
+  result          MatchResult
+  bonusOffensif   Boolean  @default(false) @map("bonus_offensif")
+  bonusDefensif   Boolean  @default(false) @map("bonus_defensif")
+
+  // Détails
+  refereeId       String?  @map("referee_id")
+  referee         Referee? @relation(fields: [refereeId], references: [id])
+  attendance      Int?
+  report          String?  @db.Text
+  manOfTheMatch   String?  @map("man_of_the_match")
+
+  // Scoring USAP
+  triesUsap           Int? @map("tries_usap")
+  conversionsUsap     Int? @map("conversions_usap")
+  penaltiesUsap       Int? @map("penalties_usap")
+  dropGoalsUsap       Int? @map("drop_goals_usap")
+  penaltyTriesUsap    Int? @map("penalty_tries_usap")
+
+  // Scoring adversaire
+  triesOpponent       Int? @map("tries_opponent")
+  conversionsOpponent Int? @map("conversions_opponent")
+  penaltiesOpponent   Int? @map("penalties_opponent")
+  dropGoalsOpponent   Int? @map("drop_goals_opponent")
+  penaltyTriesOpponent Int? @map("penalty_tries_opponent")
+
+  // Relations
+  players         MatchPlayer[]
+  matchEvents     MatchEvent[]
+
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  @@map("matches")
+  @@index([date])
+  @@index([seasonId])
+  @@index([opponentId])
+  @@index([competitionId])
+}
+
+enum MatchResult {
+  VICTOIRE
+  DEFAITE
+  NUL
+}
+
+// =============================================================================
+// ÉVÉNEMENTS D'UN MATCH (timeline minute par minute)
+// Essais, cartons, remplacements...
+// =============================================================================
+
+model MatchEvent {
+  id          String    @id @default(cuid())
+  matchId     String    @map("match_id")
+  match       Match     @relation(fields: [matchId], references: [id], onDelete: Cascade)
+  minute      Int
+  type        EventType
+  playerId    String?   @map("player_id")
+  isUsap      Boolean   @default(true) @map("is_usap")
+  description String?
+
+  // Pour les remplacements
+  relatedPlayerId String? @map("related_player_id")
+
+  createdAt DateTime @default(now()) @map("created_at")
+
+  @@map("match_events")
+  @@index([matchId])
+}
+
+enum EventType {
+  ESSAI
+  TRANSFORMATION
+  PENALITE
+  DROP
+  ESSAI_PENALITE
+  CARTON_JAUNE
+  CARTON_ROUGE
+  REMPLACEMENT_ENTREE
+  REMPLACEMENT_SORTIE
+}
+
+// =============================================================================
+// PARTICIPATION JOUEUR À UN MATCH
+// =============================================================================
+
+model MatchPlayer {
+  id            String   @id @default(cuid())
+  matchId       String   @map("match_id")
+  match         Match    @relation(fields: [matchId], references: [id], onDelete: Cascade)
+  playerId      String   @map("player_id")
+  player        Player   @relation(fields: [playerId], references: [id])
+
+  shirtNumber   Int?     @map("shirt_number")
+  isStarter     Boolean  @map("is_starter")
+  isCaptain     Boolean  @default(false) @map("is_captain")
+  positionPlayed Position? @map("position_played")
+
+  minutesPlayed Int?     @map("minutes_played")
+  subIn         Int?     @map("sub_in")
+  subOut        Int?     @map("sub_out")
+
+  tries         Int      @default(0)
+  conversions   Int      @default(0)
+  penalties     Int      @default(0)
+  dropGoals     Int      @default(0) @map("drop_goals")
+  totalPoints   Int      @default(0) @map("total_points")
+
+  yellowCard    Boolean  @default(false) @map("yellow_card")
+  yellowCardMin Int?     @map("yellow_card_min")
+  redCard       Boolean  @default(false) @map("red_card")
+  redCardMin    Int?     @map("red_card_min")
+
+  notes         String?  @db.Text
+
+  createdAt DateTime @default(now()) @map("created_at")
+
+  @@unique([matchId, playerId])
+  @@map("match_players")
+  @@index([playerId])
+  @@index([matchId])
+}
+
+// =============================================================================
+// EFFECTIF PAR SAISON
+// =============================================================================
+
+model SeasonPlayer {
+  id            String   @id @default(cuid())
+  seasonId      String   @map("season_id")
+  season        Season   @relation(fields: [seasonId], references: [id])
+  playerId      String   @map("player_id")
+  player        Player   @relation(fields: [playerId], references: [id])
+
+  shirtNumber   Int?     @map("shirt_number")
+  position      Position?
+  isLoan        Boolean  @default(false) @map("is_loan")
+  loanFrom      String?  @map("loan_from")
+  loanTo        String?  @map("loan_to")
+
+  createdAt DateTime @default(now()) @map("created_at")
+
+  @@unique([seasonId, playerId])
+  @@map("season_players")
+}
+
+// =============================================================================
+// ARBITRES
+// =============================================================================
+
+model Referee {
+  id            String   @id @default(cuid())
+  firstName     String   @map("first_name")
+  lastName      String   @map("last_name")
+  photoUrl      String?  @map("photo_url")
+
+  matches       Match[]
+
+  createdAt DateTime @default(now()) @map("created_at")
+
+  @@map("referees")
+  @@index([lastName])
+}
+
+// =============================================================================
+// TROPHÉES / PALMARÈS
+// =============================================================================
+
+model Trophy {
+  id            String   @id @default(cuid())
+  year          Int
+  competition   String
+  achievement   TrophyType
+  opponent      String?
+  score         String?
+  venue         String?
+  details       String?  @db.Text
+
+  createdAt DateTime @default(now()) @map("created_at")
+
+  @@map("trophies")
+}
+
+enum TrophyType {
+  CHAMPION
+  FINALISTE
+  DEMI_FINALISTE
+  QUART_FINALISTE
+  VAINQUEUR_COUPE
+  FINALISTE_COUPE
+}
+
+// =============================================================================
+// STADES
+// =============================================================================
+
+model Venue {
+  id            String   @id @default(cuid())
+  name          String
+  city          String
+  countryId     String?  @map("country_id")
+  country       Country? @relation(fields: [countryId], references: [id])
+  capacity      Int?
+  yearOpened    Int?     @map("year_opened")
+  latitude      Float?
+  longitude     Float?
+  isHomeGround  Boolean  @default(false) @map("is_home_ground")
+  photoUrl      String?  @map("photo_url")
+  notes         String?  @db.Text
+
+  matches       Match[]
+
+  createdAt DateTime @default(now()) @map("created_at")
+
+  @@map("venues")
+}
+
+// =============================================================================
+// ENTRAÎNEURS
+// =============================================================================
+
+model Coach {
+  id            String   @id @default(cuid())
+  firstName     String   @map("first_name")
+  lastName      String   @map("last_name")
+  role          String?
+  photoUrl      String?  @map("photo_url")
+  biography     String?  @db.Text
+
+  seasons       Season[]
+
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  @@map("coaches")
+}
+
+// =============================================================================
+// PRÉSIDENTS
+// =============================================================================
+
+model President {
+  id            String   @id @default(cuid())
+  firstName     String   @map("first_name")
+  lastName      String   @map("last_name")
+  startYear     Int?     @map("start_year")
+  endYear       Int?     @map("end_year")
+  photoUrl      String?  @map("photo_url")
+  biography     String?  @db.Text
+
+  seasons       Season[]
+
+  createdAt DateTime @default(now()) @map("created_at")
+
+  @@map("presidents")
+}

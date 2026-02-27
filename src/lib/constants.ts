@@ -1,0 +1,67 @@
+// =============================================================================
+// Couleurs USAP
+// =============================================================================
+
+export const COLORS = {
+  SANG: "#C8102E",
+  OR: "#FFD700",
+  FOND_SOMBRE: "#1a1a2e",
+  FOND_CARTE: "#16213e",
+  TEXTE_BLANC: "#ffffff",
+  TEXTE_GRIS: "#94a3b8",
+} as const;
+
+// =============================================================================
+// Postes de rugby (numéro → libellé français)
+// =============================================================================
+
+export const POSITIONS: Record<string, { label: string; number: number }> = {
+  PILIER_GAUCHE: { label: "Pilier gauche", number: 1 },
+  TALONNEUR: { label: "Talonneur", number: 2 },
+  PILIER_DROIT: { label: "Pilier droit", number: 3 },
+  DEUXIEME_LIGNE: { label: "2ème ligne", number: 4 },
+  TROISIEME_LIGNE_AILE: { label: "3ème ligne aile", number: 6 },
+  NUMERO_HUIT: { label: "N°8", number: 8 },
+  DEMI_DE_MELEE: { label: "Demi de mêlée", number: 9 },
+  DEMI_OUVERTURE: { label: "Demi d'ouverture", number: 10 },
+  AILIER: { label: "Ailier", number: 11 },
+  CENTRE: { label: "Centre", number: 12 },
+  ARRIERE: { label: "Arrière", number: 15 },
+} as const;
+
+// =============================================================================
+// Compétitions
+// =============================================================================
+
+export const COMPETITIONS = [
+  { name: "Top 14", shortName: "Top 14", type: "CHAMPIONNAT" },
+  { name: "Pro D2", shortName: "Pro D2", type: "CHAMPIONNAT" },
+  { name: "Champions Cup", shortName: "H-Cup", type: "COUPE_EUROPE" },
+  { name: "Challenge européen", shortName: "Challenge", type: "CHALLENGE_EUROPE" },
+  { name: "Challenge Yves du Manoir", shortName: "Du Manoir", type: "COUPE_FRANCE" },
+] as const;
+
+// =============================================================================
+// Navigation principale
+// =============================================================================
+
+export const NAV_LINKS = [
+  { href: "/", label: "Accueil" },
+  { href: "/saisons", label: "Saisons" },
+  { href: "/joueurs", label: "Joueurs" },
+  { href: "/matchs", label: "Matchs" },
+  { href: "/statistiques", label: "Statistiques" },
+  { href: "/palmares", label: "Palmarès" },
+] as const;
+
+// =============================================================================
+// Palmarès résumé
+// =============================================================================
+
+export const PALMARES = {
+  titresChampion: [1914, 1921, 1925, 1938, 1944, 1955, 2009],
+  finales: [1924, 1926, 1935, 1939, 1952, 1977, 1998, 2004, 2010],
+  titresProD2: [2018, 2021],
+  challengeDuManoir: [1935, 1955, 1994],
+  finaleCoupeEurope: [2003],
+} as const;
