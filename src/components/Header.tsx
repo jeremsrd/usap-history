@@ -20,7 +20,7 @@ export default function Header() {
             USAP
           </span>
           <span className="text-xl font-bold uppercase tracking-wider text-usap-or">
-            History
+            Historia
           </span>
         </Link>
 

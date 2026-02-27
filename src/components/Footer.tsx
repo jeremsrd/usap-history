@@ -2,7 +2,7 @@ export default function Footer() {
   return (
     <footer className="border-t border-white/10 bg-usap-fond">
       <div className="mx-auto max-w-7xl px-4 py-6 text-center text-sm text-muted-foreground">
-        USAP History — Données historiques de l&apos;USA Perpignan depuis 1902
+        USAP Historia — Données historiques de l&apos;USA Perpignan depuis 1902
       </div>
     </footer>
   );

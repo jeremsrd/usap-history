@@ -38,7 +38,7 @@ export default function Home() {
             <span className="text-foreground">depuis 1902</span>
           </h1>
           <p className="mx-auto mt-6 max-w-2xl text-lg text-muted-foreground">
-            La base de données historique complète de l&apos;USA Perpignan.
+            USAP Historia — La base de données historique complète de l&apos;USA Perpignan.
             Matchs, joueurs, saisons et statistiques du club catalan.
           </p>
         </div>

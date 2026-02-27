@@ -15,9 +15,9 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "USAP History - L'histoire de l'USA Perpignan depuis 1902",
+  title: "USAP Historia - L'histoire de l'USA Perpignan depuis 1902",
   description:
-    "Base de données historique complète de l'USA Perpignan (USAP) : matchs, joueurs, saisons et statistiques du club catalan depuis 1902.",
+    "USAP Historia — Base de données historique complète de l'USA Perpignan : matchs, joueurs, saisons et statistiques du club catalan depuis 1902.",
   keywords: [
     "USAP",
     "USA Perpignan",

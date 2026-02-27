@@ -1,5 +1,5 @@
 // =============================================================================
-// Types principaux pour l'application USAP History
+// Types principaux pour l'application USAP Historia
 // =============================================================================
 
 export type MatchResult = "VICTOIRE" | "DEFAITE" | "NUL";
