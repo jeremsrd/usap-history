@@ -13,6 +13,29 @@ datasource db {
 }
 
 // =============================================================================
+// UTILISATEURS / ADMINISTRATION
+// Lié à Supabase Auth — l'id correspond au user.id de Supabase
+// =============================================================================
+
+model User {
+  id        String   @id                              // UUID Supabase Auth
+  email     String   @unique
+  name      String?
+  role      UserRole @default(VIEWER)
+
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  @@map("users")
+}
+
+enum UserRole {
+  ADMIN
+  EDITOR
+  VIEWER
+}
+
+// =============================================================================
 // PAYS / NATIONS
 // Normalisation des pays pour joueurs, adversaires, compétitions, etc.
 // =============================================================================

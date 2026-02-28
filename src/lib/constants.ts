@@ -1,14 +1,17 @@
 // =============================================================================
 // Couleurs USAP
+// Les couleurs de l'interface sont gérées par CSS variables (voir globals.css).
+// Ces constantes servent de référence pour les contextes non-CSS (canvas, SVG…)
 // =============================================================================
 
 export const COLORS = {
   SANG: "#C8102E",
-  OR: "#FFD700",
+  OR_LIGHT: "#b8860b",
+  OR_DARK: "#FFD700",
+  FOND_CLAIR: "#f8fafc",
   FOND_SOMBRE: "#1a1a2e",
-  FOND_CARTE: "#16213e",
-  TEXTE_BLANC: "#ffffff",
-  TEXTE_GRIS: "#94a3b8",
+  CARTE_CLAIR: "#ffffff",
+  CARTE_SOMBRE: "#16213e",
 } as const;
 
 // =============================================================================

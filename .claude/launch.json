@@ -1,0 +1,12 @@
+{
+  "version": "0.0.1",
+  "configurations": [
+    {
+      "name": "dev",
+      "runtimeExecutable": "/usr/local/opt/node@22/bin/npx",
+      "runtimeArgs": ["next", "dev", "--turbopack"],
+      "env": { "PATH": "/usr/local/opt/node@22/bin:/usr/local/bin:/usr/bin:/bin" },
+      "port": 3000
+    }
+  ]
+}

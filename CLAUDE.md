@@ -114,11 +114,22 @@ usap-history/
 ## Identité visuelle
 
 - **Couleur principale** : Rouge sang (#C8102E) - couleur dominante USAP
-- **Couleur secondaire** : Or/Jaune (#FFD700) - accent catalan
-- **Fond sombre** : #1a1a2e (pour un rendu premium type archives)
-- **Texte** : blanc sur fond sombre, noir sur fond clair
+- **Couleur secondaire** : Or/Jaune (#FFD700 dark, #b8860b light) - accent catalan
+- **Fond** : adaptatif via CSS variables (clair par défaut)
+- **Texte** : adaptatif via CSS variables (sombre sur fond clair, clair sur fond sombre)
 - **Police titres** : font-bold, uppercase pour les titres de section
 - **Style général** : sobre, professionnel, orienté données (pas de fioritures)
+
+## Thème clair/sombre
+
+- **Thème par défaut** : clair (light)
+- **Gestion** : `next-themes` avec `attribute="class"` sur `<html>`
+- **Stockage préférence** : localStorage (automatique via next-themes)
+- **Fallback** : préférence système (prefers-color-scheme)
+- **Toggle** : bouton Sun/Moon dans le Header
+- **Convention** : toujours utiliser les couleurs sémantiques Tailwind (`bg-background`, `text-foreground`, `border-border`, `bg-card`, `bg-muted`, etc.) plutôt que des couleurs hardcodées
+- **USAP brand** : `usap-sang`, `usap-or`, `usap-fond`, `usap-carte` sont définis via CSS variables et s'adaptent au thème
+- **Interdit** : `border-white/10`, `bg-white/5`, ou toute couleur hardcodée qui ne s'adapte pas au thème
 
 ## Postes de rugby (pour la BDD)
 

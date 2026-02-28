@@ -45,14 +45,58 @@
   --radius-2xl: calc(var(--radius) + 8px);
   --radius-3xl: calc(var(--radius) + 12px);
   --radius-4xl: calc(var(--radius) + 16px);
-  --color-usap-sang: #C8102E;
-  --color-usap-or: #FFD700;
-  --color-usap-fond: #1a1a2e;
-  --color-usap-carte: #16213e;
+  --color-usap-sang: var(--usap-sang);
+  --color-usap-or: var(--usap-or);
+  --color-usap-fond: var(--usap-fond);
+  --color-usap-carte: var(--usap-carte);
 }
 
+/* ============================================= */
+/* THÈME CLAIR (défaut)                          */
+/* ============================================= */
 :root {
   --radius: 0.625rem;
+  --background: #ffffff;
+  --foreground: #0f172a;
+  --card: #f8fafc;
+  --card-foreground: #0f172a;
+  --popover: #ffffff;
+  --popover-foreground: #0f172a;
+  --primary: #C8102E;
+  --primary-foreground: #ffffff;
+  --secondary: #f1f5f9;
+  --secondary-foreground: #1e293b;
+  --muted: #f1f5f9;
+  --muted-foreground: #64748b;
+  --accent: #f1f5f9;
+  --accent-foreground: #1e293b;
+  --destructive: #dc2626;
+  --border: #e2e8f0;
+  --input: #e2e8f0;
+  --ring: #C8102E;
+  --chart-1: #C8102E;
+  --chart-2: #b8860b;
+  --chart-3: #2563eb;
+  --chart-4: #059669;
+  --chart-5: #d97706;
+  --sidebar: #f8fafc;
+  --sidebar-foreground: #0f172a;
+  --sidebar-primary: #C8102E;
+  --sidebar-primary-foreground: #ffffff;
+  --sidebar-accent: #f1f5f9;
+  --sidebar-accent-foreground: #1e293b;
+  --sidebar-border: #e2e8f0;
+  --sidebar-ring: #C8102E;
+  --usap-sang: #C8102E;
+  --usap-or: #b8860b;
+  --usap-fond: #f8fafc;
+  --usap-carte: #ffffff;
+}
+
+/* ============================================= */
+/* THÈME SOMBRE                                  */
+/* ============================================= */
+.dark {
   --background: #1a1a2e;
   --foreground: #f1f5f9;
   --card: #16213e;
@@ -84,6 +128,10 @@
   --sidebar-accent-foreground: #f1f5f9;
   --sidebar-border: rgba(255, 255, 255, 0.1);
   --sidebar-ring: #C8102E;
+  --usap-sang: #C8102E;
+  --usap-or: #FFD700;
+  --usap-fond: #1a1a2e;
+  --usap-carte: #16213e;
 }
 
 @layer base {

@@ -54,7 +54,7 @@ export default function Home() {
             {stats.map((stat) => (
               <div
                 key={stat.label}
-                className="rounded-lg border border-white/10 bg-usap-carte p-6 text-center transition-colors hover:border-usap-or/30"
+                className="rounded-lg border border-border bg-usap-carte p-6 text-center transition-colors hover:border-usap-or/30"
               >
                 <stat.icon className="mx-auto mb-3 h-8 w-8 text-usap-or" />
                 <div className="text-3xl font-bold text-usap-or sm:text-4xl">
@@ -70,14 +70,14 @@ export default function Home() {
       </section>
 
       {/* Section palmarès */}
-      <section className="border-t border-white/10 py-16">
+      <section className="border-t border-border py-16">
         <div className="mx-auto max-w-7xl px-4">
           <h2 className="mb-10 text-center text-2xl font-bold uppercase tracking-wider text-foreground">
             Palmarès
           </h2>
           <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
             {/* Champion de France */}
-            <div className="rounded-lg border border-white/10 bg-usap-carte p-6">
+            <div className="rounded-lg border border-border bg-usap-carte p-6">
               <div className="mb-4 flex items-center gap-2">
                 <Trophy className="h-5 w-5 text-usap-or" />
                 <h3 className="text-lg font-bold uppercase text-foreground">
@@ -97,7 +97,7 @@ export default function Home() {
             </div>
 
             {/* Finaliste */}
-            <div className="rounded-lg border border-white/10 bg-usap-carte p-6">
+            <div className="rounded-lg border border-border bg-usap-carte p-6">
               <div className="mb-4 flex items-center gap-2">
                 <Star className="h-5 w-5 text-muted-foreground" />
                 <h3 className="text-lg font-bold uppercase text-foreground">
@@ -108,7 +108,7 @@ export default function Home() {
                 {PALMARES.finales.map((year) => (
                   <span
                     key={year}
-                    className="rounded bg-white/5 px-3 py-1 text-sm font-medium text-muted-foreground"
+                    className="rounded bg-muted px-3 py-1 text-sm font-medium text-muted-foreground"
                   >
                     {year}
                   </span>
@@ -117,7 +117,7 @@ export default function Home() {
             </div>
 
             {/* Champion Pro D2 */}
-            <div className="rounded-lg border border-white/10 bg-usap-carte p-6">
+            <div className="rounded-lg border border-border bg-usap-carte p-6">
               <div className="mb-4 flex items-center gap-2">
                 <Trophy className="h-5 w-5 text-usap-or" />
                 <h3 className="text-lg font-bold uppercase text-foreground">
@@ -137,7 +137,7 @@ export default function Home() {
             </div>
 
             {/* Challenge Yves du Manoir */}
-            <div className="rounded-lg border border-white/10 bg-usap-carte p-6">
+            <div className="rounded-lg border border-border bg-usap-carte p-6">
               <div className="mb-4 flex items-center gap-2">
                 <Trophy className="h-5 w-5 text-usap-or" />
                 <h3 className="text-lg font-bold uppercase text-foreground">
@@ -157,7 +157,7 @@ export default function Home() {
             </div>
 
             {/* Finale Coupe d'Europe */}
-            <div className="rounded-lg border border-white/10 bg-usap-carte p-6">
+            <div className="rounded-lg border border-border bg-usap-carte p-6">
               <div className="mb-4 flex items-center gap-2">
                 <Star className="h-5 w-5 text-muted-foreground" />
                 <h3 className="text-lg font-bold uppercase text-foreground">
@@ -168,7 +168,7 @@ export default function Home() {
                 {PALMARES.finaleCoupeEurope.map((year) => (
                   <span
                     key={year}
-                    className="rounded bg-white/5 px-3 py-1 text-sm font-medium text-muted-foreground"
+                    className="rounded bg-muted px-3 py-1 text-sm font-medium text-muted-foreground"
                   >
                     {year}
                   </span>
