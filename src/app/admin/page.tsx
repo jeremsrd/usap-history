@@ -40,12 +40,13 @@ export default async function AdminPage() {
   }
 
   // Récupérer les stats pour le dashboard
-  const [playerCount, matchCount, seasonCount, trophyCount] =
+  const [playerCount, matchCount, seasonCount, trophyCount, countryCount] =
     await Promise.all([
       prisma.player.count(),
       prisma.match.count(),
       prisma.season.count(),
       prisma.trophy.count(),
+      prisma.country.count(),
     ]);
 
   return (
@@ -56,6 +57,7 @@ export default async function AdminPage() {
         matches: matchCount,
         seasons: seasonCount,
         trophies: trophyCount,
+        countries: countryCount,
       }}
     />
   );

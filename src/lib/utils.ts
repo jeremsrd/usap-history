@@ -50,3 +50,15 @@ export function formatResult(result: string): string {
 export function formatSeasonLabel(startYear: number, endYear: number): string {
   return `${startYear}-${endYear}`;
 }
+
+/**
+ * Convertit un code ISO pays (2 lettres) en emoji drapeau.
+ * Ex: "FR" → "🇫🇷", "NZ" → "🇳🇿"
+ */
+export function countryCodeToFlag(code: string): string {
+  const upper = code.toUpperCase();
+  if (upper.length !== 2) return code;
+  return String.fromCodePoint(
+    ...Array.from(upper).map((c) => 0x1f1e6 + c.charCodeAt(0) - 65),
+  );
+}

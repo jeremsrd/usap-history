@@ -2,7 +2,8 @@
 
 import { useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
-import { Users, Calendar, Trophy, Swords, LogOut } from "lucide-react";
+import Link from "next/link";
+import { Users, Calendar, Trophy, Swords, LogOut, Globe } from "lucide-react";
 
 interface AdminDashboardProps {
   user: { email: string; name: string | null; role: string };
@@ -11,6 +12,7 @@ interface AdminDashboardProps {
     matches: number;
     seasons: number;
     trophies: number;
+    countries: number;
   };
 }
 
@@ -19,6 +21,7 @@ const statCards = [
   { key: "matches" as const, label: "Matchs", icon: Swords, href: "/admin/matchs" },
   { key: "seasons" as const, label: "Saisons", icon: Calendar, href: "/admin/saisons" },
   { key: "trophies" as const, label: "Trophées", icon: Trophy, href: "/admin/palmares" },
+  { key: "countries" as const, label: "Pays", icon: Globe, href: "/admin/pays" },
 ];
 
 export default function AdminDashboard({ user, stats }: AdminDashboardProps) {
@@ -53,10 +56,11 @@ export default function AdminDashboard({ user, stats }: AdminDashboardProps) {
       </div>
 
       {/* Stats */}
-      <div className="grid grid-cols-2 gap-6 md:grid-cols-4">
+      <div className="grid grid-cols-2 gap-6 md:grid-cols-5">
         {statCards.map((card) => (
-          <div
+          <Link
             key={card.key}
+            href={card.href}
             className="rounded-lg border border-border bg-usap-carte p-6 text-center transition-colors hover:border-usap-or/30"
           >
             <card.icon className="mx-auto mb-3 h-8 w-8 text-usap-or" />
@@ -66,7 +70,7 @@ export default function AdminDashboard({ user, stats }: AdminDashboardProps) {
             <div className="mt-2 text-sm text-muted-foreground">
               {card.label}
             </div>
-          </div>
+          </Link>
         ))}
       </div>
 
@@ -91,6 +95,11 @@ export default function AdminDashboard({ user, stats }: AdminDashboardProps) {
             description="Créer ou modifier une saison"
             href="/admin/saisons"
           />
+          <ActionCard
+            title="Gérer les pays"
+            description="Ajouter ou modifier les pays référencés"
+            href="/admin/pays"
+          />
         </div>
       </div>
     </div>
@@ -107,9 +116,12 @@ function ActionCard({
   href: string;
 }) {
   return (
-    <div className="rounded-lg border border-border bg-usap-carte p-5 transition-colors hover:border-usap-sang/30">
+    <Link
+      href={href}
+      className="rounded-lg border border-border bg-usap-carte p-5 transition-colors hover:border-usap-sang/30"
+    >
       <h3 className="font-bold text-foreground">{title}</h3>
       <p className="mt-1 text-sm text-muted-foreground">{description}</p>
-    </div>
+    </Link>
   );
 }

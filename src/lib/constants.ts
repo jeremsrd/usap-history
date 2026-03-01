@@ -45,6 +45,19 @@ export const COMPETITIONS = [
 ] as const;
 
 // =============================================================================
+// Continents (libellés français pour l'UI)
+// =============================================================================
+
+export const CONTINENTS: Record<string, string> = {
+  EUROPE: "Europe",
+  AFRIQUE: "Afrique",
+  AMERIQUE_NORD: "Amérique du Nord",
+  AMERIQUE_SUD: "Amérique du Sud",
+  ASIE: "Asie",
+  OCEANIE: "Océanie",
+} as const;
+
+// =============================================================================
 // Navigation principale
 // =============================================================================
 
