@@ -45,6 +45,20 @@ export const COMPETITIONS = [
 ] as const;
 
 // =============================================================================
+// Divisions (libellés français pour l'UI)
+// =============================================================================
+
+export const DIVISIONS: Record<string, string> = {
+  CHAMPIONNAT_1ERE_SERIE: "Championnat 1ère série",
+  CHAMPIONNAT_EXCELLENCE: "Championnat Excellence",
+  GROUPE_A: "Groupe A",
+  PREMIERE_DIVISION: "1ère Division",
+  TOP_16: "Top 16",
+  TOP_14: "Top 14",
+  PRO_D2: "Pro D2",
+} as const;
+
+// =============================================================================
 // Continents (libellés français pour l'UI)
 // =============================================================================
 
