@@ -301,6 +301,7 @@ export default function PlayerForm({
             onChange={setPhotoUrl}
             folder="players"
             label="Photo du joueur"
+            name="photoUrl"
           />
 
           {/* Biographie */}

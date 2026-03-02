@@ -83,6 +83,16 @@ export const CONTINENTS: Record<string, string> = {
 } as const;
 
 // =============================================================================
+// Résultats de match (libellés français pour l'UI)
+// =============================================================================
+
+export const MATCH_RESULTS: Record<string, string> = {
+  VICTOIRE: "Victoire",
+  DEFAITE: "Défaite",
+  NUL: "Nul",
+} as const;
+
+// =============================================================================
 // Navigation principale
 // =============================================================================
 

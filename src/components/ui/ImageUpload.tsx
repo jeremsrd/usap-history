@@ -9,6 +9,7 @@ interface ImageUploadProps {
   onChange: (url: string | null) => void;
   folder: string;
   label?: string;
+  name?: string;
 }
 
 export default function ImageUpload({
@@ -16,6 +17,7 @@ export default function ImageUpload({
   onChange,
   folder,
   label = "Image",
+  name = "logoUrl",
 }: ImageUploadProps) {
   const inputRef = useRef<HTMLInputElement>(null);
   const [isUploading, setIsUploading] = useState(false);
@@ -118,7 +120,7 @@ export default function ImageUpload({
       />
 
       {/* Hidden input pour envoyer l'URL dans le FormData */}
-      <input type="hidden" name="logoUrl" value={preview ?? ""} />
+      <input type="hidden" name={name} value={preview ?? ""} />
 
       {error && <p className="mt-1 text-xs text-destructive">{error}</p>}
 

@@ -216,6 +216,7 @@ export default function VenueForm({
             onChange={setPhotoUrl}
             folder="stades"
             label="Photo du stade"
+            name="photoUrl"
           />
 
           {/* Stade de l'USAP */}

@@ -185,11 +185,11 @@ export default function PlayerList({ players, countries }: PlayerListProps) {
                           alt={`${player.firstName} ${player.lastName}`}
                           width={32}
                           height={32}
-                          className="rounded-full object-cover"
+                          className="h-8 w-8 shrink-0 rounded-full object-cover"
                           unoptimized
                         />
                       ) : (
-                        <div className="flex h-8 w-8 items-center justify-center rounded-full bg-muted text-xs font-medium text-muted-foreground">
+                        <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-muted text-xs font-medium text-muted-foreground">
                           {player.firstName[0]}
                           {player.lastName[0]}
                         </div>
