@@ -3,7 +3,7 @@
 import { useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
 import Link from "next/link";
-import { Users, Calendar, Trophy, Swords, LogOut, Globe } from "lucide-react";
+import { Users, Calendar, Trophy, Swords, LogOut, Globe, MapPin } from "lucide-react";
 
 interface AdminDashboardProps {
   user: { email: string; name: string | null; role: string };
@@ -13,6 +13,7 @@ interface AdminDashboardProps {
     seasons: number;
     trophies: number;
     countries: number;
+    venues: number;
   };
 }
 
@@ -22,6 +23,7 @@ const statCards = [
   { key: "seasons" as const, label: "Saisons", icon: Calendar, href: "/admin/saisons" },
   { key: "trophies" as const, label: "Trophées", icon: Trophy, href: "/admin/palmares" },
   { key: "countries" as const, label: "Pays", icon: Globe, href: "/admin/pays" },
+  { key: "venues" as const, label: "Stades", icon: MapPin, href: "/admin/stades" },
 ];
 
 export default function AdminDashboard({ user, stats }: AdminDashboardProps) {
@@ -56,7 +58,7 @@ export default function AdminDashboard({ user, stats }: AdminDashboardProps) {
       </div>
 
       {/* Stats */}
-      <div className="grid grid-cols-2 gap-6 md:grid-cols-5">
+      <div className="grid grid-cols-2 gap-6 md:grid-cols-3 lg:grid-cols-6">
         {statCards.map((card) => (
           <Link
             key={card.key}
@@ -96,9 +98,19 @@ export default function AdminDashboard({ user, stats }: AdminDashboardProps) {
             href="/admin/saisons"
           />
           <ActionCard
+            title="Gérer les adversaires"
+            description="Ajouter ou modifier les clubs adverses"
+            href="/admin/adversaires"
+          />
+          <ActionCard
             title="Gérer les pays"
             description="Ajouter ou modifier les pays référencés"
             href="/admin/pays"
+          />
+          <ActionCard
+            title="Gérer les stades"
+            description="Ajouter ou modifier les stades"
+            href="/admin/stades"
           />
         </div>
       </div>
