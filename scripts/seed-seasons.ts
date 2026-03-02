@@ -24,9 +24,13 @@ function range(
 
 // Toutes les saisons de l'USAP, classées par ère
 const seasons = [
-  // 1902-1914 : Championnat de France 1ère série
-  // (ASP en 2ème série jusqu'en 1911, puis accession à l'élite)
-  ...range(1902, 1913, Division.CHAMPIONNAT_1ERE_SERIE),
+  // 1902-1911 : Championnat de France 2ème série
+  // L'ASP monte en 1ère série en 1911 après avoir remporté la finale de 2ème série
+  ...range(1902, 1910, Division.CHAMPIONNAT_2EME_SERIE),
+
+  // 1911-1914 : Championnat de France 1ère série
+  // Champion 1914
+  ...range(1911, 1913, Division.CHAMPIONNAT_1ERE_SERIE),
 
   // ⚠️ 1914-1919 : Pas de championnat (Première Guerre mondiale)
 

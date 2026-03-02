@@ -1,0 +1,2 @@
+-- AlterEnum
+ALTER TYPE "Division" ADD VALUE 'CHAMPIONNAT_2EME_SERIE';

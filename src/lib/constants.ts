@@ -49,6 +49,7 @@ export const COMPETITIONS = [
 // =============================================================================
 
 export const DIVISIONS: Record<string, string> = {
+  CHAMPIONNAT_2EME_SERIE: "Championnat 2ème série",
   CHAMPIONNAT_1ERE_SERIE: "Championnat 1ère série",
   CHAMPIONNAT_EXCELLENCE: "Championnat Excellence",
   GROUPE_A: "Groupe A",
