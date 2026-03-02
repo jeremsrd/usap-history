@@ -3,7 +3,7 @@
 import { useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
 import Link from "next/link";
-import { Users, Calendar, Trophy, Swords, LogOut, Globe, MapPin } from "lucide-react";
+import { Users, Calendar, Trophy, Swords, LogOut, Globe, MapPin, Medal } from "lucide-react";
 
 interface AdminDashboardProps {
   user: { email: string; name: string | null; role: string };
@@ -14,6 +14,7 @@ interface AdminDashboardProps {
     trophies: number;
     countries: number;
     venues: number;
+    competitions: number;
   };
 }
 
@@ -24,6 +25,7 @@ const statCards = [
   { key: "trophies" as const, label: "Trophées", icon: Trophy, href: "/admin/palmares" },
   { key: "countries" as const, label: "Pays", icon: Globe, href: "/admin/pays" },
   { key: "venues" as const, label: "Stades", icon: MapPin, href: "/admin/stades" },
+  { key: "competitions" as const, label: "Compétitions", icon: Medal, href: "/admin/competitions" },
 ];
 
 export default function AdminDashboard({ user, stats }: AdminDashboardProps) {
@@ -83,13 +85,13 @@ export default function AdminDashboard({ user, stats }: AdminDashboardProps) {
         </h2>
         <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
           <ActionCard
-            title="Ajouter un match"
-            description="Saisir le résultat d'un nouveau match"
+            title="Gérer les matchs"
+            description="Saisir ou modifier les résultats de matchs"
             href="/admin/matchs"
           />
           <ActionCard
-            title="Ajouter un joueur"
-            description="Créer une fiche joueur"
+            title="Gérer les joueurs"
+            description="Ajouter ou modifier les fiches joueurs"
             href="/admin/joueurs"
           />
           <ActionCard
@@ -111,6 +113,11 @@ export default function AdminDashboard({ user, stats }: AdminDashboardProps) {
             title="Gérer les stades"
             description="Ajouter ou modifier les stades"
             href="/admin/stades"
+          />
+          <ActionCard
+            title="Gérer les compétitions"
+            description="Championnats, coupes et compétitions"
+            href="/admin/competitions"
           />
         </div>
       </div>

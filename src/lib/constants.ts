@@ -44,6 +44,16 @@ export const COMPETITIONS = [
   { name: "Challenge Yves du Manoir", shortName: "Du Manoir", type: "COUPE_FRANCE" },
 ] as const;
 
+// Types de compétition (libellés français pour l'UI)
+export const COMPETITION_TYPES: Record<string, string> = {
+  CHAMPIONNAT: "Championnat",
+  COUPE_EUROPE: "Coupe d'Europe",
+  CHALLENGE_EUROPE: "Challenge européen",
+  COUPE_FRANCE: "Coupe de France / Manoir",
+  AMICAL: "Amical",
+  BARRAGES: "Barrages",
+} as const;
+
 // =============================================================================
 // Divisions (libellés français pour l'UI)
 // =============================================================================

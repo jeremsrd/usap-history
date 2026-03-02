@@ -193,6 +193,7 @@ model Player {
   weight          Int?                               // kg
   photoUrl        String?  @map("photo_url")
   biography       String?  @db.Text
+  isActive        Boolean  @default(false) @map("is_active") // Joueur actuellement à l'USAP
 
   // Relations
   careerClubs       CareerClub[]
