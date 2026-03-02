@@ -45,8 +45,8 @@ export async function createCountry(
     return { error: "Le nom et le code ISO sont obligatoires." };
   }
 
-  if (code.length !== 2) {
-    return { error: "Le code ISO doit être composé de 2 lettres (ex: FR)." };
+  if (code.length < 2 || code.length > 3) {
+    return { error: "Le code doit être composé de 2 lettres (ISO: FR, NZ) ou 3 lettres (rugby: ENG, SCT, WAL)." };
   }
 
   try {
@@ -86,8 +86,8 @@ export async function updateCountry(
     return { error: "Le nom et le code ISO sont obligatoires." };
   }
 
-  if (code.length !== 2) {
-    return { error: "Le code ISO doit être composé de 2 lettres (ex: FR)." };
+  if (code.length < 2 || code.length > 3) {
+    return { error: "Le code doit être composé de 2 lettres (ISO: FR, NZ) ou 3 lettres (rugby: ENG, SCT, WAL)." };
   }
 
   try {

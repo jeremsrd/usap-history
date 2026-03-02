@@ -79,7 +79,7 @@ export default function CountryForm({ country, onClose }: CountryFormProps) {
               htmlFor="code"
               className="mb-1 block text-sm font-medium text-muted-foreground"
             >
-              Code ISO (2 lettres) *
+              Code (2-3 lettres) *
             </label>
             <div className="flex items-center gap-3">
               <input
@@ -87,20 +87,20 @@ export default function CountryForm({ country, onClose }: CountryFormProps) {
                 name="code"
                 type="text"
                 required
-                maxLength={2}
+                maxLength={3}
                 value={code}
                 onChange={(e) => setCode(e.target.value.toUpperCase())}
                 placeholder="FR"
                 className="w-full rounded-md border border-border bg-card px-3 py-2 uppercase text-foreground placeholder:text-muted-foreground focus:border-usap-sang focus:outline-none focus:ring-1 focus:ring-usap-sang"
               />
-              {code.length === 2 && (
+              {code.length >= 2 && (
                 <span className="text-3xl" title={code}>
                   {countryCodeToFlag(code)}
                 </span>
               )}
             </div>
             <p className="mt-1 text-xs text-muted-foreground">
-              Le drapeau sera généré automatiquement depuis le code ISO.
+              2 lettres ISO (FR, NZ) ou 3 lettres rugby (ENG, SCT, WAL).
             </p>
           </div>
 

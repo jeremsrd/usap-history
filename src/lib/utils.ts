@@ -52,13 +52,50 @@ export function formatSeasonLabel(startYear: number, endYear: number): string {
 }
 
 /**
- * Convertit un code ISO pays (2 lettres) en emoji drapeau.
- * Ex: "FR" → "🇫🇷", "NZ" → "🇳🇿"
+ * Codes spéciaux pour les nations du rugby (subdivisions GB).
+ * Ces nations n'ont pas de code ISO 3166-1 mais ont des drapeaux Unicode
+ * via les "flag tag sequences" (🏴 + tags + cancel).
+ */
+const SUBDIVISION_FLAGS: Record<string, string> = {
+  ENG: "gbeng", // 🏴󠁧󠁢󠁥󠁮󠁧󠁿 Angleterre
+  SCT: "gbsct", // 🏴󠁧󠁢󠁳󠁣󠁴󠁿 Écosse
+  WAL: "gbwls", // 🏴󠁧󠁢󠁷󠁬󠁳󠁿 Pays de Galles
+};
+
+/**
+ * Génère un emoji drapeau de subdivision via Unicode flag tag sequence.
+ * 🏴 (U+1F3F4) + tag characters (U+E0061..U+E007A) + cancel tag (U+E007F)
+ */
+function subdivisionToFlag(subdivision: string): string {
+  const BLACK_FLAG = 0x1f3f4;
+  const TAG_BASE = 0xe0061; // tag 'a'
+  const CANCEL_TAG = 0xe007f;
+  const tags = Array.from(subdivision).map(
+    (c) => TAG_BASE + c.charCodeAt(0) - 97,
+  );
+  return String.fromCodePoint(BLACK_FLAG, ...tags, CANCEL_TAG);
+}
+
+/**
+ * Convertit un code pays en emoji drapeau.
+ * - Codes ISO 3166-1 (2 lettres) : "FR" → 🇫🇷, "NZ" → 🇳🇿
+ * - Codes rugby spéciaux (3 lettres) : "ENG" → 🏴󠁧󠁢󠁥󠁮󠁧󠁿, "SCT" → 🏴󠁧󠁢󠁳󠁣󠁴󠁿, "WAL" → 🏴󠁧󠁢󠁷󠁬󠁳󠁿
  */
 export function countryCodeToFlag(code: string): string {
   const upper = code.toUpperCase();
-  if (upper.length !== 2) return code;
-  return String.fromCodePoint(
-    ...Array.from(upper).map((c) => 0x1f1e6 + c.charCodeAt(0) - 65),
-  );
+
+  // Codes de subdivision (nations du rugby : ENG, SCT, WAL)
+  const subdivision = SUBDIVISION_FLAGS[upper];
+  if (subdivision) {
+    return subdivisionToFlag(subdivision);
+  }
+
+  // Codes ISO 3166-1 standard (2 lettres)
+  if (upper.length === 2) {
+    return String.fromCodePoint(
+      ...Array.from(upper).map((c) => 0x1f1e6 + c.charCodeAt(0) - 65),
+    );
+  }
+
+  return code;
 }
