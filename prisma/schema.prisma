@@ -131,8 +131,12 @@ model Opponent {
   logoUrl         String?  @map("logo_url")
   primaryColor    String?  @map("primary_color")     // #hex
   secondaryColor  String?  @map("secondary_color")
-  stadiumName     String?  @map("stadium_name")
+  venueId         String?  @map("venue_id")
+  venue           Venue?   @relation(fields: [venueId], references: [id])
   foundedYear     Int?     @map("founded_year")
+  websiteUrl      String?  @map("website_url")
+  facebookUrl     String?  @map("facebook_url")
+  instagramUrl    String?  @map("instagram_url")
   isActive        Boolean  @default(true) @map("is_active")
   notes           String?  @db.Text
 
@@ -656,6 +660,7 @@ model Venue {
   notes         String?  @db.Text
 
   matches       Match[]
+  opponents     Opponent[]
 
   createdAt DateTime @default(now()) @map("created_at")
 
