@@ -3,10 +3,9 @@ import Link from "next/link";
 import { ArrowLeft } from "lucide-react";
 import { createClient } from "@/lib/supabase/server";
 import { prisma } from "@/lib/prisma";
-import SeasonList from "./SeasonList";
+import CoachList from "./CoachList";
 
-export default async function AdminSaisonsPage() {
-  // Auth + rôle
+export default async function AdminEntraineursPage() {
   const supabase = await createClient();
   const {
     data: { user },
@@ -17,34 +16,21 @@ export default async function AdminSaisonsPage() {
   const dbUser = await prisma.user.findUnique({ where: { id: user.id } });
   if (!dbUser || dbUser.role === "VIEWER") redirect("/");
 
-  // Données
-  const [seasons, coaches, presidents] = await Promise.all([
-    prisma.season.findMany({
-      orderBy: { startYear: "desc" },
-      select: {
-        id: true,
-        label: true,
-        startYear: true,
-        endYear: true,
-        division: true,
-        coachId: true,
-        presidentId: true,
-        _count: { select: { matches: true, seasonPlayers: true } },
-      },
-    }),
-    prisma.coach.findMany({
-      orderBy: [{ lastName: "asc" }, { firstName: "asc" }],
-      select: { id: true, firstName: true, lastName: true },
-    }),
-    prisma.president.findMany({
-      orderBy: [{ startYear: "desc" }],
-      select: { id: true, firstName: true, lastName: true },
-    }),
-  ]);
+  const coaches = await prisma.coach.findMany({
+    orderBy: [{ lastName: "asc" }, { firstName: "asc" }],
+    select: {
+      id: true,
+      firstName: true,
+      lastName: true,
+      role: true,
+      photoUrl: true,
+      biography: true,
+      _count: { select: { seasons: true } },
+    },
+  });
 
   return (
     <div className="mx-auto max-w-7xl px-4 py-10">
-      {/* Header */}
       <div className="mb-8">
         <Link
           href="/admin"
@@ -55,15 +41,14 @@ export default async function AdminSaisonsPage() {
         </Link>
         <h1 className="text-2xl font-bold uppercase tracking-wider">
           <span className="text-usap-sang">Gestion</span>{" "}
-          <span className="text-usap-or">des saisons</span>
+          <span className="text-usap-or">des entraîneurs</span>
         </h1>
         <p className="mt-1 text-sm text-muted-foreground">
-          Saisons de l&apos;USAP depuis 1902.
+          Entraîneurs et staff technique de l&apos;USAP.
         </p>
       </div>
 
-      {/* Liste */}
-      <SeasonList seasons={seasons} coaches={coaches} presidents={presidents} />
+      <CoachList coaches={coaches} />
     </div>
   );
 }

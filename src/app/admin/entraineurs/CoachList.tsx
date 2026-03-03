@@ -2,63 +2,49 @@
 
 import { useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
-import { Plus, Pencil, Trash2, Calendar, Search } from "lucide-react";
-import { deleteSeason } from "./actions";
-import SeasonForm from "./SeasonForm";
-import { DIVISIONS } from "@/lib/constants";
+import { Plus, Pencil, Trash2, User, Search } from "lucide-react";
+import { deleteCoach } from "./actions";
+import CoachForm from "./CoachForm";
 
-interface CoachOption {
+interface CoachData {
   id: string;
   firstName: string;
   lastName: string;
+  role: string | null;
+  photoUrl: string | null;
+  biography: string | null;
+  _count: { seasons: number };
 }
 
-interface PresidentOption {
-  id: string;
-  firstName: string;
-  lastName: string;
+interface CoachListProps {
+  coaches: CoachData[];
 }
 
-interface SeasonData {
-  id: string;
-  label: string;
-  startYear: number;
-  endYear: number;
-  division: string;
-  coachId: string | null;
-  presidentId: string | null;
-  _count: { matches: number; seasonPlayers: number };
-}
-
-interface SeasonListProps {
-  seasons: SeasonData[];
-  coaches: CoachOption[];
-  presidents: PresidentOption[];
-}
-
-export default function SeasonList({ seasons, coaches, presidents }: SeasonListProps) {
+export default function CoachList({ coaches }: CoachListProps) {
   const router = useRouter();
   const [showForm, setShowForm] = useState(false);
-  const [editSeason, setEditSeason] = useState<SeasonData | null>(null);
-  const [deleteTarget, setDeleteTarget] = useState<SeasonData | null>(null);
+  const [editCoach, setEditCoach] = useState<CoachData | null>(null);
+  const [deleteTarget, setDeleteTarget] = useState<CoachData | null>(null);
   const [deleteError, setDeleteError] = useState<string | null>(null);
   const [isPending, startTransition] = useTransition();
   const [search, setSearch] = useState("");
 
-  const filtered = seasons.filter(
-    (s) =>
-      s.label.toLowerCase().includes(search.toLowerCase()) ||
-      (DIVISIONS[s.division] ?? "").toLowerCase().includes(search.toLowerCase()),
+  const filtered = coaches.filter(
+    (c) =>
+      `${c.firstName} ${c.lastName}`
+        .toLowerCase()
+        .includes(search.toLowerCase()) ||
+      (c.role ?? "").toLowerCase().includes(search.toLowerCase()),
   );
 
-  function handleEdit(season: SeasonData) {
-    setEditSeason(season);
+  function handleEdit(coach: CoachData) {
+    setEditCoach(coach);
     setShowForm(true);
   }
 
   function handleCloseForm() {
     setShowForm(false);
-    setEditSeason(null);
+    setEditCoach(null);
     router.refresh();
   }
 
@@ -67,7 +53,7 @@ export default function SeasonList({ seasons, coaches, presidents }: SeasonListP
     setDeleteError(null);
 
     startTransition(async () => {
-      const result = await deleteSeason(deleteTarget.id);
+      const result = await deleteCoach(deleteTarget.id);
       if (result.error) {
         setDeleteError(result.error);
       } else {
@@ -90,35 +76,33 @@ export default function SeasonList({ seasons, coaches, presidents }: SeasonListP
             type="text"
             value={search}
             onChange={(e) => setSearch(e.target.value)}
-            placeholder="Rechercher une saison..."
+            placeholder="Rechercher un entraîneur..."
             className="w-full rounded-md border border-border bg-card py-2 pl-9 pr-3 text-sm text-foreground placeholder:text-muted-foreground focus:border-usap-sang focus:outline-none focus:ring-1 focus:ring-usap-sang sm:w-64"
           />
         </div>
         <button
           onClick={() => {
-            setEditSeason(null);
+            setEditCoach(null);
             setShowForm(true);
           }}
           className="flex items-center gap-2 rounded-md bg-usap-sang px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-usap-sang/90"
         >
           <Plus size={16} />
-          Ajouter une saison
+          Ajouter un entraîneur
         </button>
       </div>
 
-      {/* Compteur */}
       <p className="mb-4 text-sm text-muted-foreground">
-        {filtered.length} saison{filtered.length > 1 ? "s" : ""}
-        {filtered.length !== seasons.length && ` sur ${seasons.length}`}
+        {filtered.length} entraîneur{filtered.length > 1 ? "s" : ""}
+        {filtered.length !== coaches.length && ` sur ${coaches.length}`}
       </p>
 
-      {/* Table */}
       {filtered.length === 0 ? (
         <div className="rounded-lg border border-border bg-usap-carte p-10 text-center">
-          <Calendar className="mx-auto mb-3 h-10 w-10 text-muted-foreground" />
+          <User className="mx-auto mb-3 h-10 w-10 text-muted-foreground" />
           <p className="text-muted-foreground">
-            {seasons.length === 0
-              ? "Aucune saison enregistrée."
+            {coaches.length === 0
+              ? "Aucun entraîneur enregistré."
               : "Aucun résultat pour cette recherche."}
           </p>
         </div>
@@ -128,13 +112,13 @@ export default function SeasonList({ seasons, coaches, presidents }: SeasonListP
             <thead>
               <tr className="border-b border-border bg-muted/50">
                 <th className="px-4 py-3 text-left font-semibold text-foreground">
-                  Saison
-                </th>
-                <th className="px-4 py-3 text-left font-semibold text-foreground">
-                  Division
+                  Entraîneur
                 </th>
                 <th className="hidden px-4 py-3 text-left font-semibold text-foreground sm:table-cell">
-                  Matchs
+                  Rôle
+                </th>
+                <th className="hidden px-4 py-3 text-left font-semibold text-foreground md:table-cell">
+                  Saisons
                 </th>
                 <th className="px-4 py-3 text-right font-semibold text-foreground">
                   Actions
@@ -142,24 +126,26 @@ export default function SeasonList({ seasons, coaches, presidents }: SeasonListP
               </tr>
             </thead>
             <tbody>
-              {filtered.map((season) => (
+              {filtered.map((coach) => (
                 <tr
-                  key={season.id}
+                  key={coach.id}
                   className="border-b border-border last:border-b-0 hover:bg-muted/30"
                 >
-                  <td className="px-4 py-3 font-medium text-foreground">
-                    {season.label}
-                  </td>
-                  <td className="px-4 py-3 text-muted-foreground">
-                    {DIVISIONS[season.division] ?? season.division}
+                  <td className="px-4 py-3">
+                    <span className="font-medium text-foreground">
+                      {coach.firstName} {coach.lastName}
+                    </span>
                   </td>
                   <td className="hidden px-4 py-3 text-muted-foreground sm:table-cell">
-                    {season._count.matches}
+                    {coach.role ?? "—"}
+                  </td>
+                  <td className="hidden px-4 py-3 text-muted-foreground md:table-cell">
+                    {coach._count.seasons}
                   </td>
                   <td className="px-4 py-3">
                     <div className="flex justify-end gap-1">
                       <button
-                        onClick={() => handleEdit(season)}
+                        onClick={() => handleEdit(coach)}
                         className="rounded-md p-2 text-muted-foreground transition-colors hover:bg-accent hover:text-foreground"
                         title="Modifier"
                       >
@@ -168,7 +154,7 @@ export default function SeasonList({ seasons, coaches, presidents }: SeasonListP
                       <button
                         onClick={() => {
                           setDeleteError(null);
-                          setDeleteTarget(season);
+                          setDeleteTarget(coach);
                         }}
                         className="rounded-md p-2 text-muted-foreground transition-colors hover:bg-destructive/10 hover:text-destructive"
                         title="Supprimer"
@@ -184,22 +170,18 @@ export default function SeasonList({ seasons, coaches, presidents }: SeasonListP
         </div>
       )}
 
-      {/* Modal formulaire */}
-      {showForm && (
-        <SeasonForm season={editSeason} coaches={coaches} presidents={presidents} onClose={handleCloseForm} />
-      )}
+      {showForm && <CoachForm coach={editCoach} onClose={handleCloseForm} />}
 
-      {/* Modal confirmation suppression */}
       {deleteTarget && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
           <div className="mx-4 w-full max-w-sm rounded-lg border border-border bg-background p-6 shadow-xl">
             <h3 className="mb-2 text-lg font-bold text-foreground">
-              Supprimer cette saison ?
+              Supprimer cet entraîneur ?
             </h3>
             <p className="mb-4 text-sm text-muted-foreground">
-              Voulez-vous vraiment supprimer la saison{" "}
+              Voulez-vous vraiment supprimer{" "}
               <span className="font-semibold text-foreground">
-                {deleteTarget.label}
+                {deleteTarget.firstName} {deleteTarget.lastName}
               </span>{" "}
               ? Cette action est irréversible.
             </p>

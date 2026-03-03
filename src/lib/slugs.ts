@@ -52,6 +52,32 @@ export function generateRefereeSlug(
 }
 
 /**
+ * Génère le slug d'un entraîneur : "jacques-brunel-clxyz123abc"
+ * Même logique que les joueurs (CUID pour l'unicité).
+ */
+export function generateCoachSlug(
+  firstName: string,
+  lastName: string,
+  id: string,
+): string {
+  const namePart = slugify(`${firstName} ${lastName}`);
+  return `${namePart}-${id}`;
+}
+
+/**
+ * Génère le slug d'un président : "paul-goze-clxyz123abc"
+ * Même logique que les joueurs (CUID pour l'unicité).
+ */
+export function generatePresidentSlug(
+  firstName: string,
+  lastName: string,
+  id: string,
+): string {
+  const namePart = slugify(`${firstName} ${lastName}`);
+  return `${namePart}-${id}`;
+}
+
+/**
  * Génère le slug d'un adversaire : "stade-toulousain-clxyz123abc"
  * Utilise le nom du club + CUID pour l'unicité.
  */

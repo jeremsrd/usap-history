@@ -685,6 +685,7 @@ model Coach {
   id            String   @id @default(cuid())
   firstName     String   @map("first_name")
   lastName      String   @map("last_name")
+  slug          String   @unique @default("")
   role          String?
   photoUrl      String?  @map("photo_url")
   biography     String?  @db.Text
@@ -705,6 +706,7 @@ model President {
   id            String   @id @default(cuid())
   firstName     String   @map("first_name")
   lastName      String   @map("last_name")
+  slug          String   @unique @default("")
   startYear     Int?     @map("start_year")
   endYear       Int?     @map("end_year")
   photoUrl      String?  @map("photo_url")

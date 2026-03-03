@@ -6,22 +6,38 @@ import { createSeason, updateSeason } from "./actions";
 import type { SeasonActionState } from "./actions";
 import { DIVISIONS } from "@/lib/constants";
 
+interface CoachOption {
+  id: string;
+  firstName: string;
+  lastName: string;
+}
+
+interface PresidentOption {
+  id: string;
+  firstName: string;
+  lastName: string;
+}
+
 interface SeasonData {
   id: string;
   label: string;
   startYear: number;
   endYear: number;
   division: string;
+  coachId: string | null;
+  presidentId: string | null;
 }
 
 interface SeasonFormProps {
   season?: SeasonData | null;
+  coaches: CoachOption[];
+  presidents: PresidentOption[];
   onClose: () => void;
 }
 
 const initialState: SeasonActionState = {};
 
-export default function SeasonForm({ season, onClose }: SeasonFormProps) {
+export default function SeasonForm({ season, coaches, presidents, onClose }: SeasonFormProps) {
   const isEdit = !!season;
   const action = isEdit ? updateSeason : createSeason;
   const [state, formAction, isPending] = useActionState(action, initialState);
@@ -120,6 +136,52 @@ export default function SeasonForm({ season, onClose }: SeasonFormProps) {
               {Object.entries(DIVISIONS).map(([value, label]) => (
                 <option key={value} value={value}>
                   {label}
+                </option>
+              ))}
+            </select>
+          </div>
+
+          {/* Entraîneur */}
+          <div>
+            <label
+              htmlFor="coachId"
+              className="mb-1 block text-sm font-medium text-muted-foreground"
+            >
+              Entraîneur
+            </label>
+            <select
+              id="coachId"
+              name="coachId"
+              defaultValue={season?.coachId ?? ""}
+              className="w-full rounded-md border border-border bg-card px-3 py-2 text-foreground focus:border-usap-sang focus:outline-none focus:ring-1 focus:ring-usap-sang"
+            >
+              <option value="">— Aucun —</option>
+              {coaches.map((c) => (
+                <option key={c.id} value={c.id}>
+                  {c.firstName} {c.lastName}
+                </option>
+              ))}
+            </select>
+          </div>
+
+          {/* Président */}
+          <div>
+            <label
+              htmlFor="presidentId"
+              className="mb-1 block text-sm font-medium text-muted-foreground"
+            >
+              Président
+            </label>
+            <select
+              id="presidentId"
+              name="presidentId"
+              defaultValue={season?.presidentId ?? ""}
+              className="w-full rounded-md border border-border bg-card px-3 py-2 text-foreground focus:border-usap-sang focus:outline-none focus:ring-1 focus:ring-usap-sang"
+            >
+              <option value="">— Aucun —</option>
+              {presidents.map((p) => (
+                <option key={p.id} value={p.id}>
+                  {p.firstName} {p.lastName}
                 </option>
               ))}
             </select>

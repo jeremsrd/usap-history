@@ -22,7 +22,16 @@ export default async function JoueursPage({
   const activeFilter = params.actif;
   const searchQuery = params.q?.trim() || undefined;
 
-  const where: Record<string, unknown> = {};
+  // Uniquement les joueurs liés à l'USAP (passage, carrière, match ou effectif saison)
+  const usapCondition = {
+    OR: [
+      { usapStints: { some: {} } },
+      { careerClubs: { some: { isUsap: true } } },
+      { matchAppearances: { some: { isOpponent: false } } },
+      { seasonSquads: { some: {} } },
+    ],
+  };
+  const where: Record<string, unknown> = { ...usapCondition };
 
   if (positionFilter && positionFilter in POSITIONS) {
     where.position = positionFilter;
@@ -55,10 +64,10 @@ export default async function JoueursPage({
     },
   });
 
-  // Compteurs pour les filtres
-  const totalCount = await prisma.player.count();
+  // Compteurs pour les filtres (uniquement joueurs USAP)
+  const totalCount = await prisma.player.count({ where: usapCondition });
   const activeCount = await prisma.player.count({
-    where: { isActive: true },
+    where: { ...usapCondition, isActive: true },
   });
 
   return (

@@ -3,7 +3,7 @@
 import { useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
 import Link from "next/link";
-import { Users, Calendar, Trophy, Swords, LogOut, Globe, MapPin, Medal } from "lucide-react";
+import { Users, Calendar, Trophy, Swords, LogOut, Globe, MapPin, Medal, GraduationCap, Crown } from "lucide-react";
 
 interface AdminDashboardProps {
   user: { email: string; name: string | null; role: string };
@@ -15,6 +15,8 @@ interface AdminDashboardProps {
     countries: number;
     venues: number;
     competitions: number;
+    coaches: number;
+    presidents: number;
   };
 }
 
@@ -26,6 +28,8 @@ const statCards = [
   { key: "countries" as const, label: "Pays", icon: Globe, href: "/admin/pays" },
   { key: "venues" as const, label: "Stades", icon: MapPin, href: "/admin/stades" },
   { key: "competitions" as const, label: "Compétitions", icon: Medal, href: "/admin/competitions" },
+  { key: "coaches" as const, label: "Entraîneurs", icon: GraduationCap, href: "/admin/entraineurs" },
+  { key: "presidents" as const, label: "Présidents", icon: Crown, href: "/admin/presidents" },
 ];
 
 export default function AdminDashboard({ user, stats }: AdminDashboardProps) {
@@ -60,7 +64,7 @@ export default function AdminDashboard({ user, stats }: AdminDashboardProps) {
       </div>
 
       {/* Stats */}
-      <div className="grid grid-cols-2 gap-6 md:grid-cols-3 lg:grid-cols-6">
+      <div className="grid grid-cols-2 gap-6 sm:grid-cols-3 lg:grid-cols-5">
         {statCards.map((card) => (
           <Link
             key={card.key}
@@ -123,6 +127,16 @@ export default function AdminDashboard({ user, stats }: AdminDashboardProps) {
             title="Gérer le palmarès"
             description="Titres, finales et trophées"
             href="/admin/palmares"
+          />
+          <ActionCard
+            title="Gérer les entraîneurs"
+            description="Ajouter ou modifier les entraîneurs"
+            href="/admin/entraineurs"
+          />
+          <ActionCard
+            title="Gérer les présidents"
+            description="Ajouter ou modifier les présidents"
+            href="/admin/presidents"
           />
         </div>
       </div>
