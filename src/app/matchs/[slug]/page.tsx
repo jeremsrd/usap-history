@@ -54,7 +54,7 @@ export default async function MatchDetailPage({ params }: Props) {
       season: { select: { label: true } },
       competition: true,
       opponent: {
-        select: { name: true, shortName: true, logoUrl: true, city: true },
+        select: { name: true, shortName: true, logoUrl: true, city: true, slug: true },
       },
       venue: true,
       referee: true,
@@ -126,7 +126,16 @@ export default async function MatchDetailPage({ params }: Props) {
             <p
               className={`text-lg font-bold uppercase ${match.isHome ? "text-usap-sang" : "text-foreground"}`}
             >
-              {match.isHome ? "USAP" : oppName}
+              {match.isHome ? (
+                "USAP"
+              ) : (
+                <Link
+                  href={`/adversaires/${match.opponent.slug}`}
+                  className="hover:underline"
+                >
+                  {oppName}
+                </Link>
+              )}
             </p>
           </div>
 
@@ -146,7 +155,16 @@ export default async function MatchDetailPage({ params }: Props) {
             <p
               className={`text-lg font-bold uppercase ${!match.isHome ? "text-usap-sang" : "text-foreground"}`}
             >
-              {match.isHome ? oppName : "USAP"}
+              {match.isHome ? (
+                <Link
+                  href={`/adversaires/${match.opponent.slug}`}
+                  className="hover:underline"
+                >
+                  {oppName}
+                </Link>
+              ) : (
+                "USAP"
+              )}
             </p>
           </div>
         </div>

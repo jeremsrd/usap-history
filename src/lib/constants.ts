@@ -101,6 +101,7 @@ export const NAV_LINKS = [
   { href: "/saisons", label: "Saisons" },
   { href: "/joueurs", label: "Joueurs" },
   { href: "/matchs", label: "Matchs" },
+  { href: "/adversaires", label: "Adversaires" },
   { href: "/statistiques", label: "Statistiques" },
   { href: "/palmares", label: "Palmarès" },
   { href: "/arbitres", label: "Arbitres" },

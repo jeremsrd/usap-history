@@ -52,6 +52,15 @@ export function generateRefereeSlug(
 }
 
 /**
+ * Génère le slug d'un adversaire : "stade-toulousain-clxyz123abc"
+ * Utilise le nom du club + CUID pour l'unicité.
+ */
+export function generateOpponentSlug(name: string, id: string): string {
+  const namePart = slugify(name);
+  return `${namePart}-${id}`;
+}
+
+/**
  * Génère le slug d'un match.
  *
  * Domicile : "top-14-usap-vs-toulouse-j5-14-09-2024"

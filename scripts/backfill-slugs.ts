@@ -4,7 +4,7 @@
 // =============================================================================
 
 import { PrismaClient } from "@prisma/client";
-import { generatePlayerSlug, generateMatchSlug, generateRefereeSlug } from "../src/lib/slugs";
+import { generatePlayerSlug, generateMatchSlug, generateRefereeSlug, generateOpponentSlug } from "../src/lib/slugs";
 
 const prisma = new PrismaClient();
 
@@ -76,6 +76,23 @@ async function main() {
     });
   }
   console.log(`  ${referees.length} arbitre(s) mis à jour.`);
+
+  // --- Backfill adversaires ---
+  console.log("Backfill des slugs adversaires...");
+
+  const opponents = await prisma.opponent.findMany({
+    where: { slug: "" },
+    select: { id: true, name: true },
+  });
+
+  for (const o of opponents) {
+    const slug = generateOpponentSlug(o.name, o.id);
+    await prisma.opponent.update({
+      where: { id: o.id },
+      data: { slug },
+    });
+  }
+  console.log(`  ${opponents.length} adversaire(s) mis à jour.`);
 
   console.log("Backfill terminé.");
 }

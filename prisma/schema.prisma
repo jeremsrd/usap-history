@@ -123,6 +123,7 @@ model PlayerInternational {
 model Opponent {
   id              String   @id @default(cuid())
   name            String   @unique                  // "Stade Toulousain"
+  slug            String   @unique @default("")
   shortName       String?  @map("short_name")       // "Toulouse"
   officialName    String?  @map("official_name")     // "Stade Toulousain Rugby"
   city            String?

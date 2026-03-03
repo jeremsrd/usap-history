@@ -4,6 +4,7 @@ import { redirect } from "next/navigation";
 import { revalidatePath } from "next/cache";
 import { createClient } from "@/lib/supabase/server";
 import { prisma } from "@/lib/prisma";
+import { generateOpponentSlug } from "@/lib/slugs";
 
 // --- Helpers ---
 
@@ -60,7 +61,7 @@ export async function createOpponent(
   }
 
   try {
-    await prisma.opponent.create({
+    const created = await prisma.opponent.create({
       data: {
         name,
         shortName,
@@ -77,6 +78,12 @@ export async function createOpponent(
         notes,
       },
     });
+    // Générer le slug avec le CUID
+    const slug = generateOpponentSlug(name, created.id);
+    await prisma.opponent.update({
+      where: { id: created.id },
+      data: { slug },
+    });
   } catch (e: unknown) {
     if (
       e instanceof Error &&
@@ -88,6 +95,7 @@ export async function createOpponent(
   }
 
   revalidatePath("/admin/adversaires");
+  revalidatePath("/adversaires");
   return { success: true };
 }
 
@@ -122,10 +130,12 @@ export async function updateOpponent(
   }
 
   try {
+    const slug = generateOpponentSlug(name, id);
     await prisma.opponent.update({
       where: { id },
       data: {
         name,
+        slug,
         shortName,
         officialName,
         city,
@@ -151,6 +161,7 @@ export async function updateOpponent(
   }
 
   revalidatePath("/admin/adversaires");
+  revalidatePath("/adversaires");
   return { success: true };
 }
 
@@ -186,5 +197,6 @@ export async function deleteOpponent(
   }
 
   revalidatePath("/admin/adversaires");
+  revalidatePath("/adversaires");
   return { success: true };
 }
