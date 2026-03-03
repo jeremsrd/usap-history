@@ -192,6 +192,7 @@ model Player {
   height          Int?                               // cm
   weight          Int?                               // kg
   photoUrl        String?  @map("photo_url")
+  slug            String   @unique                      // "guilhem-guirado-clxyz123abc"
   biography       String?  @db.Text
   isActive        Boolean  @default(false) @map("is_active") // Joueur actuellement à l'USAP
 
@@ -420,6 +421,7 @@ enum CompetitionType {
 
 model Match {
   id              String   @id @default(cuid())
+  slug            String   @unique                      // "top-14-usap-vs-toulouse-j5-14-09-2024"
   date            DateTime
   kickoffTime     String?  @map("kickoff_time")
 
@@ -542,6 +544,7 @@ model MatchPlayer {
   match         Match    @relation(fields: [matchId], references: [id], onDelete: Cascade)
   playerId      String   @map("player_id")
   player        Player   @relation(fields: [playerId], references: [id])
+  isOpponent    Boolean  @default(false) @map("is_opponent")
 
   shirtNumber   Int?     @map("shirt_number")
   isStarter     Boolean  @map("is_starter")
@@ -562,6 +565,10 @@ model MatchPlayer {
   yellowCardMin Int?     @map("yellow_card_min")
   redCard       Boolean  @default(false) @map("red_card")
   redCardMin    Int?     @map("red_card_min")
+  orangeCard    Boolean  @default(false) @map("orange_card")
+  orangeCardMin Int?     @map("orange_card_min")
+  whiteCard     Boolean  @default(false) @map("white_card")
+  whiteCardMin  Int?     @map("white_card_min")
 
   notes         String?  @db.Text
 

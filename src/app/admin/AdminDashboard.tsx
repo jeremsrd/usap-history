@@ -119,6 +119,11 @@ export default function AdminDashboard({ user, stats }: AdminDashboardProps) {
             description="Championnats, coupes et compétitions"
             href="/admin/competitions"
           />
+          <ActionCard
+            title="Gérer le palmarès"
+            description="Titres, finales et trophées"
+            href="/admin/palmares"
+          />
         </div>
       </div>
     </div>

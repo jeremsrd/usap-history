@@ -2,7 +2,16 @@
 
 import { useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
-import { Plus, Pencil, Trash2, Swords, Search, Shield } from "lucide-react";
+import {
+  Plus,
+  Pencil,
+  Trash2,
+  Swords,
+  Search,
+  Shield,
+  ClipboardList,
+} from "lucide-react";
+import Link from "next/link";
 import Image from "next/image";
 import { deleteMatch } from "./actions";
 import MatchForm from "./MatchForm";
@@ -265,6 +274,9 @@ export default function MatchList({
                 <th className="hidden px-4 py-3 text-left font-semibold text-foreground lg:table-cell">
                   Stade
                 </th>
+                <th className="hidden px-4 py-3 text-left font-semibold text-foreground xl:table-cell">
+                  Détails
+                </th>
                 <th className="px-4 py-3 text-right font-semibold text-foreground">
                   Actions
                 </th>
@@ -360,9 +372,35 @@ export default function MatchList({
                     {m.venue?.name ?? "—"}
                   </td>
 
+                  {/* Compo/Events count */}
+                  <td className="hidden px-4 py-3 xl:table-cell">
+                    <div className="flex gap-1.5">
+                      {m._count.players > 0 && (
+                        <span className="rounded bg-usap-sang/10 px-1.5 py-0.5 text-xs font-medium text-usap-sang">
+                          {m._count.players}J
+                        </span>
+                      )}
+                      {m._count.matchEvents > 0 && (
+                        <span className="rounded bg-usap-or/10 px-1.5 py-0.5 text-xs font-medium text-usap-or">
+                          {m._count.matchEvents}E
+                        </span>
+                      )}
+                      {m._count.players === 0 && m._count.matchEvents === 0 && (
+                        <span className="text-xs text-muted-foreground">—</span>
+                      )}
+                    </div>
+                  </td>
+
                   {/* Actions */}
                   <td className="px-4 py-3">
                     <div className="flex justify-end gap-1">
+                      <Link
+                        href={`/admin/matchs/${m.id}`}
+                        className="rounded-md p-2 text-muted-foreground transition-colors hover:bg-usap-sang/10 hover:text-usap-sang"
+                        title="Détails (composition, événements)"
+                      >
+                        <ClipboardList size={15} />
+                      </Link>
                       <button
                         onClick={() => handleEdit(m)}
                         className="rounded-md p-2 text-muted-foreground transition-colors hover:bg-accent hover:text-foreground"

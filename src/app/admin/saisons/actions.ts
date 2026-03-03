@@ -76,6 +76,7 @@ export async function createSeason(
   }
 
   revalidatePath("/admin/saisons");
+  revalidatePath("/saisons");
   return { success: true };
 }
 
@@ -125,6 +126,7 @@ export async function updateSeason(
   }
 
   revalidatePath("/admin/saisons");
+  revalidatePath("/saisons");
   return { success: true };
 }
 
@@ -158,5 +160,6 @@ export async function deleteSeason(id: string): Promise<SeasonActionState> {
   }
 
   revalidatePath("/admin/saisons");
+  revalidatePath("/saisons");
   return { success: true };
 }

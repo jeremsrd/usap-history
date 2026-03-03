@@ -4,6 +4,7 @@ import { redirect } from "next/navigation";
 import { revalidatePath } from "next/cache";
 import { createClient } from "@/lib/supabase/server";
 import { prisma } from "@/lib/prisma";
+import { generatePlayerSlug } from "@/lib/slugs";
 import type { Position } from "@prisma/client";
 
 // --- Helpers ---
@@ -95,28 +96,38 @@ export async function createPlayer(
   }
 
   try {
-    await prisma.player.create({
-      data: {
-        firstName,
-        lastName,
-        position: positionVal as Position | null,
-        birthDate,
-        deathDate,
-        birthPlace,
-        birthCountryId,
-        nationalityId,
-        height,
-        weight,
-        photoUrl,
-        biography,
-        isActive,
-      },
+    await prisma.$transaction(async (tx) => {
+      const created = await tx.player.create({
+        data: {
+          firstName,
+          lastName,
+          slug: "temp", // Temporaire, mis à jour juste après avec l'id généré
+          position: positionVal as Position | null,
+          birthDate,
+          deathDate,
+          birthPlace,
+          birthCountryId,
+          nationalityId,
+          height,
+          weight,
+          photoUrl,
+          biography,
+          isActive,
+        },
+      });
+
+      const slug = generatePlayerSlug(firstName, lastName, created.id);
+      await tx.player.update({
+        where: { id: created.id },
+        data: { slug },
+      });
     });
   } catch {
     return { error: "Erreur lors de la création du joueur." };
   }
 
   revalidatePath("/admin/joueurs");
+  revalidatePath("/joueurs");
   return { success: true };
 }
 
@@ -170,12 +181,15 @@ export async function updatePlayer(
     return { error: "La date de décès doit être postérieure à la date de naissance." };
   }
 
+  const slug = generatePlayerSlug(firstName, lastName, id);
+
   try {
     await prisma.player.update({
       where: { id },
       data: {
         firstName,
         lastName,
+        slug,
         position: positionVal as Position | null,
         birthDate,
         deathDate,
@@ -194,6 +208,7 @@ export async function updatePlayer(
   }
 
   revalidatePath("/admin/joueurs");
+  revalidatePath("/joueurs");
   return { success: true };
 }
 

@@ -4,6 +4,7 @@ import { redirect } from "next/navigation";
 import { revalidatePath } from "next/cache";
 import { createClient } from "@/lib/supabase/server";
 import { prisma } from "@/lib/prisma";
+import { generateMatchSlug } from "@/lib/slugs";
 import type { MatchResult } from "@prisma/client";
 
 // --- Helpers ---
@@ -189,10 +190,38 @@ export async function createMatch(
 
   const date = new Date(data.dateStr);
 
+  // Récupérer les noms pour générer le slug
+  const [competition, opponent] = await Promise.all([
+    prisma.competition.findUnique({
+      where: { id: data.competitionId! },
+      select: { name: true, shortName: true },
+    }),
+    prisma.opponent.findUnique({
+      where: { id: data.opponentId! },
+      select: { name: true, shortName: true },
+    }),
+  ]);
+
+  if (!competition || !opponent) {
+    return { error: "Compétition ou adversaire introuvable." };
+  }
+
+  const slug = generateMatchSlug({
+    competitionShortName: competition.shortName,
+    competitionName: competition.name,
+    opponentShortName: opponent.shortName,
+    opponentName: opponent.name,
+    isHome: data.isHome,
+    matchday: data.matchday,
+    round: data.round,
+    date,
+  });
+
   try {
     await prisma.match.create({
       data: {
         date,
+        slug,
         kickoffTime: data.kickoffTime,
         seasonId: data.seasonId!,
         competitionId: data.competitionId!,
@@ -231,6 +260,7 @@ export async function createMatch(
   }
 
   revalidatePath("/admin/matchs");
+  revalidatePath("/matchs");
   return { success: true };
 }
 
@@ -249,11 +279,39 @@ export async function updateMatch(
 
   const date = new Date(data.dateStr);
 
+  // Récupérer les noms pour régénérer le slug
+  const [competition, opponent] = await Promise.all([
+    prisma.competition.findUnique({
+      where: { id: data.competitionId! },
+      select: { name: true, shortName: true },
+    }),
+    prisma.opponent.findUnique({
+      where: { id: data.opponentId! },
+      select: { name: true, shortName: true },
+    }),
+  ]);
+
+  if (!competition || !opponent) {
+    return { error: "Compétition ou adversaire introuvable." };
+  }
+
+  const slug = generateMatchSlug({
+    competitionShortName: competition.shortName,
+    competitionName: competition.name,
+    opponentShortName: opponent.shortName,
+    opponentName: opponent.name,
+    isHome: data.isHome,
+    matchday: data.matchday,
+    round: data.round,
+    date,
+  });
+
   try {
     await prisma.match.update({
       where: { id },
       data: {
         date,
+        slug,
         kickoffTime: data.kickoffTime,
         seasonId: data.seasonId!,
         competitionId: data.competitionId!,
@@ -292,6 +350,7 @@ export async function updateMatch(
   }
 
   revalidatePath("/admin/matchs");
+  revalidatePath("/matchs");
   return { success: true };
 }
 
