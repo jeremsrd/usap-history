@@ -205,10 +205,13 @@ export default async function MatchDetailPage({ params }: Props) {
             </span>
           )}
           {match.referee && (
-            <span className="flex items-center gap-1.5">
+            <Link
+              href={`/arbitres/${match.referee.slug}`}
+              className="flex items-center gap-1.5 hover:text-usap-sang"
+            >
               <User className="h-4 w-4" />
               {match.referee.firstName} {match.referee.lastName}
-            </span>
+            </Link>
           )}
           {match.manOfTheMatch && (
             <span className="flex items-center gap-1.5">

@@ -611,6 +611,7 @@ model Referee {
   id            String   @id @default(cuid())
   firstName     String   @map("first_name")
   lastName      String   @map("last_name")
+  slug          String   @unique @default("")
   photoUrl      String?  @map("photo_url")
 
   matches       Match[]

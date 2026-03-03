@@ -39,6 +39,19 @@ export function generatePlayerSlug(
 }
 
 /**
+ * Génère le slug d'un arbitre : "mathieu-raynal-clxyz123abc"
+ * Même logique que les joueurs (CUID pour l'unicité).
+ */
+export function generateRefereeSlug(
+  firstName: string,
+  lastName: string,
+  id: string,
+): string {
+  const namePart = slugify(`${firstName} ${lastName}`);
+  return `${namePart}-${id}`;
+}
+
+/**
  * Génère le slug d'un match.
  *
  * Domicile : "top-14-usap-vs-toulouse-j5-14-09-2024"

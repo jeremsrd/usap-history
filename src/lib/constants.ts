@@ -103,6 +103,7 @@ export const NAV_LINKS = [
   { href: "/matchs", label: "Matchs" },
   { href: "/statistiques", label: "Statistiques" },
   { href: "/palmares", label: "Palmarès" },
+  { href: "/arbitres", label: "Arbitres" },
 ] as const;
 
 // =============================================================================
