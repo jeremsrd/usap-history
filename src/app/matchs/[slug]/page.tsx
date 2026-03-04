@@ -289,7 +289,7 @@ export default async function MatchDetailPage({ params }: Props) {
                   usap={match.dropGoalsUsap}
                   opp={match.dropGoalsOpponent}
                 />
-                {(match.penaltyTriesUsap || match.penaltyTriesOpponent) && (
+                {(match.penaltyTriesUsap !== 0 || match.penaltyTriesOpponent !== 0) && (
                   <ScoreRow
                     label="Essais de pénalité"
                     usap={match.penaltyTriesUsap}
