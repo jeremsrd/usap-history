@@ -3,7 +3,7 @@
 import { useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
 import Link from "next/link";
-import { Users, Calendar, Trophy, Swords, LogOut, Globe, MapPin, Medal, GraduationCap, Crown } from "lucide-react";
+import { Users, Calendar, Trophy, Swords, LogOut, Globe, MapPin, Medal, GraduationCap, Crown, Shield } from "lucide-react";
 
 interface AdminDashboardProps {
   user: { email: string; name: string | null; role: string };
@@ -17,6 +17,7 @@ interface AdminDashboardProps {
     competitions: number;
     coaches: number;
     presidents: number;
+    referees: number;
   };
 }
 
@@ -30,6 +31,7 @@ const statCards = [
   { key: "competitions" as const, label: "Compétitions", icon: Medal, href: "/admin/competitions" },
   { key: "coaches" as const, label: "Entraîneurs", icon: GraduationCap, href: "/admin/entraineurs" },
   { key: "presidents" as const, label: "Présidents", icon: Crown, href: "/admin/presidents" },
+  { key: "referees" as const, label: "Arbitres", icon: Shield, href: "/admin/arbitres" },
 ];
 
 export default function AdminDashboard({ user, stats }: AdminDashboardProps) {
@@ -137,6 +139,11 @@ export default function AdminDashboard({ user, stats }: AdminDashboardProps) {
             title="Gérer les présidents"
             description="Ajouter ou modifier les présidents"
             href="/admin/presidents"
+          />
+          <ActionCard
+            title="Gérer les arbitres"
+            description="Ajouter ou modifier les arbitres"
+            href="/admin/arbitres"
           />
         </div>
       </div>
