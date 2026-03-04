@@ -56,7 +56,7 @@ export default async function MatchDetailPage({ params }: Props) {
       opponent: {
         select: { name: true, shortName: true, logoUrl: true, city: true, slug: true },
       },
-      venue: true,
+      venue: { select: { name: true, slug: true, city: true } },
       referee: true,
       players: {
         include: {
@@ -211,10 +211,13 @@ export default async function MatchDetailPage({ params }: Props) {
         {/* Infos match */}
         <div className="mt-6 flex flex-wrap justify-center gap-x-6 gap-y-2 border-t border-border pt-4 text-sm text-muted-foreground">
           {match.venue && (
-            <span className="flex items-center gap-1.5">
+            <Link
+              href={`/stades/${match.venue.slug}`}
+              className="flex items-center gap-1.5 hover:text-usap-sang"
+            >
               <MapPin className="h-4 w-4" />
               {match.venue.name}, {match.venue.city}
-            </span>
+            </Link>
           )}
           {match.attendance && (
             <span className="flex items-center gap-1.5">

@@ -658,6 +658,7 @@ enum TrophyType {
 model Venue {
   id            String   @id @default(cuid())
   name          String
+  slug          String   @unique @default("")
   city          String
   countryId     String?  @map("country_id")
   country       Country? @relation(fields: [countryId], references: [id])
