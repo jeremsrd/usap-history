@@ -80,8 +80,12 @@ export default async function MatchDetailPage({ params }: Props) {
   if (!match) notFound();
 
   const oppName = match.opponent.shortName || match.opponent.name;
-  const starters = match.players.filter((p) => p.isStarter);
-  const substitutes = match.players.filter((p) => !p.isStarter);
+  const usapPlayers = match.players.filter((p) => !p.isOpponent);
+  const oppPlayers = match.players.filter((p) => p.isOpponent);
+  const usapStarters = usapPlayers.filter((p) => p.isStarter);
+  const usapSubstitutes = usapPlayers.filter((p) => !p.isStarter);
+  const oppStarters = oppPlayers.filter((p) => p.isStarter);
+  const oppSubstitutes = oppPlayers.filter((p) => !p.isStarter);
 
   return (
     <div className="mx-auto max-w-7xl px-4 py-10">
@@ -299,37 +303,71 @@ export default async function MatchDetailPage({ params }: Props) {
       )}
 
       <div className="grid gap-10 lg:grid-cols-2">
-        {/* Composition */}
-        {match.players.length > 0 && (
+        {/* Composition USAP */}
+        {usapPlayers.length > 0 && (
           <section>
             <h2 className="mb-4 flex items-center gap-2 text-2xl font-bold uppercase tracking-wider text-foreground">
               <Users className="h-6 w-6 text-usap-or" />
               Composition USAP
             </h2>
 
-            {/* Titulaires */}
-            {starters.length > 0 && (
+            {usapStarters.length > 0 && (
               <div className="mb-4">
                 <h3 className="mb-2 text-sm font-semibold uppercase text-muted-foreground">
-                  Titulaires ({starters.length})
+                  Titulaires ({usapStarters.length})
                 </h3>
                 <div className="space-y-1">
-                  {starters.map((mp) => (
+                  {usapStarters.map((mp) => (
                     <PlayerRow key={mp.id} mp={mp} />
                   ))}
                 </div>
               </div>
             )}
 
-            {/* Remplaçants */}
-            {substitutes.length > 0 && (
+            {usapSubstitutes.length > 0 && (
               <div>
                 <h3 className="mb-2 text-sm font-semibold uppercase text-muted-foreground">
-                  Remplaçants ({substitutes.length})
+                  Remplaçants ({usapSubstitutes.length})
                 </h3>
                 <div className="space-y-1">
-                  {substitutes.map((mp) => (
+                  {usapSubstitutes.map((mp) => (
                     <PlayerRow key={mp.id} mp={mp} />
+                  ))}
+                </div>
+              </div>
+            )}
+          </section>
+        )}
+
+        {/* Composition adversaire */}
+        {oppPlayers.length > 0 && (
+          <section>
+            <h2 className="mb-4 flex items-center gap-2 text-2xl font-bold uppercase tracking-wider text-foreground">
+              <Users className="h-6 w-6 text-muted-foreground" />
+              Composition {oppName}
+            </h2>
+
+            {oppStarters.length > 0 && (
+              <div className="mb-4">
+                <h3 className="mb-2 text-sm font-semibold uppercase text-muted-foreground">
+                  Titulaires ({oppStarters.length})
+                </h3>
+                <div className="space-y-1">
+                  {oppStarters.map((mp) => (
+                    <PlayerRow key={mp.id} mp={mp} isOpponentRow />
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {oppSubstitutes.length > 0 && (
+              <div>
+                <h3 className="mb-2 text-sm font-semibold uppercase text-muted-foreground">
+                  Remplaçants ({oppSubstitutes.length})
+                </h3>
+                <div className="space-y-1">
+                  {oppSubstitutes.map((mp) => (
+                    <PlayerRow key={mp.id} mp={mp} isOpponentRow />
                   ))}
                 </div>
               </div>
@@ -425,6 +463,7 @@ function ScoreRow({
 
 function PlayerRow({
   mp,
+  isOpponentRow = false,
 }: {
   mp: {
     id: string;
@@ -442,11 +481,12 @@ function PlayerRow({
       lastName: string;
     };
   };
+  isOpponentRow?: boolean;
 }) {
   return (
     <div className="flex items-center gap-2 rounded border border-border bg-background px-3 py-2 text-sm">
       {/* Numéro */}
-      <span className="w-7 shrink-0 text-center font-bold text-usap-sang">
+      <span className={`w-7 shrink-0 text-center font-bold ${isOpponentRow ? "text-muted-foreground" : "text-usap-sang"}`}>
         {mp.shirtNumber ?? "—"}
       </span>
 
