@@ -3,6 +3,7 @@ import { notFound } from "next/navigation";
 import { prisma } from "@/lib/prisma";
 import { DIVISIONS, POSITIONS } from "@/lib/constants";
 import { formatDateFR, formatResult } from "@/lib/utils";
+import Image from "next/image";
 import {
   Trophy,
   ArrowUp,
@@ -10,6 +11,8 @@ import {
   MapPin,
   Users,
   Calendar,
+  Target,
+  Award,
 } from "lucide-react";
 import type { Metadata } from "next";
 
@@ -61,6 +64,69 @@ export default async function SaisonDetailPage({ params }: Props) {
   });
 
   if (!season) notFound();
+
+  // IDs des matchs de la saison (pour filtrer les stats)
+  const seasonMatchIds = season.matches.map((m) => m.id);
+
+  // ── Statistiques individuelles de la saison ──────────────────────
+  // Meilleurs marqueurs (par points)
+  const topScorersAgg = await prisma.matchPlayer.groupBy({
+    by: ["playerId"],
+    where: { matchId: { in: seasonMatchIds }, isOpponent: false },
+    _sum: { totalPoints: true },
+    orderBy: { _sum: { totalPoints: "desc" } },
+    take: 10,
+    having: { totalPoints: { _sum: { gt: 0 } } },
+  });
+
+  const scorerIds = topScorersAgg.map((s) => s.playerId);
+  const scorerPlayers = await prisma.player.findMany({
+    where: { id: { in: scorerIds } },
+    select: { id: true, slug: true, firstName: true, lastName: true, position: true, photoUrl: true },
+  });
+  const topScorers = topScorersAgg.map((agg) => {
+    const player = scorerPlayers.find((p) => p.id === agg.playerId)!;
+    return { ...player, totalPoints: agg._sum.totalPoints ?? 0 };
+  });
+
+  // Plus capés (nombre d'apparitions)
+  const topAppsAgg = await prisma.matchPlayer.groupBy({
+    by: ["playerId"],
+    where: { matchId: { in: seasonMatchIds }, isOpponent: false },
+    _count: { id: true },
+    orderBy: { _count: { id: "desc" } },
+    take: 10,
+  });
+
+  const appIds = topAppsAgg.map((a) => a.playerId);
+  const appPlayers = await prisma.player.findMany({
+    where: { id: { in: appIds } },
+    select: { id: true, slug: true, firstName: true, lastName: true, position: true, photoUrl: true },
+  });
+  const topApps = topAppsAgg.map((agg) => {
+    const player = appPlayers.find((p) => p.id === agg.playerId)!;
+    return { ...player, appearances: agg._count.id };
+  });
+
+  // Meilleurs marqueurs d'essais
+  const topTriesAgg = await prisma.matchPlayer.groupBy({
+    by: ["playerId"],
+    where: { matchId: { in: seasonMatchIds }, isOpponent: false },
+    _sum: { tries: true },
+    orderBy: { _sum: { tries: "desc" } },
+    take: 10,
+    having: { tries: { _sum: { gt: 0 } } },
+  });
+
+  const tryIds = topTriesAgg.map((t) => t.playerId);
+  const tryPlayers = await prisma.player.findMany({
+    where: { id: { in: tryIds } },
+    select: { id: true, slug: true, firstName: true, lastName: true, position: true, photoUrl: true },
+  });
+  const topTries = topTriesAgg.map((agg) => {
+    const player = tryPlayers.find((p) => p.id === agg.playerId)!;
+    return { ...player, tries: agg._sum.tries ?? 0 };
+  });
 
   // Grouper les matchs par compétition
   const matchesByCompetition = new Map<
@@ -285,6 +351,90 @@ export default async function SaisonDetailPage({ params }: Props) {
         </section>
       )}
 
+      {/* Statistiques individuelles */}
+      {(topScorers.length > 0 || topApps.length > 0 || topTries.length > 0) && (
+        <section className="mb-10">
+          <h2 className="mb-6 flex items-center gap-2 text-2xl font-bold uppercase tracking-wider text-foreground">
+            <Target className="h-6 w-6 text-usap-or" />
+            Statistiques individuelles
+          </h2>
+
+          <div className="grid gap-10 lg:grid-cols-3">
+            {/* Meilleurs marqueurs */}
+            {topScorers.length > 0 && (
+              <div>
+                <h3 className="mb-3 flex items-center gap-2 text-lg font-semibold text-foreground">
+                  <Target className="h-4 w-4 text-usap-or" />
+                  Meilleurs marqueurs
+                </h3>
+                <div className="space-y-1">
+                  {topScorers.map((p, i) => (
+                    <PlayerRankRow
+                      key={p.id}
+                      rank={i + 1}
+                      slug={p.slug}
+                      firstName={p.firstName}
+                      lastName={p.lastName}
+                      position={p.position}
+                      photoUrl={p.photoUrl}
+                      stat={`${p.totalPoints} pts`}
+                    />
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {/* Plus capés */}
+            {topApps.length > 0 && (
+              <div>
+                <h3 className="mb-3 flex items-center gap-2 text-lg font-semibold text-foreground">
+                  <Users className="h-4 w-4 text-usap-or" />
+                  Plus capés
+                </h3>
+                <div className="space-y-1">
+                  {topApps.map((p, i) => (
+                    <PlayerRankRow
+                      key={p.id}
+                      rank={i + 1}
+                      slug={p.slug}
+                      firstName={p.firstName}
+                      lastName={p.lastName}
+                      position={p.position}
+                      photoUrl={p.photoUrl}
+                      stat={`${p.appearances} match${p.appearances > 1 ? "s" : ""}`}
+                    />
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {/* Meilleurs marqueurs d'essais */}
+            {topTries.length > 0 && (
+              <div>
+                <h3 className="mb-3 flex items-center gap-2 text-lg font-semibold text-foreground">
+                  <Award className="h-4 w-4 text-usap-or" />
+                  Meilleurs marqueurs d&apos;essais
+                </h3>
+                <div className="space-y-1">
+                  {topTries.map((p, i) => (
+                    <PlayerRankRow
+                      key={p.id}
+                      rank={i + 1}
+                      slug={p.slug}
+                      firstName={p.firstName}
+                      lastName={p.lastName}
+                      position={p.position}
+                      photoUrl={p.photoUrl}
+                      stat={`${p.tries} essai${p.tries > 1 ? "s" : ""}`}
+                    />
+                  ))}
+                </div>
+              </div>
+            )}
+          </div>
+        </section>
+      )}
+
       {/* Effectif */}
       {season.seasonPlayers.length > 0 && (
         <section>
@@ -356,5 +506,58 @@ function StatBox({
       </div>
       <div className="text-xs text-muted-foreground">{label}</div>
     </div>
+  );
+}
+
+function PlayerRankRow({
+  rank,
+  slug,
+  firstName,
+  lastName,
+  position,
+  photoUrl,
+  stat,
+}: {
+  rank: number;
+  slug: string;
+  firstName: string;
+  lastName: string;
+  position: string | null;
+  photoUrl: string | null;
+  stat: string;
+}) {
+  return (
+    <Link
+      href={`/joueurs/${slug}`}
+      className="flex items-center gap-2 rounded border border-border bg-background px-3 py-2 text-sm transition-colors hover:border-usap-or/30"
+    >
+      <span className="w-6 shrink-0 text-center font-bold text-muted-foreground">
+        {rank}
+      </span>
+      {photoUrl ? (
+        <Image
+          src={photoUrl}
+          alt={`${firstName} ${lastName}`}
+          width={28}
+          height={28}
+          className="h-7 w-7 shrink-0 rounded-full object-cover"
+        />
+      ) : (
+        <div className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-muted">
+          <Users className="h-3.5 w-3.5 text-muted-foreground" />
+        </div>
+      )}
+      <span className="flex-1 truncate font-medium text-foreground">
+        {firstName} {lastName}
+      </span>
+      {position && (
+        <span className="hidden text-xs text-muted-foreground sm:inline">
+          {POSITIONS[position]?.label ?? position}
+        </span>
+      )}
+      <span className="shrink-0 rounded bg-usap-sang/10 px-2 py-0.5 text-xs font-bold text-usap-sang">
+        {stat}
+      </span>
+    </Link>
   );
 }
