@@ -471,6 +471,9 @@ function PlayerRow({
     isStarter: boolean;
     isCaptain: boolean;
     positionPlayed: string | null;
+    minutesPlayed: number | null;
+    subIn: number | null;
+    subOut: number | null;
     tries: number;
     totalPoints: number;
     yellowCard: boolean;
@@ -505,6 +508,19 @@ function PlayerRow({
       {mp.positionPlayed && (
         <span className="hidden text-xs text-muted-foreground sm:inline">
           {POSITIONS[mp.positionPlayed]?.label ?? mp.positionPlayed}
+        </span>
+      )}
+
+      {/* Minutes jouées */}
+      {mp.minutesPlayed != null && (
+        <span className="text-xs text-muted-foreground" title="Minutes jouées">
+          {mp.minutesPlayed}&apos;
+          {mp.subIn != null && (
+            <span className="ml-0.5">({mp.subIn}&apos;→)</span>
+          )}
+          {mp.subOut != null && !mp.subIn && (
+            <span className="ml-0.5">(→{mp.subOut}&apos;)</span>
+          )}
         </span>
       )}
 

@@ -397,6 +397,9 @@ export default async function JoueurDetailPage({ params }: Props) {
                   <th className="px-3 py-2 text-center font-semibold text-foreground">
                     N°
                   </th>
+                  <th className="hidden px-3 py-2 text-center font-semibold text-foreground sm:table-cell">
+                    Min
+                  </th>
                   <th className="hidden px-3 py-2 text-center font-semibold text-foreground md:table-cell">
                     Essais
                   </th>
@@ -461,6 +464,13 @@ export default async function JoueurDetailPage({ params }: Props) {
                           <span className="text-xs text-muted-foreground">
                             *
                           </span>
+                        )}
+                      </td>
+                      <td className="hidden px-3 py-2 text-center text-muted-foreground sm:table-cell">
+                        {ma.minutesPlayed != null ? (
+                          <span>{ma.minutesPlayed}&apos;</span>
+                        ) : (
+                          <span>—</span>
                         )}
                       </td>
                       <td className="hidden px-3 py-2 text-center md:table-cell">
