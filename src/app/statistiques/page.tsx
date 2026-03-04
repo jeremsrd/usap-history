@@ -23,11 +23,18 @@ export const metadata: Metadata = {
 
 export default async function StatistiquesPage() {
   // ── Compteurs globaux ──────────────────────────────────────────────
-  const [totalMatches, totalPlayers, totalSeasons] = await Promise.all([
+  // Nombre de joueurs USAP = joueurs ayant au moins 1 apparition non-adversaire
+  const [totalMatches, totalSeasons] = await Promise.all([
     prisma.match.count(),
-    prisma.player.count(),
     prisma.season.count(),
   ]);
+
+  const usapPlayerIds = await prisma.matchPlayer.findMany({
+    where: { isOpponent: false },
+    select: { playerId: true },
+    distinct: ["playerId"],
+  });
+  const totalPlayers = usapPlayerIds.length;
 
   // ── Bilan global V/N/D ─────────────────────────────────────────────
   const [wins, draws, losses] = await Promise.all([
@@ -57,9 +64,10 @@ export default async function StatistiquesPage() {
   const totalPointsFor = pointsAgg._sum.scoreUsap ?? 0;
   const totalPointsAgainst = pointsAgg._sum.scoreOpponent ?? 0;
 
-  // ── Meilleurs marqueurs (top 10 par points) ────────────────────────
+  // ── Meilleurs marqueurs USAP (top 10 par points) ───────────────────
   const topScorersAgg = await prisma.matchPlayer.groupBy({
     by: ["playerId"],
+    where: { isOpponent: false },
     _sum: { totalPoints: true },
     orderBy: { _sum: { totalPoints: "desc" } },
     take: 10,
@@ -84,9 +92,10 @@ export default async function StatistiquesPage() {
     return { ...player, totalPoints: agg._sum.totalPoints ?? 0 };
   });
 
-  // ── Plus capés (top 10 par nombre de matchs) ───────────────────────
+  // ── Plus capés USAP (top 10 par nombre de matchs) ──────────────────
   const topAppsAgg = await prisma.matchPlayer.groupBy({
     by: ["playerId"],
+    where: { isOpponent: false },
     _count: { id: true },
     orderBy: { _count: { id: "desc" } },
     take: 10,
@@ -110,9 +119,10 @@ export default async function StatistiquesPage() {
     return { ...player, appearances: agg._count.id };
   });
 
-  // ── Meilleurs essayeurs (top 10) ───────────────────────────────────
+  // ── Meilleurs essayeurs USAP (top 10) ──────────────────────────────
   const topTriesAgg = await prisma.matchPlayer.groupBy({
     by: ["playerId"],
+    where: { isOpponent: false },
     _sum: { tries: true },
     orderBy: { _sum: { tries: "desc" } },
     take: 10,
@@ -134,6 +144,59 @@ export default async function StatistiquesPage() {
 
   const topTries = topTriesAgg.map((agg) => {
     const player = topTryPlayers.find((p) => p.id === agg.playerId)!;
+    return { ...player, tries: agg._sum.tries ?? 0 };
+  });
+
+  // ── Statistiques adverses (joueurs adverses contre l'USAP) ─────────
+  const oppScorersAgg = await prisma.matchPlayer.groupBy({
+    by: ["playerId"],
+    where: { isOpponent: true },
+    _sum: { totalPoints: true },
+    orderBy: { _sum: { totalPoints: "desc" } },
+    take: 10,
+    having: { totalPoints: { _sum: { gt: 0 } } },
+  });
+
+  const oppScorerIds = oppScorersAgg.map((s) => s.playerId);
+  const oppScorerPlayers = await prisma.player.findMany({
+    where: { id: { in: oppScorerIds } },
+    select: {
+      id: true,
+      slug: true,
+      firstName: true,
+      lastName: true,
+      position: true,
+      photoUrl: true,
+    },
+  });
+  const oppScorers = oppScorersAgg.map((agg) => {
+    const player = oppScorerPlayers.find((p) => p.id === agg.playerId)!;
+    return { ...player, totalPoints: agg._sum.totalPoints ?? 0 };
+  });
+
+  const oppTriesAgg = await prisma.matchPlayer.groupBy({
+    by: ["playerId"],
+    where: { isOpponent: true },
+    _sum: { tries: true },
+    orderBy: { _sum: { tries: "desc" } },
+    take: 10,
+    having: { tries: { _sum: { gt: 0 } } },
+  });
+
+  const oppTryIds = oppTriesAgg.map((t) => t.playerId);
+  const oppTryPlayers = await prisma.player.findMany({
+    where: { id: { in: oppTryIds } },
+    select: {
+      id: true,
+      slug: true,
+      firstName: true,
+      lastName: true,
+      position: true,
+      photoUrl: true,
+    },
+  });
+  const oppTries = oppTriesAgg.map((agg) => {
+    const player = oppTryPlayers.find((p) => p.id === agg.playerId)!;
     return { ...player, tries: agg._sum.tries ?? 0 };
   });
 
@@ -254,7 +317,7 @@ export default async function StatistiquesPage() {
         <StatCard
           icon={<Users className="h-6 w-6 text-usap-or" />}
           value={totalPlayers.toLocaleString("fr-FR")}
-          label="Joueurs référencés"
+          label="Joueurs USAP"
         />
         <StatCard
           icon={<BarChart3 className="h-6 w-6 text-usap-or" />}
@@ -403,7 +466,7 @@ export default async function StatistiquesPage() {
         <section>
           <h2 className="mb-4 flex items-center gap-2 text-xl font-bold uppercase tracking-wider text-foreground">
             <Award className="h-5 w-5 text-usap-or" />
-            Meilleurs essayeurs
+            Meilleurs marqueurs d&apos;essais
           </h2>
           <div className="space-y-1">
             {topTries.map((p, i) => (
@@ -421,6 +484,70 @@ export default async function StatistiquesPage() {
           </div>
         </section>
       </div>
+
+      {/* ── Statistiques adverses (contre l'USAP) ───────────── */}
+      {(oppScorers.length > 0 || oppTries.length > 0) && (
+        <div className="mb-10">
+          <h2 className="mb-4 flex items-center gap-2 text-2xl font-bold uppercase tracking-wider text-foreground">
+            <Swords className="h-6 w-6 text-muted-foreground" />
+            Contre l&apos;USAP
+          </h2>
+          <p className="mb-6 text-sm text-muted-foreground">
+            Statistiques individuelles des joueurs adverses face à l&apos;USAP.
+          </p>
+          <div className="grid gap-10 lg:grid-cols-2">
+            {/* Meilleurs marqueurs adverses */}
+            {oppScorers.length > 0 && (
+              <section>
+                <h3 className="mb-4 flex items-center gap-2 text-xl font-bold uppercase tracking-wider text-foreground">
+                  <Target className="h-5 w-5 text-muted-foreground" />
+                  Meilleurs marqueurs adverses
+                </h3>
+                <div className="space-y-1">
+                  {oppScorers.map((p, i) => (
+                    <PlayerRankRow
+                      key={p.id}
+                      rank={i + 1}
+                      slug={p.slug}
+                      firstName={p.firstName}
+                      lastName={p.lastName}
+                      position={p.position}
+                      photoUrl={p.photoUrl}
+                      stat={`${p.totalPoints} pts`}
+                      variant="opponent"
+                    />
+                  ))}
+                </div>
+              </section>
+            )}
+
+            {/* Meilleurs essayeurs adverses */}
+            {oppTries.length > 0 && (
+              <section>
+                <h3 className="mb-4 flex items-center gap-2 text-xl font-bold uppercase tracking-wider text-foreground">
+                  <Award className="h-5 w-5 text-muted-foreground" />
+                  Meilleurs marqueurs d&apos;essais adverses
+                </h3>
+                <div className="space-y-1">
+                  {oppTries.map((p, i) => (
+                    <PlayerRankRow
+                      key={p.id}
+                      rank={i + 1}
+                      slug={p.slug}
+                      firstName={p.firstName}
+                      lastName={p.lastName}
+                      position={p.position}
+                      photoUrl={p.photoUrl}
+                      stat={`${p.tries} essais`}
+                      variant="opponent"
+                    />
+                  ))}
+                </div>
+              </section>
+            )}
+          </div>
+        </div>
+      )}
 
       {/* ── Records de matchs ─────────────────────────────── */}
       <section className="mb-10">
@@ -603,6 +730,7 @@ function PlayerRankRow({
   position,
   photoUrl,
   stat,
+  variant = "usap",
 }: {
   rank: number;
   slug: string;
@@ -611,7 +739,13 @@ function PlayerRankRow({
   position: string | null;
   photoUrl: string | null;
   stat: string;
+  variant?: "usap" | "opponent";
 }) {
+  const statStyle =
+    variant === "opponent"
+      ? "bg-muted text-muted-foreground"
+      : "bg-usap-sang/10 text-usap-sang";
+
   return (
     <Link
       href={`/joueurs/${slug}`}
@@ -641,7 +775,9 @@ function PlayerRankRow({
           {POSITIONS[position]?.label ?? position}
         </span>
       )}
-      <span className="shrink-0 rounded bg-usap-sang/10 px-2 py-0.5 text-xs font-bold text-usap-sang">
+      <span
+        className={`shrink-0 rounded px-2 py-0.5 text-xs font-bold ${statStyle}`}
+      >
         {stat}
       </span>
     </Link>
