@@ -42,7 +42,7 @@ const USAP_SQUAD = [
   { num: 17, lastName: "Tetrashvili", position: "PILIER_GAUCHE" as const, isStarter: false },
   { num: 18, lastName: "Orie", position: "DEUXIEME_LIGNE" as const, isStarter: false },
   { num: 19, lastName: "Bachelier", position: "TROISIEME_LIGNE_AILE" as const, isStarter: false },
-  { num: 20, lastName: "Bouthier", position: "ARRIERE" as const, isStarter: false },
+  { num: 20, lastName: "Bouthier", position: "TROISIEME_LIGNE_AILE" as const, isStarter: false },
   { num: 21, lastName: "Deghmache", position: "DEMI_DE_MELEE" as const, isStarter: false },
   { num: 22, lastName: "Buliruarua", position: "CENTRE" as const, isStarter: false },
   { num: 23, lastName: "Fakatika", position: "PILIER_DROIT" as const, isStarter: false },
@@ -102,9 +102,11 @@ async function main() {
         firstName: "Antoine",
         lastName: "Bouthier",
         slug: bouthierSlugBase + "-temp",
-        position: "ARRIERE",
+        position: "TROISIEME_LIGNE_AILE",
         isActive: true,
-        birthDate: new Date("1994-02-08"),
+        birthDate: new Date("2004-06-22"),
+        height: 197,
+        weight: 95,
       },
     });
     // Mettre à jour le slug avec le vrai CUID (nécessaire pour la page joueur)
