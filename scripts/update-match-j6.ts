@@ -95,16 +95,22 @@ async function main() {
     where: { lastName: "Bouthier" },
   });
   if (!bouthier) {
-    const bouthierSlug = slugify("Antoine Bouthier");
+    // Créer d'abord avec un slug temporaire, puis mettre à jour avec le CUID
+    const bouthierSlugBase = slugify("Antoine Bouthier");
     bouthier = await prisma.player.create({
       data: {
         firstName: "Antoine",
         lastName: "Bouthier",
-        slug: bouthierSlug + "-" + Date.now().toString(36) + Math.random().toString(36).slice(2, 6),
+        slug: bouthierSlugBase + "-temp",
         position: "ARRIERE",
         isActive: true,
         birthDate: new Date("1994-02-08"),
       },
+    });
+    // Mettre à jour le slug avec le vrai CUID (nécessaire pour la page joueur)
+    bouthier = await prisma.player.update({
+      where: { id: bouthier.id },
+      data: { slug: `${bouthierSlugBase}-${bouthier.id}` },
     });
     console.log(`  Créé : Antoine Bouthier (${bouthier.id})`);
 
