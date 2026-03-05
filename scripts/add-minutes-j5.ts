@@ -1,13 +1,18 @@
 /**
  * Script d'ajout des minutes jouées pour le match USAP - Pau (J5 Top 14, 05/10/2024)
  *
- * Remplacements USAP reconstitués (source : eurosport.fr) :
- *  42' Lam → Ruiz
- *  42' Della Schiava → Oviedo
- *  42' Aucagne → Allan
+ * Remplacements USAP reconstitués (source : itsrugby.fr, francebleu.fr) :
+ *  40' Lam → Ruiz
+ *  40' De La Fuente → Allan
  *  47' Fa'aso'o → Orie
- *  59' Beria → Fakatika
- *  Non utilisés : Aprasidze, Buliruarua, Ceccarelli
+ *  57' Ecochard → Aprasidze
+ *  58' Beria → Fakatika
+ *  58' Della Schiava → Ceccarelli
+ *  Non utilisés : Oviedo, Buliruarua
+ *
+ * ⚠ Ce script corrige une première version erronée qui avait Aucagne sorti à 42'
+ *   alors qu'il marque la pénalité de la victoire à la 80'.
+ *   Il commence par nettoyer les mauvaises données avant d'appliquer les bonnes.
  *
  * Exécution : PATH="/usr/local/opt/node@22/bin:$PATH" npx tsx scripts/add-minutes-j5.ts
  */
@@ -45,13 +50,14 @@ const PLAYER_IDS: Record<string, string> = {
   Ceccarelli: "cmmby9p2b001k1ucd3lgmjsyw",
 };
 
-// Remplacements
+// Remplacements corrigés
 const REPLACEMENTS = [
-  { out: "Lam", in: "Ruiz", min: 42 },
-  { out: "Della Schiava", in: "Oviedo", min: 42 },
-  { out: "Aucagne", in: "Allan", min: 42 },
+  { out: "Lam", in: "Ruiz", min: 40 },
+  { out: "De La Fuente", in: "Allan", min: 40 },
   { out: "Fa'aso'o", in: "Orie", min: 47 },
-  { out: "Beria", in: "Fakatika", min: 59 },
+  { out: "Ecochard", in: "Aprasidze", min: 57 },
+  { out: "Beria", in: "Fakatika", min: 58 },
+  { out: "Della Schiava", in: "Ceccarelli", min: 58 },
 ];
 
 // Titulaires qui jouent 80 minutes complètes
@@ -60,26 +66,47 @@ const FULL_MATCH_STARTERS = [
   "Warion",
   "Brazo",
   "Velarte",
-  "Ecochard",
+  "Aucagne",
   "Dubois",
-  "De La Fuente",
   "Naqalevu",
   "Joseph",
   "Dupichot",
 ];
 
 // Remplaçants non utilisés
-const UNUSED_SUBS = ["Aprasidze", "Buliruarua", "Ceccarelli"];
+const UNUSED_SUBS = ["Oviedo", "Buliruarua"];
 
 async function main() {
   console.log(
-    "=== Ajout des minutes jouées - USAP vs Pau (J5, 05/10/2024) ===\n"
+    "=== Correction des minutes jouées - USAP vs Pau (J5, 05/10/2024) ===\n"
   );
+
+  // ---------------------------------------------------------------
+  // 0. Nettoyage des données erronées de la version précédente
+  // ---------------------------------------------------------------
+  console.log("--- Nettoyage des données erronées ---");
+
+  // Réinitialiser toutes les minutes/subIn/subOut pour les joueurs USAP de ce match
+  const resetResult = await prisma.matchPlayer.updateMany({
+    where: { matchId: MATCH_ID, isOpponent: false },
+    data: { minutesPlayed: null, subIn: null, subOut: null },
+  });
+  console.log(`  ${resetResult.count} joueurs réinitialisés`);
+
+  // Supprimer les anciens événements de remplacement
+  const deleteResult = await prisma.matchEvent.deleteMany({
+    where: {
+      matchId: MATCH_ID,
+      type: { in: ["REMPLACEMENT_SORTIE", "REMPLACEMENT_ENTREE"] },
+      isUsap: true,
+    },
+  });
+  console.log(`  ${deleteResult.count} événements de remplacement supprimés`);
 
   // ---------------------------------------------------------------
   // 1. Titulaires 80 minutes
   // ---------------------------------------------------------------
-  console.log("--- Titulaires 80 minutes ---");
+  console.log("\n--- Titulaires 80 minutes ---");
   for (const name of FULL_MATCH_STARTERS) {
     const playerId = PLAYER_IDS[name];
     const mp = await prisma.matchPlayer.findFirst({
@@ -152,46 +179,32 @@ async function main() {
 
   const replacementEvents = [
     {
-      minute: 42,
+      minute: 40,
       type: "REMPLACEMENT_SORTIE" as const,
       playerId: PLAYER_IDS["Lam"],
       isUsap: true,
       description: "Sortie de Seilala Lam. Remplacé par Isaac Ruiz.",
     },
     {
-      minute: 42,
+      minute: 40,
       type: "REMPLACEMENT_ENTREE" as const,
       playerId: PLAYER_IDS["Ruiz"],
       isUsap: true,
       description: "Entrée d'Isaac Ruiz en remplacement de Lam.",
     },
     {
-      minute: 42,
+      minute: 40,
       type: "REMPLACEMENT_SORTIE" as const,
-      playerId: PLAYER_IDS["Della Schiava"],
+      playerId: PLAYER_IDS["De La Fuente"],
       isUsap: true,
-      description: "Sortie de Noé Della Schiava. Remplacé par Juan Manuel Oviedo.",
+      description: "Sortie de Nicolás De La Fuente. Remplacé par Tommaso Allan.",
     },
     {
-      minute: 42,
-      type: "REMPLACEMENT_ENTREE" as const,
-      playerId: PLAYER_IDS["Oviedo"],
-      isUsap: true,
-      description: "Entrée de Juan Manuel Oviedo en remplacement de Della Schiava.",
-    },
-    {
-      minute: 42,
-      type: "REMPLACEMENT_SORTIE" as const,
-      playerId: PLAYER_IDS["Aucagne"],
-      isUsap: true,
-      description: "Sortie d'Antoine Aucagne. Remplacé par Tommaso Allan.",
-    },
-    {
-      minute: 42,
+      minute: 40,
       type: "REMPLACEMENT_ENTREE" as const,
       playerId: PLAYER_IDS["Allan"],
       isUsap: true,
-      description: "Entrée de Tommaso Allan en remplacement d'Aucagne.",
+      description: "Entrée de Tommaso Allan en remplacement de De La Fuente.",
     },
     {
       minute: 47,
@@ -208,18 +221,46 @@ async function main() {
       description: "Entrée de Marvin Orie en remplacement de Fa'aso'o.",
     },
     {
-      minute: 59,
+      minute: 57,
+      type: "REMPLACEMENT_SORTIE" as const,
+      playerId: PLAYER_IDS["Ecochard"],
+      isUsap: true,
+      description: "Sortie de Tom Ecochard. Remplacé par Gela Aprasidze.",
+    },
+    {
+      minute: 57,
+      type: "REMPLACEMENT_ENTREE" as const,
+      playerId: PLAYER_IDS["Aprasidze"],
+      isUsap: true,
+      description: "Entrée de Gela Aprasidze en remplacement d'Ecochard.",
+    },
+    {
+      minute: 58,
       type: "REMPLACEMENT_SORTIE" as const,
       playerId: PLAYER_IDS["Beria"],
       isUsap: true,
       description: "Sortie de Giorgi Beria. Remplacé par Akato Fakatika.",
     },
     {
-      minute: 59,
+      minute: 58,
       type: "REMPLACEMENT_ENTREE" as const,
       playerId: PLAYER_IDS["Fakatika"],
       isUsap: true,
       description: "Entrée d'Akato Fakatika en remplacement de Beria.",
+    },
+    {
+      minute: 58,
+      type: "REMPLACEMENT_SORTIE" as const,
+      playerId: PLAYER_IDS["Della Schiava"],
+      isUsap: true,
+      description: "Sortie de Noé Della Schiava. Remplacé par Pietro Ceccarelli.",
+    },
+    {
+      minute: 58,
+      type: "REMPLACEMENT_ENTREE" as const,
+      playerId: PLAYER_IDS["Ceccarelli"],
+      isUsap: true,
+      description: "Entrée de Pietro Ceccarelli en remplacement de Della Schiava.",
     },
   ];
 
@@ -241,8 +282,8 @@ async function main() {
   // Résumé final
   // ---------------------------------------------------------------
   console.log("\n=== Mise à jour terminée ===");
-  console.log("  Titulaires 80' : 10 joueurs");
-  console.log("  Remplacements : 5 (3 non utilisés : Aprasidze, Buliruarua, Ceccarelli)");
+  console.log("  Titulaires 80' : 9 joueurs (dont Aucagne, buteur à la 80')");
+  console.log("  Remplacements : 6 (2 non utilisés : Oviedo, Buliruarua)");
   console.log(`  Événements ajoutés : ${replacementEvents.length}`);
 }
 
