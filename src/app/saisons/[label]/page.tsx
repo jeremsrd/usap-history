@@ -13,6 +13,14 @@ import {
   Calendar,
   Target,
   Award,
+  Crosshair,
+  Repeat,
+  Zap,
+  Clock,
+  AlertTriangle,
+  ShieldOff,
+  ShieldAlert,
+  ShieldCheck,
 } from "lucide-react";
 import type { Metadata } from "next";
 
@@ -69,64 +77,132 @@ export default async function SaisonDetailPage({ params }: Props) {
   const seasonMatchIds = season.matches.map((m) => m.id);
 
   // ── Statistiques individuelles de la saison ──────────────────────
-  // Meilleurs marqueurs (par points)
+  const usapFilter = { matchId: { in: seasonMatchIds }, isOpponent: false };
+  const playerSelect = { id: true, slug: true, firstName: true, lastName: true, position: true, photoUrl: true } as const;
+
+  // Requêtes séquentielles pour respecter la limite du pool Supabase
   const topScorersAgg = await prisma.matchPlayer.groupBy({
-    by: ["playerId"],
-    where: { matchId: { in: seasonMatchIds }, isOpponent: false },
+    by: ["playerId"], where: usapFilter,
     _sum: { totalPoints: true },
     orderBy: { _sum: { totalPoints: "desc" } },
-    take: 10,
-    having: { totalPoints: { _sum: { gt: 0 } } },
+    take: 10, having: { totalPoints: { _sum: { gt: 0 } } },
   });
-
-  const scorerIds = topScorersAgg.map((s) => s.playerId);
-  const scorerPlayers = await prisma.player.findMany({
-    where: { id: { in: scorerIds } },
-    select: { id: true, slug: true, firstName: true, lastName: true, position: true, photoUrl: true },
-  });
-  const topScorers = topScorersAgg.map((agg) => {
-    const player = scorerPlayers.find((p) => p.id === agg.playerId)!;
-    return { ...player, totalPoints: agg._sum.totalPoints ?? 0 };
-  });
-
-  // Plus capés (nombre d'apparitions)
   const topAppsAgg = await prisma.matchPlayer.groupBy({
-    by: ["playerId"],
-    where: { matchId: { in: seasonMatchIds }, isOpponent: false },
+    by: ["playerId"], where: usapFilter,
+    _count: { id: true },
+    orderBy: { _count: { id: "desc" } },
+    take: 10,
+  });
+  const topTriesAgg = await prisma.matchPlayer.groupBy({
+    by: ["playerId"], where: usapFilter,
+    _sum: { tries: true },
+    orderBy: { _sum: { tries: "desc" } },
+    take: 10, having: { tries: { _sum: { gt: 0 } } },
+  });
+  const topPenAgg = await prisma.matchPlayer.groupBy({
+    by: ["playerId"], where: usapFilter,
+    _sum: { penalties: true },
+    orderBy: { _sum: { penalties: "desc" } },
+    take: 10, having: { penalties: { _sum: { gt: 0 } } },
+  });
+  const topConvAgg = await prisma.matchPlayer.groupBy({
+    by: ["playerId"], where: usapFilter,
+    _sum: { conversions: true },
+    orderBy: { _sum: { conversions: "desc" } },
+    take: 10, having: { conversions: { _sum: { gt: 0 } } },
+  });
+  const topDropAgg = await prisma.matchPlayer.groupBy({
+    by: ["playerId"], where: usapFilter,
+    _sum: { dropGoals: true },
+    orderBy: { _sum: { dropGoals: "desc" } },
+    take: 10, having: { dropGoals: { _sum: { gt: 0 } } },
+  });
+  const topMinutesAgg = await prisma.matchPlayer.groupBy({
+    by: ["playerId"], where: usapFilter,
+    _sum: { minutesPlayed: true },
+    orderBy: { _sum: { minutesPlayed: "desc" } },
+    take: 10, having: { minutesPlayed: { _sum: { gt: 0 } } },
+  });
+  const yellowCardsAgg = await prisma.matchPlayer.groupBy({
+    by: ["playerId"], where: { ...usapFilter, yellowCard: true },
+    _count: { id: true },
+    orderBy: { _count: { id: "desc" } },
+    take: 10,
+  });
+  const redCardsAgg = await prisma.matchPlayer.groupBy({
+    by: ["playerId"], where: { ...usapFilter, redCard: true },
+    _count: { id: true },
+    orderBy: { _count: { id: "desc" } },
+    take: 10,
+  });
+  const whiteCardsAgg = await prisma.matchPlayer.groupBy({
+    by: ["playerId"], where: { ...usapFilter, whiteCard: true },
+    _count: { id: true },
+    orderBy: { _count: { id: "desc" } },
+    take: 10,
+  });
+  const orangeCardsAgg = await prisma.matchPlayer.groupBy({
+    by: ["playerId"], where: { ...usapFilter, orangeCard: true },
     _count: { id: true },
     orderBy: { _count: { id: "desc" } },
     take: 10,
   });
 
-  const appIds = topAppsAgg.map((a) => a.playerId);
-  const appPlayers = await prisma.player.findMany({
-    where: { id: { in: appIds } },
-    select: { id: true, slug: true, firstName: true, lastName: true, position: true, photoUrl: true },
+  // Récupérer tous les joueurs concernés en une seule requête
+  const allPlayerIds = [
+    ...new Set([
+      ...topScorersAgg.map((s) => s.playerId),
+      ...topAppsAgg.map((a) => a.playerId),
+      ...topTriesAgg.map((t) => t.playerId),
+      ...topPenAgg.map((p) => p.playerId),
+      ...topConvAgg.map((c) => c.playerId),
+      ...topDropAgg.map((d) => d.playerId),
+      ...topMinutesAgg.map((m) => m.playerId),
+      ...yellowCardsAgg.map((y) => y.playerId),
+      ...redCardsAgg.map((r) => r.playerId),
+      ...whiteCardsAgg.map((w) => w.playerId),
+      ...orangeCardsAgg.map((o) => o.playerId),
+    ]),
+  ];
+  const allPlayers = await prisma.player.findMany({
+    where: { id: { in: allPlayerIds } },
+    select: playerSelect,
   });
-  const topApps = topAppsAgg.map((agg) => {
-    const player = appPlayers.find((p) => p.id === agg.playerId)!;
-    return { ...player, appearances: agg._count.id };
-  });
+  const playerMap = new Map(allPlayers.map((p) => [p.id, p]));
 
-  // Meilleurs marqueurs d'essais
-  const topTriesAgg = await prisma.matchPlayer.groupBy({
-    by: ["playerId"],
-    where: { matchId: { in: seasonMatchIds }, isOpponent: false },
-    _sum: { tries: true },
-    orderBy: { _sum: { tries: "desc" } },
-    take: 10,
-    having: { tries: { _sum: { gt: 0 } } },
-  });
-
-  const tryIds = topTriesAgg.map((t) => t.playerId);
-  const tryPlayers = await prisma.player.findMany({
-    where: { id: { in: tryIds } },
-    select: { id: true, slug: true, firstName: true, lastName: true, position: true, photoUrl: true },
-  });
-  const topTries = topTriesAgg.map((agg) => {
-    const player = tryPlayers.find((p) => p.id === agg.playerId)!;
-    return { ...player, tries: agg._sum.tries ?? 0 };
-  });
+  const topScorers = topScorersAgg.map((agg) => ({
+    ...playerMap.get(agg.playerId)!, totalPoints: agg._sum.totalPoints ?? 0,
+  }));
+  const topApps = topAppsAgg.map((agg) => ({
+    ...playerMap.get(agg.playerId)!, appearances: agg._count.id,
+  }));
+  const topTries = topTriesAgg.map((agg) => ({
+    ...playerMap.get(agg.playerId)!, tries: agg._sum.tries ?? 0,
+  }));
+  const topPenalties = topPenAgg.map((agg) => ({
+    ...playerMap.get(agg.playerId)!, penalties: agg._sum.penalties ?? 0,
+  }));
+  const topConversions = topConvAgg.map((agg) => ({
+    ...playerMap.get(agg.playerId)!, conversions: agg._sum.conversions ?? 0,
+  }));
+  const topDrops = topDropAgg.map((agg) => ({
+    ...playerMap.get(agg.playerId)!, dropGoals: agg._sum.dropGoals ?? 0,
+  }));
+  const topMinutes = topMinutesAgg.map((agg) => ({
+    ...playerMap.get(agg.playerId)!, minutes: agg._sum.minutesPlayed ?? 0,
+  }));
+  const yellowCards = yellowCardsAgg.map((agg) => ({
+    ...playerMap.get(agg.playerId)!, count: agg._count.id,
+  }));
+  const redCards = redCardsAgg.map((agg) => ({
+    ...playerMap.get(agg.playerId)!, count: agg._count.id,
+  }));
+  const whiteCards = whiteCardsAgg.map((agg) => ({
+    ...playerMap.get(agg.playerId)!, count: agg._count.id,
+  }));
+  const orangeCards = orangeCardsAgg.map((agg) => ({
+    ...playerMap.get(agg.playerId)!, count: agg._count.id,
+  }));
 
   // Grouper les matchs par compétition
   const matchesByCompetition = new Map<
@@ -431,6 +507,202 @@ export default async function SaisonDetailPage({ params }: Props) {
                 </div>
               </div>
             )}
+
+            {/* Pénalités */}
+            {topPenalties.length > 0 && (
+              <div>
+                <h3 className="mb-3 flex items-center gap-2 text-lg font-semibold text-foreground">
+                  <Crosshair className="h-4 w-4 text-usap-or" />
+                  Pénalités
+                </h3>
+                <div className="space-y-1">
+                  {topPenalties.map((p, i) => (
+                    <PlayerRankRow
+                      key={p.id}
+                      rank={i + 1}
+                      slug={p.slug}
+                      firstName={p.firstName}
+                      lastName={p.lastName}
+                      position={p.position}
+                      photoUrl={p.photoUrl}
+                      stat={`${p.penalties} pén.`}
+                    />
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {/* Transformations */}
+            {topConversions.length > 0 && (
+              <div>
+                <h3 className="mb-3 flex items-center gap-2 text-lg font-semibold text-foreground">
+                  <Repeat className="h-4 w-4 text-usap-or" />
+                  Transformations
+                </h3>
+                <div className="space-y-1">
+                  {topConversions.map((p, i) => (
+                    <PlayerRankRow
+                      key={p.id}
+                      rank={i + 1}
+                      slug={p.slug}
+                      firstName={p.firstName}
+                      lastName={p.lastName}
+                      position={p.position}
+                      photoUrl={p.photoUrl}
+                      stat={`${p.conversions} transfo${p.conversions > 1 ? "s" : ""}`}
+                    />
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {/* Drops */}
+            {topDrops.length > 0 && (
+              <div>
+                <h3 className="mb-3 flex items-center gap-2 text-lg font-semibold text-foreground">
+                  <Zap className="h-4 w-4 text-usap-or" />
+                  Drops
+                </h3>
+                <div className="space-y-1">
+                  {topDrops.map((p, i) => (
+                    <PlayerRankRow
+                      key={p.id}
+                      rank={i + 1}
+                      slug={p.slug}
+                      firstName={p.firstName}
+                      lastName={p.lastName}
+                      position={p.position}
+                      photoUrl={p.photoUrl}
+                      stat={`${p.dropGoals} drop${p.dropGoals > 1 ? "s" : ""}`}
+                    />
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {/* Minutes jouées */}
+            {topMinutes.length > 0 && (
+              <div>
+                <h3 className="mb-3 flex items-center gap-2 text-lg font-semibold text-foreground">
+                  <Clock className="h-4 w-4 text-usap-or" />
+                  Minutes jouées
+                </h3>
+                <div className="space-y-1">
+                  {topMinutes.map((p, i) => (
+                    <PlayerRankRow
+                      key={p.id}
+                      rank={i + 1}
+                      slug={p.slug}
+                      firstName={p.firstName}
+                      lastName={p.lastName}
+                      position={p.position}
+                      photoUrl={p.photoUrl}
+                      stat={`${p.minutes}'`}
+                    />
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {/* Cartons jaunes */}
+            {yellowCards.length > 0 && (
+              <div>
+                <h3 className="mb-3 flex items-center gap-2 text-lg font-semibold text-foreground">
+                  <AlertTriangle className="h-4 w-4 text-yellow-500" />
+                  Cartons jaunes
+                </h3>
+                <div className="space-y-1">
+                  {yellowCards.map((p, i) => (
+                    <PlayerRankRow
+                      key={p.id}
+                      rank={i + 1}
+                      slug={p.slug}
+                      firstName={p.firstName}
+                      lastName={p.lastName}
+                      position={p.position}
+                      photoUrl={p.photoUrl}
+                      stat={`${p.count} CJ`}
+                      badgeColor="bg-yellow-500/10 text-yellow-600"
+                    />
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {/* Cartons rouges */}
+            {redCards.length > 0 && (
+              <div>
+                <h3 className="mb-3 flex items-center gap-2 text-lg font-semibold text-foreground">
+                  <ShieldOff className="h-4 w-4 text-red-500" />
+                  Cartons rouges
+                </h3>
+                <div className="space-y-1">
+                  {redCards.map((p, i) => (
+                    <PlayerRankRow
+                      key={p.id}
+                      rank={i + 1}
+                      slug={p.slug}
+                      firstName={p.firstName}
+                      lastName={p.lastName}
+                      position={p.position}
+                      photoUrl={p.photoUrl}
+                      stat={`${p.count} CR`}
+                      badgeColor="bg-red-500/10 text-red-500"
+                    />
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {/* Cartons blancs (affiché seulement si des joueurs en ont) */}
+            {whiteCards.length > 0 && (
+              <div>
+                <h3 className="mb-3 flex items-center gap-2 text-lg font-semibold text-foreground">
+                  <ShieldCheck className="h-4 w-4 text-muted-foreground" />
+                  Cartons blancs
+                </h3>
+                <div className="space-y-1">
+                  {whiteCards.map((p, i) => (
+                    <PlayerRankRow
+                      key={p.id}
+                      rank={i + 1}
+                      slug={p.slug}
+                      firstName={p.firstName}
+                      lastName={p.lastName}
+                      position={p.position}
+                      photoUrl={p.photoUrl}
+                      stat={`${p.count} CB`}
+                      badgeColor="bg-muted text-muted-foreground"
+                    />
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {/* Cartons orange (affiché seulement si des joueurs en ont) */}
+            {orangeCards.length > 0 && (
+              <div>
+                <h3 className="mb-3 flex items-center gap-2 text-lg font-semibold text-foreground">
+                  <ShieldAlert className="h-4 w-4 text-orange-500" />
+                  Cartons orange
+                </h3>
+                <div className="space-y-1">
+                  {orangeCards.map((p, i) => (
+                    <PlayerRankRow
+                      key={p.id}
+                      rank={i + 1}
+                      slug={p.slug}
+                      firstName={p.firstName}
+                      lastName={p.lastName}
+                      position={p.position}
+                      photoUrl={p.photoUrl}
+                      stat={`${p.count} CO`}
+                      badgeColor="bg-orange-500/10 text-orange-500"
+                    />
+                  ))}
+                </div>
+              </div>
+            )}
           </div>
         </section>
       )}
@@ -517,6 +789,7 @@ function PlayerRankRow({
   position,
   photoUrl,
   stat,
+  badgeColor,
 }: {
   rank: number;
   slug: string;
@@ -525,6 +798,7 @@ function PlayerRankRow({
   position: string | null;
   photoUrl: string | null;
   stat: string;
+  badgeColor?: string;
 }) {
   return (
     <Link
@@ -555,7 +829,7 @@ function PlayerRankRow({
           {POSITIONS[position]?.label ?? position}
         </span>
       )}
-      <span className="shrink-0 rounded bg-usap-sang/10 px-2 py-0.5 text-xs font-bold text-usap-sang">
+      <span className={`shrink-0 rounded px-2 py-0.5 text-xs font-bold ${badgeColor ?? "bg-usap-sang/10 text-usap-sang"}`}>
         {stat}
       </span>
     </Link>
