@@ -463,6 +463,7 @@ model Match {
   referee         Referee? @relation(fields: [refereeId], references: [id])
   attendance      Int?
   report          String?  @db.Text
+  videoUrl        String?  @map("video_url") // URL YouTube du résumé du match
   manOfTheMatch   String?  @map("man_of_the_match")
 
   // Scoring USAP

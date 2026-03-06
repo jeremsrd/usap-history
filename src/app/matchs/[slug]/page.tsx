@@ -12,6 +12,7 @@ import {
   User,
 } from "lucide-react";
 import type { Metadata } from "next";
+import YouTubeEmbed from "@/components/YouTubeEmbed";
 
 type Props = {
   params: Promise<{ slug: string }>;
@@ -422,6 +423,19 @@ export default async function MatchDetailPage({ params }: Props) {
           </section>
         )}
       </div>
+
+      {/* Résumé vidéo */}
+      {match.videoUrl && (
+        <section className="mt-10">
+          <h2 className="mb-4 text-2xl font-bold uppercase tracking-wider text-foreground">
+            📺 Résumé vidéo
+          </h2>
+          <YouTubeEmbed
+            url={match.videoUrl}
+            title={`Résumé ${match.isHome ? "USAP" : oppName} - ${match.isHome ? oppName : "USAP"}`}
+          />
+        </section>
+      )}
 
       {/* Compte-rendu */}
       {match.report && (
