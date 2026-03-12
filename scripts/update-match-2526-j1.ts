@@ -102,6 +102,8 @@ async function main() {
       penaltiesOpponent: 4,
       dropGoalsOpponent: 0,
       penaltyTriesOpponent: 0,
+      // Vidéo résumé
+      videoUrl: "https://www.youtube.com/watch?v=oTa_-DRI720",
       // Infos complémentaires
       report:
         "Première journée de la saison 2025-2026. Bayonne ouvre le score par Segonds (9') " +
