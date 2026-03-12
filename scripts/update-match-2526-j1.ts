@@ -166,32 +166,35 @@ async function main() {
   });
   console.log(`  ${deleted.count} entrée(s) supprimée(s)`);
 
+  // Minutes calculées à partir des remplacements AllRugby :
+  // Velarte : 0-26 + 31-48 + 71-80 = 52 min (HIA à 26', retour 31', sorti 48', revenu 71')
+  // Le Corvec : 26-31 + 57-80 = 28 min (HIA cover puis entrée définitive)
   const USAP_SQUAD = [
     // Titulaires
-    { num: 1, lastName: "Devaux", position: "PILIER_GAUCHE" as const, isStarter: true },
-    { num: 2, lastName: "Lotrian", position: "TALONNEUR" as const, isStarter: true },
-    { num: 3, lastName: "Brookes", position: "PILIER_DROIT" as const, isStarter: true },
-    { num: 4, lastName: "Yato", position: "DEUXIEME_LIGNE" as const, isStarter: true },
-    { num: 5, lastName: "Warion", position: "DEUXIEME_LIGNE" as const, isStarter: true },
-    { num: 6, lastName: "Della Schiava", position: "TROISIEME_LIGNE_AILE" as const, isStarter: true },
-    { num: 7, lastName: "Diaby", position: "TROISIEME_LIGNE_AILE" as const, isStarter: true },
-    { num: 8, lastName: "Velarte", position: "NUMERO_HUIT" as const, isStarter: true },
-    { num: 9, lastName: "Hall", position: "DEMI_DE_MELEE" as const, isStarter: true },
-    { num: 10, lastName: "McIntyre", position: "DEMI_OUVERTURE" as const, isStarter: true },
-    { num: 11, lastName: "Dubois", position: "AILIER" as const, isStarter: true },
-    { num: 12, lastName: "De La Fuente", position: "CENTRE" as const, isStarter: true, isCaptain: true },
-    { num: 13, lastName: "Buliruarua", position: "CENTRE" as const, isStarter: true },
-    { num: 14, lastName: "Joseph", position: "AILIER" as const, isStarter: true },
-    { num: 15, lastName: "Tedder", position: "ARRIERE" as const, isStarter: true },
+    { num: 1, lastName: "Devaux", position: "PILIER_GAUCHE" as const, isStarter: true, minutesPlayed: 52 },
+    { num: 2, lastName: "Lotrian", position: "TALONNEUR" as const, isStarter: true, minutesPlayed: 57 },
+    { num: 3, lastName: "Brookes", position: "PILIER_DROIT" as const, isStarter: true, minutesPlayed: 57 },
+    { num: 4, lastName: "Yato", position: "DEUXIEME_LIGNE" as const, isStarter: true, minutesPlayed: 71 },
+    { num: 5, lastName: "Warion", position: "DEUXIEME_LIGNE" as const, isStarter: true, minutesPlayed: 80 },
+    { num: 6, lastName: "Della Schiava", position: "TROISIEME_LIGNE_AILE" as const, isStarter: true, minutesPlayed: 80 },
+    { num: 7, lastName: "Diaby", position: "TROISIEME_LIGNE_AILE" as const, isStarter: true, minutesPlayed: 57 },
+    { num: 8, lastName: "Velarte", position: "NUMERO_HUIT" as const, isStarter: true, minutesPlayed: 52 },
+    { num: 9, lastName: "Hall", position: "DEMI_DE_MELEE" as const, isStarter: true, minutesPlayed: 52 },
+    { num: 10, lastName: "McIntyre", position: "DEMI_OUVERTURE" as const, isStarter: true, minutesPlayed: 26 },
+    { num: 11, lastName: "Dubois", position: "AILIER" as const, isStarter: true, minutesPlayed: 80 },
+    { num: 12, lastName: "De La Fuente", position: "CENTRE" as const, isStarter: true, isCaptain: true, minutesPlayed: 80 },
+    { num: 13, lastName: "Buliruarua", position: "CENTRE" as const, isStarter: true, minutesPlayed: 80 },
+    { num: 14, lastName: "Joseph", position: "AILIER" as const, isStarter: true, minutesPlayed: 80 },
+    { num: 15, lastName: "Tedder", position: "ARRIERE" as const, isStarter: true, minutesPlayed: 80 },
     // Remplaçants
-    { num: 16, lastName: "Lam", position: "TALONNEUR" as const, isStarter: false },
-    { num: 17, lastName: "Beria", position: "PILIER_GAUCHE" as const, isStarter: false },
-    { num: 18, lastName: "Van Tonder", position: "TROISIEME_LIGNE_AILE" as const, isStarter: false },
-    { num: 19, lastName: "Tanguy", position: "DEUXIEME_LIGNE" as const, isStarter: false },
-    { num: 20, lastName: "Le Corvec", position: "TROISIEME_LIGNE_AILE" as const, isStarter: false },
-    { num: 21, lastName: "Ecochard", position: "DEMI_DE_MELEE" as const, isStarter: false },
-    { num: 22, lastName: "Paia'aua", position: "CENTRE" as const, isStarter: false },
-    { num: 23, lastName: "Roelofse", position: "PILIER_DROIT" as const, isStarter: false },
+    { num: 16, lastName: "Lam", position: "TALONNEUR" as const, isStarter: false, minutesPlayed: 23 },
+    { num: 17, lastName: "Beria", position: "PILIER_GAUCHE" as const, isStarter: false, minutesPlayed: 28 },
+    { num: 18, lastName: "Van Tonder", position: "TROISIEME_LIGNE_AILE" as const, isStarter: false, minutesPlayed: 32 },
+    { num: 19, lastName: "Tanguy", position: "DEUXIEME_LIGNE" as const, isStarter: false, minutesPlayed: 0 },
+    { num: 20, lastName: "Le Corvec", position: "TROISIEME_LIGNE_AILE" as const, isStarter: false, minutesPlayed: 28 },
+    { num: 21, lastName: "Ecochard", position: "DEMI_DE_MELEE" as const, isStarter: false, minutesPlayed: 28 },
+    { num: 22, lastName: "Paia'aua", position: "CENTRE" as const, isStarter: false, minutesPlayed: 54 },
+    { num: 23, lastName: "Roelofse", position: "PILIER_DROIT" as const, isStarter: false, minutesPlayed: 23 },
   ];
 
   for (const p of USAP_SQUAD) {
@@ -241,11 +244,12 @@ async function main() {
         totalPoints,
         yellowCard,
         yellowCardMin,
+        minutesPlayed: p.minutesPlayed,
       },
     });
     console.log(
-      `  ${p.isStarter ? "TIT" : "REM"} ${String(p.num).padStart(2, " ")}. ${p.lastName}` +
-        (totalPoints > 0 ? ` (${totalPoints} pts)` : "") +
+      `  ${p.isStarter ? "TIT" : "REM"} ${String(p.num).padStart(2, " ")}. ${p.lastName} (${p.minutesPlayed}')` +
+        (totalPoints > 0 ? ` ${totalPoints} pts` : "") +
         (yellowCard ? ` [CJ ${yellowCardMin}']` : "") +
         (p.lastName === "De La Fuente" ? " (C)" : ""),
     );
@@ -256,32 +260,36 @@ async function main() {
   // ---------------------------------------------------------------
   console.log("\n--- Composition Bayonne ---");
 
+  // Minutes Bayonne (source AllRugby) :
+  // Bordelai : 0-55 + 79-80 = 56 min (sorti 55', revenu 79')
+  // Habel-Kuffner : 0-52 + 66-80 = 66 min (sorti 52', revenu 66')
+  // Tiberghien : 0-52 + 71-80 = 61 min (sorti 52', revenu 71')
   const BAYONNE_SQUAD = [
     // Titulaires
-    { num: 1, firstName: "Andy", lastName: "Bordelai", position: "PILIER_GAUCHE" as const, isStarter: true },
-    { num: 2, firstName: "Facundo", lastName: "Bosch", position: "TALONNEUR" as const, isStarter: true },
-    { num: 3, firstName: "Emerick", lastName: "Setiano", position: "PILIER_DROIT" as const, isStarter: true },
-    { num: 4, firstName: "Arthur", lastName: "Iturria", position: "DEUXIEME_LIGNE" as const, isStarter: true, isCaptain: true },
-    { num: 5, firstName: "Alexander", lastName: "Moon", position: "DEUXIEME_LIGNE" as const, isStarter: true },
-    { num: 6, firstName: "Rodrigo", lastName: "Bruni", position: "TROISIEME_LIGNE_AILE" as const, isStarter: true },
-    { num: 7, firstName: "Esteban", lastName: "Capilla", position: "TROISIEME_LIGNE_AILE" as const, isStarter: true },
-    { num: 8, firstName: "Giovanni", lastName: "Habel-Kuffner", position: "NUMERO_HUIT" as const, isStarter: true },
-    { num: 9, firstName: "Maxime", lastName: "Machenaud", position: "DEMI_DE_MELEE" as const, isStarter: true },
-    { num: 10, firstName: "Joris", lastName: "Segonds", position: "DEMI_OUVERTURE" as const, isStarter: true },
-    { num: 11, firstName: "Arnaud", lastName: "Erbinartegaray", position: "AILIER" as const, isStarter: true },
-    { num: 12, firstName: "Manu", lastName: "Tuilagi", position: "CENTRE" as const, isStarter: true },
-    { num: 13, firstName: "Guillaume", lastName: "Martocq", position: "CENTRE" as const, isStarter: true },
-    { num: 14, firstName: "Tom", lastName: "Spring", position: "AILIER" as const, isStarter: true },
-    { num: 15, firstName: "Cheikh", lastName: "Tiberghien", position: "ARRIERE" as const, isStarter: true },
+    { num: 1, firstName: "Andy", lastName: "Bordelai", position: "PILIER_GAUCHE" as const, isStarter: true, minutesPlayed: 56 },
+    { num: 2, firstName: "Facundo", lastName: "Bosch", position: "TALONNEUR" as const, isStarter: true, minutesPlayed: 80 },
+    { num: 3, firstName: "Emerick", lastName: "Setiano", position: "PILIER_DROIT" as const, isStarter: true, minutesPlayed: 60 },
+    { num: 4, firstName: "Arthur", lastName: "Iturria", position: "DEUXIEME_LIGNE" as const, isStarter: true, isCaptain: true, minutesPlayed: 36 },
+    { num: 5, firstName: "Alexander", lastName: "Moon", position: "DEUXIEME_LIGNE" as const, isStarter: true, minutesPlayed: 80 },
+    { num: 6, firstName: "Rodrigo", lastName: "Bruni", position: "TROISIEME_LIGNE_AILE" as const, isStarter: true, minutesPlayed: 66 },
+    { num: 7, firstName: "Esteban", lastName: "Capilla", position: "TROISIEME_LIGNE_AILE" as const, isStarter: true, minutesPlayed: 64 },
+    { num: 8, firstName: "Giovanni", lastName: "Habel-Kuffner", position: "NUMERO_HUIT" as const, isStarter: true, minutesPlayed: 66 },
+    { num: 9, firstName: "Maxime", lastName: "Machenaud", position: "DEMI_DE_MELEE" as const, isStarter: true, minutesPlayed: 60 },
+    { num: 10, firstName: "Joris", lastName: "Segonds", position: "DEMI_OUVERTURE" as const, isStarter: true, minutesPlayed: 80 },
+    { num: 11, firstName: "Arnaud", lastName: "Erbinartegaray", position: "AILIER" as const, isStarter: true, minutesPlayed: 80 },
+    { num: 12, firstName: "Manu", lastName: "Tuilagi", position: "CENTRE" as const, isStarter: true, minutesPlayed: 80 },
+    { num: 13, firstName: "Guillaume", lastName: "Martocq", position: "CENTRE" as const, isStarter: true, minutesPlayed: 71 },
+    { num: 14, firstName: "Tom", lastName: "Spring", position: "AILIER" as const, isStarter: true, minutesPlayed: 80 },
+    { num: 15, firstName: "Cheikh", lastName: "Tiberghien", position: "ARRIERE" as const, isStarter: true, minutesPlayed: 61 },
     // Remplaçants
-    { num: 16, firstName: "Lucas", lastName: "Martin", position: "TALONNEUR" as const, isStarter: false },
-    { num: 17, firstName: "Swan", lastName: "Cormenier", position: "PILIER_GAUCHE" as const, isStarter: false },
-    { num: 18, firstName: "Ewan", lastName: "Johnson", position: "DEUXIEME_LIGNE" as const, isStarter: false },
-    { num: 19, firstName: "Baptiste", lastName: "Héguy", position: "TROISIEME_LIGNE_AILE" as const, isStarter: false },
-    { num: 20, firstName: "Alexandre", lastName: "Fischer", position: "TROISIEME_LIGNE_AILE" as const, isStarter: false },
-    { num: 21, firstName: "Herschel", lastName: "Jantjies", position: "DEMI_DE_MELEE" as const, isStarter: false },
-    { num: 22, firstName: "Yohan", lastName: "Orabé", position: "AILIER" as const, isStarter: false },
-    { num: 23, firstName: "Luke", lastName: "Tagi", position: "PILIER_DROIT" as const, isStarter: false },
+    { num: 16, firstName: "Lucas", lastName: "Martin", position: "TALONNEUR" as const, isStarter: false, minutesPlayed: 0 },
+    { num: 17, firstName: "Swan", lastName: "Cormenier", position: "PILIER_GAUCHE" as const, isStarter: false, minutesPlayed: 24 },
+    { num: 18, firstName: "Ewan", lastName: "Johnson", position: "DEUXIEME_LIGNE" as const, isStarter: false, minutesPlayed: 16 },
+    { num: 19, firstName: "Baptiste", lastName: "Héguy", position: "TROISIEME_LIGNE_AILE" as const, isStarter: false, minutesPlayed: 44 },
+    { num: 20, firstName: "Alexandre", lastName: "Fischer", position: "TROISIEME_LIGNE_AILE" as const, isStarter: false, minutesPlayed: 28 },
+    { num: 21, firstName: "Herschel", lastName: "Jantjies", position: "DEMI_DE_MELEE" as const, isStarter: false, minutesPlayed: 20 },
+    { num: 22, firstName: "Yohan", lastName: "Orabé", position: "AILIER" as const, isStarter: false, minutesPlayed: 28 },
+    { num: 23, firstName: "Luke", lastName: "Tagi", position: "PILIER_DROIT" as const, isStarter: false, minutesPlayed: 20 },
   ];
 
   for (const p of BAYONNE_SQUAD) {
@@ -355,11 +363,12 @@ async function main() {
         totalPoints,
         yellowCard,
         yellowCardMin,
+        minutesPlayed: p.minutesPlayed,
       },
     });
     console.log(
-      `       ${p.isStarter ? "TIT" : "REM"} ${String(p.num).padStart(2, " ")}. ${p.firstName} ${p.lastName}` +
-        (totalPoints > 0 ? ` (${totalPoints} pts)` : "") +
+      `       ${p.isStarter ? "TIT" : "REM"} ${String(p.num).padStart(2, " ")}. ${p.firstName} ${p.lastName} (${p.minutesPlayed}')` +
+        (totalPoints > 0 ? ` ${totalPoints} pts` : "") +
         (yellowCard ? ` [CJ ${yellowCardMin}']` : "") +
         (p.isCaptain ? " (C)" : ""),
     );
