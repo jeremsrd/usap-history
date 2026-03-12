@@ -302,7 +302,7 @@ function computeResult(scoreUsap: number, scoreOpp: number): {
   }
   if (scoreUsap < scoreOpp) {
     const margin = scoreOpp - scoreUsap;
-    return { result: MatchResult.DEFAITE, bonusDefensif: margin <= 7 };
+    return { result: MatchResult.DEFAITE, bonusDefensif: margin <= 5 };
   }
   return { result: MatchResult.NUL, bonusDefensif: false };
 }
