@@ -159,6 +159,8 @@ async function main() {
       // Bonus
       bonusOffensif: false,
       bonusDefensif: false,
+      // Vidéo
+      videoUrl: "https://www.youtube.com/watch?v=XYCuGnX7FaI",
       // Rapport
       report:
         "Défaite à domicile face au Racing 92 (15-28). Tom Ecochard ouvre le score dès la 2e minute, " +
