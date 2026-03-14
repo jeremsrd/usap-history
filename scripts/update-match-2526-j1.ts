@@ -148,7 +148,14 @@ async function main() {
 
   for (const name of usapNames) {
     try {
-      PLAYER_IDS[name] = await findPlayer(name);
+      // Utiliser le prénom pour les homonymes (frères Le Corvec et Lotrian)
+      if (name === "Le Corvec") {
+        PLAYER_IDS[name] = await findPlayer(name, "Mattéo");
+      } else if (name === "Lotrian") {
+        PLAYER_IDS[name] = await findPlayer(name, "Mathys");
+      } else {
+        PLAYER_IDS[name] = await findPlayer(name);
+      }
       console.log(`  ✓ ${name}`);
     } catch {
       console.log(`  ✗ ${name} — NON TROUVÉ`);
