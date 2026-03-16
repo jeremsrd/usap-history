@@ -159,6 +159,8 @@ async function main() {
       // Bonus
       bonusOffensif: false,
       bonusDefensif: false,
+      // Vidéo
+      videoUrl: "https://www.youtube.com/watch?v=GSvibwREN0Q",
       // Rapport
       report:
         "7e défaite consécutive et une entame catastrophique pour l'USAP. Dès la 5e minute, " +
