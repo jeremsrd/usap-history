@@ -189,6 +189,8 @@ async function main() {
       // Bonus
       bonusOffensif: false,
       bonusDefensif: true,
+      // Vidéo
+      videoUrl: "https://www.youtube.com/watch?v=VSTgEqIif_8",
       // Rapport
       report:
         "Le match de la peur entre les deux derniers du classement tourne à l'avantage de Montauban. " +
