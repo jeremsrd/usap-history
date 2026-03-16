@@ -62,7 +62,7 @@ async function main() {
   // ---------------------------------------------------------------
   console.log("\n--- Stade ---");
   const venue = await prisma.venue.findFirst({
-    where: { slug: "aime-giral" },
+    where: { name: { contains: "Giral", mode: "insensitive" } },
   });
   if (!venue) {
     throw new Error("Stade Aimé-Giral non trouvé en BDD !");
