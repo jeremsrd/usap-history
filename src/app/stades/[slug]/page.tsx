@@ -2,11 +2,15 @@ import Link from "next/link";
 import { notFound, redirect } from "next/navigation";
 import { prisma } from "@/lib/prisma";
 import { formatDateFR } from "@/lib/utils";
-import { Calendar, MapPin, Users } from "lucide-react";
+import { Calendar, Filter, MapPin, Users } from "lucide-react";
 import type { Metadata } from "next";
 
 type Props = {
   params: Promise<{ slug: string }>;
+  searchParams: Promise<{
+    competition?: string;
+    resultat?: string;
+  }>;
 };
 
 /**
@@ -35,8 +39,11 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   };
 }
 
-export default async function StadeDetailPage({ params }: Props) {
+export default async function StadeDetailPage({ params, searchParams }: Props) {
   const { slug } = await params;
+  const sp = await searchParams;
+  const competitionFilter = sp.competition || undefined;
+  const resultatFilter = sp.resultat || undefined;
 
   const id = extractIdFromSlug(slug);
   if (!id) notFound();
@@ -57,7 +64,8 @@ export default async function StadeDetailPage({ params }: Props) {
           matchday: true,
           round: true,
           attendance: true,
-          competition: { select: { shortName: true, name: true } },
+          competitionId: true,
+          competition: { select: { id: true, shortName: true, name: true } },
           opponent: { select: { shortName: true, name: true } },
           season: { select: { label: true } },
           referee: { select: { firstName: true, lastName: true, slug: true } },
@@ -73,15 +81,44 @@ export default async function StadeDetailPage({ params }: Props) {
     redirect(`/stades/${venue.slug}`);
   }
 
-  // Stats agrégées
-  const totalMatches = venue.matches.length;
-  const victories = venue.matches.filter(
+  // Compétitions disponibles pour ce stade (pour le filtre)
+  const competitionsInVenue = Array.from(
+    new Map(
+      venue.matches.map((m) => [m.competition.id, m.competition]),
+    ).values(),
+  ).sort((a, b) => (a.shortName || a.name).localeCompare(b.shortName || b.name));
+
+  // Filtrage des matchs
+  const filteredMatches = venue.matches.filter((m) => {
+    if (competitionFilter && m.competitionId !== competitionFilter) return false;
+    if (resultatFilter === "victoire" && m.result !== "VICTOIRE") return false;
+    if (resultatFilter === "defaite" && m.result !== "DEFAITE") return false;
+    if (resultatFilter === "nul" && m.result !== "NUL") return false;
+    return true;
+  });
+
+  const hasFilters = competitionFilter || resultatFilter;
+
+  // Stats agrégées (sur les matchs filtrés)
+  const totalMatches = filteredMatches.length;
+  const victories = filteredMatches.filter(
     (m) => m.result === "VICTOIRE",
   ).length;
-  const defeats = venue.matches.filter(
+  const defeats = filteredMatches.filter(
     (m) => m.result === "DEFAITE",
   ).length;
-  const draws = venue.matches.filter((m) => m.result === "NUL").length;
+  const draws = filteredMatches.filter((m) => m.result === "NUL").length;
+
+  // Construire le query string pour les filtres
+  function buildFilterUrl(overrides: Record<string, string | undefined>): string {
+    const qs = new URLSearchParams();
+    const comp = overrides.competition !== undefined ? overrides.competition : competitionFilter;
+    const res = overrides.resultat !== undefined ? overrides.resultat : resultatFilter;
+    if (comp) qs.set("competition", comp);
+    if (res) qs.set("resultat", res);
+    const str = qs.toString();
+    return str ? `/stades/${slug}?${str}` : `/stades/${slug}`;
+  }
 
   return (
     <div className="mx-auto max-w-7xl px-4 py-10">
@@ -176,8 +213,56 @@ export default async function StadeDetailPage({ params }: Props) {
         <section>
           <h2 className="mb-4 flex items-center gap-2 text-2xl font-bold uppercase tracking-wider text-foreground">
             <Calendar className="h-6 w-6 text-usap-or" />
-            Matchs disputés ({venue.matches.length})
+            Matchs disputés ({totalMatches}{hasFilters ? ` / ${venue.matches.length}` : ""})
           </h2>
+
+          {/* Filtres */}
+          <form className="mb-4 flex flex-wrap items-center gap-3">
+            <Filter className="h-4 w-4 text-muted-foreground" />
+
+            {/* Compétition */}
+            <select
+              name="competition"
+              defaultValue={competitionFilter ?? ""}
+              className="rounded-lg border border-border bg-background px-3 py-2 text-sm text-foreground focus:border-usap-or focus:outline-none"
+            >
+              <option value="">Toutes les compétitions</option>
+              {competitionsInVenue.map((c) => (
+                <option key={c.id} value={c.id}>
+                  {c.shortName || c.name}
+                </option>
+              ))}
+            </select>
+
+            {/* Résultat */}
+            <select
+              name="resultat"
+              defaultValue={resultatFilter ?? ""}
+              className="rounded-lg border border-border bg-background px-3 py-2 text-sm text-foreground focus:border-usap-or focus:outline-none"
+            >
+              <option value="">Tous les résultats</option>
+              <option value="victoire">Victoires</option>
+              <option value="defaite">Défaites</option>
+              <option value="nul">Nuls</option>
+            </select>
+
+            <button
+              type="submit"
+              className="rounded-lg bg-usap-sang px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-usap-sang/80"
+            >
+              Filtrer
+            </button>
+
+            {hasFilters && (
+              <Link
+                href={`/stades/${slug}`}
+                className="text-sm text-muted-foreground hover:text-usap-sang"
+              >
+                Réinitialiser
+              </Link>
+            )}
+          </form>
+
           <div className="overflow-x-auto rounded-lg border border-border">
             <table className="w-full text-sm">
               <thead>
@@ -206,7 +291,14 @@ export default async function StadeDetailPage({ params }: Props) {
                 </tr>
               </thead>
               <tbody>
-                {venue.matches.map((m) => {
+                {filteredMatches.length === 0 && (
+                  <tr>
+                    <td colSpan={7} className="px-3 py-8 text-center text-muted-foreground">
+                      Aucun match ne correspond aux filtres sélectionnés.
+                    </td>
+                  </tr>
+                )}
+                {filteredMatches.map((m) => {
                   const resultColor =
                     m.result === "VICTOIRE"
                       ? "bg-green-500/10 text-green-600"
