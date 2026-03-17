@@ -96,18 +96,27 @@ export const MATCH_RESULTS: Record<string, string> = {
 // Navigation principale
 // =============================================================================
 
-export const NAV_LINKS = [
+// Liens principaux affichés directement dans la barre de navigation
+export const NAV_LINKS_MAIN = [
   { href: "/", label: "Accueil" },
   { href: "/saisons", label: "Saisons" },
-  { href: "/joueurs", label: "Joueurs" },
   { href: "/matchs", label: "Matchs" },
-  { href: "/adversaires", label: "Adversaires" },
-  { href: "/entraineurs", label: "Entraîneurs" },
-  { href: "/presidents", label: "Présidents" },
+  { href: "/joueurs", label: "Joueurs" },
   { href: "/statistiques", label: "Statistiques" },
   { href: "/palmares", label: "Palmarès" },
-  { href: "/arbitres", label: "Arbitres" },
 ] as const;
+
+// Liens secondaires regroupés dans le dropdown "Explorer"
+export const NAV_LINKS_MORE = [
+  { href: "/adversaires", label: "Adversaires" },
+  { href: "/stades", label: "Stades" },
+  { href: "/arbitres", label: "Arbitres" },
+  { href: "/entraineurs", label: "Entraîneurs" },
+  { href: "/presidents", label: "Présidents" },
+] as const;
+
+// Tous les liens (pour le menu mobile)
+export const NAV_LINKS = [...NAV_LINKS_MAIN, ...NAV_LINKS_MORE];
 
 // =============================================================================
 // Palmarès résumé
