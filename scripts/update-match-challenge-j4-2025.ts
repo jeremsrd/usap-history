@@ -190,6 +190,7 @@ async function main() {
         "et une pénalité d'Aucagne (73') arrachent le match nul. Ce résultat suffit " +
         "à l'USAP pour se qualifier en huitièmes de finale de Challenge Cup. " +
         "Première pro pour Diego Mascarenc.",
+      videoUrl: "https://www.youtube.com/watch?v=PONIgKr6dug",
     },
   });
   console.log("  Match mis à jour");
