@@ -162,6 +162,8 @@ async function main() {
       penaltiesOpponent: 0,
       dropGoalsOpponent: 0,
       penaltyTriesOpponent: 0,
+      // Vidéo
+      videoUrl: "https://www.youtube.com/watch?v=s9lUUg4iy7Y",
       // Bonus
       bonusOffensif: false,
       bonusDefensif: false,
