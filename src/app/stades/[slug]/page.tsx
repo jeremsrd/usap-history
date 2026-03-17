@@ -8,6 +8,7 @@ import type { Metadata } from "next";
 type Props = {
   params: Promise<{ slug: string }>;
   searchParams: Promise<{
+    saison?: string;
     competition?: string;
     resultat?: string;
   }>;
@@ -42,6 +43,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
 export default async function StadeDetailPage({ params, searchParams }: Props) {
   const { slug } = await params;
   const sp = await searchParams;
+  const saisonFilter = sp.saison || undefined;
   const competitionFilter = sp.competition || undefined;
   const resultatFilter = sp.resultat || undefined;
 
@@ -64,10 +66,11 @@ export default async function StadeDetailPage({ params, searchParams }: Props) {
           matchday: true,
           round: true,
           attendance: true,
+          seasonId: true,
           competitionId: true,
           competition: { select: { id: true, shortName: true, name: true } },
           opponent: { select: { shortName: true, name: true } },
-          season: { select: { label: true } },
+          season: { select: { id: true, label: true } },
           referee: { select: { firstName: true, lastName: true, slug: true } },
         },
       },
@@ -81,6 +84,13 @@ export default async function StadeDetailPage({ params, searchParams }: Props) {
     redirect(`/stades/${venue.slug}`);
   }
 
+  // Saisons disponibles pour ce stade (pour le filtre)
+  const seasonsInVenue = Array.from(
+    new Map(
+      venue.matches.map((m) => [m.season.id, m.season]),
+    ).values(),
+  ).sort((a, b) => b.label.localeCompare(a.label)); // Plus récentes en premier
+
   // Compétitions disponibles pour ce stade (pour le filtre)
   const competitionsInVenue = Array.from(
     new Map(
@@ -90,6 +100,7 @@ export default async function StadeDetailPage({ params, searchParams }: Props) {
 
   // Filtrage des matchs
   const filteredMatches = venue.matches.filter((m) => {
+    if (saisonFilter && m.seasonId !== saisonFilter) return false;
     if (competitionFilter && m.competitionId !== competitionFilter) return false;
     if (resultatFilter === "victoire" && m.result !== "VICTOIRE") return false;
     if (resultatFilter === "defaite" && m.result !== "DEFAITE") return false;
@@ -97,7 +108,7 @@ export default async function StadeDetailPage({ params, searchParams }: Props) {
     return true;
   });
 
-  const hasFilters = competitionFilter || resultatFilter;
+  const hasFilters = saisonFilter || competitionFilter || resultatFilter;
 
   // Stats agrégées (sur les matchs filtrés)
   const totalMatches = filteredMatches.length;
@@ -219,6 +230,20 @@ export default async function StadeDetailPage({ params, searchParams }: Props) {
           {/* Filtres */}
           <form className="mb-4 flex flex-wrap items-center gap-3">
             <Filter className="h-4 w-4 text-muted-foreground" />
+
+            {/* Saison */}
+            <select
+              name="saison"
+              defaultValue={saisonFilter ?? ""}
+              className="rounded-lg border border-border bg-background px-3 py-2 text-sm text-foreground focus:border-usap-or focus:outline-none"
+            >
+              <option value="">Toutes les saisons</option>
+              {seasonsInVenue.map((s) => (
+                <option key={s.id} value={s.id}>
+                  {s.label}
+                </option>
+              ))}
+            </select>
 
             {/* Compétition */}
             <select
