@@ -204,6 +204,7 @@ async function main() {
         "Malgré un carton jaune pour Petaia (58'), les Catalans décrochent le bonus " +
         "défensif en revenant à 7 points. Lucas Dubois échoue de peu dans les " +
         "dernières minutes pour l'essai égalisateur.",
+      videoUrl: "https://www.youtube.com/watch?v=rR3Dm4dtFDI",
     },
   });
   console.log("  Match mis à jour");
