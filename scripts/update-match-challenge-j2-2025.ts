@@ -206,6 +206,7 @@ async function main() {
         "Bernasconi (49') et Mendy (59') creusent l'écart pour Benetton, mais Fahy " +
         "maintient l'espoir (38-31). Deux pénalités d'Umaga dans le dernier quart " +
         "scellent la victoire italienne 44-31.",
+      videoUrl: "https://www.youtube.com/watch?v=iYzIdNx3HIk",
     },
   });
   console.log("  Match mis à jour");
