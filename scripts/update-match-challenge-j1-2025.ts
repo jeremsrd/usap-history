@@ -193,6 +193,7 @@ async function main() {
         "de Ben Carter (60') portent le score à 36-7. Les Dragons sauvent l'honneur par " +
         "Westwood (50') et un doublé d'Austin (65', 75'). Le Corvec complète la victoire (70'). " +
         "Un succès capital pour le moral après 11 défaites consécutives en Top 14.",
+      videoUrl: "https://www.youtube.com/watch?v=vQu30ADhBgM",
     },
   });
   console.log("  Match mis à jour");
