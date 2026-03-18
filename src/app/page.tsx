@@ -17,6 +17,8 @@ import {
 } from "lucide-react";
 import { Prisma } from "@prisma/client";
 
+export const dynamic = "force-dynamic";
+
 // Type pour les matchs retournés par la raw query "ce jour dans l'histoire"
 type TodayMatch = {
   slug: string;
