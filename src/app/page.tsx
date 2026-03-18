@@ -36,68 +36,69 @@ export default async function Home() {
   const todayMonth = now.getMonth() + 1;
   const todayDay = now.getDate();
 
-  const [lastMatch, currentSeason, matchCount, playerCount, seasonCount, todayMatches] =
-    await Promise.all([
-      // Dernier match joué
-      prisma.match.findFirst({
-        where: { date: { lte: now } },
+  // Requêtes séquentielles pour éviter de saturer le pool de connexions Supabase
+  const lastMatch = await prisma.match.findFirst({
+    where: { date: { lte: now } },
+    orderBy: { date: "desc" },
+    select: {
+      slug: true,
+      date: true,
+      scoreUsap: true,
+      scoreOpponent: true,
+      result: true,
+      isHome: true,
+      matchday: true,
+      round: true,
+      competition: { select: { name: true, shortName: true } },
+      opponent: { select: { name: true, shortName: true, logoUrl: true } },
+      venue: { select: { name: true, city: true } },
+      season: { select: { label: true } },
+    },
+  });
+
+  const currentSeason = await prisma.season.findFirst({
+    orderBy: { startYear: "desc" },
+    include: {
+      coach: { select: { firstName: true, lastName: true } },
+      matches: {
         orderBy: { date: "desc" },
-        select: {
-          slug: true,
-          date: true,
-          scoreUsap: true,
-          scoreOpponent: true,
-          result: true,
-          isHome: true,
-          matchday: true,
-          round: true,
-          competition: { select: { name: true, shortName: true } },
-          opponent: { select: { name: true, shortName: true, logoUrl: true } },
-          venue: { select: { name: true, city: true } },
-          season: { select: { label: true } },
-        },
-      }),
+        take: 5,
+        select: { result: true },
+      },
+    },
+  });
 
-      // Saison en cours (la plus récente)
-      prisma.season.findFirst({
-        orderBy: { startYear: "desc" },
-        include: {
-          coach: { select: { firstName: true, lastName: true } },
-          matches: {
-            orderBy: { date: "desc" },
-            take: 5,
-            select: { result: true },
-          },
-        },
-      }),
+  const [matchCount, playerCount, seasonCount] = await Promise.all([
+    prisma.match.count(),
+    prisma.player.count({
+      where: {
+        OR: [
+          { careerClubs: { some: { isUsap: true } } },
+          { matchAppearances: { some: { isOpponent: false } } },
+          { seasonSquads: { some: {} } },
+        ],
+      },
+    }),
+    prisma.season.count(),
+  ]);
 
-      // Compteurs
-      prisma.match.count(),
-      prisma.player.count({
-        where: {
-          OR: [
-            { careerClubs: { some: { isUsap: true } } },
-            { matchAppearances: { some: { isOpponent: false } } },
-            { seasonSquads: { some: {} } },
-          ],
-        },
-      }),
-      prisma.season.count(),
-
-      // Ce jour dans l'histoire
-      prisma.$queryRaw<TodayMatch[]>(
-        Prisma.sql`
-          SELECT m.slug, m.date, m.score_usap, m.score_opponent, m.result, m.is_home,
-                 o.name AS opponent_name, c.name AS competition_name
-          FROM matches m
-          JOIN opponents o ON m.opponent_id = o.id
-          JOIN competitions c ON m.competition_id = c.id
-          WHERE EXTRACT(MONTH FROM m.date) = ${todayMonth}
-            AND EXTRACT(DAY FROM m.date) = ${todayDay}
-          ORDER BY m.date DESC
-        `,
-      ),
-    ]);
+  let todayMatches: TodayMatch[] = [];
+  try {
+    todayMatches = await prisma.$queryRaw<TodayMatch[]>(
+      Prisma.sql`
+        SELECT m.slug, m.date, m.score_usap, m.score_opponent, m.result, m.is_home,
+               o.name AS opponent_name, c.name AS competition_name
+        FROM matches m
+        JOIN opponents o ON m.opponent_id = o.id
+        JOIN competitions c ON m.competition_id = c.id
+        WHERE EXTRACT(MONTH FROM m.date) = ${todayMonth}
+          AND EXTRACT(DAY FROM m.date) = ${todayDay}
+        ORDER BY m.date DESC
+      `,
+    );
+  } catch {
+    // Fallback silencieux si la raw query échoue
+  }
 
   // Formater la date du jour pour l'affichage
   const todayLabel = now.toLocaleDateString("fr-FR", {
