@@ -5,6 +5,8 @@ import { formatDateFR } from "@/lib/utils";
 import { Calendar, Filter, MapPin, Users } from "lucide-react";
 import type { Metadata } from "next";
 
+export const dynamic = "force-dynamic";
+
 type Props = {
   params: Promise<{ slug: string }>;
   searchParams: Promise<{

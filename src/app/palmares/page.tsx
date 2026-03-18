@@ -3,6 +3,8 @@ import { Trophy, Star, Medal } from "lucide-react";
 import { PALMARES } from "@/lib/constants";
 import type { Metadata } from "next";
 
+export const dynamic = "force-dynamic";
+
 export const metadata: Metadata = {
   title: "Palmarès - USAP Historia",
   description:

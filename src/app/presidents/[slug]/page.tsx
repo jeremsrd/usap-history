@@ -5,6 +5,8 @@ import { Calendar, User, Trophy } from "lucide-react";
 import { DIVISIONS } from "@/lib/constants";
 import type { Metadata } from "next";
 
+export const dynamic = "force-dynamic";
+
 type Props = {
   params: Promise<{ slug: string }>;
 };

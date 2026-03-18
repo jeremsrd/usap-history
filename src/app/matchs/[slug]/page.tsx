@@ -14,6 +14,8 @@ import {
 import type { Metadata } from "next";
 import VideoEmbed from "@/components/VideoEmbed";
 
+export const dynamic = "force-dynamic";
+
 type Props = {
   params: Promise<{ slug: string }>;
 };

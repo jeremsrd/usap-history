@@ -6,6 +6,8 @@ import { countryCodeToFlag } from "@/lib/utils";
 import { Users } from "lucide-react";
 import type { Metadata } from "next";
 
+export const dynamic = "force-dynamic";
+
 export const metadata: Metadata = {
   title: "Joueurs - USAP Historia",
   description:

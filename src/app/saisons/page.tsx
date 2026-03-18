@@ -4,6 +4,8 @@ import { DIVISIONS } from "@/lib/constants";
 import { Trophy, ArrowUp, ArrowDown } from "lucide-react";
 import type { Metadata } from "next";
 
+export const dynamic = "force-dynamic";
+
 export const metadata: Metadata = {
   title: "Saisons - USAP Historia",
   description:

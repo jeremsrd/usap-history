@@ -4,6 +4,8 @@ import { formatDateFR } from "@/lib/utils";
 import { MapPin } from "lucide-react";
 import type { Metadata } from "next";
 
+export const dynamic = "force-dynamic";
+
 export const metadata: Metadata = {
   title: "Matchs - USAP Historia",
   description:

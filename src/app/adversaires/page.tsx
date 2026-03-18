@@ -5,6 +5,8 @@ import { countryCodeToFlag } from "@/lib/utils";
 import { Shield } from "lucide-react";
 import type { Metadata } from "next";
 
+export const dynamic = "force-dynamic";
+
 export const metadata: Metadata = {
   title: "Adversaires - USAP Historia",
   description:

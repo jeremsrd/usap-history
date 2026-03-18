@@ -3,6 +3,8 @@ import { prisma } from "@/lib/prisma";
 import { User } from "lucide-react";
 import type { Metadata } from "next";
 
+export const dynamic = "force-dynamic";
+
 export const metadata: Metadata = {
   title: "Arbitres - USAP Historia",
   description:
