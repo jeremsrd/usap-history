@@ -370,6 +370,7 @@ model Season {
   // Relations
   matches       Match[]
   seasonPlayers SeasonPlayer[]
+  seasonCoaches SeasonCoach[]   // Staff technique détaillé avec dates
 
   createdAt DateTime @default(now()) @map("created_at")
   updatedAt DateTime @updatedAt @map("updated_at")
@@ -692,12 +693,51 @@ model Coach {
   photoUrl      String?  @map("photo_url")
   biography     String?  @db.Text
 
-  seasons       Season[]
+  seasons       Season[]          // Relation legacy (entraîneur principal unique)
+  seasonCoaches SeasonCoach[]     // Nouvelle relation détaillée
 
   createdAt DateTime @default(now()) @map("created_at")
   updatedAt DateTime @updatedAt @map("updated_at")
 
   @@map("coaches")
+}
+
+// =============================================================================
+// ENTRAÎNEURS PAR SAISON (table de liaison)
+// Permet plusieurs entraîneurs par saison avec dates et rôles
+// Ex: Azéma (juil-jan) puis Labit (jan-juin) sur la même saison
+// =============================================================================
+
+model SeasonCoach {
+  id            String   @id @default(cuid())
+  seasonId      String   @map("season_id")
+  season        Season   @relation(fields: [seasonId], references: [id], onDelete: Cascade)
+  coachId       String   @map("coach_id")
+  coach         Coach    @relation(fields: [coachId], references: [id])
+
+  role          CoachRole @default(ENTRAINEUR_PRINCIPAL)
+  startDate     DateTime? @map("start_date")     // Date de prise de fonction dans la saison
+  endDate       DateTime? @map("end_date")        // Date de fin (null = toujours en poste)
+  isInterim     Boolean   @default(false) @map("is_interim") // Intérimaire ?
+  displayOrder  Int       @default(0) @map("display_order")  // Ordre d'affichage
+  notes         String?   @db.Text
+
+  createdAt DateTime @default(now()) @map("created_at")
+
+  @@unique([seasonId, coachId, role])
+  @@map("season_coaches")
+  @@index([seasonId])
+  @@index([coachId])
+}
+
+enum CoachRole {
+  ENTRAINEUR_PRINCIPAL
+  ENTRAINEUR_ADJOINT
+  ENTRAINEUR_AVANTS
+  ENTRAINEUR_ARRIERES
+  ENTRAINEUR_DEFENSE
+  PREPARATEUR_PHYSIQUE
+  INTERIMAIRE
 }
 
 // =============================================================================

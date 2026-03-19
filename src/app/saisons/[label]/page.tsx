@@ -46,6 +46,12 @@ export default async function SaisonDetailPage({ params }: Props) {
     include: {
       coach: true,
       president: true,
+      seasonCoaches: {
+        orderBy: { displayOrder: "asc" },
+        include: {
+          coach: { select: { firstName: true, lastName: true, slug: true } },
+        },
+      },
       matches: {
         orderBy: { date: "asc" },
         include: {
@@ -261,13 +267,52 @@ export default async function SaisonDetailPage({ params }: Props) {
 
           {/* Staff */}
           <div className="text-sm text-muted-foreground">
-            {season.coach && (
-              <p>
-                <span className="font-medium text-foreground">
-                  Entraîneur :
-                </span>{" "}
-                {season.coach.firstName} {season.coach.lastName}
-              </p>
+            {season.seasonCoaches.length > 0 ? (
+              // Affichage multi-entraîneurs via SeasonCoach
+              season.seasonCoaches.map((sc) => {
+                const roleLabels: Record<string, string> = {
+                  ENTRAINEUR_PRINCIPAL: "Entraîneur",
+                  ENTRAINEUR_ADJOINT: "Adjoint",
+                  ENTRAINEUR_AVANTS: "Entr. avants",
+                  ENTRAINEUR_ARRIERES: "Entr. arrières",
+                  ENTRAINEUR_DEFENSE: "Entr. défense",
+                  PREPARATEUR_PHYSIQUE: "Prépa. physique",
+                  INTERIMAIRE: "Intérimaire",
+                };
+                const roleLabel = roleLabels[sc.role] ?? sc.role;
+                const period =
+                  sc.startDate || sc.endDate
+                    ? ` (${sc.startDate ? new Date(sc.startDate).toLocaleDateString("fr-FR", { month: "short" }) : ""}${sc.endDate ? ` → ${new Date(sc.endDate).toLocaleDateString("fr-FR", { month: "short" })}` : " → …"})`
+                    : "";
+                return (
+                  <p key={sc.id}>
+                    <span className="font-medium text-foreground">
+                      {roleLabel} :
+                    </span>{" "}
+                    <Link
+                      href={`/entraineurs/${sc.coach.slug}`}
+                      className="hover:text-usap-sang"
+                    >
+                      {sc.coach.firstName} {sc.coach.lastName}
+                    </Link>
+                    {period && (
+                      <span className="text-xs text-muted-foreground">
+                        {period}
+                      </span>
+                    )}
+                  </p>
+                );
+              })
+            ) : (
+              // Fallback legacy
+              season.coach && (
+                <p>
+                  <span className="font-medium text-foreground">
+                    Entraîneur :
+                  </span>{" "}
+                  {season.coach.firstName} {season.coach.lastName}
+                </p>
+              )
             )}
             {season.president && (
               <p>

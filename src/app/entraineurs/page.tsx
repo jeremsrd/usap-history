@@ -15,7 +15,7 @@ export default async function EntraineursPage() {
   const coaches = await prisma.coach.findMany({
     orderBy: [{ lastName: "asc" }, { firstName: "asc" }],
     include: {
-      _count: { select: { seasons: true } },
+      _count: { select: { seasons: true, seasonCoaches: true } },
     },
   });
 
@@ -59,8 +59,8 @@ export default async function EntraineursPage() {
                   <p className="mt-1 text-sm text-usap-or">{coach.role}</p>
                 )}
                 <p className="mt-1 text-sm text-muted-foreground">
-                  {coach._count.seasons} saison
-                  {coach._count.seasons > 1 ? "s" : ""}
+                  {Math.max(coach._count.seasons, coach._count.seasonCoaches)} saison
+                  {Math.max(coach._count.seasons, coach._count.seasonCoaches) > 1 ? "s" : ""}
                 </p>
               </div>
             </Link>

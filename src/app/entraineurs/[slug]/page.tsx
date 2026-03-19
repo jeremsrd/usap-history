@@ -43,6 +43,7 @@ export default async function EntraineurDetailPage({ params }: Props) {
   const coach = await prisma.coach.findUnique({
     where: { id },
     include: {
+      // Relation legacy
       seasons: {
         orderBy: { startYear: "desc" },
         select: {
@@ -60,6 +61,28 @@ export default async function EntraineurDetailPage({ params }: Props) {
           pointsAgainst: true,
         },
       },
+      // Nouvelle relation détaillée
+      seasonCoaches: {
+        orderBy: { season: { startYear: "desc" } },
+        include: {
+          season: {
+            select: {
+              label: true,
+              division: true,
+              finalRanking: true,
+              champion: true,
+              promoted: true,
+              relegated: true,
+              matchesPlayed: true,
+              wins: true,
+              draws: true,
+              losses: true,
+              pointsFor: true,
+              pointsAgainst: true,
+            },
+          },
+        },
+      },
     },
   });
 
@@ -69,19 +92,70 @@ export default async function EntraineurDetailPage({ params }: Props) {
     redirect(`/entraineurs/${coach.slug}`);
   }
 
-  // Stats agrégées sur toutes les saisons
-  const totalSeasons = coach.seasons.length;
-  const totalWins = coach.seasons.reduce((sum, s) => sum + (s.wins ?? 0), 0);
-  const totalDraws = coach.seasons.reduce((sum, s) => sum + (s.draws ?? 0), 0);
-  const totalLosses = coach.seasons.reduce(
-    (sum, s) => sum + (s.losses ?? 0),
-    0,
-  );
-  const totalMatches = coach.seasons.reduce(
+  // Fusionner les saisons : seasonCoaches en priorité, sinon legacy
+  // On déduplique par label de saison
+  const COACH_ROLE_LABELS: Record<string, string> = {
+    ENTRAINEUR_PRINCIPAL: "Entraîneur principal",
+    ENTRAINEUR_ADJOINT: "Adjoint",
+    ENTRAINEUR_AVANTS: "Entraîneur des avants",
+    ENTRAINEUR_ARRIERES: "Entraîneur des arrières",
+    ENTRAINEUR_DEFENSE: "Entraîneur de la défense",
+    PREPARATEUR_PHYSIQUE: "Préparateur physique",
+    INTERIMAIRE: "Intérimaire",
+  };
+
+  type SeasonRow = {
+    label: string;
+    division: string;
+    finalRanking: number | null;
+    champion: boolean;
+    promoted: boolean;
+    relegated: boolean;
+    matchesPlayed: number | null;
+    wins: number | null;
+    draws: number | null;
+    losses: number | null;
+    pointsFor: number | null;
+    pointsAgainst: number | null;
+    role?: string;
+    startDate?: Date | null;
+    endDate?: Date | null;
+    isInterim?: boolean;
+  };
+
+  const seasonMap = new Map<string, SeasonRow>();
+
+  // D'abord les seasonCoaches (plus détaillés)
+  for (const sc of coach.seasonCoaches) {
+    seasonMap.set(sc.season.label + sc.role, {
+      ...sc.season,
+      role: COACH_ROLE_LABELS[sc.role] ?? sc.role,
+      startDate: sc.startDate,
+      endDate: sc.endDate,
+      isInterim: sc.isInterim,
+    });
+  }
+
+  // Ensuite les legacy (si pas déjà dans seasonCoaches)
+  for (const s of coach.seasons) {
+    if (!Array.from(seasonMap.keys()).some((k) => k.startsWith(s.label))) {
+      seasonMap.set(s.label, s);
+    }
+  }
+
+  const allSeasons = Array.from(seasonMap.values());
+
+  // Stats agrégées (on déduplique par label pour ne pas compter deux fois)
+  const uniqueSeasonLabels = new Set(allSeasons.map((s) => s.label));
+  const totalSeasons = uniqueSeasonLabels.size;
+  const totalWins = allSeasons.reduce((sum, s) => sum + (s.wins ?? 0), 0);
+  const totalDraws = allSeasons.reduce((sum, s) => sum + (s.draws ?? 0), 0);
+  const totalLosses = allSeasons.reduce((sum, s) => sum + (s.losses ?? 0), 0);
+  const totalMatches = allSeasons.reduce(
     (sum, s) => sum + (s.matchesPlayed ?? 0),
     0,
   );
-  const titles = coach.seasons.filter((s) => s.champion).length;
+  const titles = allSeasons.filter((s) => s.champion).length;
 
   return (
     <div className="mx-auto max-w-7xl px-4 py-10">
@@ -162,11 +236,11 @@ export default async function EntraineurDetailPage({ params }: Props) {
       )}
 
       {/* Saisons dirigées */}
-      {coach.seasons.length > 0 && (
+      {allSeasons.length > 0 && (
         <section>
           <h2 className="mb-4 flex items-center gap-2 text-2xl font-bold uppercase tracking-wider text-foreground">
             <Calendar className="h-6 w-6 text-usap-or" />
-            Saisons dirigées ({coach.seasons.length})
+            Saisons dirigées ({totalSeasons})
           </h2>
           <div className="overflow-x-auto rounded-lg border border-border">
             <table className="w-full text-sm">
@@ -174,6 +248,9 @@ export default async function EntraineurDetailPage({ params }: Props) {
                 <tr className="border-b border-border bg-muted/50">
                   <th className="px-3 py-2 text-left font-semibold text-foreground">
                     Saison
+                  </th>
+                  <th className="hidden px-3 py-2 text-left font-semibold text-foreground sm:table-cell">
+                    Rôle
                   </th>
                   <th className="px-3 py-2 text-left font-semibold text-foreground">
                     Division
@@ -202,9 +279,9 @@ export default async function EntraineurDetailPage({ params }: Props) {
                 </tr>
               </thead>
               <tbody>
-                {coach.seasons.map((s) => (
+                {allSeasons.map((s, idx) => (
                   <tr
-                    key={s.label}
+                    key={`${s.label}-${idx}`}
                     className="border-b border-border transition-colors hover:bg-muted/30"
                   >
                     <td className="px-3 py-2">
@@ -235,6 +312,22 @@ export default async function EntraineurDetailPage({ params }: Props) {
                           </span>
                         )}
                       </Link>
+                      {/* Période si renseignée */}
+                      {s.startDate && (
+                        <span className="ml-2 text-xs text-muted-foreground">
+                          ({new Date(s.startDate).toLocaleDateString("fr-FR", { month: "short", year: "numeric" })}
+                          {s.endDate
+                            ? ` → ${new Date(s.endDate).toLocaleDateString("fr-FR", { month: "short", year: "numeric" })}`
+                            : " → …"}
+                          )
+                        </span>
+                      )}
+                    </td>
+                    <td className="hidden px-3 py-2 text-muted-foreground sm:table-cell">
+                      {s.role ?? "Entraîneur principal"}
+                      {s.isInterim && (
+                        <span className="ml-1 text-xs text-usap-or">(int.)</span>
+                      )}
                     </td>
                     <td className="px-3 py-2 text-muted-foreground">
                       {DIVISIONS[s.division] ?? s.division}
