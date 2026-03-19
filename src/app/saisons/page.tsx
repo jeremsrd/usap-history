@@ -17,6 +17,13 @@ export default async function SaisonsPage() {
     orderBy: { startYear: "desc" },
     include: {
       coach: { select: { firstName: true, lastName: true } },
+      seasonCoaches: {
+        where: { role: "ENTRAINEUR_PRINCIPAL" },
+        orderBy: { displayOrder: "asc" },
+        include: {
+          coach: { select: { firstName: true, lastName: true } },
+        },
+      },
     },
   });
 
@@ -93,11 +100,15 @@ export default async function SaisonsPage() {
                   {DIVISIONS[season.division] ?? season.division}
                 </td>
 
-                {/* Entraîneur */}
+                {/* Entraîneur(s) */}
                 <td className="hidden px-4 py-3 text-muted-foreground sm:table-cell">
-                  {season.coach
-                    ? `${season.coach.firstName} ${season.coach.lastName}`
-                    : "—"}
+                  {season.seasonCoaches.length > 0
+                    ? season.seasonCoaches
+                        .map((sc) => `${sc.coach.firstName} ${sc.coach.lastName}`)
+                        .join(" / ")
+                    : season.coach
+                      ? `${season.coach.firstName} ${season.coach.lastName}`
+                      : "—"}
                 </td>
 
                 {/* Classement */}
