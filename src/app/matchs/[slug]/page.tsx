@@ -13,6 +13,7 @@ import {
 } from "lucide-react";
 import type { Metadata } from "next";
 import VideoEmbed from "@/components/VideoEmbed";
+import ScoreEvolution from "@/components/ScoreEvolution";
 
 export const dynamic = "force-dynamic";
 
@@ -302,6 +303,22 @@ export default async function MatchDetailPage({ params }: Props) {
               </tbody>
             </table>
           </div>
+        </section>
+      )}
+
+      {/* Évolution du score */}
+      {match.matchEvents.filter((e) => ["ESSAI", "TRANSFORMATION", "PENALITE", "DROP", "ESSAI_PENALITE"].includes(e.type)).length > 0 && (
+        <section className="mb-10">
+          <h2 className="mb-4 text-2xl font-bold uppercase tracking-wider text-foreground">
+            Évolution du score
+          </h2>
+          <ScoreEvolution
+            events={match.matchEvents}
+            finalScoreUsap={match.scoreUsap}
+            finalScoreOpponent={match.scoreOpponent}
+            opponentName={oppName}
+            isHome={match.isHome}
+          />
         </section>
       )}
 
