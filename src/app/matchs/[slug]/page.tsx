@@ -1,4 +1,5 @@
 import Link from "next/link";
+import Image from "next/image";
 import { notFound } from "next/navigation";
 import { prisma } from "@/lib/prisma";
 import { POSITIONS } from "@/lib/constants";
@@ -128,19 +129,23 @@ export default async function MatchDetailPage({ params }: Props) {
         </div>
 
         {/* Affichage score */}
-        <div className="flex items-center justify-center gap-6 sm:gap-10">
+        <div className="flex items-center justify-center gap-4 sm:gap-8">
           {/* Équipe domicile */}
-          <div className="text-center">
-            <p
-              className={`text-lg font-bold uppercase ${match.isHome ? "text-usap-sang" : "text-foreground"}`}
-            >
+          <div className="flex flex-col items-center gap-2">
+            {match.isHome ? (
+              <Image src="/images/usap/logo.png" alt="USAP" width={48} height={48} className="h-12 w-12" />
+            ) : match.opponent.logoUrl ? (
+              <Image src={match.opponent.logoUrl} alt={oppName} width={48} height={48} className="h-12 w-12 object-contain" />
+            ) : (
+              <div className="flex h-12 w-12 items-center justify-center rounded-full bg-muted text-xs font-bold text-muted-foreground">
+                {(match.opponent.shortName || match.opponent.name).slice(0, 3).toUpperCase()}
+              </div>
+            )}
+            <p className={`text-lg font-bold uppercase ${match.isHome ? "text-usap-sang" : "text-foreground"}`}>
               {match.isHome ? (
                 "USAP"
               ) : (
-                <Link
-                  href={`/adversaires/${match.opponent.slug}`}
-                  className="hover:underline"
-                >
+                <Link href={`/adversaires/${match.opponent.slug}`} className="hover:underline">
                   {oppName}
                 </Link>
               )}
@@ -159,15 +164,19 @@ export default async function MatchDetailPage({ params }: Props) {
           </div>
 
           {/* Équipe extérieur */}
-          <div className="text-center">
-            <p
-              className={`text-lg font-bold uppercase ${!match.isHome ? "text-usap-sang" : "text-foreground"}`}
-            >
+          <div className="flex flex-col items-center gap-2">
+            {!match.isHome ? (
+              <Image src="/images/usap/logo.png" alt="USAP" width={48} height={48} className="h-12 w-12" />
+            ) : match.opponent.logoUrl ? (
+              <Image src={match.opponent.logoUrl} alt={oppName} width={48} height={48} className="h-12 w-12 object-contain" />
+            ) : (
+              <div className="flex h-12 w-12 items-center justify-center rounded-full bg-muted text-xs font-bold text-muted-foreground">
+                {(match.opponent.shortName || match.opponent.name).slice(0, 3).toUpperCase()}
+              </div>
+            )}
+            <p className={`text-lg font-bold uppercase ${!match.isHome ? "text-usap-sang" : "text-foreground"}`}>
               {match.isHome ? (
-                <Link
-                  href={`/adversaires/${match.opponent.slug}`}
-                  className="hover:underline"
-                >
+                <Link href={`/adversaires/${match.opponent.slug}`} className="hover:underline">
                   {oppName}
                 </Link>
               ) : (

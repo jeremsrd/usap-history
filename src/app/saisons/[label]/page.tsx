@@ -428,18 +428,26 @@ export default async function SaisonDetailPage({ params }: Props) {
                             <td className="px-3 py-2">
                               <Link
                                 href={`/matchs/${match.slug}`}
-                                className="font-medium text-foreground hover:text-usap-sang"
+                                className="flex items-center gap-2 font-medium text-foreground hover:text-usap-sang"
                               >
                                 {match.isHome ? (
                                   <>
+                                    <Image src="/images/usap/logo.png" alt="USAP" width={20} height={20} className="h-5 w-5" />
                                     <span className="font-bold">USAP</span>
                                     {" - "}
+                                    {match.opponent.logoUrl ? (
+                                      <Image src={match.opponent.logoUrl} alt={oppName} width={20} height={20} className="h-5 w-5 object-contain" />
+                                    ) : null}
                                     {oppName}
                                   </>
                                 ) : (
                                   <>
+                                    {match.opponent.logoUrl ? (
+                                      <Image src={match.opponent.logoUrl} alt={oppName} width={20} height={20} className="h-5 w-5 object-contain" />
+                                    ) : null}
                                     {oppName}
                                     {" - "}
+                                    <Image src="/images/usap/logo.png" alt="USAP" width={20} height={20} className="h-5 w-5" />
                                     <span className="font-bold">USAP</span>
                                   </>
                                 )}

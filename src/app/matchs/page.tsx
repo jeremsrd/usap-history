@@ -1,4 +1,5 @@
 import Link from "next/link";
+import Image from "next/image";
 import { prisma } from "@/lib/prisma";
 import { formatDateFR } from "@/lib/utils";
 import { MapPin } from "lucide-react";
@@ -272,15 +273,20 @@ export default async function MatchsPage({
                     <td className="px-3 py-3">
                       <Link
                         href={`/matchs/${match.slug}`}
-                        className="font-medium text-foreground hover:text-usap-sang"
+                        className="flex items-center gap-1.5 font-medium text-foreground hover:text-usap-sang"
                       >
                         {match.isHome ? (
                           <>
-                            <span className="font-bold">USAP</span> - {oppName}
+                            <Image src="/images/usap/logo.png" alt="USAP" width={18} height={18} className="h-[18px] w-[18px]" />
+                            <span className="font-bold">USAP</span> -{" "}
+                            {match.opponent.logoUrl && <Image src={match.opponent.logoUrl} alt={oppName} width={18} height={18} className="h-[18px] w-[18px] object-contain" />}
+                            {oppName}
                           </>
                         ) : (
                           <>
+                            {match.opponent.logoUrl && <Image src={match.opponent.logoUrl} alt={oppName} width={18} height={18} className="h-[18px] w-[18px] object-contain" />}
                             {oppName} -{" "}
+                            <Image src="/images/usap/logo.png" alt="USAP" width={18} height={18} className="h-[18px] w-[18px]" />
                             <span className="font-bold">USAP</span>
                           </>
                         )}
