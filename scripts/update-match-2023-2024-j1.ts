@@ -28,10 +28,10 @@ const USAP_SQUAD = [
   { num: 7, firstName: "Patrick", lastName: "Sobela", position: Position.TROISIEME_LIGNE_AILE, isStarter: true },
   { num: 8, firstName: "Joaquín", lastName: "Oviedo", position: Position.NUMERO_HUIT, isStarter: true },
   { num: 9, firstName: "Sadek", lastName: "Deghmache", position: Position.DEMI_DE_MELEE, isStarter: true },
-  { num: 10, firstName: "Jake", lastName: "McIntyre", position: Position.DEMI_OUVERTURE, isStarter: true },
+  { num: 10, firstName: "Jake", lastName: "McIntyre", position: Position.DEMI_OUVERTURE, isStarter: true, isCaptain: true },
   { num: 11, firstName: "Alistair", lastName: "Crossdale", position: Position.AILIER, isStarter: true },
   { num: 12, firstName: "Apisai", lastName: "Naqalevu", position: Position.CENTRE, isStarter: true },
-  { num: 13, firstName: "Jean-Pascal", lastName: "Barraque", position: Position.CENTRE, isStarter: true, isCaptain: true },
+  { num: 13, firstName: "Jean-Pascal", lastName: "Barraque", position: Position.CENTRE, isStarter: true },
   { num: 14, firstName: "Tavite", lastName: "Veredamu", position: Position.AILIER, isStarter: true },
   { num: 15, firstName: "Louis", lastName: "Dupichot", position: Position.ARRIERE, isStarter: true },
   // Remplaçants
