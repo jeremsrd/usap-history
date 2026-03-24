@@ -74,8 +74,8 @@ export async function addMatchPlayer(
   }
 
   // Vérifier que le joueur n'est pas déjà dans la compo
-  const existing = await prisma.matchPlayer.findUnique({
-    where: { matchId_playerId: { matchId, playerId } },
+  const existing = await prisma.matchPlayer.findFirst({
+    where: { matchId, playerId },
   });
 
   if (existing) {

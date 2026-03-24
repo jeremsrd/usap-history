@@ -38,12 +38,13 @@ interface MatchPlayerData {
   whiteCardMin: number | null;
   subIn: number | null;
   subOut: number | null;
+  opponentPlayerName: string | null;
   player: {
     id: string;
     firstName: string;
     lastName: string;
     position: string | null;
-  };
+  } | null;
 }
 
 interface MatchPlayerManagerProps {
@@ -82,7 +83,7 @@ export default function MatchPlayerManager({
     .sort((a, b) => (a.shirtNumber ?? 99) - (b.shirtNumber ?? 99));
 
   // Joueurs pas encore dans la compo
-  const existingPlayerIds = new Set(matchPlayers.map((p) => p.player.id));
+  const existingPlayerIds = new Set(matchPlayers.filter((p) => p.player).map((p) => p.player!.id));
   const availablePlayers = allPlayers.filter(
     (p) => !existingPlayerIds.has(p.id),
   );
@@ -367,7 +368,7 @@ function PlayerRow({
           {mp.shirtNumber ?? "—"}
         </span>
         <span className="flex-1 font-medium text-foreground">
-          {mp.player.firstName} {mp.player.lastName}
+          {mp.player ? `${mp.player.firstName} ${mp.player.lastName}` : mp.opponentPlayerName ?? "Inconnu"}
           {mp.isCaptain && (
             <span className="ml-1 text-xs text-usap-or">(C)</span>
           )}

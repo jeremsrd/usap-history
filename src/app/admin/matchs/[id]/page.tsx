@@ -90,12 +90,14 @@ export default async function AdminMatchDetailPage({
   const opponentPlayers = match.players.filter((mp) => mp.isOpponent);
 
   // Joueurs dans la compo (pour le sélecteur d'événements)
-  const compositionPlayers = match.players.map((mp) => ({
-    id: mp.player.id,
-    firstName: mp.player.firstName,
-    lastName: mp.player.lastName,
-    isOpponent: mp.isOpponent,
-  }));
+  const compositionPlayers = match.players
+    .filter((mp) => mp.player !== null)
+    .map((mp) => ({
+      id: mp.player!.id,
+      firstName: mp.player!.firstName,
+      lastName: mp.player!.lastName,
+      isOpponent: mp.isOpponent,
+    }));
 
   return (
     <div className="mx-auto max-w-7xl px-4 py-10">

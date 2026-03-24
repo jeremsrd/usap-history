@@ -32,7 +32,7 @@ export default async function StatistiquesPage() {
   ]);
 
   const usapPlayerIds = await prisma.matchPlayer.findMany({
-    where: { isOpponent: false },
+    where: { isOpponent: false, playerId: { not: null } },
     select: { playerId: true },
     distinct: ["playerId"],
   });
@@ -69,14 +69,14 @@ export default async function StatistiquesPage() {
   // ── Meilleurs marqueurs USAP (top 10 par points) ───────────────────
   const topScorersAgg = await prisma.matchPlayer.groupBy({
     by: ["playerId"],
-    where: { isOpponent: false },
+    where: { isOpponent: false, playerId: { not: null } },
     _sum: { totalPoints: true },
     orderBy: { _sum: { totalPoints: "desc" } },
     take: 10,
     having: { totalPoints: { _sum: { gt: 0 } } },
   });
 
-  const topScorerIds = topScorersAgg.map((s) => s.playerId);
+  const topScorerIds = topScorersAgg.map((s) => s.playerId as string);
   const topScorerPlayers = await prisma.player.findMany({
     where: { id: { in: topScorerIds } },
     select: {
@@ -97,13 +97,13 @@ export default async function StatistiquesPage() {
   // ── Plus capés USAP (top 10 par nombre de matchs) ──────────────────
   const topAppsAgg = await prisma.matchPlayer.groupBy({
     by: ["playerId"],
-    where: { isOpponent: false },
+    where: { isOpponent: false, playerId: { not: null } },
     _count: { id: true },
     orderBy: { _count: { id: "desc" } },
     take: 10,
   });
 
-  const topAppIds = topAppsAgg.map((a) => a.playerId);
+  const topAppIds = topAppsAgg.map((a) => a.playerId as string);
   const topAppPlayers = await prisma.player.findMany({
     where: { id: { in: topAppIds } },
     select: {
@@ -124,14 +124,14 @@ export default async function StatistiquesPage() {
   // ── Meilleurs essayeurs USAP (top 10) ──────────────────────────────
   const topTriesAgg = await prisma.matchPlayer.groupBy({
     by: ["playerId"],
-    where: { isOpponent: false },
+    where: { isOpponent: false, playerId: { not: null } },
     _sum: { tries: true },
     orderBy: { _sum: { tries: "desc" } },
     take: 10,
     having: { tries: { _sum: { gt: 0 } } },
   });
 
-  const topTryIds = topTriesAgg.map((t) => t.playerId);
+  const topTryIds = topTriesAgg.map((t) => t.playerId as string);
   const topTryPlayers = await prisma.player.findMany({
     where: { id: { in: topTryIds } },
     select: {
@@ -152,14 +152,14 @@ export default async function StatistiquesPage() {
   // ── Statistiques adverses (joueurs adverses contre l'USAP) ─────────
   const oppScorersAgg = await prisma.matchPlayer.groupBy({
     by: ["playerId"],
-    where: { isOpponent: true },
+    where: { isOpponent: true, playerId: { not: null } },
     _sum: { totalPoints: true },
     orderBy: { _sum: { totalPoints: "desc" } },
     take: 10,
     having: { totalPoints: { _sum: { gt: 0 } } },
   });
 
-  const oppScorerIds = oppScorersAgg.map((s) => s.playerId);
+  const oppScorerIds = oppScorersAgg.map((s) => s.playerId as string);
   const oppScorerPlayers = await prisma.player.findMany({
     where: { id: { in: oppScorerIds } },
     select: {
@@ -178,14 +178,14 @@ export default async function StatistiquesPage() {
 
   const oppTriesAgg = await prisma.matchPlayer.groupBy({
     by: ["playerId"],
-    where: { isOpponent: true },
+    where: { isOpponent: true, playerId: { not: null } },
     _sum: { tries: true },
     orderBy: { _sum: { tries: "desc" } },
     take: 10,
     having: { tries: { _sum: { gt: 0 } } },
   });
 
-  const oppTryIds = oppTriesAgg.map((t) => t.playerId);
+  const oppTryIds = oppTriesAgg.map((t) => t.playerId as string);
   const oppTryPlayers = await prisma.player.findMany({
     where: { id: { in: oppTryIds } },
     select: {

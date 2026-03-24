@@ -123,6 +123,7 @@ export default async function AdversaireDetailPage({ params }: Props) {
     where: {
       match: { opponentId: id },
       isOpponent: false,
+      playerId: { not: null },
     },
     _sum: { totalPoints: true, tries: true },
     orderBy: { _sum: { totalPoints: "desc" } },
@@ -130,7 +131,7 @@ export default async function AdversaireDetailPage({ params }: Props) {
     having: { totalPoints: { _sum: { gt: 0 } } },
   });
 
-  const topScorerIds = topScorersAgg.map((s) => s.playerId);
+  const topScorerIds = topScorersAgg.map((s) => s.playerId as string);
   const topScorerPlayers =
     topScorerIds.length > 0
       ? await prisma.player.findMany({

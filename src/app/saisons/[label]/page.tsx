@@ -85,7 +85,7 @@ export default async function SaisonDetailPage({ params }: Props) {
   const seasonMatchIds = season.matches.map((m) => m.id);
 
   // ── Statistiques individuelles de la saison ──────────────────────
-  const usapFilter = { matchId: { in: seasonMatchIds }, isOpponent: false };
+  const usapFilter = { matchId: { in: seasonMatchIds }, isOpponent: false, playerId: { not: null } as const };
   const playerSelect = { id: true, slug: true, firstName: true, lastName: true, position: true, photoUrl: true } as const;
 
   // Requêtes séquentielles pour respecter la limite du pool Supabase
@@ -171,7 +171,7 @@ export default async function SaisonDetailPage({ params }: Props) {
       ...whiteCardsAgg.map((w) => w.playerId),
       ...orangeCardsAgg.map((o) => o.playerId),
     ]),
-  ];
+  ].filter((id): id is string => id !== null);
   const allPlayers = await prisma.player.findMany({
     where: { id: { in: allPlayerIds } },
     select: playerSelect,
@@ -179,37 +179,37 @@ export default async function SaisonDetailPage({ params }: Props) {
   const playerMap = new Map(allPlayers.map((p) => [p.id, p]));
 
   const topScorers = topScorersAgg.map((agg) => ({
-    ...playerMap.get(agg.playerId)!, totalPoints: agg._sum.totalPoints ?? 0,
+    ...playerMap.get(agg.playerId!)!, totalPoints: agg._sum.totalPoints ?? 0,
   }));
   const topApps = topAppsAgg.map((agg) => ({
-    ...playerMap.get(agg.playerId)!, appearances: agg._count.id,
+    ...playerMap.get(agg.playerId!)!, appearances: agg._count.id,
   }));
   const topTries = topTriesAgg.map((agg) => ({
-    ...playerMap.get(agg.playerId)!, tries: agg._sum.tries ?? 0,
+    ...playerMap.get(agg.playerId!)!, tries: agg._sum.tries ?? 0,
   }));
   const topPenalties = topPenAgg.map((agg) => ({
-    ...playerMap.get(agg.playerId)!, penalties: agg._sum.penalties ?? 0,
+    ...playerMap.get(agg.playerId!)!, penalties: agg._sum.penalties ?? 0,
   }));
   const topConversions = topConvAgg.map((agg) => ({
-    ...playerMap.get(agg.playerId)!, conversions: agg._sum.conversions ?? 0,
+    ...playerMap.get(agg.playerId!)!, conversions: agg._sum.conversions ?? 0,
   }));
   const topDrops = topDropAgg.map((agg) => ({
-    ...playerMap.get(agg.playerId)!, dropGoals: agg._sum.dropGoals ?? 0,
+    ...playerMap.get(agg.playerId!)!, dropGoals: agg._sum.dropGoals ?? 0,
   }));
   const topMinutes = topMinutesAgg.map((agg) => ({
-    ...playerMap.get(agg.playerId)!, minutes: agg._sum.minutesPlayed ?? 0,
+    ...playerMap.get(agg.playerId!)!, minutes: agg._sum.minutesPlayed ?? 0,
   }));
   const yellowCards = yellowCardsAgg.map((agg) => ({
-    ...playerMap.get(agg.playerId)!, count: agg._count.id,
+    ...playerMap.get(agg.playerId!)!, count: agg._count.id,
   }));
   const redCards = redCardsAgg.map((agg) => ({
-    ...playerMap.get(agg.playerId)!, count: agg._count.id,
+    ...playerMap.get(agg.playerId!)!, count: agg._count.id,
   }));
   const whiteCards = whiteCardsAgg.map((agg) => ({
-    ...playerMap.get(agg.playerId)!, count: agg._count.id,
+    ...playerMap.get(agg.playerId!)!, count: agg._count.id,
   }));
   const orangeCards = orangeCardsAgg.map((agg) => ({
-    ...playerMap.get(agg.playerId)!, count: agg._count.id,
+    ...playerMap.get(agg.playerId!)!, count: agg._count.id,
   }));
 
   // Grouper les matchs par compétition
