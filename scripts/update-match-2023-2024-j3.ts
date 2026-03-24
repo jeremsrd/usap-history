@@ -2,10 +2,9 @@
  * Mise à jour du match Racing 92 - USAP (J3 Top 14, 02/09/2023)
  * Score : Racing 92 59 - 10 USAP
  *
- * Match historiquement catastrophique : 4 joueurs USAP exclus (double jaune = rouge)
- * Sobela (29'), Maurouard (45'), McIntyre (65'), Deghmache (81')
+ * 2 cartons jaunes USAP : Velarte (19'), Joly (63')
  *
- * Sources : top14.lnr.fr, allrugby.com, defense-92.fr, dailymotion
+ * Sources : top14.lnr.fr, lequipe.fr, defense-92.fr, dailymotion
  *
  * Usage : npx tsx scripts/update-match-2023-2024-j3.ts
  */
@@ -205,7 +204,7 @@ async function main() {
    * Racing : 9E 7T 0P 0D = 45+14 = 59
    * USAP : 2E 0T 0P 0D = 10
    *
-   * 4 joueurs USAP exclus (double jaune) : Sobela, Maurouard, McIntyre, Deghmache
+   * 2 cartons jaunes USAP : Velarte (19'), Joly (63')
    */
   await prisma.match.update({
     where: { id: match.id },
@@ -234,9 +233,8 @@ async function main() {
       // Rapport
       report:
         "Apocalypse à La Défense Arena. L'USAP subit la pire défaite de son début de saison " +
-        "avec 9 essais encaissés et 40-0 à la mi-temps. Match marqué par une indiscipline " +
-        "catastrophique : 4 joueurs exclus pour double carton jaune (Sobela 29', Maurouard 45', " +
-        "McIntyre 65', Deghmache 81'). L'USAP réduit parfois à 12 joueurs. " +
+        "avec 9 essais encaissés et 40-0 à la mi-temps. " +
+        "Cartons jaunes pour Velarte (19') et Joly (63'). " +
         "Dubois (47') et Velarte (57') sauvent l'honneur en seconde période. " +
         "3e défaite consécutive, 0 point au classement.",
     },
@@ -260,28 +258,10 @@ async function main() {
 
     // Dubois : 1 essai (47')
     if (p.lastName === "Dubois") { tries = 1; totalPoints = 5; }
-    // Velarte : 1 essai (57')
-    if (p.lastName === "Velarte") { tries = 1; totalPoints = 5; }
-    // Sobela : CJ 16' + CJ 29' = rouge
-    if (p.lastName === "Sobela") {
-      yellowCard = true; yellowCardMin = 16;
-      redCard = true; redCardMin = 29;
-    }
-    // Maurouard : CJ 22' + CJ 45' = rouge
-    if (p.lastName === "Maurouard") {
-      yellowCard = true; yellowCardMin = 22;
-      redCard = true; redCardMin = 45;
-    }
-    // McIntyre : CJ 40' + CJ 65' = rouge
-    if (p.lastName === "McIntyre") {
-      yellowCard = true; yellowCardMin = 40;
-      redCard = true; redCardMin = 65;
-    }
-    // Deghmache : CJ 73' + CJ 81' = rouge
-    if (p.lastName === "Deghmache") {
-      yellowCard = true; yellowCardMin = 73;
-      redCard = true; redCardMin = 81;
-    }
+    // Velarte : 1 essai (57') + CJ (19')
+    if (p.lastName === "Velarte") { tries = 1; totalPoints = 5; yellowCard = true; yellowCardMin = 19; }
+    // Joly : CJ (63')
+    if (p.lastName === "Joly") { yellowCard = true; yellowCardMin = 63; }
 
     await prisma.matchPlayer.create({
       data: {
@@ -379,73 +359,51 @@ async function main() {
       description: "Essai de Jordan Joseph (Racing 92). 12-0." },
     { minute: 15, type: "TRANSFORMATION", isUsap: false,
       description: "Transformation de Nolann Le Garrec (Racing 92). 14-0." },
-    // 16' - CJ Sobela (USAP)
-    { minute: 16, type: "CARTON_JAUNE", playerLastName: "Sobela", isUsap: true,
-      description: "Carton jaune Patrick Sobela (USAP). 1er avertissement." },
+    // 19' - CJ Velarte (USAP)
+    { minute: 19, type: "CARTON_JAUNE", playerLastName: "Velarte", isUsap: true,
+      description: "Carton jaune Lucas Velarte (USAP)." },
     // 20' - Essai Laclayat (Racing) 19-0
     { minute: 20, type: "ESSAI", isUsap: false,
       description: "Essai de Thomas Laclayat (Racing 92). 19-0." },
     { minute: 21, type: "TRANSFORMATION", isUsap: false,
       description: "Transformation de Nolann Le Garrec (Racing 92). 21-0." },
-    // 22' - CJ Maurouard (USAP)
-    { minute: 22, type: "CARTON_JAUNE", playerLastName: "Maurouard", isUsap: true,
-      description: "Carton jaune Jérémy Maurouard (USAP). 1er avertissement." },
     // 27' - Essai Jordan Joseph (Racing) 26-0
     { minute: 27, type: "ESSAI", isUsap: false,
       description: "2e essai de Jordan Joseph (Racing 92). 26-0." },
     { minute: 28, type: "TRANSFORMATION", isUsap: false,
       description: "Transformation de Nolann Le Garrec (Racing 92). 28-0." },
-    // 29' - 2e CJ Sobela = ROUGE
-    { minute: 29, type: "CARTON_ROUGE", playerLastName: "Sobela", isUsap: true,
-      description: "2e carton jaune pour Sobela (USAP) = exclusion. USAP à 14." },
     // 33' - Essai Naituvi (Racing) non transformé 33-0
     { minute: 33, type: "ESSAI", isUsap: false,
       description: "Essai de Wame Naituvi (Racing 92). Non transformé. 33-0." },
-    // 38' - Essai Naituvi ou autre, pour atteindre 38-0 puis 40-0
-    // Selon progression : 33-0 -> 38-0 (essai non conv) -> 40-0 (conv?)
-    // En fait 6 essais = 30 + 5 conv = 10 = 40. Donc le 6e essai est converti.
+    // 39' - 6e essai Racing 38-0
     { minute: 39, type: "ESSAI", isUsap: false,
-      description: "6e essai du Racing 92 (Wame Naituvi). 38-0." },
-    { minute: 40, type: "CARTON_JAUNE", playerLastName: "McIntyre", isUsap: true,
-      description: "Carton jaune Jake McIntyre (USAP). 1er avertissement." },
+      description: "6e essai du Racing 92. 38-0." },
     // === MI-TEMPS : Racing 40 - 0 USAP ===
-    // Correction: 9T 7conv = 45+14=59. 6 essais en 1ère MT avec 5 conv = 30+10 = 40. OK.
+    // 6 essais + 5 conv en 1ère MT = 30+10 = 40
+    { minute: 40, type: "TRANSFORMATION", isUsap: false,
+      description: "Transformation (Racing 92). 40-0 à la mi-temps." },
+    // 43' - Essai Laclayat (Racing) reprise 2e MT
     { minute: 43, type: "ESSAI", isUsap: false,
-      description: "Essai de Thomas Laclayat (Racing 92). 40-0 à la mi-temps, reprise en 2e." },
+      description: "Essai de Thomas Laclayat (Racing 92). 45-0." },
     { minute: 44, type: "TRANSFORMATION", isUsap: false,
-      description: "Transformation de Nolann Le Garrec (Racing 92). Score recalculé après MT." },
-    // 45' - 2e CJ Maurouard = ROUGE
-    { minute: 45, type: "CARTON_ROUGE", playerLastName: "Maurouard", isUsap: true,
-      description: "2e carton jaune pour Maurouard (USAP) = exclusion." },
-    // 47' - Essai Dubois (USAP) non transformé 40-5
+      description: "Transformation de Nolann Le Garrec (Racing 92). 47-0." },
+    // 47' - Essai Dubois (USAP) non transformé
     { minute: 47, type: "ESSAI", playerLastName: "Dubois", isUsap: true,
-      description: "Essai de Lucas Dubois (USAP). Non transformé. 40-5." },
-    // 52' - Pénalité ou transformation pour 45-5 ? Non, 40-5 -> 40-10 -> 45-10
-    // 57' - Essai Velarte (USAP) non transformé 40-10
+      description: "Essai de Lucas Dubois (USAP). Non transformé. 47-5." },
+    // 57' - Essai Velarte (USAP) non transformé
     { minute: 57, type: "ESSAI", playerLastName: "Velarte", isUsap: true,
-      description: "Essai de Lucas Velarte (USAP). Non transformé. 40-10." },
-    // 64' - Essai Naituvi (Racing) non conv 45-10
+      description: "Essai de Lucas Velarte (USAP). Non transformé. 47-10." },
+    // 63' - CJ Joly (USAP)
+    { minute: 63, type: "CARTON_JAUNE", playerLastName: "Joly", isUsap: true,
+      description: "Carton jaune Arthur Joly (USAP)." },
+    // 64' - Essai Naituvi (Racing) non conv
     { minute: 64, type: "ESSAI", isUsap: false,
-      description: "Essai de Wame Naituvi (Racing 92). Non transformé. 45-10." },
-    // 65' - 2e CJ McIntyre = ROUGE
-    { minute: 65, type: "CARTON_ROUGE", playerLastName: "McIntyre", isUsap: true,
-      description: "2e carton jaune pour McIntyre (USAP) = exclusion. USAP à 12." },
-    // 70' - Essai Gomes Sa (Racing) 50-10
+      description: "Essai de Wame Naituvi (Racing 92). Non transformé. 52-10." },
+    // 70' - Essai Gomes Sa (Racing)
     { minute: 70, type: "ESSAI", isUsap: false,
-      description: "Essai de Cedate Gomes Sa (Racing 92). 50-10." },
+      description: "Essai de Cedate Gomes Sa (Racing 92). 57-10." },
     { minute: 71, type: "TRANSFORMATION", isUsap: false,
-      description: "Transformation de Tristan Tedder (Racing 92). 52-10." },
-    // 73' - CJ Deghmache (USAP)
-    { minute: 73, type: "CARTON_JAUNE", playerLastName: "Deghmache", isUsap: true,
-      description: "Carton jaune Sadek Deghmache (USAP). 1er avertissement." },
-    // 79' - Essai Taofifénua (Racing) 57-10
-    { minute: 79, type: "ESSAI", isUsap: false,
-      description: "Essai de Donovan Taofifénua (Racing 92). 57-10." },
-    { minute: 80, type: "TRANSFORMATION", isUsap: false,
       description: "Transformation de Tristan Tedder (Racing 92). 59-10." },
-    // 81' - 2e CJ Deghmache = ROUGE
-    { minute: 81, type: "CARTON_ROUGE", playerLastName: "Deghmache", isUsap: true,
-      description: "2e carton jaune pour Deghmache (USAP) = exclusion. 4e joueur exclu du match." },
   ];
 
   for (const evt of events) {
@@ -483,7 +441,7 @@ async function main() {
   console.log("  Composition USAP : 23 joueurs");
   console.log("  Composition Racing 92 : 23 joueurs");
   console.log(`  Événements : ${events.length}`);
-  console.log("  ⚠ 4 exclusions USAP (double jaune)");
+  console.log("  2 cartons jaunes USAP : Velarte (19'), Joly (63')");
 }
 
 main()
