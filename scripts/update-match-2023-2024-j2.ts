@@ -329,7 +329,41 @@ async function main() {
   }
 
   // -----------------------------------------------------------------------
-  // 6. Liens joueurs-saison
+  // 6. Composition Clermont (adversaire)
+  // -----------------------------------------------------------------------
+  console.log("\n--- Composition Clermont (adversaire) ---");
+
+  for (const p of CLERMONT_SQUAD) {
+    let minutesPlayed: number | null = null;
+    if (p.isStarter) {
+      minutesPlayed = (p as any).subOut ? (p as any).subOut : 80;
+    } else if ((p as any).subIn) {
+      minutesPlayed = 80 - (p as any).subIn;
+    } else {
+      minutesPlayed = 0;
+    }
+
+    await prisma.matchPlayer.create({
+      data: {
+        matchId: match.id,
+        playerId: null,
+        isOpponent: true,
+        opponentPlayerName: `${p.firstName} ${p.lastName}`,
+        shirtNumber: p.num,
+        isStarter: p.isStarter,
+        positionPlayed: p.position,
+        subIn: (p as any).subIn ?? null,
+        subOut: (p as any).subOut ?? null,
+        minutesPlayed,
+      },
+    });
+
+    const label = p.isStarter ? "TIT" : "REM";
+    console.log(`  ${label} ${String(p.num).padStart(2, " ")}. ${p.firstName} ${p.lastName}`);
+  }
+
+  // -----------------------------------------------------------------------
+  // 7. Liens joueurs-saison
   // -----------------------------------------------------------------------
   console.log("\n--- Liens joueurs-saison ---");
   let linkedCount = 0;
@@ -354,7 +388,7 @@ async function main() {
   console.log(`  ${linkedCount} nouveau(x) lien(s) joueur-saison créé(s)`);
 
   // -----------------------------------------------------------------------
-  // 7. Événements du match
+  // 8. Événements du match
   // -----------------------------------------------------------------------
   console.log("\n--- Événements du match ---");
 
@@ -428,7 +462,7 @@ async function main() {
   console.log("  Arbitre : Benoît Rousselet");
   console.log("  Affluence : 13 674");
   console.log("  Stade : Marcel-Michelin");
-  console.log("  Composition USAP : 23 joueurs");
+  console.log("  Composition : 23 USAP + 23 Clermont");
   console.log(`  Événements : ${events.length}`);
 }
 

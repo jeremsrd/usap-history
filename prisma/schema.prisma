@@ -545,9 +545,10 @@ model MatchPlayer {
   id            String   @id @default(cuid())
   matchId       String   @map("match_id")
   match         Match    @relation(fields: [matchId], references: [id], onDelete: Cascade)
-  playerId      String   @map("player_id")
-  player        Player   @relation(fields: [playerId], references: [id])
+  playerId      String?  @map("player_id")
+  player        Player?  @relation(fields: [playerId], references: [id])
   isOpponent    Boolean  @default(false) @map("is_opponent")
+  opponentPlayerName String? @map("opponent_player_name")
 
   shirtNumber   Int?     @map("shirt_number")
   isStarter     Boolean  @map("is_starter")
@@ -577,8 +578,8 @@ model MatchPlayer {
 
   createdAt DateTime @default(now()) @map("created_at")
 
-  @@unique([matchId, playerId])
   @@map("match_players")
+  @@index([matchId, playerId])
   @@index([playerId])
   @@index([matchId])
 }

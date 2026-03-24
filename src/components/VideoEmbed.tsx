@@ -39,7 +39,7 @@ function getEmbedUrl(provider: VideoProvider, videoId: string): string {
     case "youtube":
       return `https://www.youtube.com/embed/${videoId}?autoplay=0`;
     case "dailymotion":
-      return `https://www.dailymotion.com/embed/video/${videoId}?autoplay=0`;
+      return `https://www.dailymotion.com/embed/video/${videoId}?autoplay=false&queue-autoplay-next=false&mute=true`;
   }
 }
 

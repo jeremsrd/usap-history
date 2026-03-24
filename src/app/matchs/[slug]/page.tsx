@@ -520,14 +520,19 @@ function PlayerRow({
     totalPoints: number;
     yellowCard: boolean;
     redCard: boolean;
+    opponentPlayerName: string | null;
     player: {
       slug: string;
       firstName: string;
       lastName: string;
-    };
+    } | null;
   };
   isOpponentRow?: boolean;
 }) {
+  const playerName = mp.player
+    ? `${mp.player.firstName} ${mp.player.lastName}`
+    : mp.opponentPlayerName ?? "Inconnu";
+
   return (
     <div className="flex items-center gap-2 rounded border border-border bg-background px-3 py-2 text-sm">
       {/* Numéro */}
@@ -536,15 +541,24 @@ function PlayerRow({
       </span>
 
       {/* Nom */}
-      <Link
-        href={`/joueurs/${mp.player.slug}`}
-        className="flex-1 font-medium text-foreground hover:text-usap-sang"
-      >
-        {mp.player.firstName} {mp.player.lastName}
-        {mp.isCaptain && (
-          <span className="ml-1 text-xs text-usap-or">(C)</span>
-        )}
-      </Link>
+      {mp.player ? (
+        <Link
+          href={`/joueurs/${mp.player.slug}`}
+          className="flex-1 font-medium text-foreground hover:text-usap-sang"
+        >
+          {playerName}
+          {mp.isCaptain && (
+            <span className="ml-1 text-xs text-usap-or">(C)</span>
+          )}
+        </Link>
+      ) : (
+        <span className="flex-1 font-medium text-foreground">
+          {playerName}
+          {mp.isCaptain && (
+            <span className="ml-1 text-xs text-usap-or">(C)</span>
+          )}
+        </span>
+      )}
 
       {/* Poste */}
       {mp.positionPlayed && (
