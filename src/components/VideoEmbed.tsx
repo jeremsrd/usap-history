@@ -37,9 +37,9 @@ function detectProvider(url: string): { provider: VideoProvider; videoId: string
 function getEmbedUrl(provider: VideoProvider, videoId: string): string {
   switch (provider) {
     case "youtube":
-      return `https://www.youtube.com/embed/${videoId}`;
+      return `https://www.youtube.com/embed/${videoId}?autoplay=0`;
     case "dailymotion":
-      return `https://www.dailymotion.com/embed/video/${videoId}`;
+      return `https://www.dailymotion.com/embed/video/${videoId}?autoplay=0`;
   }
 }
 
@@ -56,7 +56,7 @@ export default function VideoEmbed({ url, title = "Résumé du match" }: VideoEm
         className="absolute inset-0 h-full w-full"
         src={embedUrl}
         title={title}
-        allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+        allow="accelerometer; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
         allowFullScreen
         loading="lazy"
       />
