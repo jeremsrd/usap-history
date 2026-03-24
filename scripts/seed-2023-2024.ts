@@ -73,7 +73,7 @@ const MATCHES: MatchData[] = [
   { matchday: 26, date: "2024-06-08", isHome: false, opponentName: "Section Paloise", scoreUsap: 24, scoreOpp: 36, competition: "TOP14" },
 
   // === CHALLENGE CUP — Phase de poules ===
-  { round: "Poule J1", date: "2023-12-10", isHome: true, opponentName: "Emirates Lions", scoreUsap: 12, scoreOpp: 28, competition: "CHALLENGE" },
+  { round: "Poule J1", date: "2023-12-10", isHome: true, opponentName: "Lions", scoreUsap: 12, scoreOpp: 28, competition: "CHALLENGE" },
   { round: "Poule J2", date: "2023-12-16", isHome: false, opponentName: "Benetton Rugby", scoreUsap: 7, scoreOpp: 29, competition: "CHALLENGE" },
   { round: "Poule J3", date: "2024-01-12", isHome: false, opponentName: "Ospreys", scoreUsap: 3, scoreOpp: 25, competition: "CHALLENGE" },
   { round: "Poule J4", date: "2024-01-21", isHome: true, opponentName: "Newcastle Falcons", scoreUsap: 23, scoreOpp: 32, competition: "CHALLENGE" },
@@ -108,7 +108,7 @@ const OPPONENTS_DATA: OpponentData[] = [
   { name: "US Oyonnax", shortName: "Oyonnax", city: "Oyonnax" },
   { name: "Lyon OU", shortName: "Lyon", city: "Lyon" },
   // Challenge Cup
-  { name: "Emirates Lions", shortName: "Lions", city: "Johannesburg", countryCode: "ZA", countryName: "Afrique du Sud", continent: Continent.AFRIQUE },
+  { name: "Lions", shortName: "Lions", city: "Johannesburg", countryCode: "ZA", countryName: "Afrique du Sud", continent: Continent.AFRIQUE },
   { name: "Benetton Rugby", shortName: "Benetton", city: "Trévise", countryCode: "IT", countryName: "Italie", continent: Continent.EUROPE },
   { name: "Ospreys", shortName: "Ospreys", city: "Swansea", countryCode: "WA", countryName: "Pays de Galles", continent: Continent.EUROPE },
   { name: "Newcastle Falcons", shortName: "Newcastle", city: "Newcastle", countryCode: "GB", countryName: "Angleterre", continent: Continent.EUROPE },
