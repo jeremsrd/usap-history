@@ -213,6 +213,8 @@ async function main() {
         "de pénalité (40') après le CJ de Latu, menant 16-10 à la pause. En seconde période, " +
         "Garbisi réduit l'écart (42', 47') mais Crossdale scelle la victoire à la 71' sur une " +
         "superbe passe au pied de McIntyre. Patrick Sobela élu homme du match.",
+      // Vidéo
+      videoUrl: "https://www.youtube.com/watch?v=kIkpr9cxj3g",
     },
   });
   console.log("  Match mis à jour");
