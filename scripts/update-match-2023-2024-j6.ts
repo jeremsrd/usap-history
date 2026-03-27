@@ -201,6 +201,8 @@ async function main() {
       penaltiesOpponent: 1,
       dropGoalsOpponent: 0,
       penaltyTriesOpponent: 0,
+      // Vidéo
+      videoUrl: "https://www.youtube.com/watch?v=ZiNwG7iYbMA",
       // Rapport
       report:
         "Match fou à Ernest-Wallon avec 77 points et 10 essais ! L'USAP tient le coup (3-3, 10-6) " +
