@@ -181,11 +181,15 @@ async function main() {
    *
    * CJ Fa'aso'o (28')
    */
+  // Stade (Ernest-Wallon, Toulouse, extérieur)
+  const venue = await prisma.venue.findFirst({ where: { name: { contains: "Ernest-Wallon" } } });
+
   await prisma.match.update({
     where: { id: match.id },
     data: {
       kickoffTime: "15:00",
       refereeId,
+      venueId: venue?.id ?? undefined,
       // Mi-temps
       halfTimeUsap: 6,
       halfTimeOpponent: 31,

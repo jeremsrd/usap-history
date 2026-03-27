@@ -174,11 +174,15 @@ async function main() {
    * USAP : 2E 2T 4P 0D = 10+4+12 = 26
    * Toulon : 3E 2T 1P 0D = 15+4+3 = 22
    */
+  // Stade (Aimé-Giral, domicile)
+  const venue = await prisma.venue.findFirst({ where: { name: { contains: "Giral" } } });
+
   await prisma.match.update({
     where: { id: match.id },
     data: {
       kickoffTime: "17:00",
       refereeId,
+      venueId: venue?.id ?? undefined,
       // Mi-temps
       halfTimeUsap: 16,
       halfTimeOpponent: 15,
