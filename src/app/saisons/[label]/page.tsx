@@ -59,7 +59,7 @@ export default async function SaisonDetailPage({ params }: Props) {
           opponent: {
             select: { name: true, shortName: true, logoUrl: true },
           },
-          venue: { select: { name: true, city: true } },
+          venue: { select: { name: true, city: true, slug: true } },
         },
       },
       seasonPlayers: {
@@ -464,10 +464,13 @@ export default async function SaisonDetailPage({ params }: Props) {
                             </td>
                             <td className="hidden whitespace-nowrap px-3 py-2 text-muted-foreground sm:table-cell">
                               {match.venue && (
-                                <span className="flex items-center gap-1">
+                                <Link
+                                  href={`/stades/${match.venue.slug}`}
+                                  className="flex items-center gap-1 hover:text-usap-or transition-colors"
+                                >
                                   <MapPin className="h-3 w-3" />
                                   {match.venue.name}
-                                </span>
+                                </Link>
                               )}
                             </td>
                           </tr>
