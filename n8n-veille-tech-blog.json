@@ -1,0 +1,206 @@
+{
+  "name": "Veille Tech - Articles Blog Quotidiens",
+  "nodes": [
+    {
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "triggerAtHour": 8
+            }
+          ]
+        }
+      },
+      "id": "schedule-trigger",
+      "name": "Tous les jours à 8h",
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.2,
+      "position": [0, 300]
+    },
+    {
+      "parameters": {
+        "url": "https://news.ycombinator.com/rss"
+      },
+      "id": "rss-hackernews",
+      "name": "RSS Hacker News",
+      "type": "n8n-nodes-base.rssFeedRead",
+      "typeVersion": 1,
+      "position": [250, 100]
+    },
+    {
+      "parameters": {
+        "url": "https://dev.to/feed"
+      },
+      "id": "rss-devto",
+      "name": "RSS Dev.to",
+      "type": "n8n-nodes-base.rssFeedRead",
+      "typeVersion": 1,
+      "position": [250, 300]
+    },
+    {
+      "parameters": {
+        "url": "https://techcrunch.com/feed/"
+      },
+      "id": "rss-techcrunch",
+      "name": "RSS TechCrunch",
+      "type": "n8n-nodes-base.rssFeedRead",
+      "typeVersion": 1,
+      "position": [250, 500]
+    },
+    {
+      "parameters": {
+        "mode": "append",
+        "options": {}
+      },
+      "id": "merge-1",
+      "name": "Merge HN + Dev.to",
+      "type": "n8n-nodes-base.merge",
+      "typeVersion": 3,
+      "position": [500, 200]
+    },
+    {
+      "parameters": {
+        "mode": "append",
+        "options": {}
+      },
+      "id": "merge-2",
+      "name": "Merge All Feeds",
+      "type": "n8n-nodes-base.merge",
+      "typeVersion": 3,
+      "position": [750, 300]
+    },
+    {
+      "parameters": {
+        "jsCode": "// Trier par date décroissante et limiter à 10 articles\nconst items = $input.all();\n\n// Dédupliquer par titre\nconst seen = new Set();\nconst unique = items.filter(item => {\n  const title = (item.json.title || '').toLowerCase().trim();\n  if (seen.has(title)) return false;\n  seen.add(title);\n  return true;\n});\n\n// Trier par date décroissante\nconst sorted = unique.sort((a, b) => {\n  const dateA = new Date(a.json.pubDate || a.json.isoDate || 0);\n  const dateB = new Date(b.json.pubDate || b.json.isoDate || 0);\n  return dateB - dateA;\n});\n\n// Prendre les 10 premiers\nconst top10 = sorted.slice(0, 10);\n\nconst today = new Date().toLocaleDateString('fr-FR', {\n  weekday: 'long',\n  year: 'numeric',\n  month: 'long',\n  day: 'numeric'\n});\n\n// Formater les articles pour le prompt\nconst articlesText = top10.map((item, i) => {\n  const title = (item.json.title || 'Sans titre').replace(/[\\\"]/g, \"'\");\n  const link = item.json.link || 'N/A';\n  const snippet = (item.json.contentSnippet || item.json.content || '').substring(0, 200).replace(/[\\\"]/g, \"'\").replace(/\\n/g, ' ');\n  return `${i + 1}. ${title} - Source: ${link} - ${snippet}`;\n}).join('\\n');\n\nconst userPrompt = `Voici les ${top10.length} actualités tech les plus marquantes du ${today} :\\n\\n${articlesText}\\n\\n---\\nÀ partir de ces actualités, rédige un article de blog en français (400-600 mots) qui : 1. A un titre accrocheur avec un emoji 2. Commence par une introduction engageante 3. Couvre les 3-5 sujets les plus intéressants avec des sous-titres 4. Pour chaque sujet un paragraphe de contexte et pourquoi c est important 5. Termine par une conclusion 6. Ajoute une section Sources à la fin avec les liens vers les articles originaux`;\n\n// Construire le body OpenAI complet comme objet JS (pas de problème d'échappement)\nconst openaiBody = {\n  model: 'gpt-4o-mini',\n  temperature: 0.7,\n  max_tokens: 2000,\n  messages: [\n    {\n      role: 'system',\n      content: 'Tu es un rédacteur de blog tech francophone spécialisé dans le développement web, l IA et les nouvelles technologies. Tu rédiges des articles engageants, accessibles et bien structurés en français. Ton ton est professionnel mais décontracté. Tu utilises le format Markdown.'\n    },\n    {\n      role: 'user',\n      content: userPrompt\n    }\n  ]\n};\n\nreturn [{\n  json: {\n    openaiBody,\n    date: today,\n    articleCount: top10.length\n  }\n}];"
+      },
+      "id": "code-format",
+      "name": "Trier, dédupliquer, formater",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [1000, 300]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://api.openai.com/v1/chat/completions",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "openAiApi",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify($json.openaiBody) }}",
+        "options": {}
+      },
+      "id": "openai-generate",
+      "name": "OpenAI - Rédiger article",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [1250, 300],
+      "credentials": {
+        "openAiApi": {
+          "id": "",
+          "name": "OpenAI API"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "fromEmail": "={{ $env.SMTP_FROM || 'veille@example.com' }}",
+        "toEmail": "={{ $env.VEILLE_EMAIL || 'votre@email.com' }}",
+        "subject": "=📰 Veille Tech du {{ $('Trier, dédupliquer, formater').item.json.date }}",
+        "emailType": "html",
+        "html": "=<div style=\"font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; max-width: 700px; margin: 0 auto; padding: 20px; color: #333;\">\n  <div style=\"background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); padding: 30px; border-radius: 12px 12px 0 0; text-align: center;\">\n    <h1 style=\"color: white; margin: 0; font-size: 24px;\">📰 Veille Tech Quotidienne</h1>\n    <p style=\"color: rgba(255,255,255,0.85); margin: 8px 0 0;\">{{ $('Trier, dédupliquer, formater').item.json.date }}</p>\n  </div>\n  <div style=\"background: #fff; padding: 30px; border: 1px solid #e2e8f0; border-top: none; border-radius: 0 0 12px 12px;\">\n    <div style=\"line-height: 1.7; font-size: 15px;\">{{ $json.choices[0].message.content.replace(/\\n/g, '<br>').replace(/## (.*?)(<br>|$)/g, '<h2 style=\"color: #4a5568; border-bottom: 2px solid #667eea; padding-bottom: 8px; margin-top: 25px;\">$1</h2>').replace(/# (.*?)(<br>|$)/g, '<h1 style=\"color: #2d3748; font-size: 22px;\">$1</h1>').replace(/\\*\\*(.*?)\\*\\*/g, '<strong>$1</strong>').replace(/\\[(.*?)\\]\\((.*?)\\)/g, '<a href=\"$2\" style=\"color: #667eea;\">$1</a>') }}</div>\n  </div>\n  <div style=\"text-align: center; padding: 20px; color: #a0aec0; font-size: 12px;\">\n    <p>Généré automatiquement par n8n 🤖</p>\n  </div>\n</div>",
+        "options": {}
+      },
+      "id": "send-email",
+      "name": "Envoyer par email",
+      "type": "n8n-nodes-base.emailSend",
+      "typeVersion": 2.1,
+      "position": [1500, 300],
+      "credentials": {
+        "smtp": {
+          "id": "",
+          "name": "SMTP"
+        }
+      }
+    }
+  ],
+  "connections": {
+    "Tous les jours à 8h": {
+      "main": [
+        [
+          { "node": "RSS Hacker News", "type": "main", "index": 0 },
+          { "node": "RSS Dev.to", "type": "main", "index": 0 },
+          { "node": "RSS TechCrunch", "type": "main", "index": 0 }
+        ]
+      ]
+    },
+    "RSS Hacker News": {
+      "main": [
+        [
+          { "node": "Merge HN + Dev.to", "type": "main", "index": 0 }
+        ]
+      ]
+    },
+    "RSS Dev.to": {
+      "main": [
+        [
+          { "node": "Merge HN + Dev.to", "type": "main", "index": 1 }
+        ]
+      ]
+    },
+    "Merge HN + Dev.to": {
+      "main": [
+        [
+          { "node": "Merge All Feeds", "type": "main", "index": 0 }
+        ]
+      ]
+    },
+    "RSS TechCrunch": {
+      "main": [
+        [
+          { "node": "Merge All Feeds", "type": "main", "index": 1 }
+        ]
+      ]
+    },
+    "Merge All Feeds": {
+      "main": [
+        [
+          { "node": "Trier, dédupliquer, formater", "type": "main", "index": 0 }
+        ]
+      ]
+    },
+    "Trier, dédupliquer, formater": {
+      "main": [
+        [
+          { "node": "OpenAI - Rédiger article", "type": "main", "index": 0 }
+        ]
+      ]
+    },
+    "OpenAI - Rédiger article": {
+      "main": [
+        [
+          { "node": "Envoyer par email", "type": "main", "index": 0 }
+        ]
+      ]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1",
+    "saveManualExecutions": true,
+    "callerPolicy": "workflowsFromSameOwner"
+  },
+  "tags": [
+    { "name": "veille" },
+    { "name": "blog" },
+    { "name": "automatisation" }
+  ]
+}
