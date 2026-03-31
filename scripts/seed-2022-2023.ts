@@ -374,7 +374,7 @@ async function main() {
       coachId: arlettaz.id,
       notes:
         "13e du Top 14. Saison difficile, maintien obtenu via barrage contre Grenoble (33-19). " +
-        "Aucune victoire à l'extérieur en phase régulière. " +
+        "Une seule victoire à l'extérieur en Top 14 : 24-22 à Brive (J17, match de la peur). " +
         "Éliminé en phase de poules de Challenge Cup (0V 4D, Pool A avec Bristol et Glasgow). " +
         "Belles victoires à domicile : 49-29 vs Pau (J18), 26-21 vs Toulouse (J25), 30-21 vs Racing (J23). " +
         "Coach : Patrick Arlettaz.",
