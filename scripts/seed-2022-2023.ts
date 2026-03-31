@@ -61,7 +61,7 @@ const MATCHES: MatchData[] = [
   { matchday: 14, date: "2022-12-31", isHome: true, opponentName: "Stade Rochelais", scoreUsap: 10, scoreOpp: 29, competition: "TOP14" },
   { matchday: 15, date: "2023-01-07", isHome: false, opponentName: "ASM Clermont Auvergne", scoreUsap: 20, scoreOpp: 31, competition: "TOP14" },
   { matchday: 16, date: "2023-01-28", isHome: true, opponentName: "Stade Français Paris", scoreUsap: 31, scoreOpp: 24, competition: "TOP14" },
-  { matchday: 17, date: "2023-02-04", isHome: false, opponentName: "CA Brive", scoreUsap: 22, scoreOpp: 24, competition: "TOP14" },
+  { matchday: 17, date: "2023-02-04", isHome: false, opponentName: "CA Brive", scoreUsap: 24, scoreOpp: 22, competition: "TOP14" },
   { matchday: 18, date: "2023-02-18", isHome: true, opponentName: "Section Paloise", scoreUsap: 49, scoreOpp: 29, competition: "TOP14" },
   { matchday: 19, date: "2023-02-25", isHome: false, opponentName: "Union Bordeaux-Bègles", scoreUsap: 7, scoreOpp: 43, competition: "TOP14" },
   { matchday: 20, date: "2023-03-04", isHome: true, opponentName: "Aviron Bayonnais", scoreUsap: 34, scoreOpp: 27, competition: "TOP14" },
