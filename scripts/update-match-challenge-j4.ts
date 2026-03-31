@@ -98,7 +98,7 @@ async function main() {
   const bachelierId = await getPlayer("Bachelier");
   const hallId = await getPlayer("Hall", "James");
   const pouletId = await getPlayer("Poulet");
-  const barraqueId = await getPlayer("Barraque");
+  const barraqueId = await getPlayer("Barraqué");
 
   // ---------------------------------------------------------------
   // 2. Nettoyage des données existantes

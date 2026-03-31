@@ -43,11 +43,11 @@ const USAP_SQUAD = [
   // Remplaçants
   { num: 16, firstName: "Xavier", lastName: "Chiocci", position: Position.PILIER_GAUCHE, isStarter: false, minutesPlayed: 29, subIn: 51 },
   { num: 17, firstName: "Posolo", lastName: "Tuilagi", position: Position.DEUXIEME_LIGNE, isStarter: false, minutesPlayed: 20, subIn: 60 },
-  { num: 18, firstName: "Joaquin", lastName: "Oviedo", position: Position.NUMERO_HUIT, isStarter: false, minutesPlayed: 25, subIn: 55 },
+  { num: 18, firstName: "Joaquín", lastName: "Oviedo", position: Position.NUMERO_HUIT, isStarter: false, minutesPlayed: 25, subIn: 55 },
   { num: 19, firstName: "Pietro", lastName: "Ceccarelli", position: Position.PILIER_DROIT, isStarter: false, minutesPlayed: 24, subIn: 56 },
   { num: 20, firstName: "Mathieu", lastName: "Acebes", position: Position.AILIER, isStarter: false, minutesPlayed: 13, subIn: 67 },
   { num: 21, firstName: "Sadek", lastName: "Deghmache", position: Position.DEMI_DE_MELEE, isStarter: false, minutesPlayed: 18, subIn: 62 },
-  { num: 22, firstName: "Jean-Pascal", lastName: "Barraque", position: Position.DEMI_OUVERTURE, isStarter: false, minutesPlayed: 0 },
+  { num: 22, firstName: "Jean-Pascal", lastName: "Barraqué", position: Position.DEMI_OUVERTURE, isStarter: false, minutesPlayed: 0 },
   { num: 23, firstName: "Victor", lastName: "Montgaillard", position: Position.TALONNEUR, isStarter: false, minutesPlayed: 0 },
 ];
 

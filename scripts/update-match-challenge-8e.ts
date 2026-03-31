@@ -39,7 +39,7 @@ async function main() {
     { first: "James", last: "Hall" },
     { first: "Jake", last: "McIntyre" },
     { first: "Alivereti", last: "Duguivalu" },
-    { first: "Jeronimo", last: "De La Fuente" },
+    { first: "Jerónimo", last: "De La Fuente" },
     { first: "Apisai", last: "Naqalevu" },
     { first: "Tavite", last: "Veredamu" },
     { first: "Tommaso", last: "Allan" },

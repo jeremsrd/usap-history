@@ -126,7 +126,7 @@ async function main() {
 
   // Joueurs potentiellement nouveaux
   PLAYER_IDS["Ruiz"] = await findOrCreatePlayer("Ignacio", "Ruiz", "TALONNEUR");
-  PLAYER_IDS["Oviedo"] = await findOrCreatePlayer("Joaquin", "Oviedo", "NUMERO_HUIT");
+  PLAYER_IDS["Oviedo"] = await findOrCreatePlayer("Joaquín", "Oviedo", "NUMERO_HUIT");
   PLAYER_IDS["Aucagne"] = await findOrCreatePlayer("Antoine", "Aucagne", "DEMI_OUVERTURE");
   PLAYER_IDS["Mascarenc"] = await findOrCreatePlayer("Diego", "Mascarenc", "CENTRE");
   PLAYER_IDS["Forner"] = await findOrCreatePlayer("Theo", "Forner", "ARRIERE");

@@ -49,7 +49,7 @@ const USAP_SQUAD = [
   { num: 19, firstName: "Kelian", lastName: "Galletier", position: Position.TROISIEME_LIGNE_AILE, isStarter: false, minutesPlayed: 20, subIn: 60 },
   { num: 20, firstName: "Sadek", lastName: "Deghmache", position: Position.DEMI_DE_MELEE, isStarter: false, minutesPlayed: 18, subIn: 62 },
   { num: 21, firstName: "Jake", lastName: "McIntyre", position: Position.DEMI_OUVERTURE, isStarter: false, minutesPlayed: 15, subIn: 65 },
-  { num: 22, firstName: "Theo", lastName: "Forner", position: Position.ARRIERE, isStarter: false, minutesPlayed: 0 },
+  { num: 22, firstName: "Théo", lastName: "Forner", position: Position.ARRIERE, isStarter: false, minutesPlayed: 0 },
   { num: 23, firstName: "Siosiaia", lastName: "Fia", position: Position.PILIER_DROIT, isStarter: false, minutesPlayed: 25, subIn: 55, yellowCard: true, yellowCardMin: 80 },
 ];
 

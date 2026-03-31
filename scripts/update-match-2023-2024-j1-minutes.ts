@@ -89,7 +89,7 @@ async function main() {
   console.log("--- Capitaine ---");
 
   // Retirer le capitanat de Barraque
-  const barraque = await findMatchPlayer(match.id, "Barraque", false);
+  const barraque = await findMatchPlayer(match.id, "Barraqué", false);
   if (barraque?.isCaptain) {
     await prisma.matchPlayer.update({
       where: { id: barraque.id },

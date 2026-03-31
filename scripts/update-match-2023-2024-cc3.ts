@@ -42,7 +42,7 @@ const USAP_SQUAD = [
   { num: 18, firstName: "Pietro", lastName: "Ceccarelli", position: Position.PILIER_DROIT, isStarter: false, minutesPlayed: 25, subIn: 55 },
   { num: 19, firstName: "Bastien", lastName: "Chinarro", position: Position.DEUXIEME_LIGNE, isStarter: false, minutesPlayed: 0 },
   { num: 20, firstName: "Alan", lastName: "Brazo", position: Position.TROISIEME_LIGNE_AILE, isStarter: false, minutesPlayed: 0 },
-  { num: 21, firstName: "Joaquin", lastName: "Oviedo", position: Position.NUMERO_HUIT, isStarter: false, minutesPlayed: 0 },
+  { num: 21, firstName: "Joaquín", lastName: "Oviedo", position: Position.NUMERO_HUIT, isStarter: false, minutesPlayed: 0 },
   { num: 22, firstName: "Matteo", lastName: "Rodor", position: Position.DEMI_DE_MELEE, isStarter: false, minutesPlayed: 15, subIn: 65 },
   { num: 23, firstName: "Jean-Pascal", lastName: "Barraqué", position: Position.ARRIERE, isStarter: false, minutesPlayed: 0 },
 ];

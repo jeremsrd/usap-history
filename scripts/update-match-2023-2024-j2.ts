@@ -38,7 +38,7 @@ const USAP_SQUAD = [
   { num: 19, firstName: "Lucas", lastName: "Velarte", position: Position.TROISIEME_LIGNE_AILE, isStarter: false, subIn: 51 },
   { num: 20, firstName: "Kelian", lastName: "Galletier", position: Position.TROISIEME_LIGNE_AILE, isStarter: false, subIn: 51 },
   { num: 21, firstName: "Tom", lastName: "Ecochard", position: Position.DEMI_DE_MELEE, isStarter: false, subIn: 52 },
-  { num: 22, firstName: "Jean-Pascal", lastName: "Barraque", position: Position.DEMI_OUVERTURE, isStarter: false, subIn: 36 },
+  { num: 22, firstName: "Jean-Pascal", lastName: "Barraqué", position: Position.DEMI_OUVERTURE, isStarter: false, subIn: 36 },
   { num: 23, firstName: "Arthur", lastName: "Joly", position: Position.PILIER_DROIT, isStarter: false, subIn: 55 },
 ];
 

@@ -39,7 +39,7 @@ const USAP_SQUAD = [
   { num: 12, firstName: "Edward", lastName: "Sawailau", position: Position.CENTRE, isStarter: true, minutesPlayed: 58, subOut: 58 },
   { num: 13, firstName: "Alivereti", lastName: "Duguivalu", position: Position.CENTRE, isStarter: true, minutesPlayed: 80 },
   { num: 14, firstName: "Louis", lastName: "Dupichot", position: Position.AILIER, isStarter: true, minutesPlayed: 80 },
-  { num: 15, firstName: "Jean-Pascal", lastName: "Barraque", position: Position.ARRIERE, isStarter: true, minutesPlayed: 80 },
+  { num: 15, firstName: "Jean-Pascal", lastName: "Barraqué", position: Position.ARRIERE, isStarter: true, minutesPlayed: 80 },
   // Remplaçants
   { num: 16, firstName: "Seilala", lastName: "Lam", position: Position.TALONNEUR, isStarter: false, minutesPlayed: 23, subIn: 57 },          // remplace Ruiz 57'
   { num: 17, firstName: "Xavier", lastName: "Chiocci", position: Position.PILIER_GAUCHE, isStarter: false, minutesPlayed: 28, subIn: 52 },    // remplace Lotrian 52'

@@ -45,7 +45,7 @@ const USAP_SQUAD = [
   { num: 19, lastName: "Velarte", position: "TROISIEME_LIGNE_AILE" as const, isStarter: false },
   { num: 20, lastName: "Aprasidze", position: "DEMI_DE_MELEE" as const, isStarter: false },
   { num: 21, lastName: "Buliruarua", position: "CENTRE" as const, isStarter: false },
-  { num: 22, lastName: "Barraque", position: "ARRIERE" as const, isStarter: false },
+  { num: 22, lastName: "Barraqué", position: "ARRIERE" as const, isStarter: false },
   { num: 23, lastName: "Ceccarelli", position: "PILIER_DROIT" as const, isStarter: false },
 ];
 
@@ -84,13 +84,13 @@ async function main() {
   // ---------------------------------------------------------------
   console.log("--- Joueur Barraque ---");
   let barraque = await prisma.player.findFirst({
-    where: { lastName: { contains: "Barraque", mode: "insensitive" } },
+    where: { lastName: { contains: "Barraqué", mode: "insensitive" } },
   });
   if (!barraque) {
     barraque = await prisma.player.create({
       data: {
         firstName: "Jean-Pascal",
-        lastName: "Barraque",
+        lastName: "Barraqué",
         slug: `temp-${Date.now()}`,
         position: "ARRIERE",
         birthDate: new Date("1997-03-16"),
@@ -104,7 +104,7 @@ async function main() {
   } else {
     console.log(`  Existe : ${barraque.firstName} ${barraque.lastName} (${barraque.id})`);
   }
-  PLAYER_IDS["Barraque"] = barraque.id;
+  PLAYER_IDS["Barraqué"] = barraque.id;
 
   console.log("\n--- Venue ---");
   let venue = await prisma.venue.findFirst({
@@ -356,7 +356,7 @@ async function main() {
     {
       minute: 57,
       type: "REMPLACEMENT_ENTREE",
-      playerId: PLAYER_IDS["Barraque"],
+      playerId: PLAYER_IDS["Barraqué"],
       isUsap: true,
       description: "Entrée de Jean-Pascal Barraque en remplacement de Dupichot",
     },

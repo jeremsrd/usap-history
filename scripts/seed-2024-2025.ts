@@ -165,7 +165,7 @@ const SQUAD: PlayerData[] = [
 
   // Numéros 8
   { firstName: "So'otala", lastName: "Fa'aso'o", position: Position.NUMERO_HUIT },
-  { firstName: "Joaquin", lastName: "Oviedo", position: Position.NUMERO_HUIT },
+  { firstName: "Joaquín", lastName: "Oviedo", position: Position.NUMERO_HUIT },
   { firstName: "Lucas", lastName: "Velarte", position: Position.NUMERO_HUIT },
 
   // Demis de mêlée
