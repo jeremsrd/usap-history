@@ -128,11 +128,15 @@ async function main() {
   const refereeId = await findOrCreateReferee("Luc", "Ramos");
 
   console.log("\n--- Match (infos générales) ---");
+  const venue = await prisma.venue.findFirst({ where: { name: { contains: "Dauger" } } });
+
   await prisma.match.update({
     where: { id: match.id },
     data: {
       kickoffTime: "17:00",
       refereeId,
+      venueId: venue?.id ?? undefined,
+      videoUrl: "https://www.youtube.com/watch?v=3ur9OWm7oXs",
       halfTimeUsap: 6,
       halfTimeOpponent: 10,
       // USAP : 2E + 2T + 2P = 10+4+6 = 20
