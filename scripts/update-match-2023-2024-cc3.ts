@@ -120,12 +120,28 @@ async function main() {
   console.log("--- Arbitre ---");
   const refereeId = await findOrCreateReferee("Morné", "Ferreira");
 
+  console.log("\n--- Stade ---");
+  let venue = await prisma.venue.findFirst({ where: { name: { contains: "Swansea", mode: "insensitive" } } });
+  if (!venue) {
+    let wales = await prisma.country.findFirst({ where: { code: "WA" } });
+    if (!wales) {
+      wales = await prisma.country.create({ data: { name: "Pays de Galles", code: "WA", slug: "pays-de-galles" } });
+    }
+    venue = await prisma.venue.create({
+      data: { name: "Swansea.com Stadium", slug: "swansea-com-stadium", city: "Swansea", countryId: wales.id, capacity: 20520 },
+    });
+    console.log(`  Créé : ${venue.name}`);
+  } else {
+    console.log(`  Existe : ${venue.name}`);
+  }
+
   console.log("\n--- Match (infos générales) ---");
   await prisma.match.update({
     where: { id: match.id },
     data: {
       kickoffTime: "21:00",
       refereeId,
+      venueId: venue.id,
       halfTimeUsap: 0,
       halfTimeOpponent: 8,
       // USAP : 1P = 3

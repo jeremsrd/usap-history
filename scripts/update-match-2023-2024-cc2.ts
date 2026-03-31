@@ -120,12 +120,28 @@ async function main() {
   console.log("--- Arbitre ---");
   const refereeId = await findOrCreateReferee("Eoghan", "Cross");
 
+  console.log("\n--- Stade ---");
+  let venue = await prisma.venue.findFirst({ where: { name: { contains: "Monigo", mode: "insensitive" } } });
+  if (!venue) {
+    let italy = await prisma.country.findFirst({ where: { name: { contains: "Italie", mode: "insensitive" } } });
+    if (!italy) {
+      italy = await prisma.country.create({ data: { name: "Italie", code: "ITA", slug: "italie" } });
+    }
+    venue = await prisma.venue.create({
+      data: { name: "Stadio Comunale di Monigo", slug: "stadio-comunale-di-monigo", city: "Trévise", countryId: italy.id, capacity: 8000 },
+    });
+    console.log(`  Créé : ${venue.name}`);
+  } else {
+    console.log(`  Existe : ${venue.name}`);
+  }
+
   console.log("\n--- Match (infos générales) ---");
   await prisma.match.update({
     where: { id: match.id },
     data: {
       kickoffTime: "16:15",
       refereeId,
+      venueId: venue.id,
       videoUrl: "https://www.youtube.com/watch?v=6nWGgxYHNAc",
       halfTimeUsap: 0,
       halfTimeOpponent: 17,
