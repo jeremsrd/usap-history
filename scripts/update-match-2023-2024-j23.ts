@@ -147,6 +147,7 @@ async function main() {
         "Clermont en profite : Darricarrère (59'), Beria (66'), Fourcade (71'), " +
         "Jauneau (76') inscrivent 4 essais en 20 minutes. Veredamu sauve l'honneur (69') " +
         "mais Clermont s'impose 35-28. Fin de série pour l'USAP.",
+      videoUrl: "https://www.youtube.com/watch?v=-zaRggNuN_U",
     },
   });
   console.log("  Match mis à jour");
