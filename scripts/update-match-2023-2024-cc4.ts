@@ -126,6 +126,7 @@ async function main() {
     data: {
       kickoffTime: "14:00",
       refereeId,
+      videoUrl: "https://www.youtube.com/watch?v=-HSUZcTOj-Q",
       halfTimeUsap: 13,
       halfTimeOpponent: 9,
       // USAP : 3E + 1T + 2P = 15+2+6 = 23
