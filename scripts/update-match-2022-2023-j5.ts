@@ -135,6 +135,7 @@ async function main() {
       refereeId,
       halfTimeUsap: 14,
       halfTimeOpponent: 0,
+      videoUrl: "https://www.youtube.com/watch?v=RA0fiiBaaFw",
       // USAP : 1E + 0T + 3P = 5+0+9 = 14
       triesUsap: 1, conversionsUsap: 0, penaltiesUsap: 3, dropGoalsUsap: 0, penaltyTriesUsap: 0,
       // Castres : 1E + 1T + 1P = 5+2+3 = 10
