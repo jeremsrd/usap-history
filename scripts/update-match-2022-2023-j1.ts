@@ -142,6 +142,7 @@ async function main() {
       triesUsap: 2, conversionsUsap: 2, penaltiesUsap: 0, dropGoalsUsap: 0, penaltyTriesUsap: 0,
       // Pau : 1E + 1T + 3P = 5+2+9 = 16
       triesOpponent: 1, conversionsOpponent: 1, penaltiesOpponent: 3, dropGoalsOpponent: 0, penaltyTriesOpponent: 0,
+      videoUrl: "https://www.youtube.com/watch?v=kVZMr9bwYEQ",
       report:
         "Défaite cruelle au Hameau pour l'ouverture de la saison. " +
         "Première mi-temps terne : seule une pénalité de Henry (28') départage les équipes (3-0). " +
