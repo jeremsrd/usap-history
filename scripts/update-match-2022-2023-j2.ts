@@ -132,7 +132,7 @@ async function main() {
       refereeId,
       halfTimeUsap: 6,
       halfTimeOpponent: 12,
-      videoUrl: "https://www.dailymotion.com/video/x8dmmla",
+      videoUrl: "https://www.youtube.com/watch?v=h-rPy3KycVk",
       // USAP : 0E + 2P = 6
       triesUsap: 0, conversionsUsap: 0, penaltiesUsap: 2, dropGoalsUsap: 0, penaltyTriesUsap: 0,
       // Brive : 3E + 1T = 15+2 = 17
