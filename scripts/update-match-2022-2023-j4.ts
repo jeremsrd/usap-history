@@ -133,6 +133,7 @@ async function main() {
       refereeId,
       halfTimeUsap: 16,
       halfTimeOpponent: 6,
+      videoUrl: "https://www.youtube.com/watch?v=pVRMPZnPx-Y",
       // USAP : 1E + 1T + 4P = 5+2+12 = 19
       triesUsap: 1, conversionsUsap: 1, penaltiesUsap: 4, dropGoalsUsap: 0, penaltyTriesUsap: 0,
       // Toulon : 1E + 1T + 1P = 5+2+3 + 3P(Serin+Paillaugue) = ... non
