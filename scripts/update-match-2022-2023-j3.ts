@@ -147,6 +147,7 @@ async function main() {
       venueId: venue.id,
       halfTimeUsap: 3,
       halfTimeOpponent: 26,
+      videoUrl: "https://www.youtube.com/watch?v=Va_ePYKB1Ts",
       // USAP : 1E + 0T + 1P = 5+0+3 = 8
       triesUsap: 1, conversionsUsap: 0, penaltiesUsap: 1, dropGoalsUsap: 0, penaltyTriesUsap: 0,
       // La Rochelle : 7E + 4T = 35+8 = 43
