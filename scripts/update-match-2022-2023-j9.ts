@@ -138,6 +138,7 @@ async function main() {
       refereeId,
       halfTimeUsap: 15,
       halfTimeOpponent: 7,
+      videoUrl: "https://www.youtube.com/watch?v=lIW4GpM7_gg",
       // USAP : 3E + 2T + 3P = 15+4+9 = 28
       triesUsap: 3, conversionsUsap: 2, penaltiesUsap: 3, dropGoalsUsap: 0, penaltyTriesUsap: 0,
       // Lyon : 3E + 3T = 15+6 = 21
