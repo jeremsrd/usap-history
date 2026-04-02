@@ -127,15 +127,15 @@ async function main() {
   console.log(`Match trouvé : ${match.slug} (${match.id})`);
   console.log(`  USAP ${match.scoreUsap} - ${match.scoreOpponent} ${match.opponent.name}\n`);
 
-  // Arbitre non identifié avec certitude — pas de mise à jour refereeId
   console.log("--- Arbitre ---");
-  console.log("  ⚠ Arbitre non identifié — à compléter ultérieurement");
+  const refereeId = await findOrCreateReferee("Thomas", "Charabas");
 
   console.log("\n--- Match (infos générales) ---");
   await prisma.match.update({
     where: { id: match.id },
     data: {
       kickoffTime: "17:00",
+      refereeId,
       halfTimeUsap: 6,
       halfTimeOpponent: 20,
       videoUrl: "https://www.youtube.com/watch?v=KotDOgM-Le0",
@@ -253,7 +253,7 @@ async function main() {
   console.log("\n=== Mise à jour terminée ===");
   console.log("  Score : Toulouse 34 - 13 USAP (extérieur)");
   console.log("  Mi-temps : Toulouse 20 - 6 USAP");
-  console.log("  ⚠ Arbitre à compléter");
+  console.log("  Arbitre : Thomas Charabas");
   console.log("  Tedder 8 pts (1T + 2P), Montgaillard 1E (5 pts)");
   console.log("  CJ : Galletier (39'), Shields (50')");
   console.log("  Toulouse : Ntamack 2P+1E, Ramos 4T, Lebel/Roumat/Willis/Ntamack 1E chacun");
