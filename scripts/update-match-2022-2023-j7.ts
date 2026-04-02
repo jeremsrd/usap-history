@@ -138,6 +138,7 @@ async function main() {
       refereeId,
       halfTimeUsap: 3,
       halfTimeOpponent: 9,
+      videoUrl: "https://www.youtube.com/watch?v=pz4c_zdDu24",
       // USAP : 1E + 1T + 1P = 5+2+3 = 10
       triesUsap: 1, conversionsUsap: 1, penaltiesUsap: 1, dropGoalsUsap: 0, penaltyTriesUsap: 0,
       // Clermont : 1E + 0T + 5P = 5+0+15 = 20
