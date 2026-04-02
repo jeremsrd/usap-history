@@ -139,6 +139,7 @@ async function main() {
       refereeId,
       halfTimeUsap: 17,
       halfTimeOpponent: 6,
+      videoUrl: "https://www.youtube.com/watch?v=Xqz8lsQ_M10",
       // USAP : 2E + 2T + 2P = 10+4+6 = 20
       triesUsap: 2, conversionsUsap: 2, penaltiesUsap: 2, dropGoalsUsap: 0, penaltyTriesUsap: 0,
       // Bayonne : 2E + 1T + 4P = 10+2+12 = 24
