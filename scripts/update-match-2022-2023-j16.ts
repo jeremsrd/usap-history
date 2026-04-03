@@ -140,7 +140,7 @@ async function main() {
       refereeId,
       halfTimeUsap: 17,
       halfTimeOpponent: 14,
-      videoUrl: null,
+      videoUrl: "https://www.youtube.com/watch?v=n_jnN8UEWJc",
       // USAP : 4E + 4T + 1P = 20+8+3 = 31
       triesUsap: 4, conversionsUsap: 4, penaltiesUsap: 1, dropGoalsUsap: 0, penaltyTriesUsap: 0,
       // Stade Français : 3E + 0T + 2P + 1DG = 15+0+6+3 = 24
