@@ -139,7 +139,7 @@ async function main() {
       refereeId,
       halfTimeUsap: 0,
       halfTimeOpponent: 19,
-      videoUrl: null,
+      videoUrl: "https://www.youtube.com/watch?v=-c9u0nTCDVc",
       // USAP : 1E + 1T + 1P = 5+2+3 = 10
       triesUsap: 1, conversionsUsap: 1, penaltiesUsap: 1, dropGoalsUsap: 0, penaltyTriesUsap: 0,
       // Montpellier : 4E + 3T + 4P = 20+6+12 = 38
