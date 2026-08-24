@@ -27,7 +27,11 @@
  */
 
 import { PrismaClient, Position, MatchResult } from "@prisma/client";
-import { generateMatchSlug, generatePlayerSlug } from "../src/lib/slugs";
+import {
+  generateMatchSlug,
+  generatePlayerSlug,
+  generateRefereeSlug,
+} from "../src/lib/slugs";
 
 const prisma = new PrismaClient();
 
@@ -96,6 +100,10 @@ interface MatchData {
   dropGoalsOpponent: number;
   bonusOffensif: boolean;
   bonusDefensif: boolean;
+  /** Arbitre central, quand il a pu être sourcé. */
+  referee?: { firstName: string; lastName: string };
+  /** URL du résumé vidéo, quand elle a pu être sourcée. */
+  videoUrl?: string;
   report: string;
   usapSquad: UsapPlayerData[];
   oppSquad: OpponentPlayerData[];
@@ -510,8 +518,10 @@ events: [
     triesOpponent: 4, conversionsOpponent: 2, penaltiesOpponent: 1, dropGoalsOpponent: 0,
     bonusOffensif: false,
     bonusDefensif: false,
+    referee: { firstName: "Kévin", lastName: "Bralley" },
+    videoUrl: "https://www.youtube.com/watch?v=pp1Itk9bi8s",
     report:
-      "Victoire capitale à Aimé-Giral dans la course au maintien. Menée 10-17 à la pause après les essais de Ramototabua (7'), Durand (32') et Botitu (37'), l'USAP renverse le match en seconde période : Tuilagi (52') puis Hicks (56'), profitant du carton jaune de Durand, remettent les Catalans devant. Castres repasse en tête par Ramototabua (65'), mais Duguivalu inscrit l'essai de la gagne à la 80e, transformé par Urdapilleta. 29-27.",
+      "Dernier match de la saison à Aimé-Giral, sans enjeu comptable pour personne : l'USAP est déjà condamnée à l'access match et Castres n'a plus rien à jouer. Les Catalans cherchent surtout de la confiance à deux semaines d'Aix. Menés 10-17 à la pause après les essais de Ramototabua (7'), Durand (32') et Botitu (37'), ils renversent le match en seconde période : Tuilagi (52'), de retour de blessure, puis Hicks (56') profitant du carton jaune de Durand. Castres repasse devant par Ramototabua (65') et mène encore 27-22 à une minute de la fin. Sur le dernier ballon, un gros travail de Jefferson-Lee Joseph et une ultime passe de Tommaso Allan libèrent Duguivalu, qui plonge entre les poteaux ; Kévin Bralley valide l'essai après un long recours à l'arbitrage vidéo, Urdapilleta transforme. 29-27. Trois des quatre essais catalans sont inscrits par des joueurs sur le départ (Allan, Hicks, Duguivalu).",
     usapSquad: [
   { num: 1, firstName: "Giorgi", lastName: "Tetrashvili", position: Position.PILIER_GAUCHE, isStarter: true, subOut: 36 },
   { num: 2, firstName: "Ignacio", lastName: "Ruiz", position: Position.TALONNEUR, isStarter: true, subOut: 41 },
@@ -807,6 +817,27 @@ async function findOrCreatePlayer(
   return player.id;
 }
 
+/** Retrouve un arbitre par nom, ou le crée. */
+async function findOrCreateReferee(firstName: string, lastName: string): Promise<string> {
+  const existing = await prisma.referee.findFirst({
+    where: {
+      firstName: { equals: firstName, mode: "insensitive" },
+      lastName: { equals: lastName, mode: "insensitive" },
+    },
+  });
+  if (existing) return existing.id;
+
+  const referee = await prisma.referee.create({
+    data: { firstName, lastName, slug: `temp-${Date.now()}` },
+  });
+  await prisma.referee.update({
+    where: { id: referee.id },
+    data: { slug: generateRefereeSlug(firstName, lastName, referee.id) },
+  });
+  console.log(`    [arbitre] Créé : ${firstName} ${lastName}`);
+  return referee.id;
+}
+
 function computeResult(scoreUsap: number, scoreOpponent: number): MatchResult {
   if (scoreUsap > scoreOpponent) return MatchResult.VICTOIRE;
   if (scoreUsap < scoreOpponent) return MatchResult.DEFAITE;
@@ -863,9 +894,15 @@ async function main() {
 
     // ---- Match ------------------------------------------------------------
     const result = computeResult(m.scoreUsap, m.scoreOpponent);
+    const refereeId = m.referee
+      ? await findOrCreateReferee(m.referee.firstName, m.referee.lastName)
+      : null;
+
     const common = {
       date: new Date(m.date),
       kickoffTime: m.kickoffTime,
+      refereeId,
+      videoUrl: m.videoUrl ?? null,
       seasonId: season.id,
       competitionId: competition.id,
       matchday: m.matchday,
