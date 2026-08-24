@@ -519,6 +519,7 @@ function PlayerRow({
     tries: number;
     totalPoints: number;
     yellowCard: boolean;
+    orangeCard: boolean;
     redCard: boolean;
     opponentPlayerName: string | null;
     player: {
@@ -592,6 +593,7 @@ function PlayerRow({
         </span>
       )}
       {mp.yellowCard && <span title="Carton jaune">🟨</span>}
+      {mp.orangeCard && <span title="Carton orange">🟧</span>}
       {mp.redCard && <span title="Carton rouge">🟥</span>}
     </div>
   );

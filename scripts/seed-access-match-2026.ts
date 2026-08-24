@@ -1,21 +1,27 @@
 /**
  * Access match Top 14 / Pro D2 — Provence Rugby 24-47 USAP (14/06/2026)
  *
- * 13e du Top 14, l'USAP affronte Provence Rugby, demi-finaliste de Pro D2,
- * au Stade Maurice-David d'Aix-en-Provence, et conserve sa place dans l'élite.
- * Peceli Yato, entré à la 28e minute, inscrit un doublé et est désigné homme
- * du match. Quatrième access match remporté par les Catalans.
+ * 13e du Top 14, l'USAP affronte Provence Rugby, finaliste malheureux de
+ * Pro D2, au Stade Maurice-David d'Aix-en-Provence, et conserve sa place
+ * dans l'élite. Peceli Yato, entré à la 28e minute, inscrit un doublé et est
+ * désigné homme du match. Quatrième access match remporté par les Catalans.
  *
- * Sources : top14.lnr.fr (compte rendu et marqueurs), provencerugby.com,
- *   lerugbynistere.fr, blog-rct.com (composition USAP),
- *   minutesports.fr (désignation arbitrale).
+ * Sources : top14.lnr.fr (feuille de match officielle : compositions et
+ *   officiels), rugbyrama.fr (direct commenté : chronologie complète, cartons,
+ *   remplacements, score à la mi-temps), provencerugby.com, lerugbynistere.fr.
  *
- * Précision sur les données : les marqueurs d'essais et leurs minutes sont
- * sourcés, mais les buteurs des transformations (6 pour l'USAP, 2 pour
- * Provence) ne le sont pas. Elles sont donc comptabilisées au niveau du match
- * (conversionsUsap / conversionsOpponent) mais ne sont attribuées à aucun
- * joueur et n'apparaissent pas dans la chronologie. Le score à la mi-temps,
- * l'affluence et le banc de Provence restent également à sourcer.
+ * À noter :
+ * - Benjamin Urdapilleta, annoncé à l'ouverture dans la composition de
+ *   présentation, déclare forfait le jour du match (adducteurs) ; Jake
+ *   McIntyre débute au poste de demi d'ouverture.
+ * - Sama Malolo écope d'un carton orange à la 33e (plaquage à la tête sur
+ *   Jalagonia). Le type EventType ne comporte pas encore CARTON_ORANGE : la
+ *   sanction est portée sur la feuille de match (champ orangeCard) et non
+ *   dans la chronologie.
+ * - 18e : Bruce Devaux entre pendant le carton jaune de Tetrashvili, Théo
+ *   Forner sortant temporairement ; Forner revient ensuite et marque à la 39e.
+ *   Seule l'entrée de Devaux est donc enregistrée.
+ * - Affluence non chiffrée (stade annoncé à guichets fermés).
  *
  * Usage : npx tsx scripts/seed-access-match-2026.ts
  *
@@ -36,66 +42,89 @@ const prisma = new PrismaClient();
 const DATE = new Date("2026-06-14");
 const SCORE_USAP = 47;
 const SCORE_PROVENCE = 24;
+const VIDEO_URL = "https://www.youtube.com/watch?v=l3AfbfwKHgE";
 
-// === COMPOSITION USAP ===
+// === COMPOSITION USAP (feuille de match LNR) ===
 const USAP_SQUAD = [
-  { num: 1, firstName: "Giorgi", lastName: "Tetrashvili", position: Position.PILIER_GAUCHE, isStarter: true },
-  { num: 2, firstName: "Sama", lastName: "Malolo", position: Position.TALONNEUR, isStarter: true },
-  { num: 3, firstName: "Kieran", lastName: "Brookes", position: Position.PILIER_DROIT, isStarter: true },
-  { num: 4, firstName: "Mathieu", lastName: "Tanguy", position: Position.DEUXIEME_LIGNE, isStarter: true },
-  { num: 5, firstName: "Jonny", lastName: "Gray", position: Position.DEUXIEME_LIGNE, isStarter: true },
+  { num: 1, firstName: "Giorgi", lastName: "Tetrashvili", position: Position.PILIER_GAUCHE, isStarter: true, yellowCardMin: 16 },
+  { num: 2, firstName: "Sama", lastName: "Malolo", position: Position.TALONNEUR, isStarter: true, orangeCardMin: 33, subOut: 33 },
+  { num: 3, firstName: "Kieran", lastName: "Brookes", position: Position.PILIER_DROIT, isStarter: true, subOut: 53 },
+  { num: 4, firstName: "Mathieu", lastName: "Tanguy", position: Position.DEUXIEME_LIGNE, isStarter: true, subOut: 28 },
+  { num: 5, firstName: "Jonny", lastName: "Gray", position: Position.DEUXIEME_LIGNE, isStarter: true, subOut: 53 },
   { num: 6, firstName: "Maxwell", lastName: "Hicks", position: Position.TROISIEME_LIGNE_AILE, isStarter: true },
-  { num: 7, firstName: "Jacobus", lastName: "Van Tonder", position: Position.TROISIEME_LIGNE_AILE, isStarter: true },
+  { num: 7, firstName: "Jacobus", lastName: "Van Tonder", position: Position.TROISIEME_LIGNE_AILE, isStarter: true, subOut: 40 },
   { num: 8, firstName: "Joaquín", lastName: "Oviedo", position: Position.NUMERO_HUIT, isStarter: true, tries: 2 },
-  { num: 9, firstName: "James", lastName: "Hall", position: Position.DEMI_DE_MELEE, isStarter: true },
-  { num: 10, firstName: "Benjamin", lastName: "Urdapilleta", position: Position.DEMI_OUVERTURE, isStarter: true },
+  { num: 9, firstName: "James", lastName: "Hall", position: Position.DEMI_DE_MELEE, isStarter: true, subOut: 63 },
+  { num: 10, firstName: "Jake", lastName: "McIntyre", position: Position.DEMI_OUVERTURE, isStarter: true, subOut: 66 },
   { num: 11, firstName: "Théo", lastName: "Forner", position: Position.AILIER, isStarter: true, tries: 1 },
   { num: 12, firstName: "Jerónimo", lastName: "De La Fuente", position: Position.CENTRE, isStarter: true, isCaptain: true, tries: 1 },
   { num: 13, firstName: "Alivereti", lastName: "Duguivalu", position: Position.CENTRE, isStarter: true },
-  { num: 14, firstName: "Jefferson-Lee", lastName: "Joseph", position: Position.AILIER, isStarter: true },
-  { num: 15, firstName: "Tommaso", lastName: "Allan", position: Position.ARRIERE, isStarter: true },
-  { num: 16, firstName: "Ignacio", lastName: "Ruiz", position: Position.TALONNEUR, isStarter: false, tries: 1 },
-  { num: 17, firstName: "Bruce", lastName: "Devaux", position: Position.PILIER_GAUCHE, isStarter: false },
+  { num: 14, firstName: "Jefferson-Lee", lastName: "Joseph", position: Position.AILIER, isStarter: true, subOut: 34 },
+  { num: 15, firstName: "Tommaso", lastName: "Allan", position: Position.ARRIERE, isStarter: true, conversions: 6 },
+  { num: 16, firstName: "Ignacio", lastName: "Ruiz", position: Position.TALONNEUR, isStarter: false, tries: 1, subIn: 34 },
+  { num: 17, firstName: "Bruce", lastName: "Devaux", position: Position.PILIER_GAUCHE, isStarter: false, subIn: 18 },
   { num: 18, firstName: "Peceli", lastName: "Yato", position: Position.TROISIEME_LIGNE_AILE, isStarter: false, tries: 2, subIn: 28 },
-  { num: 19, firstName: "Posolo", lastName: "Tuilagi", position: Position.DEUXIEME_LIGNE, isStarter: false },
-  { num: 20, firstName: "Mattéo", lastName: "Le Corvec", position: Position.TROISIEME_LIGNE_AILE, isStarter: false },
-  { num: 21, firstName: "Tom", lastName: "Ecochard", position: Position.DEMI_DE_MELEE, isStarter: false },
-  { num: 22, firstName: "Jordan", lastName: "Petaia", position: Position.AILIER, isStarter: false },
-  { num: 23, firstName: "Pietro", lastName: "Ceccarelli", position: Position.PILIER_DROIT, isStarter: false },
+  { num: 19, firstName: "Posolo", lastName: "Tuilagi", position: Position.DEUXIEME_LIGNE, isStarter: false, subIn: 53 },
+  { num: 20, firstName: "Mattéo", lastName: "Le Corvec", position: Position.TROISIEME_LIGNE_AILE, isStarter: false, subIn: 40 },
+  { num: 21, firstName: "Tom", lastName: "Ecochard", position: Position.DEMI_DE_MELEE, isStarter: false, subIn: 63 },
+  { num: 22, firstName: "Jordan", lastName: "Petaia", position: Position.CENTRE, isStarter: false, subIn: 66 },
+  { num: 23, firstName: "Pietro", lastName: "Ceccarelli", position: Position.PILIER_DROIT, isStarter: false, subIn: 53 },
 ];
 
-// === COMPOSITION PROVENCE RUGBY (XV de départ ; banc non sourcé) ===
+// === COMPOSITION PROVENCE RUGBY (feuille de match LNR) ===
 const PROVENCE_SQUAD = [
-  { num: 1, name: "Lino Julien", position: Position.PILIER_GAUCHE },
-  { num: 2, name: "Romain Latterrade", position: Position.TALONNEUR },
-  { num: 3, name: "Tomas Francis", position: Position.PILIER_DROIT },
-  { num: 4, name: "Andrès Zafra Tarazona", position: Position.DEUXIEME_LIGNE, isCaptain: true },
-  { num: 5, name: "Yannick Youyoutte", position: Position.DEUXIEME_LIGNE },
-  { num: 6, name: "Teimana Harrison", position: Position.TROISIEME_LIGNE_AILE },
-  { num: 7, name: "Charly Gambini", position: Position.TROISIEME_LIGNE_AILE },
-  { num: 8, name: "Tornike Jalagonia", position: Position.NUMERO_HUIT },
-  { num: 9, name: "Arthur Coville", position: Position.DEMI_DE_MELEE },
-  { num: 10, name: "Caleb Muntz", position: Position.DEMI_OUVERTURE },
-  { num: 11, name: "Léo Drouet", position: Position.AILIER },
-  { num: 12, name: "Kaveinga Finau", position: Position.CENTRE },
-  { num: 13, name: "Setareki Bituniyata", position: Position.CENTRE },
-  { num: 14, name: "Adrien Lapegue-Lafaye", position: Position.AILIER },
-  { num: 15, name: "Manuel Portela Morais Vareiro", position: Position.ARRIERE },
+  { num: 1, name: "Lino Julien", position: Position.PILIER_GAUCHE, isStarter: true, subOut: 43 },
+  { num: 2, name: "Romain Latterrade", position: Position.TALONNEUR, isStarter: true, subOut: 51 },
+  { num: 3, name: "Tomas Francis", position: Position.PILIER_DROIT, isStarter: true, subOut: 49 },
+  { num: 4, name: "Andrès Zafra Tarazona", position: Position.DEUXIEME_LIGNE, isStarter: true, isCaptain: true, yellowCardMin: 37 },
+  { num: 5, name: "Yannick Youyoutte", position: Position.DEUXIEME_LIGNE, isStarter: true, subOut: 49 },
+  { num: 6, name: "Teimana Harrison", position: Position.TROISIEME_LIGNE_AILE, isStarter: true },
+  { num: 7, name: "Charly Gambini", position: Position.TROISIEME_LIGNE_AILE, isStarter: true },
+  { num: 8, name: "Tornike Jalagonia", position: Position.NUMERO_HUIT, isStarter: true, subOut: 33 },
+  { num: 9, name: "Arthur Coville", position: Position.DEMI_DE_MELEE, isStarter: true, subOut: 75 },
+  { num: 10, name: "Caleb Muntz", position: Position.DEMI_OUVERTURE, isStarter: true, subOut: 76 },
+  { num: 11, name: "Léo Drouet", position: Position.AILIER, isStarter: true },
+  { num: 12, name: "Kaveinga Finau", position: Position.CENTRE, isStarter: true, subOut: 62 },
+  { num: 13, name: "Setareki Bituniyata", position: Position.CENTRE, isStarter: true, yellowCardMin: 43 },
+  { num: 14, name: "Adrien Lapegue-Lafaye", position: Position.AILIER, isStarter: true },
+  { num: 15, name: "Manuel Portela Morais Vareiro", position: Position.ARRIERE, isStarter: true },
+  { num: 16, name: "Kapeliele Pifeleti Jr", position: Position.TALONNEUR, isStarter: false, subIn: 51 },
+  { num: 17, name: "Thomas Vernet", position: Position.PILIER_GAUCHE, isStarter: false, subIn: 43 },
+  { num: 18, name: "Izack Rodda", position: Position.DEUXIEME_LIGNE, isStarter: false, subIn: 49 },
+  { num: 19, name: "Marvin Saint Gys Okuya", position: Position.TROISIEME_LIGNE_AILE, isStarter: false },
+  { num: 20, name: "Albert Tuisue", position: Position.NUMERO_HUIT, isStarter: false, subIn: 33 },
+  { num: 21, name: "Joris Cazenave", position: Position.DEMI_DE_MELEE, isStarter: false, subIn: 75 },
+  { num: 22, name: "Pierre Lucas", position: Position.CENTRE, isStarter: false, subIn: 62 },
+  { num: 23, name: "Hugo Ndiaye", position: Position.PILIER_DROIT, isStarter: false, subIn: 49 },
 ];
 
-// === CHRONOLOGIE (essais uniquement — transformations non sourcées) ===
-const EVENTS = [
-  { minute: 20, isUsap: false, who: "Tornike Jalagonia" },
-  { minute: 25, isUsap: false, who: "Andrès Zafra Tarazona" },
-  { minute: 36, isUsap: true, who: "Peceli Yato" },
-  { minute: 39, isUsap: true, who: "Théo Forner" },
-  { minute: 43, isUsap: true, who: "Joaquín Oviedo" },
-  { minute: 49, isUsap: true, who: "Peceli Yato" },
-  { minute: 60, isUsap: false, who: "Léo Drouet" },
-  { minute: 64, isUsap: true, who: "Ignacio Ruiz" },
-  { minute: 74, isUsap: false, who: "Setareki Bituniyata" },
-  { minute: 77, isUsap: true, who: "Joaquín Oviedo" },
-  { minute: 79, isUsap: true, who: "Jerónimo De La Fuente" },
+// === CHRONOLOGIE (direct commenté Rugbyrama) ===
+// Le carton orange de Malolo (33') n'y figure pas : voir en-tête du fichier.
+type EventType = "ESSAI" | "TRANSFORMATION" | "CARTON_JAUNE";
+const EVENTS: Array<{ minute: number; type: EventType; isUsap: boolean; who: string }> = [
+  { minute: 16, type: "CARTON_JAUNE", isUsap: true, who: "Giorgi Tetrashvili" },
+  { minute: 20, type: "ESSAI", isUsap: false, who: "Tornike Jalagonia" },
+  { minute: 25, type: "ESSAI", isUsap: false, who: "Andrès Zafra Tarazona" },
+  { minute: 36, type: "ESSAI", isUsap: true, who: "Peceli Yato" },
+  { minute: 36, type: "TRANSFORMATION", isUsap: true, who: "Tommaso Allan" },
+  { minute: 37, type: "CARTON_JAUNE", isUsap: false, who: "Andrès Zafra Tarazona" },
+  { minute: 39, type: "ESSAI", isUsap: true, who: "Théo Forner" },
+  { minute: 39, type: "TRANSFORMATION", isUsap: true, who: "Tommaso Allan" },
+  // Mi-temps : Provence 10 - 14 USAP
+  { minute: 43, type: "CARTON_JAUNE", isUsap: false, who: "Setareki Bituniyata" },
+  { minute: 44, type: "ESSAI", isUsap: true, who: "Joaquín Oviedo" },
+  { minute: 44, type: "TRANSFORMATION", isUsap: true, who: "Tommaso Allan" },
+  { minute: 51, type: "ESSAI", isUsap: true, who: "Peceli Yato" },
+  { minute: 51, type: "TRANSFORMATION", isUsap: true, who: "Tommaso Allan" },
+  { minute: 59, type: "ESSAI", isUsap: false, who: "Léo Drouet" },
+  { minute: 59, type: "TRANSFORMATION", isUsap: false, who: "Manuel Portela Morais Vareiro" },
+  { minute: 65, type: "ESSAI", isUsap: true, who: "Ignacio Ruiz" },
+  { minute: 73, type: "ESSAI", isUsap: false, who: "Setareki Bituniyata" },
+  { minute: 73, type: "TRANSFORMATION", isUsap: false, who: "Manuel Portela Morais Vareiro" },
+  { minute: 77, type: "ESSAI", isUsap: true, who: "Joaquín Oviedo" },
+  { minute: 77, type: "TRANSFORMATION", isUsap: true, who: "Tommaso Allan" },
+  { minute: 80, type: "ESSAI", isUsap: true, who: "Jerónimo De La Fuente" },
+  { minute: 80, type: "TRANSFORMATION", isUsap: true, who: "Tommaso Allan" },
 ];
 
 // =============================================================================
@@ -152,6 +181,19 @@ async function findOrCreateReferee(firstName: string, lastName: string): Promise
   });
   console.log(`  [arbitre] Créé : ${firstName} ${lastName}`);
   return referee.id;
+}
+
+/** Score courant (Provence-USAP, l'USAP joue à l'extérieur) après l'événement i. */
+function runningScore(upTo: number): string {
+  let usap = 0;
+  let provence = 0;
+  for (let i = 0; i <= upTo; i++) {
+    const e = EVENTS[i];
+    const v = e.type === "ESSAI" ? 5 : e.type === "TRANSFORMATION" ? 2 : 0;
+    if (e.isUsap) usap += v;
+    else provence += v;
+  }
+  return `${provence}-${usap}`;
 }
 
 // =============================================================================
@@ -229,6 +271,8 @@ async function main() {
     refereeId,
     scoreUsap: SCORE_USAP,
     scoreOpponent: SCORE_PROVENCE,
+    halfTimeUsap: 14,
+    halfTimeOpponent: 10,
     result: MatchResult.VICTOIRE,
     bonusOffensif: false,
     bonusDefensif: false,
@@ -243,16 +287,22 @@ async function main() {
     dropGoalsOpponent: 0,
     penaltyTriesOpponent: 0,
     manOfTheMatch: "Peceli Yato",
+    videoUrl: VIDEO_URL,
     report:
-      "L'USAP conserve sa place en Top 14 au terme d'un access match maîtrisé " +
-      "au Stade Maurice-David. Provence Rugby prend pourtant les devants par " +
-      "Jalagonia (20') et son capitaine Zafra Tarazona (25'), mais l'entrée de " +
-      "Peceli Yato à la 28e minute change le match : le Fidjien inscrit un " +
-      "doublé (36', 49') et Forner (39') permet aux Catalans de virer en tête. " +
-      "Oviedo (43'), Ruiz (64'), Oviedo encore (77') et De La Fuente (79') " +
-      "portent le total à sept essais. Drouet (60') et Bituniyata (74') " +
-      "sauvent l'honneur provençal. Victoire 47-24 et maintien assuré : " +
-      "l'USAP remporte son quatrième access match.",
+      "L'USAP conserve sa place en Top 14 au terme d'un match en deux temps au " +
+      "Stade Maurice-David. Privés d'Urdapilleta, forfait le jour du match " +
+      "(adducteurs) et remplacé par Jake McIntyre à l'ouverture, les Catalans " +
+      "subissent pendant une demi-heure : carton jaune pour Tetrashvili (16'), " +
+      "essais de Jalagonia (20') et du capitaine Zafra Tarazona (25'), puis " +
+      "carton orange pour Malolo (33') après un plaquage à la tête. Vareiro " +
+      "manque toutefois les deux transformations et Provence ne mène que 10-0. " +
+      "L'entrée de Peceli Yato à la 28e minute renverse la rencontre : le " +
+      "Fidjien marque (36'), Forner enchaîne (39') et l'USAP vire en tête 14-10. " +
+      "En seconde période les Catalans déroulent — Oviedo (44'), Yato encore " +
+      "(51'), Ruiz (65'), Oviedo à nouveau (77') et De La Fuente à la sirène " +
+      "(80') — Tommaso Allan passant six transformations sur sept. Drouet (59') " +
+      "et Bituniyata (73') limitent la casse. Victoire 47-24 et maintien " +
+      "assuré : l'USAP remporte son quatrième access match.",
   };
 
   let match = await prisma.match.findFirst({
@@ -286,6 +336,7 @@ async function main() {
     playerIds[`${p.firstName} ${p.lastName}`] = playerId;
 
     const tries = p.tries ?? 0;
+    const conversions = p.conversions ?? 0;
     await prisma.matchPlayer.create({
       data: {
         matchId: match.id,
@@ -296,9 +347,15 @@ async function main() {
         isCaptain: p.isCaptain ?? false,
         positionPlayed: p.position,
         subIn: p.subIn ?? null,
-        minutesPlayed: p.isStarter ? 80 : p.subIn != null ? 80 - p.subIn : null,
+        subOut: p.subOut ?? null,
+        minutesPlayed: p.isStarter ? (p.subOut ?? 80) : p.subIn != null ? 80 - p.subIn : null,
         tries,
-        totalPoints: tries * 5,
+        conversions,
+        totalPoints: tries * 5 + conversions * 2,
+        yellowCard: p.yellowCardMin != null,
+        yellowCardMin: p.yellowCardMin ?? null,
+        orangeCard: p.orangeCardMin != null,
+        orangeCardMin: p.orangeCardMin ?? null,
       },
     });
 
@@ -321,34 +378,45 @@ async function main() {
         isOpponent: true,
         opponentPlayerName: p.name,
         shirtNumber: p.num,
-        isStarter: true,
+        isStarter: p.isStarter,
         isCaptain: p.isCaptain ?? false,
         positionPlayed: p.position,
+        subIn: p.subIn ?? null,
+        subOut: p.subOut ?? null,
+        yellowCard: p.yellowCardMin != null,
+        yellowCardMin: p.yellowCardMin ?? null,
       },
     });
   }
-  console.log(`  Composition Provence : ${PROVENCE_SQUAD.length} joueurs (XV de départ)`);
+  console.log(`  Composition Provence : ${PROVENCE_SQUAD.length} joueurs`);
 
   // ---- Chronologie -------------------------------------------------------
   await prisma.matchEvent.deleteMany({ where: { matchId: match.id } });
-  for (const e of EVENTS) {
+  for (let i = 0; i < EVENTS.length; i++) {
+    const e = EVENTS[i];
     const team = e.isUsap ? "USAP" : "Provence";
+    const description =
+      e.type === "CARTON_JAUNE"
+        ? `Carton jaune pour ${e.who} (${team}).`
+        : `${e.type === "ESSAI" ? "Essai" : "Transformation"} de ${e.who} (${team}). ${runningScore(i)}.`;
+
     await prisma.matchEvent.create({
       data: {
         matchId: match.id,
         minute: e.minute,
-        type: "ESSAI",
+        type: e.type,
         playerId: e.isUsap ? (playerIds[e.who] ?? null) : null,
         isUsap: e.isUsap,
-        description: `Essai de ${e.who} (${team}).`,
+        description,
       },
     });
   }
-  console.log(`  Chronologie : ${EVENTS.length} essais`);
+  console.log(`  Chronologie : ${EVENTS.length} événements`);
 
   console.log("\n=== Terminé ===");
-  console.log("  Provence Rugby 24 - 47 USAP — maintien en Top 14");
-  console.log("  Homme du match : Peceli Yato");
+  console.log("  Provence Rugby 24 - 47 USAP (mi-temps 10-14) — maintien en Top 14");
+  console.log("  Arbitre : Vincent Blasco-Baqué | Homme du match : Peceli Yato");
+  console.log(`  Vidéo : ${VIDEO_URL}`);
 }
 
 main()
