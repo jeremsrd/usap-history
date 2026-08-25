@@ -111,6 +111,89 @@ usap-history/
 - **Dates** : format ISO en base, affichage DD/MM/YYYY côté UI
 - **Scores** : toujours stocker score USAP en premier
 
+## Saisie d'un match (feuille de match)
+
+Règles à appliquer **sans qu'on ait à les redemander** à chaque ajout de match.
+
+### Joueurs adverses : une seule convention
+
+Un joueur adverse est une **vraie ligne `Player`**, reliée par
+`MatchPlayer.playerId` avec `isOpponent: true`. Le champ
+`MatchPlayer.opponentPlayerName` est **abandonné** : ne plus l'utiliser.
+
+Cela permet de suivre une personne d'un club à l'autre, de compter ses
+confrontations avec l'USAP, et de gérer les joueurs passés par les deux camps
+(Yato, Urdapilleta, les Lotrian…).
+
+- Créer l'adversaire avec `isActive: false` (ce drapeau signifie « actuellement
+  à l'USAP »).
+- **Toujours chercher un joueur existant avant d'en créer un**, sur le nom
+  **normalisé** : sans accents, sans casse, sans ponctuation. Un filtre SQL
+  `lastName equals` ne suffit pas — il rate « Guerois-Galisson » vs
+  « Guerois Galisson », « Bécognée » vs « Becognee ». Construire un index en
+  mémoire une fois, puis chercher dedans.
+- `players` contient donc majoritairement des adversaires (~1170 sur ~1320).
+  C'est normal. Les pages de liste filtrent déjà sur `isOpponent: false`.
+
+### Champs à remplir des deux côtés
+
+Ne jamais remplir seulement le côté USAP :
+
+- `minutesPlayed`, `subIn`, `subOut` — 80' pour un titulaire non remplacé, la
+  minute de sortie sinon, `80 - subIn` pour un entrant, `null` si le
+  remplaçant n'est pas entré
+- `tries`, `conversions`, `penalties`, `dropGoals`, `totalPoints`
+- `yellowCard` / `orangeCard` / `redCard` + minute
+- `isCaptain`, `shirtNumber`, `positionPlayed` (poste réellement tenu :
+  déduit du numéro de maillot pour les titulaires)
+
+Sur le match : `halfTimeUsap` / `halfTimeOpponent`, `refereeId`, `videoUrl`,
+`attendance`, `report`, les compteurs `triesUsap` / `triesOpponent` etc., et
+`bonusOffensif` / `bonusDefensif`.
+
+### Contrôles à faire systématiquement
+
+- La somme des points par joueur doit retomber sur le score de l'équipe.
+  Un **essai de pénalité** (7 pts) n'a pas de marqueur : le déduire du total
+  attendu et le porter sur `penaltyTriesUsap` / `penaltyTriesOpponent`.
+- Déduire les réalisations de la chronologie plutôt que de les ressaisir, et
+  signaler tout marqueur absent de la composition.
+- Les statistiques agrégées de saison doivent correspondre au classement
+  officiel avant d'être écrites (cf. `close-season-2025-2026.ts`).
+
+### Slugs
+
+Toujours passer par `generatePlayerSlug(firstName, lastName, player.id)` et ses
+équivalents dans `src/lib/slugs.ts`. Les pages de détail retrouvent
+l'enregistrement en extrayant le CUID de la fin du slug
+(`/([a-z0-9]{25,})$/`) : un suffixe fabriqué avec `Date.now()` ou un aléatoire
+rend la fiche inaccessible (404). Voir `scripts/fix-broken-slugs.ts`.
+
+### Où trouver les données
+
+- **Feuille de match officielle** (compositions + arbitres) :
+  `top14.lnr.fr/feuille-de-match/{saison}/j{N}/{id}-{dom}-{ext}/compositions`.
+  L'identifiant se retrouve sur
+  `top14.lnr.fr/calendrier-et-resultats/{saison}/j{N}`. Page rendue en JS :
+  la charger dans un navigateur, pas en `curl`.
+- **Chronologie détaillée** : API ESPN
+  `site.api.espn.com/apis/site/v2/sports/rugby/{league}/summary?event={gameId}`
+  (Top 14 = 270559, Challenge = 272073). Donne événements, remplacements,
+  cartons et compositions, mais **pas** les arbitres ni l'affluence.
+- **Direct commenté** : rugbyrama.fr, ici.fr — utiles pour l'arbitre, le score
+  à la mi-temps et les faits de match.
+- **Résumé vidéo** : chaîne YouTube « TOP 14 - Officiel ». **Vérifier chaque
+  identifiant** via `https://www.youtube.com/oembed?url=…&format=json` avant
+  de l'enregistrer : le HTML de recherche YouTube désaligne titres et
+  identifiants.
+
+### Scripts
+
+Un script par match ou par lot cohérent, dans `scripts/`, **idempotent**
+(supprime compositions et événements avant de les recréer), avec en en-tête le
+récapitulatif du match et les sources. Prévoir un `--dry` pour tout script qui
+modifie des données existantes en masse.
+
 ## Identité visuelle
 
 - **Couleur principale** : Rouge sang (#C8102E) - couleur dominante USAP

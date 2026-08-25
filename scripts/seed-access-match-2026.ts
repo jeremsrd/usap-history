@@ -161,6 +161,83 @@ async function findOrCreatePlayer(
   return player.id;
 }
 
+/**
+ * Index des joueurs existants, par nom normalisé. Construit une seule fois :
+ * la recherche doit porter sur le nom normalisé complet, car un filtre SQL sur
+ * le seul nom de famille rate les variantes d'accent et de ponctuation
+ * ("Guerois-Galisson" vs "Guerois Galisson", "Bécognée" vs "Becognee").
+ */
+let playerIndex: Map<string, string> | null = null;
+
+async function getPlayerIndex(): Promise<Map<string, string>> {
+  if (playerIndex) return playerIndex;
+  const all = await prisma.player.findMany({
+    select: { id: true, firstName: true, lastName: true },
+  });
+  playerIndex = new Map();
+  for (const p of all) {
+    const key = normalizeName(`${p.firstName} ${p.lastName}`);
+    if (!playerIndex.has(key)) playerIndex.set(key, p.id);
+  }
+  return playerIndex;
+}
+
+/**
+ * Retrouve le joueur adverse par nom complet, ou le crée.
+ * Convention du projet : un adversaire est une vraie ligne `Player` reliée par
+ * MatchPlayer.playerId avec isOpponent = true (voir CLAUDE.md).
+ */
+async function findOrCreateOpponentPlayer(
+  fullName: string,
+  position: Position,
+): Promise<string> {
+  const index = await getPlayerIndex();
+  const key = normalizeName(fullName);
+  const existing = index.get(key);
+  if (existing) return existing;
+
+  const { firstName, lastName } = splitFullName(fullName);
+  const player = await prisma.player.create({
+    data: {
+      firstName,
+      lastName,
+      position,
+      isActive: false,
+      slug: `temp-${Date.now()}-${Math.random()}`,
+    },
+  });
+  await prisma.player.update({
+    where: { id: player.id },
+    data: { slug: generatePlayerSlug(firstName, lastName, player.id) },
+  });
+  index.set(key, player.id);
+  console.log(`    [adversaire] Créé : ${fullName}`);
+  return player.id;
+}
+
+/** Nom comparable : sans accents, sans casse, sans ponctuation. */
+function normalizeName(name: string): string {
+  return name
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .toLowerCase()
+    .replace(/[^a-z\s]/g, "")
+    .replace(/\s+/g, " ")
+    .trim();
+}
+
+/** Découpe un nom complet, particules rattachées au nom de famille. */
+function splitFullName(full: string): { firstName: string; lastName: string } {
+  const parts = full.trim().split(/\s+/);
+  if (parts.length === 1) return { firstName: "", lastName: parts[0] };
+  const particles = new Set(["de", "la", "le", "van", "von", "du", "des", "da", "di"]);
+  const idx = parts.findIndex((x, i) => i > 0 && particles.has(x.toLowerCase()));
+  if (idx > 0) {
+    return { firstName: parts.slice(0, idx).join(" "), lastName: parts.slice(idx).join(" ") };
+  }
+  return { firstName: parts[0], lastName: parts.slice(1).join(" ") };
+}
+
 async function findOrCreateReferee(firstName: string, lastName: string): Promise<string> {
   const existing = await prisma.referee.findFirst({
     where: {
@@ -386,15 +463,18 @@ async function main() {
   }
 
   let oppPoints = 0;
+  const oppPlayerIds: Record<string, string> = {};
   for (const p of PROVENCE_SQUAD) {
     const sc = oppScoring[p.name] ?? { tries: 0, conversions: 0 };
     const pts = sc.tries * 5 + sc.conversions * 2;
     oppPoints += pts;
+    const oppPlayerId = await findOrCreateOpponentPlayer(p.name, p.position);
+    oppPlayerIds[p.name] = oppPlayerId;
     await prisma.matchPlayer.create({
       data: {
         matchId: match.id,
+        playerId: oppPlayerId,
         isOpponent: true,
-        opponentPlayerName: p.name,
         shirtNumber: p.num,
         isStarter: p.isStarter,
         isCaptain: p.isCaptain ?? false,
@@ -432,7 +512,9 @@ async function main() {
         matchId: match.id,
         minute: e.minute,
         type: e.type,
-        playerId: e.isUsap ? (playerIds[e.who] ?? null) : null,
+        playerId: e.isUsap
+          ? (playerIds[e.who] ?? null)
+          : (oppPlayerIds[e.who] ?? null),
         isUsap: e.isUsap,
         description,
       },
