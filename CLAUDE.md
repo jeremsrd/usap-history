@@ -113,9 +113,9 @@ confrontations avec l'USAP, et de gérer les joueurs passés par les deux camps
   `lastName equals` ne suffit pas — il rate « Guerois-Galisson » vs
   « Guerois Galisson », « Bécognée » vs « Becognee ». Construire un index en
   mémoire une fois, puis chercher dedans.
-- `players` contient donc majoritairement des adversaires : 1 171 sur 1 311,
-  seuls 140 ont porté le maillot catalan. C'est normal. Les pages de liste
-  filtrent déjà sur `isOpponent: false`.
+- `players` contient donc majoritairement des adversaires : environ 1 240 sur
+  1 390, seuls ~147 ont porté le maillot catalan. C'est normal. Les pages de
+  liste filtrent déjà sur `isOpponent: false`.
 
 ### Champs à remplir des deux côtés
 
@@ -207,10 +207,15 @@ rend la fiche inaccessible (404). Voir `scripts/fix-broken-slugs.ts`.
 ### Où trouver les données
 
 - **Feuille de match officielle** (compositions + arbitres) :
-  `top14.lnr.fr/feuille-de-match/{saison}/j{N}/{id}-{dom}-{ext}/compositions`.
+  `top14.lnr.fr/feuille-de-match/{saison}/{phase}/{id}-{dom}-{ext}/compositions`.
+  La phase est `j{N}` pour une journée, `access` en 2022-2023 et
+  `access-top-14` en 2025-2026 pour un barrage — le segment a changé de nom.
   L'identifiant se retrouve sur
-  `top14.lnr.fr/calendrier-et-resultats/{saison}/j{N}`. Page rendue en JS :
-  la charger dans un navigateur, pas en `curl`.
+  `top14.lnr.fr/calendrier-et-resultats/{saison}/{phase}`. L'onglet
+  `/resumes-replays` du même match porte les « faits de match » : chronologie
+  complète avec score courant après chaque action, et les changements notés
+  **entrant | sortant | minute**. Pages rendues en JS : les charger dans un
+  navigateur, pas en `curl`.
 - **Chronologie détaillée** : API ESPN
   `site.api.espn.com/apis/site/v2/sports/rugby/{league}/summary?event={gameId}`
   (Top 14 = 270559, Challenge = 272073). Donne événements, remplacements,
@@ -222,6 +227,15 @@ rend la fiche inaccessible (404). Voir `scripts/fix-broken-slugs.ts`.
   compositions et les remplacements. Site Nuxt en SSR, à charger dans un
   navigateur. Le sélecteur de saison se pilote mal par script : passer par une
   recherche web restreinte au domaine pour retrouver l'id du match.
+- **Saisons anciennes** : `allrugby.com/saison-{saison}/matchs/{dom}-{ext}-{id}.html`,
+  l'identifiant venant de `allrugby.com/competitions/{compétition}/calendrier.html`.
+  Seule source retrouvée pour le Challenge Cup 2022-2023. Trois pièges :
+  le tableau doit être **parsé colonne par colonne** (13 colonnes, les
+  réalisations de l'USAP à gauche du nom, celles de l'adversaire à droite) —
+  mis à plat, on ne sait plus à qui attribuer une minute ; le **club recevant
+  est à gauche**, pas l'USAP ; et les remplacements de la colonne droite
+  écrivent la **minute avant le nom**, l'inverse de la gauche. Ni arbitre, ni
+  affluence, ni score à la mi-temps.
 - **Direct commenté** : rugbyrama.fr, ici.fr — utiles pour l'arbitre, le score
   à la mi-temps et les faits de match.
 - **Résumé vidéo** : chaîne YouTube « TOP 14 - Officiel ». **Vérifier chaque
@@ -234,7 +248,23 @@ rend la fiche inaccessible (404). Voir `scripts/fix-broken-slugs.ts`.
 Un script par match ou par lot cohérent, dans `scripts/`, **idempotent**
 (supprime compositions et événements avant de les recréer), avec en en-tête le
 récapitulatif du match et les sources. Prévoir un `--dry` pour tout script qui
-modifie des données existantes en masse.
+modifie des données existantes en masse — et vérifier que la simulation agrège
+bien les valeurs *corrigées*, pas celles encore en base, sinon le garde-fou ment.
+
+### Scripts de maintenance
+
+À connaître avant d'en écrire un nouveau, et à relancer après un gros import :
+
+| Script | Rôle |
+|---|---|
+| `fix-bonus-points.ts` | recalcule tous les bonus et les totaux de saison, refuse d'écrire si un classement officiel connu diverge |
+| `fix-broken-slugs.ts` | réécrit les slugs dont le suffixe ne permet plus de retrouver l'entité (fiche en 404) |
+| `normalize-opponent-players.ts` | rattache les anciennes lignes `opponentPlayerName` à un vrai `Player` |
+| `merge-duplicate-players-2026.ts` | fusion de doublons, paires listées en dur et vérifiées à la main |
+| `close-season-2025-2026.ts` | modèle de clôture de saison, avec garde-fou sur le classement officiel |
+
+`fix-duplicate-players.ts` existe aussi mais apparie les prénoms par préfixe et
+par inclusion : trop large pour être lancé sans revue préalable.
 
 ## Identité visuelle
 
@@ -289,13 +319,19 @@ authentification Supabase, statistiques et recherche. Reste la phase 4
 
 ### Couverture des données
 
-| Saison | Matchs | État |
-|---|---|---|
-| 2025-2026 | 32 | complète et clôturée |
-| 2024-2025 | 32 | complète |
-| 2023-2024 | 30 | complète |
-| 2022-2023 | 31 | Top 14 complet ; les 4 matchs de Challenge Cup n'ont pas de composition adverse |
-| 2008-2009 | 1 | uniquement la finale |
+**Tous les matchs en base ont leur feuille de match complète** (46 joueurs,
+minutes, réalisations, chronologie). Ce qui varie, c'est l'annexe :
+
+| Saison | Matchs | Arbitres | Vidéos | Comptes-rendus | Affluences |
+|---|---|---|---|---|---|
+| 2025-2026 | 32 | 32 | 31 | 32 | 6 |
+| 2024-2025 | 32 | 32 | 24 | 28 | 14 |
+| 2023-2024 | 30 | 30 | 29 | 30 | 2 |
+| 2022-2023 | 31 | 27 | 21 | 31 | 0 |
+| 2008-2009 | 1 | 1 | 0 | 1 | 1 |
+
+Les 4 arbitres manquants de 2022-2023 sont ceux des matchs de Challenge Cup :
+l'EPCR ne remonte pas au-delà de 2023-2024 et allrugby ne les publie pas.
 
 114 saisons sur 119 n'ont encore aucun match : c'est le chantier de la phase 4,
 menée en remontant le temps saison par saison.
@@ -306,7 +342,7 @@ menée en remontant le temps saison par saison.
   existe et s'affiche, mais la sanction ne peut pas figurer dans la chronologie.
 - Les fiches joueur affichent séparément « Matchs avec l'USAP » et « Matchs
   contre l'USAP ». Les statistiques ne comptent que les premiers. Toute nouvelle
-  requête sur les joueurs doit filtrer `isOpponent: false`, sinon les 1 171
+  requête sur les joueurs doit filtrer `isOpponent: false`, sinon les ~1 240
   adversaires présents dans `players` faussent le résultat.
 - Erreur d'hydratation React sur les pages de match, antérieure et non
   diagnostiquée (probablement `next-themes`).

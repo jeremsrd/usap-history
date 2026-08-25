@@ -45,11 +45,14 @@ npx tsx scripts/<script>.ts --dry    # simulation (scripts de masse)
 | 2025-2026 | 32 | complète et clôturée — 13e du Top 14, maintien à l'access match |
 | 2024-2025 | 32 | complète |
 | 2023-2024 | 30 | complète |
-| 2022-2023 | 31 | Top 14 complet, compositions adverses manquantes en Challenge Cup |
+| 2022-2023 | 31 | complète — 13e, maintien au barrage contre Grenoble |
 | 2008-2009 | 1 | finale du championnat |
 
-126 matchs, 1 311 joueurs (dont 140 ayant porté le maillot catalan),
-5 566 feuilles de match et 2 422 événements.
+Tous ces matchs ont leur feuille complète : compositions des deux équipes,
+temps de jeu, réalisations, cartons et chronologie.
+
+126 matchs, 1 391 joueurs (dont 147 ayant porté le maillot catalan),
+5 796 feuilles de match et 2 489 événements.
 
 Les 114 autres saisons restent à documenter : c'est le chantier en cours, mené
 en remontant le temps saison par saison.
