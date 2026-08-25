@@ -848,6 +848,55 @@ async function findOrCreateReferee(firstName: string, lastName: string): Promise
   return referee.id;
 }
 
+/**
+ * Temps de jeu : 80' pour un titulaire non remplacé, la minute de sortie pour
+ * un titulaire remplacé, le complément pour un entrant. Null si le remplaçant
+ * n'est pas entré en jeu.
+ */
+function minutesPlayed(
+  isStarter: boolean,
+  subIn?: number,
+  subOut?: number,
+): number | null {
+  if (isStarter) return subOut ?? 80;
+  return subIn != null ? 80 - subIn : null;
+}
+
+type Scoring = { tries: number; conversions: number; penalties: number; dropGoals: number };
+
+/** Cumule les réalisations adverses depuis la chronologie du match. */
+function tallyOpponentScoring(m: MatchData): Record<string, Scoring> {
+  const tally: Record<string, Scoring> = {};
+  const known = new Set(m.oppSquad.map((p) => p.name));
+
+  for (const e of m.events) {
+    if (e.isUsap || !e.who) continue;
+    if (e.type === "ESSAI_PENALITE") {
+      // 7 pts sans transformation : à traiter à part le jour où le cas se présente
+      console.log(`  ⚠ essai de pénalité adverse non comptabilisé (${e.minute}')`);
+      continue;
+    }
+    const key =
+      e.type === "ESSAI"
+        ? "tries"
+        : e.type === "TRANSFORMATION"
+          ? "conversions"
+          : e.type === "PENALITE"
+            ? "penalties"
+            : e.type === "DROP"
+              ? "dropGoals"
+              : null;
+    if (!key) continue; // cartons
+    if (!known.has(e.who)) {
+      console.log(`  ⚠ marqueur adverse absent de la composition : ${e.who}`);
+      continue;
+    }
+    tally[e.who] ??= { tries: 0, conversions: 0, penalties: 0, dropGoals: 0 };
+    tally[e.who][key as keyof Scoring]++;
+  }
+  return tally;
+}
+
 function computeResult(scoreUsap: number, scoreOpponent: number): MatchResult {
   if (scoreUsap > scoreOpponent) return MatchResult.VICTOIRE;
   if (scoreUsap < scoreOpponent) return MatchResult.DEFAITE;
@@ -972,13 +1021,6 @@ async function main() {
       const playerId = await findOrCreatePlayer(p.firstName, p.lastName, p.position);
       playerIds[`${p.firstName} ${p.lastName}`] = playerId;
 
-      // Temps de jeu : 80' pour un titulaire non remplacé, sinon selon l'entrée/sortie
-      const minutesPlayed = p.isStarter
-        ? (p.subOut ?? 80)
-        : p.subIn != null
-          ? 80 - p.subIn
-          : 0;
-
       await prisma.matchPlayer.create({
         data: {
           matchId: match.id,
@@ -988,7 +1030,7 @@ async function main() {
           isStarter: p.isStarter,
           isCaptain: p.isCaptain ?? false,
           positionPlayed: p.position,
-          minutesPlayed,
+          minutesPlayed: minutesPlayed(p.isStarter, p.subIn, p.subOut),
           subIn: p.subIn ?? null,
           subOut: p.subOut ?? null,
           tries: p.tries ?? 0,
@@ -1013,7 +1055,11 @@ async function main() {
     console.log(`  Composition USAP : ${m.usapSquad.length} joueurs`);
 
     // ---- Composition adverse ----------------------------------------------
+    // Les réalisations adverses sont déduites de la chronologie plutôt que
+    // saisies deux fois : toute divergence de nom est signalée.
+    const oppScoring = tallyOpponentScoring(m);
     for (const p of m.oppSquad) {
+      const sc = oppScoring[p.name] ?? { tries: 0, conversions: 0, penalties: 0, dropGoals: 0 };
       await prisma.matchPlayer.create({
         data: {
           matchId: match.id,
@@ -1025,10 +1071,27 @@ async function main() {
           positionPlayed: p.position,
           subIn: p.subIn ?? null,
           subOut: p.subOut ?? null,
+          minutesPlayed: minutesPlayed(p.isStarter, p.subIn, p.subOut),
+          tries: sc.tries,
+          conversions: sc.conversions,
+          penalties: sc.penalties,
+          dropGoals: sc.dropGoals,
+          totalPoints: sc.tries * 5 + sc.conversions * 2 + sc.penalties * 3 + sc.dropGoals * 3,
         },
       });
     }
-    console.log(`  Composition ${m.opponentLabel} : ${m.oppSquad.length} joueurs`);
+    const oppPoints = Object.values(oppScoring).reduce(
+      (acc, s) => acc + s.tries * 5 + s.conversions * 2 + s.penalties * 3 + s.dropGoals * 3,
+      0,
+    );
+    if (oppPoints !== m.scoreOpponent) {
+      console.log(
+        `  ⚠ points ${m.opponentLabel} repartis : ${oppPoints} au lieu de ${m.scoreOpponent}`,
+      );
+    }
+    console.log(
+      `  Composition ${m.opponentLabel} : ${m.oppSquad.length} joueurs (${oppPoints} pts répartis)`,
+    );
 
     // ---- Cartons sur la feuille de match -----------------------------------
     for (const e of m.events) {

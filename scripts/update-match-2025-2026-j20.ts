@@ -60,30 +60,44 @@ const USAP_SQUAD = [
 ];
 
 // === COMPOSITION TOULON (adversaire) ===
-const RCT_SQUAD = [
-  { num: 1, name: "Dany Priso", position: Position.PILIER_GAUCHE, isStarter: true },
-  { num: 2, name: "Gianmarco Lucchesi", position: Position.TALONNEUR, isStarter: true },
-  { num: 3, name: "Beka Gigashvili", position: Position.PILIER_DROIT, isStarter: true },
-  { num: 4, name: "Corentin Mezouel", position: Position.DEUXIEME_LIGNE, isStarter: true },
-  { num: 5, name: "Brian Alainu'uese", position: Position.DEUXIEME_LIGNE, isStarter: true },
-  { num: 6, name: "Lewis Ludlam", position: Position.TROISIEME_LIGNE_AILE, isStarter: true },
+// Entrées/sorties et réalisations : chronologie ESPN (gameId 602818).
+interface OpponentPlayerData {
+  num: number;
+  name: string;
+  position: Position;
+  isStarter: boolean;
+  subIn?: number;
+  subOut?: number;
+  tries?: number;
+  conversions?: number;
+  penalties?: number;
+  totalPoints?: number;
+}
+
+const RCT_SQUAD: OpponentPlayerData[] = [
+  { num: 1, name: "Dany Priso", position: Position.PILIER_GAUCHE, isStarter: true , subOut: 49 },
+  { num: 2, name: "Gianmarco Lucchesi", position: Position.TALONNEUR, isStarter: true , subOut: 49 },
+  { num: 3, name: "Beka Gigashvili", position: Position.PILIER_DROIT, isStarter: true , subOut: 49 },
+  { num: 4, name: "Corentin Mezouel", position: Position.DEUXIEME_LIGNE, isStarter: true , subOut: 49 },
+  { num: 5, name: "Brian Alainu'uese", position: Position.DEUXIEME_LIGNE, isStarter: true , subOut: 49, tries: 1, totalPoints: 5 },
+  { num: 6, name: "Lewis Ludlam", position: Position.TROISIEME_LIGNE_AILE, isStarter: true , subOut: 57, tries: 1, totalPoints: 5 },
   { num: 7, name: "Jules Coulon", position: Position.TROISIEME_LIGNE_AILE, isStarter: true },
-  { num: 8, name: "Mikheili Shioshvili", position: Position.NUMERO_HUIT, isStarter: true },
+  { num: 8, name: "Mikheili Shioshvili", position: Position.NUMERO_HUIT, isStarter: true , subOut: 76, tries: 1, totalPoints: 5 },
   { num: 9, name: "Ben White", position: Position.DEMI_DE_MELEE, isStarter: true },
   { num: 10, name: "Tomás Albornoz", position: Position.DEMI_OUVERTURE, isStarter: true },
   { num: 11, name: "Mathis Ferté", position: Position.AILIER, isStarter: true },
-  { num: 12, name: "Antoine Frisch", position: Position.CENTRE, isStarter: true },
+  { num: 12, name: "Antoine Frisch", position: Position.CENTRE, isStarter: true , subOut: 62 },
   { num: 13, name: "Ignacio Brex", position: Position.CENTRE, isStarter: true },
   { num: 14, name: "Setariki Tuicuvu", position: Position.AILIER, isStarter: true },
-  { num: 15, name: "Melvyn Jaminet", position: Position.ARRIERE, isStarter: true },
-  { num: 16, name: "Pierre Damond", position: Position.TALONNEUR, isStarter: false },
-  { num: 17, name: "Jarrett Gros", position: Position.PILIER_GAUCHE, isStarter: false },
-  { num: 18, name: "Giorgi Javakhia", position: Position.PILIER_DROIT, isStarter: false },
-  { num: 19, name: "Matthew Halagahu", position: Position.DEUXIEME_LIGNE, isStarter: false },
-  { num: 20, name: "Zeno Mercer", position: Position.NUMERO_HUIT, isStarter: false },
-  { num: 21, name: "Mateo Domon", position: Position.DEMI_DE_MELEE, isStarter: false },
-  { num: 22, name: "Mathieu Nonu", position: Position.CENTRE, isStarter: false },
-  { num: 23, name: "Kyle Sinckler", position: Position.PILIER_DROIT, isStarter: false },
+  { num: 15, name: "Melvyn Jaminet", position: Position.ARRIERE, isStarter: true , subOut: 62, conversions: 1, penalties: 1, totalPoints: 5 },
+  { num: 16, name: "Pierre Damond", position: Position.TALONNEUR, isStarter: false , subIn: 49 },
+  { num: 17, name: "Jarrett Gros", position: Position.PILIER_GAUCHE, isStarter: false , subIn: 49 },
+  { num: 18, name: "Giorgi Javakhia", position: Position.PILIER_DROIT, isStarter: false , subIn: 49 },
+  { num: 19, name: "Matthew Halagahu", position: Position.DEUXIEME_LIGNE, isStarter: false , subIn: 49 },
+  { num: 20, name: "Zeno Mercer", position: Position.NUMERO_HUIT, isStarter: false , subIn: 57 },
+  { num: 21, name: "Mateo Domon", position: Position.DEMI_DE_MELEE, isStarter: false , subIn: 62 },
+  { num: 22, name: "Mathieu Nonu", position: Position.CENTRE, isStarter: false , subIn: 62 },
+  { num: 23, name: "Kyle Sinckler", position: Position.PILIER_DROIT, isStarter: false , subIn: 49 },
 ];
 
 // =============================================================================
@@ -328,11 +342,23 @@ async function main() {
         isStarter: p.isStarter,
         isCaptain: false,
         positionPlayed: p.position,
+        subIn: p.subIn ?? null,
+        subOut: p.subOut ?? null,
+        minutesPlayed: p.isStarter
+          ? (p.subOut ?? 80)
+          : p.subIn != null
+            ? 80 - p.subIn
+            : null,
+        tries: p.tries ?? 0,
+        conversions: p.conversions ?? 0,
+        penalties: p.penalties ?? 0,
+        totalPoints: p.totalPoints ?? 0,
       },
     });
 
     const label = p.isStarter ? "TIT" : "REM";
-    console.log(`  ${label} ${String(p.num).padStart(2, " ")}. ${p.name}`);
+    const pts = p.totalPoints ? ` (${p.totalPoints} pts)` : "";
+    console.log(`  ${label} ${String(p.num).padStart(2, " ")}. ${p.name}${pts}`);
   }
 
   // -------------------------------------------------------------------------

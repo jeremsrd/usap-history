@@ -371,7 +371,25 @@ async function main() {
   console.log(`  Composition USAP : ${USAP_SQUAD.length} joueurs`);
 
   // ---- Composition Provence ---------------------------------------------
+  // Réalisations déduites de la chronologie, comme pour l'USAP.
+  const oppScoring: Record<string, { tries: number; conversions: number }> = {};
+  const oppNames = new Set(PROVENCE_SQUAD.map((p) => p.name));
+  for (const e of EVENTS) {
+    if (e.isUsap || e.type === "CARTON_JAUNE") continue;
+    if (!oppNames.has(e.who)) {
+      console.log(`  ⚠ marqueur provençal absent de la composition : ${e.who}`);
+      continue;
+    }
+    oppScoring[e.who] ??= { tries: 0, conversions: 0 };
+    if (e.type === "ESSAI") oppScoring[e.who].tries++;
+    else oppScoring[e.who].conversions++;
+  }
+
+  let oppPoints = 0;
   for (const p of PROVENCE_SQUAD) {
+    const sc = oppScoring[p.name] ?? { tries: 0, conversions: 0 };
+    const pts = sc.tries * 5 + sc.conversions * 2;
+    oppPoints += pts;
     await prisma.matchPlayer.create({
       data: {
         matchId: match.id,
@@ -383,12 +401,21 @@ async function main() {
         positionPlayed: p.position,
         subIn: p.subIn ?? null,
         subOut: p.subOut ?? null,
+        minutesPlayed: p.isStarter ? (p.subOut ?? 80) : p.subIn != null ? 80 - p.subIn : null,
+        tries: sc.tries,
+        conversions: sc.conversions,
+        totalPoints: pts,
         yellowCard: p.yellowCardMin != null,
         yellowCardMin: p.yellowCardMin ?? null,
       },
     });
   }
-  console.log(`  Composition Provence : ${PROVENCE_SQUAD.length} joueurs`);
+  if (oppPoints !== SCORE_PROVENCE) {
+    console.log(`  ⚠ points Provence répartis : ${oppPoints} au lieu de ${SCORE_PROVENCE}`);
+  }
+  console.log(
+    `  Composition Provence : ${PROVENCE_SQUAD.length} joueurs (${oppPoints} pts répartis)`,
+  );
 
   // ---- Chronologie -------------------------------------------------------
   await prisma.matchEvent.deleteMany({ where: { matchId: match.id } });
