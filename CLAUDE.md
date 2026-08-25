@@ -135,25 +135,49 @@ Sur le match : `halfTimeUsap` / `halfTimeOpponent`, `refereeId`, `videoUrl`,
 
 ### Points de bonus : jamais saisis à la main
 
-Utiliser `computeBonuses()` de `src/lib/bonus.ts`. Les scripts et l'action
+Utiliser `computeBonuses()` de `src/lib/scoring.ts`. Les scripts et l'action
 d'enregistrement de l'admin le font déjà : la case à cocher du formulaire ne
 sert plus que de repli quand le détail des essais manque.
 
-Le barème dépend de la compétition **et de l'époque**, ce qui compte pour une
-base qui remonte à 1902 :
+Le barème dépend de la compétition **et de l'époque**. Pour une base qui
+remonte à 1902, ce n'est pas un détail : jusqu'en 2003-2004 le championnat
+français ignorait les bonus **et** comptait les points autrement.
 
-| Période | Compétition | Bonus offensif | Bonus défensif |
+**Championnats français**
+
+| Période | Victoire / Nul / Défaite | Bonus offensif | Bonus défensif |
 |---|---|---|---|
-| avant 2007-2008 | championnats français | 4 essais | défaite ≤ 7 pts |
-| 2007-2008 → 2013-2014 | Top 14 / Pro D2 | 3 essais d'écart | défaite ≤ 7 pts |
-| depuis 2014-2015 | Top 14 / Pro D2 | 3 essais d'écart | défaite ≤ 5 pts |
-| jusqu'en 2025-2026 | coupes d'Europe | 4 essais | défaite ≤ 7 pts |
-| depuis 2026-2027 | coupes d'Europe | 3 essais d'écart | défaite ≤ 7 pts |
+| jusqu'en 2003-2004 | 3 / 2 / 1 | aucun | aucun |
+| 2004-2005 → 2006-2007 | 4 / 2 / 0 | 4 essais | défaite ≤ 7 pts |
+| 2007-2008 → 2013-2014 | 4 / 2 / 0 | 3 essais d'écart | défaite ≤ 7 pts |
+| depuis 2014-2015 | 4 / 2 / 0 | 3 essais d'écart | défaite ≤ 5 pts |
 
-Le différentiel de 3 essais a été adopté par la LNR en 2007-2008 pour empêcher
-les deux équipes de prendre le bonus offensif dans le même match. Le seuil
-défensif est passé de 7 à 5 points en 2014-2015 : à 5 points l'équipe menée
-n'est plus qu'à un essai de la victoire, ce qui l'incite à jouer.
+**Coupes d'Europe**
+
+| Période | Bonus offensif | Bonus défensif |
+|---|---|---|
+| jusqu'en 2025-2026 | 4 essais | défaite ≤ 7 pts |
+| depuis 2026-2027 | 3 essais d'écart | défaite ≤ 7 pts |
+
+2004-2005 est une bascule complète : abandon du 3/2/1 historique, où une
+défaite rapportait encore un point, au profit du 4/2/0 international avec
+bonus — alignement sur l'hémisphère Sud et la Coupe du monde 2003. Le vieux
+barème récompensait la participation, le nouveau le résultat et la manière.
+Le différentiel de 3 essais arrive en 2007-2008, pour empêcher les deux
+équipes de prendre le bonus offensif dans le même match. Le seuil défensif
+descend à 5 points en 2014-2015 : l'équipe menée n'est plus qu'à un essai de
+la victoire, ce qui l'incite à jouer plutôt qu'à gérer.
+
+`pointsScaleFor(seasonStartYear)` donne le barème, `matchPoints()` les points
+d'une rencontre. Ne jamais recoder un `wins * 4 + draws * 2` en dur : c'est
+faux avant 2004-2005.
+
+Trois réserves à lever avant d'attaquer les saisons anciennes :
+la date de la décision LNR de 2004 n'est pas sourcée (seule la saison
+d'application est attestée par les classements) ; la Wikipédia française
+laisse 2004-2007 dans le flou sur le seuil défensif, il faudrait les
+règlements LNR de ces saisons, qui ne sont plus en ligne ; et la date
+d'introduction des bonus dans les coupes d'Europe n'a pas été vérifiée.
 
 **Aucun bonus sur un match couperet** : phase finale européenne, barrage
 d'accession, finale. Dans le modèle, une rencontre est un couperet si elle n'a

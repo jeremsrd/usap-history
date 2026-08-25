@@ -1,14 +1,19 @@
 // =============================================================================
-// Points de bonus : règles par compétition et par époque
+// Barème de classement : points de match et bonus, par compétition et époque
 // =============================================================================
 //
 // Les règles ont changé plusieurs fois. Une base qui remonte à 1902 ne peut
 // donc pas appliquer une formule unique : le barème dépend de la compétition
 // ET de la saison.
 //
-//   Origine            bonus offensif : 4 essais
-//                      bonus défensif : défaite de 7 points ou moins
-//                      (modèle australien, généralisé ensuite)
+//   jusqu'en 2003-2004 championnats français : 3 points la victoire, 2 le nul,
+//                      1 la défaite, AUCUN bonus. L'ancien barème récompensait
+//                      la participation.
+//
+//   2004-2005          bascule complète vers le 4 / 2 / 0 international, avec
+//                      introduction des bonus : 4 essais (quel que soit le
+//                      résultat) et défaite de 7 points ou moins. Alignement
+//                      sur l'hémisphère Sud et la Coupe du monde 2003.
 //
 //   2007-2008          la LNR adopte le différentiel de 3 essais pour le
 //                      Top 14 et la Pro D2, afin d'empêcher les deux équipes
@@ -21,6 +26,20 @@
 //
 //   2026-2027          l'EPCR rejoint le différentiel de 3 essais pour ses
 //                      coupes d'Europe. Le seuil défensif y reste à 7 points.
+//
+// Réserves, à lever avant d'attaquer les saisons anciennes (phase 4) :
+//   - la saison d'application de 2004-2005 est attestée par les classements
+//     d'époque (apparition d'une colonne bonus, et arithmétique : Toulon
+//     champion de Pro D2 2004-05 avec 107 pts = 23 V ×4 + 1 N ×2 + 13 bonus,
+//     là où Bayonne 2003-04 fait 74 pts = 21 V ×3 + 2 N ×2 + 7 D ×1). La date
+//     de la décision du Comité directeur de la LNR, elle, n'est pas sourcée.
+//   - la Wikipédia française laisse 2004-2007 dans le flou sur le seuil
+//     défensif. C'était bien le standard 4 essais / 7 points, mais une source
+//     primaire demanderait les règlements LNR de ces trois saisons, qui ne
+//     sont plus en ligne.
+//   - la date d'introduction des bonus dans les coupes d'Europe n'a pas été
+//     vérifiée : le barème européen ci-dessous est supposé valable sur toute
+//     la période couverte.
 //
 // Les matchs couperets (phases finales, barrages d'accession) n'attribuent
 // aucun point de bonus.
@@ -37,6 +56,9 @@ export interface BonusRules {
 function isEuropean(competitionShortName: string): boolean {
   return ["Challenge Européen", "H-Cup"].includes(competitionShortName);
 }
+
+/** Première saison où les championnats français attribuent des bonus. */
+const PREMIERE_SAISON_BONUS_FR = 2004;
 
 /** Compétitions sans points de bonus : matchs couperets par nature. */
 function hasNoBonus(competitionShortName: string): boolean {
@@ -65,6 +87,8 @@ export function bonusRulesFor(
   }
 
   // Championnats français : Top 14, Pro D2 et divisions historiques
+  if (seasonStartYear < PREMIERE_SAISON_BONUS_FR) return null;
+
   return {
     tryBonus: seasonStartYear >= 2007 ? "DIFFERENTIEL_TROIS" : "QUATRE_ESSAIS",
     losingMargin: seasonStartYear >= 2014 ? 5 : 7,
@@ -119,12 +143,31 @@ export function computeBonuses(input: BonusInput): BonusResult {
   return { bonusOffensif, bonusDefensif, rules, triesMissing };
 }
 
+export interface PointsScale {
+  win: number;
+  draw: number;
+  loss: number;
+}
+
+/**
+ * Barème de points d'un championnat français. Le 3 / 2 / 1 historique a laissé
+ * place au 4 / 2 / 0 en 2004-2005, en même temps que l'arrivée des bonus.
+ */
+export function pointsScaleFor(seasonStartYear: number): PointsScale {
+  return seasonStartYear < PREMIERE_SAISON_BONUS_FR
+    ? { win: 3, draw: 2, loss: 1 }
+    : { win: 4, draw: 2, loss: 0 };
+}
+
 /** Points de classement d'une rencontre, bonus compris. */
 export function matchPoints(
   result: "VICTOIRE" | "NUL" | "DEFAITE",
   bonusOffensif: boolean,
   bonusDefensif: boolean,
+  seasonStartYear: number,
 ): number {
-  const base = result === "VICTOIRE" ? 4 : result === "NUL" ? 2 : 0;
+  const scale = pointsScaleFor(seasonStartYear);
+  const base =
+    result === "VICTOIRE" ? scale.win : result === "NUL" ? scale.draw : scale.loss;
   return base + (bonusOffensif ? 1 : 0) + (bonusDefensif ? 1 : 0);
 }

@@ -25,6 +25,7 @@
  */
 
 import { PrismaClient } from "@prisma/client";
+import { matchPoints } from "../src/lib/scoring";
 
 const prisma = new PrismaClient();
 
@@ -76,8 +77,11 @@ async function main() {
     bonusOffensif: matches.filter((m) => m.bonusOffensif).length,
     bonusDefensif: matches.filter((m) => m.bonusDefensif).length,
   };
-  const totalPoints =
-    calcule.wins * 4 + calcule.draws * 2 + calcule.bonusOffensif + calcule.bonusDefensif;
+  // Barème dérivé de l'époque : le 4/2/0 ne vaut que depuis 2004-2005.
+  const totalPoints = matches.reduce(
+    (acc, m) => acc + matchPoints(m.result, m.bonusOffensif, m.bonusDefensif, season.startYear),
+    0,
+  );
 
   console.log("Recalcul depuis les matchs en base :");
   console.log(

@@ -32,7 +32,7 @@ import {
   generatePlayerSlug,
   generateRefereeSlug,
 } from "../src/lib/slugs";
-import { computeBonuses } from "../src/lib/bonus";
+import { computeBonuses } from "../src/lib/scoring";
 
 const prisma = new PrismaClient();
 

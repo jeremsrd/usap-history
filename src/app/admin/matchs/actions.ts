@@ -5,7 +5,7 @@ import { revalidatePath } from "next/cache";
 import { createClient } from "@/lib/supabase/server";
 import { prisma } from "@/lib/prisma";
 import { generateMatchSlug } from "@/lib/slugs";
-import { computeBonuses } from "@/lib/bonus";
+import { computeBonuses } from "@/lib/scoring";
 import type { MatchResult } from "@prisma/client";
 
 // --- Helpers ---
@@ -181,7 +181,7 @@ function validate(data: ReturnType<typeof parseFormData>): string | null {
 
 /**
  * Dérive les deux bonus depuis la règle en vigueur (compétition + époque)
- * plutôt que de faire confiance aux cases du formulaire. Voir src/lib/bonus.ts.
+ * plutôt que de faire confiance aux cases du formulaire. Voir src/lib/scoring.ts.
  *
  * Le bonus offensif ne peut pas être tranché sans le détail des essais : dans
  * ce cas la valeur saisie est conservée, le formulaire reste la seule source.

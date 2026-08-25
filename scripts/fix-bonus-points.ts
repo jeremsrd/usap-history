@@ -7,7 +7,7 @@
  * cocher. Rien ne vérifiait la règle, si bien que 7 matchs étaient mal cochés
  * et que deux saisons affichaient un total de points erroné.
  *
- * Ce script applique src/lib/bonus.ts, qui tient compte de la compétition ET
+ * Ce script applique src/lib/scoring.ts, qui tient compte de la compétition ET
  * de l'époque : différentiel de 3 essais depuis 2007-2008 en France, seuil
  * défensif ramené de 7 à 5 points en 2014-2015, 4 essais et 7 points dans les
  * coupes d'Europe jusqu'en 2025-2026. Aucun bonus sur un match couperet.
@@ -25,7 +25,7 @@
  */
 
 import { PrismaClient } from "@prisma/client";
-import { computeBonuses, matchPoints } from "../src/lib/bonus";
+import { computeBonuses, matchPoints } from "../src/lib/scoring";
 
 const prisma = new PrismaClient();
 
@@ -142,7 +142,10 @@ async function main() {
     }));
     const bo = valeurs.filter((v) => v.bo).length;
     const bd = valeurs.filter((v) => v.bd).length;
-    const pts = valeurs.reduce((acc, v) => acc + matchPoints(v.result, v.bo, v.bd), 0);
+    const pts = valeurs.reduce(
+      (acc, v) => acc + matchPoints(v.result, v.bo, v.bd, s.startYear),
+      0,
+    );
 
     const ref = OFFICIEL[s.label];
     const conforme = !ref || (ref.bo === bo && ref.bd === bd && ref.pts === pts);
