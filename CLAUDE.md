@@ -11,69 +11,50 @@ Inspiré de :
 
 ## Stack technique
 
-- **Frontend** : Next.js 14+ (App Router) avec TypeScript
-- **UI** : Tailwind CSS + shadcn/ui
-- **Base de données** : PostgreSQL (via Supabase ou Railway)
-- **ORM** : Prisma
-- **Déploiement** : Vercel (frontend) + Supabase (BDD)
-- **Versioning** : Git + GitHub
+- **Frontend** : Next.js 15 (App Router, Turbopack) + React 19, TypeScript
+- **UI** : Tailwind v4, Radix UI, lucide-react ; `next-themes` pour le
+  clair/sombre. shadcn/ui est installé mais très peu utilisé en pratique.
+- **Base de données** : PostgreSQL sur Supabase, ORM Prisma 6
+- **Auth** : Supabase (`@supabase/ssr`), protège `/admin`
+- **Scripts** : TypeScript exécuté via `tsx`
+- **Versioning** : Git + GitHub (`jeremsrd/usap-history`)
 
 ## Structure du projet
 
 ```
 usap-history/
-├── CLAUDE.md                    # Ce fichier
-├── prisma/
-│   └── schema.prisma            # Schéma de la base de données
+├── CLAUDE.md                     # Ce fichier — conventions et règles de saisie
+├── prisma/schema.prisma          # Schéma de la base
 ├── src/
-│   ├── app/                     # Pages Next.js (App Router)
-│   │   ├── layout.tsx           # Layout principal (header, nav, footer)
-│   │   ├── page.tsx             # Page d'accueil
-│   │   ├── joueurs/
-│   │   │   ├── page.tsx         # Liste des joueurs (avec recherche/filtres)
-│   │   │   └── [id]/page.tsx    # Fiche joueur individuelle
-│   │   ├── matchs/
-│   │   │   ├── page.tsx         # Recherche de matchs
-│   │   │   └── [id]/page.tsx    # Fiche match individuelle
-│   │   ├── saisons/
-│   │   │   ├── page.tsx         # Liste des saisons
-│   │   │   └── [id]/page.tsx    # Détail d'une saison
-│   │   ├── statistiques/
-│   │   │   └── page.tsx         # Stats globales (meilleurs marqueurs, plus capés, etc.)
-│   │   ├── palmares/
-│   │   │   └── page.tsx         # Palmarès et trophées
-│   │   └── admin/               # Interface d'administration (protégée)
-│   │       ├── page.tsx         # Dashboard admin
-│   │       ├── matchs/page.tsx  # Saisie de matchs
-│   │       └── joueurs/page.tsx # Gestion des joueurs
-│   ├── components/              # Composants réutilisables
-│   │   ├── ui/                  # Composants shadcn/ui
-│   │   ├── PlayerCard.tsx       # Carte joueur
-│   │   ├── MatchCard.tsx        # Carte match
-│   │   ├── SeasonNav.tsx        # Navigation par saison
-│   │   ├── StatsTable.tsx       # Tableau de statistiques
-│   │   └── SearchBar.tsx        # Barre de recherche globale
-│   ├── lib/
-│   │   ├── prisma.ts            # Client Prisma singleton
-│   │   ├── utils.ts             # Fonctions utilitaires
-│   │   └── constants.ts         # Constantes (postes, compétitions, etc.)
-│   └── types/
-│       └── index.ts             # Types TypeScript
-├── public/
-│   ├── images/
-│   │   ├── players/             # Photos des joueurs
-│   │   ├── logos/               # Logos clubs adverses
-│   │   └── usap/                # Assets USAP (blason, etc.)
-│   └── favicon.ico
-├── scripts/
-│   ├── seed.ts                  # Script de seed initial
-│   └── import-csv.ts            # Import de données CSV
-├── .env.local                   # Variables d'environnement (ne pas committer)
-├── package.json
-├── tsconfig.json
-├── tailwind.config.ts
-└── next.config.js
+│   ├── app/                      # App Router — 33 pages
+│   │   ├── page.tsx              # Accueil
+│   │   ├── saisons/              # page.tsx + [label]/page.tsx
+│   │   ├── matchs/               # page.tsx + [slug]/page.tsx
+│   │   ├── joueurs/              # page.tsx + [slug]/page.tsx
+│   │   ├── adversaires/          # page.tsx + [slug]/page.tsx
+│   │   ├── arbitres/             # idem
+│   │   ├── stades/               # idem
+│   │   ├── entraineurs/          # idem
+│   │   ├── presidents/           # idem
+│   │   ├── palmares/, statistiques/
+│   │   ├── login/, auth/callback/, api/upload/
+│   │   └── admin/                # protégé — saisons, matchs (+ [id]), joueurs,
+│   │                             #   adversaires, arbitres, stades, entraineurs,
+│   │                             #   presidents, competitions, pays, palmares
+│   ├── components/
+│   │   ├── Header.tsx, Footer.tsx, ThemeProvider.tsx, ThemeToggle.tsx
+│   │   ├── ScoreEvolution.tsx    # graphe d'évolution du score d'un match
+│   │   ├── VideoEmbed.tsx        # résumé YouTube/Dailymotion en click-to-play
+│   │   └── ui/ImageUpload.tsx
+│   ├── lib/                      # prisma.ts, slugs.ts, utils.ts, constants.ts, supabase/
+│   └── types/index.ts
+├── scripts/                      # ~170 scripts d'import, un par match ou par lot
+└── .claude/launch.json           # config du serveur de dev
 ```
+
+Les routes de détail utilisent `[slug]` (et `[label]` pour les saisons), pas
+`[id]`. Il n'y a pas de `tailwind.config.ts` : Tailwind v4 se configure dans le
+CSS.
 
 ## Contexte historique de l'USAP
 
@@ -132,8 +113,9 @@ confrontations avec l'USAP, et de gérer les joueurs passés par les deux camps
   `lastName equals` ne suffit pas — il rate « Guerois-Galisson » vs
   « Guerois Galisson », « Bécognée » vs « Becognee ». Construire un index en
   mémoire une fois, puis chercher dedans.
-- `players` contient donc majoritairement des adversaires (~1170 sur ~1320).
-  C'est normal. Les pages de liste filtrent déjà sur `isOpponent: false`.
+- `players` contient donc majoritairement des adversaires : 1 171 sur 1 311,
+  seuls 140 ont porté le maillot catalan. C'est normal. Les pages de liste
+  filtrent déjà sur `isOpponent: false`.
 
 ### Champs à remplir des deux côtés
 
@@ -214,33 +196,76 @@ modifie des données existantes en masse.
 - **USAP brand** : `usap-sang`, `usap-or`, `usap-fond`, `usap-carte` sont définis via CSS variables et s'adaptent au thème
 - **Interdit** : `border-white/10`, `bg-white/5`, ou toute couleur hardcodée qui ne s'adapte pas au thème
 
-## Postes de rugby (pour la BDD)
+## Postes de rugby
+
+L'enum `Position` ne distingue **pas** les numéros au sein d'une même ligne :
 
 ```
-PILIER_GAUCHE = "Pilier gauche"        # 1
-TALONNEUR = "Talonneur"                # 2
-PILIER_DROIT = "Pilier droit"          # 3
-DEUXIEME_LIGNE_4 = "2ème ligne"        # 4
-DEUXIEME_LIGNE_5 = "2ème ligne"        # 5
-TROISIEME_LIGNE_AILE_6 = "3ème ligne aile" # 6
-TROISIEME_LIGNE_AILE_7 = "3ème ligne aile" # 7
-TROISIEME_LIGNE_CENTRE = "N°8"        # 8
-DEMI_DE_MELEE = "Demi de mêlée"       # 9
-DEMI_OUVERTURE = "Demi d'ouverture"    # 10
-AILIER_11 = "Ailier"                   # 11
-CENTRE_12 = "Centre"                   # 12
-CENTRE_13 = "Centre"                   # 13
-AILIER_14 = "Ailier"                   # 14
-ARRIERE = "Arrière"                    # 15
+PILIER_GAUCHE          # 1
+TALONNEUR              # 2
+PILIER_DROIT           # 3
+DEUXIEME_LIGNE         # 4 et 5
+TROISIEME_LIGNE_AILE   # 6 et 7
+NUMERO_HUIT            # 8
+DEMI_DE_MELEE          # 9
+DEMI_OUVERTURE         # 10
+AILIER                 # 11 et 14
+CENTRE                 # 12 et 13
+ARRIERE                # 15
 ```
 
-## Priorités de développement
+Les libellés d'affichage sont dans `src/lib/constants.ts` (`POSITIONS`).
 
-1. **MVP** : Schéma BDD + pages de base (saisons, matchs, joueurs) avec données de la saison 2024-2025
-2. **Phase 2** : Interface admin pour saisie de données + import CSV
-3. **Phase 3** : Statistiques avancées + recherche + "CatalanOmètre"
-4. **Phase 4** : Enrichissement historique (saisons anciennes)
-5. **Phase 5** : SEO, performances, PWA
+`MatchPlayer.positionPlayed` = poste **réellement tenu ce jour-là**, déduit du
+numéro de maillot pour les titulaires — un joueur fiché troisième ligne qui
+porte le 4 est enregistré `DEUXIEME_LIGNE` sur cette feuille de match.
+`Player.position` reste son poste de référence.
+
+## État du projet
+
+Phases 1 à 3 terminées : schéma, pages publiques, admin complet avec
+authentification Supabase, statistiques et recherche. Reste la phase 4
+(enrichissement historique) et la phase 5 (SEO, performances, PWA).
+
+### Couverture des données
+
+| Saison | Matchs | État |
+|---|---|---|
+| 2025-2026 | 32 | complète et clôturée |
+| 2024-2025 | 32 | complète |
+| 2023-2024 | 30 | complète |
+| 2022-2023 | 31 | Top 14 complet ; les 4 matchs de Challenge Cup n'ont pas de composition adverse |
+| 2008-2009 | 1 | uniquement la finale |
+
+114 saisons sur 119 n'ont encore aucun match : c'est le chantier de la phase 4,
+menée en remontant le temps saison par saison.
+
+### Limites connues
+
+- `EventType` ne comporte pas `CARTON_ORANGE`. Le champ `MatchPlayer.orangeCard`
+  existe et s'affiche, mais la sanction ne peut pas figurer dans la chronologie.
+- Les fiches joueur affichent séparément « Matchs avec l'USAP » et « Matchs
+  contre l'USAP ». Les statistiques ne comptent que les premiers. Toute nouvelle
+  requête sur les joueurs doit filtrer `isOpponent: false`, sinon les 1 171
+  adversaires présents dans `players` faussent le résultat.
+- Erreur d'hydratation React sur les pages de match, antérieure et non
+  diagnostiquée (probablement `next-themes`).
+- Affluences quasi absentes ; peu de photos et de biographies de joueurs.
+- Les modèles `CareerClub`, `PlayerStint`, `PlayerInternational` et
+  `PlayerAward` existent mais ne sont pas alimentés.
+
+## Commandes
+
+```bash
+npm run dev                          # serveur de développement (Turbopack)
+npx tsc --noEmit                     # vérification des types
+npx tsx scripts/<script>.ts          # exécuter un script d'import
+npx tsx scripts/<script>.ts --dry    # simulation, pour les scripts de masse
+```
+
+⚠️ `DATABASE_URL` pointe sur la base Supabase **de production** : un script
+lancé écrit directement sur les données du site. Toujours passer par `--dry`
+d'abord quand le script modifie de l'existant.
 
 ## Notes pour Claude Code
 
