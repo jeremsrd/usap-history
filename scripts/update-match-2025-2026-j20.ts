@@ -2,7 +2,8 @@
  * Création et mise à jour du match USAP - Toulon (J20 Top 14, 28/03/2026)
  * Score : USAP 36 - 20 Toulon
  *
- * Belle victoire à Aimé-Giral avec bonus offensif (5 essais) !
+ * Belle victoire à Aimé-Giral avec 5 essais (pas de bonus offensif :
+ * le Top 14 en exige 3 de plus que l'adversaire, ici 5 contre 3).
  * L'USAP domine en 1ère MT grâce à Yato (8'), Ecochard (25') et
  * Oviedo (34'), menant 24-10 à la pause. Toulon revient à 24-20
  * (Shioshvili 51', Ludlam 56') mais Allan (74') et Forner (81')
@@ -226,7 +227,7 @@ async function main() {
         scoreUsap: 36,
         scoreOpponent: 20,
         result: MatchResult.VICTOIRE,
-        bonusOffensif: true,
+        bonusOffensif: false,
         bonusDefensif: false,
       },
     });
@@ -271,9 +272,9 @@ async function main() {
       penaltiesOpponent: 1,
       dropGoalsOpponent: 0,
       penaltyTriesOpponent: 0,
-      bonusOffensif: true,
+      bonusOffensif: false,
       report:
-        "Belle victoire de l'USAP à Aimé-Giral avec bonus offensif (5 essais) ! " +
+        "Belle victoire de l'USAP à Aimé-Giral, avec cinq essais au compteur. " +
         "Les Catalans démarrent fort : pénalité d'Urdapilleta (5'), puis Yato ouvre " +
         "le compteur d'essais (8'). Alainu'uese répond pour Toulon (14') mais Ecochard " +
         "(25') et Oviedo (34') creusent l'écart. Mi-temps 24-10. En seconde période, " +
@@ -446,7 +447,7 @@ async function main() {
       description: "Essai de Tommaso Allan (USAP). L'USAP reprend le large. 29-20." },
     // 81' - Essai Forner (USAP) 34-20
     { minute: 81, type: "ESSAI", playerLastName: "Forner", isUsap: true,
-      description: "Essai de Théo Forner (USAP). Bonus offensif ! 34-20." },
+      description: "Essai de Théo Forner (USAP). 34-20." },
     // 82' - Transformation Allan (USAP) 36-20
     { minute: 82, type: "TRANSFORMATION", playerLastName: "Allan", isUsap: true,
       description: "Transformation de Tommaso Allan (USAP). 36-20. Score final." },
@@ -488,7 +489,6 @@ async function main() {
   console.log("  Composition Toulon : 23 joueurs");
   console.log(`  Événements : ${events.length}`);
   console.log("  5 essais USAP : Yato, Ecochard, Oviedo, Allan, Forner");
-  console.log("  BONUS OFFENSIF !");
 }
 
 main()
