@@ -104,6 +104,8 @@ interface MatchData {
   referee?: { firstName: string; lastName: string };
   /** URL du résumé vidéo, quand elle a pu être sourcée. */
   videoUrl?: string;
+  /** Affluence, quand elle a pu être sourcée. */
+  attendance?: number;
   report: string;
   usapSquad: UsapPlayerData[];
   oppSquad: OpponentPlayerData[];
@@ -717,6 +719,8 @@ events: [
     triesOpponent: 9, conversionsOpponent: 4, penaltiesOpponent: 0, dropGoalsOpponent: 0,
     bonusOffensif: false,
     bonusDefensif: false,
+    referee: { firstName: "Adam", lastName: "Leal" },
+    attendance: 7496,
     report:
       "Fin de parcours européen pour l'USAP, balayée au Septeo Stadium. Les Catalans mènent pourtant 6-5 après deux pénalités d'Aucagne (8', 25'), mais Montpellier inscrit neuf essais au total, dont un triplé de Rates. Ceccarelli marque le seul essai catalan (46'), transformé par Aucagne. Le carton jaune de Velarte (67') précède un dernier quart d'heure à sens unique. 53-13, l'USAP est éliminée en huitièmes de finale.",
     usapSquad: [
@@ -1039,6 +1043,7 @@ async function main() {
       kickoffTime: m.kickoffTime,
       refereeId,
       videoUrl: m.videoUrl ?? null,
+      attendance: m.attendance ?? null,
       seasonId: season.id,
       competitionId: competition.id,
       matchday: m.matchday,

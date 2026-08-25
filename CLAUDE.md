@@ -162,6 +162,13 @@ rend la fiche inaccessible (404). Voir `scripts/fix-broken-slugs.ts`.
   `site.api.espn.com/apis/site/v2/sports/rugby/{league}/summary?event={gameId}`
   (Top 14 = 270559, Challenge = 272073). Donne événements, remplacements,
   cartons et compositions, mais **pas** les arbitres ni l'affluence.
+- **Coupes d'Europe** : `epcrugby.com/fr/challenge-cup/matchs` (ou
+  `/champions-cup/`). Choisir la saison dans le menu « Saison », puis la phase.
+  La fiche d'un match, `/matchs/{id}/actualite`, donne **arbitre, affluence et
+  score à la mi-temps** dans son en-tête ; l'onglet `/equipes` donne les
+  compositions et les remplacements. Site Nuxt en SSR, à charger dans un
+  navigateur. Le sélecteur de saison se pilote mal par script : passer par une
+  recherche web restreinte au domaine pour retrouver l'id du match.
 - **Direct commenté** : rugbyrama.fr, ici.fr — utiles pour l'arbitre, le score
   à la mi-temps et les faits de match.
 - **Résumé vidéo** : chaîne YouTube « TOP 14 - Officiel ». **Vérifier chaque
