@@ -244,6 +244,7 @@ async function main() {
     data: {
       kickoffTime: "16:35",
       refereeId,
+      videoUrl: "https://www.youtube.com/watch?v=ZhkQUqQWam8",
       halfTimeUsap: 24,
       halfTimeOpponent: 10,
       triesUsap: 5,

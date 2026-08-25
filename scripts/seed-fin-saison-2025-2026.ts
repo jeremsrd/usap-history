@@ -133,6 +133,8 @@ const MATCHES: MatchData[] = [
     triesOpponent: 6, conversionsOpponent: 3, penaltiesOpponent: 2, dropGoalsOpponent: 0,
     bonusOffensif: false,
     bonusDefensif: false,
+    referee: { firstName: "Julien", lastName: "Caulier" },
+    videoUrl: "https://www.youtube.com/watch?v=9q4ZpEyyrnU",
     report:
       "Défaite logique au Septeo Stadium face à un Montpellier candidat au titre. L'USAP ouvre pourtant le score par Yato (10') et reste au contact grâce à Forner (30') et une pénalité d'Urdapilleta (38'), mais encaisse quatre essais avant la pause (Uelese ×2, Piccardo, Chalureau) et rentre aux vestiaires à 30-17. Les Catalans refusent de couler : Beria (59') puis Tedder (73'), tous deux transformés par Aucagne, ramènent l'écart à six points. Taofifenua (79') scelle la victoire héraultaise. Six essais à quatre, pas de bonus pour l'USAP.",
     usapSquad: [
@@ -231,6 +233,8 @@ events: [
     triesOpponent: 3, conversionsOpponent: 2, penaltiesOpponent: 4, dropGoalsOpponent: 0,
     bonusOffensif: false,
     bonusDefensif: true,
+    referee: { firstName: "Evan", lastName: "Urruzmendi" },
+    videoUrl: "https://www.youtube.com/watch?v=QkO8LK_Ivw8",
     report:
       "Crève-cœur à Aimé-Giral. Menée 16-19 à la pause malgré un essai de Forner (30'), l'USAP passe devant grâce à Yato (49') puis à trois pénalités d'Urdapilleta, impeccable au pied (5/5). À 29-28 à douze minutes de la fin, les Catalans tiennent leur victoire, mais Le Garrec, auteur de la totalité des points rochelais (2 essais, 2 transformations, 5 pénalités), passe la pénalité de la gagne à la 80e. Défaite 29-31 et point de bonus défensif.",
     usapSquad: [
@@ -326,6 +330,8 @@ events: [
     triesOpponent: 6, conversionsOpponent: 6, penaltiesOpponent: 1, dropGoalsOpponent: 0,
     bonusOffensif: false,
     bonusDefensif: false,
+    referee: { firstName: "Thomas", lastName: "Charabas" },
+    videoUrl: "https://www.youtube.com/watch?v=5SlyiZv7sGg",
     report:
       "Démonstration clermontoise au Michelin. L'USAP ouvre le score par Granell (21') transformé par Urdapilleta, mais Clermont répond immédiatement par Delguy (24') et Massa (36') et vire en tête 17-7. La seconde période tourne à la correction : Plummer (42'), Loaloa (48'), Raka (67') et Dessaigne (71') alourdissent l'addition, Plummer signant un sans-faute au pied (6/6). Ceccarelli sauve l'honneur à la sirène (80'), transformé par Aucagne. 45-14.",
     usapSquad: [
@@ -420,6 +426,8 @@ events: [
     triesOpponent: 5, conversionsOpponent: 3, penaltiesOpponent: 2, dropGoalsOpponent: 0,
     bonusOffensif: false,
     bonusDefensif: true,
+    referee: { firstName: "Tual", lastName: "Trainini" },
+    videoUrl: "https://www.youtube.com/watch?v=UtA2XZnG9SY",
     report:
       "L'USAP passe tout près de l'exploit à Chaban-Delmas. Essai de Joseph dès la 1re minute, puis Ruiz (16') et McIntyre (27') : les Catalans mènent 24-12 à la pause, Tedder assurant un sans-faute au pied. Mais McIntyre est sanctionné d'un carton jaune juste avant la mi-temps et l'UBB revient en trombe : Bielle-Biarrey (42') et Cazeaux (45') recollent, Petaia (50') redonne l'avantage à l'USAP, avant que Bielle-Biarrey (57') puis deux pénalités de Lucu (67', 73') ne renversent définitivement le match. Défaite 32-37 avec le bonus défensif.",
     usapSquad: [
@@ -613,8 +621,10 @@ events: [
     triesOpponent: 8, conversionsOpponent: 6, penaltiesOpponent: 0, dropGoalsOpponent: 0,
     bonusOffensif: false,
     bonusDefensif: false,
+    referee: { firstName: "Pierre", lastName: "Bru" },
+    videoUrl: "https://www.youtube.com/watch?v=QGHqNXsStYY",
     report:
-      "Dernière journée sans enjeu de classement pour l'USAP, déjà assurée de disputer l'access match, qui se déplace à Jean-Dauger avec une équipe très remaniée. Bayonne déroule : huit essais, dont un doublé de Spring et de Martin, et un sans-faute quasi parfait de Segonds au pied. Lotrian sauve l'honneur catalan (48'), transformé par Tedder, lui-même sanctionné d'un carton jaune à la 79e. Défaite 7-52, la plus lourde de la saison.",
+      "Dernière journée sans enjeu de classement pour l'USAP, déjà assurée de disputer l'access match, qui se déplace à Jean-Dauger avec une équipe très remaniée : Boyer Gallardo, Taty, Sol et Dubois sont alignés d'entrée, Aprasidze et McIntyre forment la charnière. Bayonne déroule : huit essais, dont un doublé de Spring et un de Martin, et un sans-faute de Segonds au pied (5/5). Lotrian sauve l'honneur catalan (48'), transformé par Tedder, lui-même sanctionné d'un carton jaune à la 79e. Défaite 7-52, la plus lourde de la saison, avec bonus offensif pour l'Aviron.",
     usapSquad: [
   { num: 1, firstName: "Lorencio", lastName: "Boyer Gallardo", position: Position.PILIER_GAUCHE, isStarter: true, subOut: 46 },
   { num: 2, firstName: "Sama", lastName: "Malolo", position: Position.TALONNEUR, isStarter: true, subOut: 46 },
