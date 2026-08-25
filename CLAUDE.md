@@ -133,6 +133,32 @@ Sur le match : `halfTimeUsap` / `halfTimeOpponent`, `refereeId`, `videoUrl`,
 `attendance`, `report`, les compteurs `triesUsap` / `triesOpponent` etc., et
 `bonusOffensif` / `bonusDefensif`.
 
+### Points de bonus : jamais saisis à la main
+
+Utiliser `computeBonuses()` de `src/lib/bonus.ts`. Les scripts et l'action
+d'enregistrement de l'admin le font déjà : la case à cocher du formulaire ne
+sert plus que de repli quand le détail des essais manque.
+
+Le barème dépend de la compétition **et de l'époque**, ce qui compte pour une
+base qui remonte à 1902 :
+
+| Période | Compétition | Bonus offensif | Bonus défensif |
+|---|---|---|---|
+| avant 2007-2008 | championnats français | 4 essais | défaite ≤ 7 pts |
+| 2007-2008 → 2013-2014 | Top 14 / Pro D2 | 3 essais d'écart | défaite ≤ 7 pts |
+| depuis 2014-2015 | Top 14 / Pro D2 | 3 essais d'écart | défaite ≤ 5 pts |
+| jusqu'en 2025-2026 | coupes d'Europe | 4 essais | défaite ≤ 7 pts |
+| depuis 2026-2027 | coupes d'Europe | 3 essais d'écart | défaite ≤ 7 pts |
+
+Le différentiel de 3 essais a été adopté par la LNR en 2007-2008 pour empêcher
+les deux équipes de prendre le bonus offensif dans le même match. Le seuil
+défensif est passé de 7 à 5 points en 2014-2015 : à 5 points l'équipe menée
+n'est plus qu'à un essai de la victoire, ce qui l'incite à jouer.
+
+**Aucun bonus sur un match couperet** : phase finale européenne, barrage
+d'accession, finale. Dans le modèle, une rencontre est un couperet si elle n'a
+pas de `matchday` et que son `round` ne commence pas par « Poule ».
+
 ### Contrôles à faire systématiquement
 
 - La somme des points par joueur doit retomber sur le score de l'équipe.
@@ -142,6 +168,9 @@ Sur le match : `halfTimeUsap` / `halfTimeOpponent`, `refereeId`, `videoUrl`,
   signaler tout marqueur absent de la composition.
 - Les statistiques agrégées de saison doivent correspondre au classement
   officiel avant d'être écrites (cf. `close-season-2025-2026.ts`).
+- Après toute saisie touchant les scores ou les essais, relancer
+  `npx tsx scripts/fix-bonus-points.ts --dry` : il recalcule tous les bonus et
+  confronte les totaux de saison aux classements officiels connus.
 
 ### Slugs
 

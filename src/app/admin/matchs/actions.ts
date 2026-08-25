@@ -5,6 +5,7 @@ import { revalidatePath } from "next/cache";
 import { createClient } from "@/lib/supabase/server";
 import { prisma } from "@/lib/prisma";
 import { generateMatchSlug } from "@/lib/slugs";
+import { computeBonuses } from "@/lib/bonus";
 import type { MatchResult } from "@prisma/client";
 
 // --- Helpers ---
@@ -178,6 +179,55 @@ function validate(data: ReturnType<typeof parseFormData>): string | null {
 
 // --- Actions ---
 
+/**
+ * Dérive les deux bonus depuis la règle en vigueur (compétition + époque)
+ * plutôt que de faire confiance aux cases du formulaire. Voir src/lib/bonus.ts.
+ *
+ * Le bonus offensif ne peut pas être tranché sans le détail des essais : dans
+ * ce cas la valeur saisie est conservée, le formulaire reste la seule source.
+ */
+async function resolveBonuses(data: {
+  seasonId: string | null;
+  competitionId: string | null;
+  matchday: number | null;
+  round: string | null;
+  scoreUsap: number;
+  scoreOpponent: number;
+  triesUsap: number | null;
+  triesOpponent: number | null;
+  bonusOffensif: boolean;
+  bonusDefensif: boolean;
+}): Promise<{ bonusOffensif: boolean; bonusDefensif: boolean }> {
+  const [season, competition] = await Promise.all([
+    prisma.season.findUnique({
+      where: { id: data.seasonId! },
+      select: { startYear: true },
+    }),
+    prisma.competition.findUnique({
+      where: { id: data.competitionId! },
+      select: { shortName: true, name: true },
+    }),
+  ]);
+  if (!season || !competition) {
+    return { bonusOffensif: data.bonusOffensif, bonusDefensif: data.bonusDefensif };
+  }
+
+  const res = computeBonuses({
+    competitionShortName: competition.shortName ?? competition.name,
+    seasonStartYear: season.startYear,
+    isKnockout: data.matchday == null && !(data.round ?? "").startsWith("Poule"),
+    scoreUsap: data.scoreUsap,
+    scoreOpponent: data.scoreOpponent,
+    triesUsap: data.triesUsap,
+    triesOpponent: data.triesOpponent,
+  });
+
+  return {
+    bonusOffensif: res.triesMissing ? data.bonusOffensif : res.bonusOffensif,
+    bonusDefensif: res.bonusDefensif,
+  };
+}
+
 export async function createMatch(
   _prev: MatchActionState,
   formData: FormData,
@@ -217,6 +267,8 @@ export async function createMatch(
     date,
   });
 
+  const bonuses = await resolveBonuses(data);
+
   try {
     await prisma.match.create({
       data: {
@@ -237,8 +289,8 @@ export async function createMatch(
         halfTimeUsap: data.halfTimeUsap,
         halfTimeOpponent: data.halfTimeOpponent,
         result: data.result as MatchResult,
-        bonusOffensif: data.bonusOffensif,
-        bonusDefensif: data.bonusDefensif,
+        bonusOffensif: bonuses.bonusOffensif,
+        bonusDefensif: bonuses.bonusDefensif,
         refereeId: data.refereeId,
         attendance: data.attendance,
         report: data.report,
@@ -306,6 +358,8 @@ export async function updateMatch(
     date,
   });
 
+  const bonuses = await resolveBonuses(data);
+
   try {
     await prisma.match.update({
       where: { id },
@@ -327,8 +381,8 @@ export async function updateMatch(
         halfTimeUsap: data.halfTimeUsap,
         halfTimeOpponent: data.halfTimeOpponent,
         result: data.result as MatchResult,
-        bonusOffensif: data.bonusOffensif,
-        bonusDefensif: data.bonusDefensif,
+        bonusOffensif: bonuses.bonusOffensif,
+        bonusDefensif: bonuses.bonusDefensif,
         refereeId: data.refereeId,
         attendance: data.attendance,
         report: data.report,

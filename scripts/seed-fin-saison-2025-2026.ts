@@ -32,6 +32,7 @@ import {
   generatePlayerSlug,
   generateRefereeSlug,
 } from "../src/lib/slugs";
+import { computeBonuses } from "../src/lib/bonus";
 
 const prisma = new PrismaClient();
 
@@ -98,8 +99,6 @@ interface MatchData {
   conversionsOpponent: number;
   penaltiesOpponent: number;
   dropGoalsOpponent: number;
-  bonusOffensif: boolean;
-  bonusDefensif: boolean;
   /** Arbitre central, quand il a pu être sourcé. */
   referee?: { firstName: string; lastName: string };
   /** URL du résumé vidéo, quand elle a pu être sourcée. */
@@ -133,8 +132,6 @@ const MATCHES: MatchData[] = [
     halfTimeOpponent: 30,
     triesUsap: 4, conversionsUsap: 4, penaltiesUsap: 1, dropGoalsUsap: 0,
     triesOpponent: 6, conversionsOpponent: 3, penaltiesOpponent: 2, dropGoalsOpponent: 0,
-    bonusOffensif: false,
-    bonusDefensif: false,
     referee: { firstName: "Julien", lastName: "Caulier" },
     videoUrl: "https://www.youtube.com/watch?v=9q4ZpEyyrnU",
     report:
@@ -233,8 +230,6 @@ events: [
     halfTimeOpponent: 19,
     triesUsap: 2, conversionsUsap: 2, penaltiesUsap: 5, dropGoalsUsap: 0,
     triesOpponent: 3, conversionsOpponent: 2, penaltiesOpponent: 4, dropGoalsOpponent: 0,
-    bonusOffensif: false,
-    bonusDefensif: true,
     referee: { firstName: "Evan", lastName: "Urruzmendi" },
     videoUrl: "https://www.youtube.com/watch?v=QkO8LK_Ivw8",
     report:
@@ -330,8 +325,6 @@ events: [
     halfTimeOpponent: 17,
     triesUsap: 2, conversionsUsap: 2, penaltiesUsap: 0, dropGoalsUsap: 0,
     triesOpponent: 6, conversionsOpponent: 6, penaltiesOpponent: 1, dropGoalsOpponent: 0,
-    bonusOffensif: false,
-    bonusDefensif: false,
     referee: { firstName: "Thomas", lastName: "Charabas" },
     videoUrl: "https://www.youtube.com/watch?v=5SlyiZv7sGg",
     report:
@@ -426,8 +419,6 @@ events: [
     halfTimeOpponent: 12,
     triesUsap: 4, conversionsUsap: 3, penaltiesUsap: 2, dropGoalsUsap: 0,
     triesOpponent: 5, conversionsOpponent: 3, penaltiesOpponent: 2, dropGoalsOpponent: 0,
-    bonusOffensif: false,
-    bonusDefensif: true,
     referee: { firstName: "Tual", lastName: "Trainini" },
     videoUrl: "https://www.youtube.com/watch?v=UtA2XZnG9SY",
     report:
@@ -526,8 +517,6 @@ events: [
     halfTimeOpponent: 17,
     triesUsap: 4, conversionsUsap: 3, penaltiesUsap: 1, dropGoalsUsap: 0,
     triesOpponent: 4, conversionsOpponent: 2, penaltiesOpponent: 1, dropGoalsOpponent: 0,
-    bonusOffensif: false,
-    bonusDefensif: false,
     referee: { firstName: "Kévin", lastName: "Bralley" },
     videoUrl: "https://www.youtube.com/watch?v=pp1Itk9bi8s",
     report:
@@ -621,8 +610,6 @@ events: [
     halfTimeOpponent: 21,
     triesUsap: 1, conversionsUsap: 1, penaltiesUsap: 0, dropGoalsUsap: 0,
     triesOpponent: 8, conversionsOpponent: 6, penaltiesOpponent: 0, dropGoalsOpponent: 0,
-    bonusOffensif: false,
-    bonusDefensif: false,
     referee: { firstName: "Pierre", lastName: "Bru" },
     videoUrl: "https://www.youtube.com/watch?v=QGHqNXsStYY",
     report:
@@ -717,8 +704,6 @@ events: [
     halfTimeOpponent: 17,
     triesUsap: 1, conversionsUsap: 1, penaltiesUsap: 2, dropGoalsUsap: 0,
     triesOpponent: 9, conversionsOpponent: 4, penaltiesOpponent: 0, dropGoalsOpponent: 0,
-    bonusOffensif: false,
-    bonusDefensif: false,
     referee: { firstName: "Adam", lastName: "Leal" },
     attendance: 7496,
     report:
@@ -1034,6 +1019,17 @@ async function main() {
 
     // ---- Match ------------------------------------------------------------
     const result = computeResult(m.scoreUsap, m.scoreOpponent);
+
+    // Les bonus sont dérivés de la règle en vigueur, jamais saisis à la main.
+    const { bonusOffensif, bonusDefensif } = computeBonuses({
+      competitionShortName: m.competitionShortName,
+      seasonStartYear: season.startYear,
+      isKnockout: m.matchday == null && !(m.round ?? "").startsWith("Poule"),
+      scoreUsap: m.scoreUsap,
+      scoreOpponent: m.scoreOpponent,
+      triesUsap: m.triesUsap,
+      triesOpponent: m.triesOpponent,
+    });
     const refereeId = m.referee
       ? await findOrCreateReferee(m.referee.firstName, m.referee.lastName)
       : null;
@@ -1056,8 +1052,8 @@ async function main() {
       halfTimeUsap: m.halfTimeUsap,
       halfTimeOpponent: m.halfTimeOpponent,
       result,
-      bonusOffensif: m.bonusOffensif,
-      bonusDefensif: m.bonusDefensif,
+      bonusOffensif,
+      bonusDefensif,
       triesUsap: m.triesUsap,
       conversionsUsap: m.conversionsUsap,
       penaltiesUsap: m.penaltiesUsap,
