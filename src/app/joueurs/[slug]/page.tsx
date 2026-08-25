@@ -12,8 +12,29 @@ import {
   Weight,
   Trophy,
   Globe,
+  Shield,
 } from "lucide-react";
 import type { Metadata } from "next";
+
+/** Une participation à un match, telle que chargée par cette page. */
+type PlayerAppearance = {
+  id: string;
+  isStarter: boolean;
+  shirtNumber: number | null;
+  minutesPlayed: number | null;
+  tries: number;
+  totalPoints: number;
+  match: {
+    slug: string;
+    date: Date;
+    scoreUsap: number;
+    scoreOpponent: number;
+    result: string;
+    isHome: boolean;
+    competition: { shortName: string | null; name: string };
+    opponent: { shortName: string | null; name: string };
+  };
+};
 
 export const dynamic = "force-dynamic";
 
@@ -101,16 +122,20 @@ export default async function JoueurDetailPage({ params }: Props) {
     redirect(`/joueurs/${player.slug}`);
   }
 
-  // Stats agrégées
-  const totalAppearances = player.matchAppearances.length;
-  const totalStarts = player.matchAppearances.filter(
-    (ma) => ma.isStarter,
-  ).length;
-  const totalTries = player.matchAppearances.reduce(
-    (sum, ma) => sum + ma.tries,
-    0,
+  // Un même joueur peut avoir porté le maillot catalan ET l'avoir affronté
+  // sous d'autres couleurs : les deux carrières sont séparées.
+  const usapAppearances = player.matchAppearances.filter(
+    (ma) => !ma.isOpponent,
   );
-  const totalPoints = player.matchAppearances.reduce(
+  const againstAppearances = player.matchAppearances.filter(
+    (ma) => ma.isOpponent,
+  );
+
+  // Stats agrégées : uniquement les matchs joués SOUS le maillot de l'USAP
+  const totalAppearances = usapAppearances.length;
+  const totalStarts = usapAppearances.filter((ma) => ma.isStarter).length;
+  const totalTries = usapAppearances.reduce((sum, ma) => sum + ma.tries, 0);
+  const totalPoints = usapAppearances.reduce(
     (sum, ma) => sum + ma.totalPoints,
     0,
   );
@@ -373,134 +398,182 @@ export default async function JoueurDetailPage({ params }: Props) {
         </section>
       )}
 
-      {/* Historique des matchs */}
-      {player.matchAppearances.length > 0 && (
-        <section>
+      {/* Matchs sous le maillot de l'USAP */}
+      {usapAppearances.length > 0 && (
+        <section className={againstAppearances.length > 0 ? "mb-10" : ""}>
           <h2 className="mb-4 flex items-center gap-2 text-2xl font-bold uppercase tracking-wider text-foreground">
             <Calendar className="h-6 w-6 text-usap-or" />
-            Matchs ({player.matchAppearances.length})
+            Matchs avec l&apos;USAP ({usapAppearances.length})
           </h2>
-          <div className="overflow-x-auto rounded-lg border border-border">
-            <table className="w-full text-sm">
-              <thead>
-                <tr className="border-b border-border bg-muted/50">
-                  <th className="px-3 py-2 text-left font-semibold text-foreground">
-                    Date
-                  </th>
-                  <th className="hidden px-3 py-2 text-left font-semibold text-foreground sm:table-cell">
-                    Compét.
-                  </th>
-                  <th className="px-3 py-2 text-left font-semibold text-foreground">
-                    Match
-                  </th>
-                  <th className="px-3 py-2 text-center font-semibold text-foreground">
-                    Score
-                  </th>
-                  <th className="px-3 py-2 text-center font-semibold text-foreground">
-                    N°
-                  </th>
-                  <th className="hidden px-3 py-2 text-center font-semibold text-foreground sm:table-cell">
-                    Min
-                  </th>
-                  <th className="hidden px-3 py-2 text-center font-semibold text-foreground md:table-cell">
-                    Essais
-                  </th>
-                  <th className="hidden px-3 py-2 text-center font-semibold text-foreground md:table-cell">
-                    Pts
-                  </th>
-                </tr>
-              </thead>
-              <tbody>
-                {player.matchAppearances.map((ma) => {
-                  const m = ma.match;
-                  const resultColor =
-                    m.result === "VICTOIRE"
-                      ? "bg-green-500/10 text-green-600"
-                      : m.result === "DEFAITE"
-                        ? "bg-red-500/10 text-red-500"
-                        : "bg-muted text-muted-foreground";
-                  const oppName =
-                    m.opponent.shortName || m.opponent.name;
-
-                  return (
-                    <tr
-                      key={ma.id}
-                      className="border-b border-border transition-colors hover:bg-muted/30"
-                    >
-                      <td className="whitespace-nowrap px-3 py-2 text-muted-foreground">
-                        {formatDateFR(m.date)}
-                      </td>
-                      <td className="hidden whitespace-nowrap px-3 py-2 text-muted-foreground sm:table-cell">
-                        {m.competition.shortName || m.competition.name}
-                      </td>
-                      <td className="px-3 py-2">
-                        <Link
-                          href={`/matchs/${m.slug}`}
-                          className="font-medium text-foreground hover:text-usap-sang"
-                        >
-                          {m.isHome ? (
-                            <>
-                              <span className="font-bold">USAP</span> -{" "}
-                              {oppName}
-                            </>
-                          ) : (
-                            <>
-                              {oppName} -{" "}
-                              <span className="font-bold">USAP</span>
-                            </>
-                          )}
-                        </Link>
-                      </td>
-                      <td className="px-3 py-2 text-center">
-                        <span
-                          className={`inline-block rounded px-2 py-0.5 text-xs font-bold ${resultColor}`}
-                        >
-                          {m.isHome
-                            ? `${m.scoreUsap} - ${m.scoreOpponent}`
-                            : `${m.scoreOpponent} - ${m.scoreUsap}`}
-                        </span>
-                      </td>
-                      <td className="px-3 py-2 text-center text-muted-foreground">
-                        {ma.shirtNumber ?? "—"}
-                        {!ma.isStarter && ma.shirtNumber && (
-                          <span className="text-xs text-muted-foreground">
-                            *
-                          </span>
-                        )}
-                      </td>
-                      <td className="hidden px-3 py-2 text-center text-muted-foreground sm:table-cell">
-                        {ma.minutesPlayed != null ? (
-                          <span>{ma.minutesPlayed}&apos;</span>
-                        ) : (
-                          <span>—</span>
-                        )}
-                      </td>
-                      <td className="hidden px-3 py-2 text-center md:table-cell">
-                        {ma.tries > 0 ? (
-                          <span className="font-medium text-foreground">
-                            {ma.tries}
-                          </span>
-                        ) : (
-                          <span className="text-muted-foreground">—</span>
-                        )}
-                      </td>
-                      <td className="hidden px-3 py-2 text-center md:table-cell">
-                        {ma.totalPoints > 0 ? (
-                          <span className="font-medium text-usap-or">
-                            {ma.totalPoints}
-                          </span>
-                        ) : (
-                          <span className="text-muted-foreground">—</span>
-                        )}
-                      </td>
-                    </tr>
-                  );
-                })}
-              </tbody>
-            </table>
-          </div>
+          <MatchHistoryTable appearances={usapAppearances} />
         </section>
       )}
+
+      {/* Confrontations sous d'autres couleurs */}
+      {againstAppearances.length > 0 && (
+        <section>
+          <h2 className="mb-2 flex items-center gap-2 text-2xl font-bold uppercase tracking-wider text-foreground">
+            <Shield className="h-6 w-6 text-muted-foreground" />
+            Matchs contre l&apos;USAP ({againstAppearances.length})
+          </h2>
+          <p className="mb-4 text-sm text-muted-foreground">
+            {usapAppearances.length > 0
+              ? "Rencontres disputées sous d'autres couleurs. Ces matchs ne comptent pas dans les statistiques ci-dessus."
+              : "Ce joueur n'a jamais porté le maillot de l'USAP : il figure dans la base au titre des adversaires rencontrés."}
+          </p>
+          <MatchHistoryTable appearances={againstAppearances} isOpponent />
+        </section>
+      )}
+    </div>
+  );
+}
+
+/**
+ * Tableau d'historique de matchs, partagé entre les rencontres jouées pour
+ * l'USAP et celles jouées contre elle. En mode adversaire, les colonnes
+ * d'essais et de points décrivent la performance face aux Catalans : elles
+ * sont affichées en sourdine pour ne pas être confondues avec les stats USAP.
+ */
+function MatchHistoryTable({
+  appearances,
+  isOpponent = false,
+}: {
+  appearances: PlayerAppearance[];
+  isOpponent?: boolean;
+}) {
+  return (
+    <div className="overflow-x-auto rounded-lg border border-border">
+      <table className="w-full text-sm">
+        <thead>
+          <tr className="border-b border-border bg-muted/50">
+            <th className="px-3 py-2 text-left font-semibold text-foreground">
+              Date
+            </th>
+            <th className="hidden px-3 py-2 text-left font-semibold text-foreground sm:table-cell">
+              Compét.
+            </th>
+            <th className="px-3 py-2 text-left font-semibold text-foreground">
+              Match
+            </th>
+            <th className="px-3 py-2 text-center font-semibold text-foreground">
+              Score
+            </th>
+            <th className="px-3 py-2 text-center font-semibold text-foreground">
+              N°
+            </th>
+            <th className="hidden px-3 py-2 text-center font-semibold text-foreground sm:table-cell">
+              Min
+            </th>
+            <th className="hidden px-3 py-2 text-center font-semibold text-foreground md:table-cell">
+              Essais
+            </th>
+            <th className="hidden px-3 py-2 text-center font-semibold text-foreground md:table-cell">
+              Pts
+            </th>
+          </tr>
+        </thead>
+        <tbody>
+          {appearances.map((ma) => {
+            const m = ma.match;
+            // Le résultat est toujours exprimé du point de vue de l'USAP :
+            // pour un adversaire, une victoire catalane est donc un revers.
+            const favourable = isOpponent
+              ? m.result === "DEFAITE"
+              : m.result === "VICTOIRE";
+            const unfavourable = isOpponent
+              ? m.result === "VICTOIRE"
+              : m.result === "DEFAITE";
+            const resultColor = favourable
+              ? "bg-green-500/10 text-green-600"
+              : unfavourable
+                ? "bg-red-500/10 text-red-500"
+                : "bg-muted text-muted-foreground";
+            const oppName = m.opponent.shortName || m.opponent.name;
+
+            return (
+              <tr
+                key={ma.id}
+                className="border-b border-border transition-colors hover:bg-muted/30"
+              >
+                <td className="whitespace-nowrap px-3 py-2 text-muted-foreground">
+                  {formatDateFR(m.date)}
+                </td>
+                <td className="hidden whitespace-nowrap px-3 py-2 text-muted-foreground sm:table-cell">
+                  {m.competition.shortName || m.competition.name}
+                </td>
+                <td className="px-3 py-2">
+                  <Link
+                    href={`/matchs/${m.slug}`}
+                    className="font-medium text-foreground hover:text-usap-sang"
+                  >
+                    {m.isHome ? (
+                      <>
+                        <span className="font-bold">USAP</span> - {oppName}
+                      </>
+                    ) : (
+                      <>
+                        {oppName} - <span className="font-bold">USAP</span>
+                      </>
+                    )}
+                  </Link>
+                </td>
+                <td className="px-3 py-2 text-center">
+                  <span
+                    className={`inline-block rounded px-2 py-0.5 text-xs font-bold ${resultColor}`}
+                  >
+                    {m.isHome
+                      ? `${m.scoreUsap} - ${m.scoreOpponent}`
+                      : `${m.scoreOpponent} - ${m.scoreUsap}`}
+                  </span>
+                </td>
+                <td className="px-3 py-2 text-center text-muted-foreground">
+                  {ma.shirtNumber ?? "—"}
+                  {!ma.isStarter && ma.shirtNumber && (
+                    <span className="text-xs text-muted-foreground">*</span>
+                  )}
+                </td>
+                <td className="hidden px-3 py-2 text-center text-muted-foreground sm:table-cell">
+                  {ma.minutesPlayed != null ? (
+                    <span>{ma.minutesPlayed}&apos;</span>
+                  ) : (
+                    <span>—</span>
+                  )}
+                </td>
+                <td className="hidden px-3 py-2 text-center md:table-cell">
+                  {ma.tries > 0 ? (
+                    <span
+                      className={
+                        isOpponent
+                          ? "font-medium text-muted-foreground"
+                          : "font-medium text-foreground"
+                      }
+                    >
+                      {ma.tries}
+                    </span>
+                  ) : (
+                    <span className="text-muted-foreground">—</span>
+                  )}
+                </td>
+                <td className="hidden px-3 py-2 text-center md:table-cell">
+                  {ma.totalPoints > 0 ? (
+                    <span
+                      className={
+                        isOpponent
+                          ? "font-medium text-muted-foreground"
+                          : "font-medium text-usap-or"
+                      }
+                    >
+                      {ma.totalPoints}
+                    </span>
+                  ) : (
+                    <span className="text-muted-foreground">—</span>
+                  )}
+                </td>
+              </tr>
+            );
+          })}
+        </tbody>
+      </table>
     </div>
   );
 }
