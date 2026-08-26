@@ -49,7 +49,8 @@ usap-history/
 │   ├── lib/                      # prisma.ts, slugs.ts, utils.ts, constants.ts, supabase/
 │   └── types/index.ts
 ├── scripts/                      # ~180 scripts d'import, un par match ou par lot
-│   └── lib/lnr.ts                # client des feuilles de match de la LNR
+│   └── lib/                      # lnr.ts (feuilles de match LNR), noms.ts
+│                                 #   (rapprochement des noms entre sources)
 └── .claude/launch.json           # config du serveur de dev
 ```
 
@@ -281,9 +282,13 @@ pas (affluence).
     y est donné « demi de mêlée »). Ils décrivent le poste de référence du
     joueur, pas celui du jour : continuer à déduire `positionPlayed` du numéro
     de maillot ;
-  - `/compositions` est du **HTML classique**, pas du JSON embarqué : les
-    numéros y sont dans des classes `player-pitch__number` et
-    `player-block__top`. Le module ne le lit pas encore.
+  - `/compositions` est du **HTML classique**, pas du JSON embarqué :
+    `lireCompositions()` s'en charge à part. Le camp de chaque joueur du XV se
+    lit dans l'URL de son maillot ; les listes du bas, qui portent les
+    remplaçants, ne mentionnent aucun club et se rattachent en comparant leur
+    XV à celui du terrain. La LNR **ne publie pas** ces compositions pour
+    toutes ses archives : neuf journées de 2022-2023 n'affichent que les
+    officiels de match.
 
   Ce que la LNR ne donne pas : l'**affluence**.
 - **Chronologie détaillée, en dernier recours** : API ESPN
@@ -359,6 +364,8 @@ subsiste et ne puisse recréer les doublons.
 | `close-season-2025-2026.ts` | modèle de clôture de saison, avec garde-fou sur le classement officiel |
 | `seed-opponent-sheet-2024-2025.ts` | **modèle à suivre** pour compléter une saison côté adverse depuis la LNR : réalisations, cartons et temps de jeu reconstitués à partir des changements |
 | `seed-opponent-scorers-2024-2025.ts` | même travail depuis ESPN, restreint au Challenge européen faute de couverture LNR ; pas de temps de jeu |
+| `audit-opponent-lineups.ts` | confronte les compositions adverses aux feuilles officielles LNR ; lecture seule, à lancer sur une saison ou sur tout |
+| `fix-opponent-lineup.ts` | remet la composition adverse d'un match en accord avec la feuille officielle (identités, dossards, titulaires, capitaine) |
 
 `fix-duplicate-players.ts` existe aussi mais apparie les prénoms par préfixe et
 par inclusion : trop large pour être lancé sans revue préalable.
@@ -465,14 +472,23 @@ menée en remontant le temps saison par saison.
   adversaires présents dans `players` faussent le résultat. Le tableau « contre
   l'USAP » n'affiche d'ailleurs ni minutes ni réalisations : le détail saisi
   côté adverse n'est visible que sur les pages de match.
-- **Des compositions adverses ont été inventées par d'anciens imports.** Le
-  symptôme est toujours le même : des prénoms plausibles mais faux, parfois un
-  joueur qui n'a jamais figuré sur la feuille. Trois cas identifiés — le J20
-  2025-2026 contre Toulon (corrigé), la composition de Grenoble au barrage
-  2024-2025 (« Bill » pour Brandon Julio Tiute Nansen, « Erwan » pour Eric
-  Escande…), et Clermont-USAP du 28/09/2024, où Folau Fainga'a manque
-  purement et simplement. Les deux derniers restent à reprendre depuis la
-  page `/compositions` de la LNR, que `scripts/lib/lnr.ts` ne lit pas encore.
+- **Des compositions adverses ont été inventées par d'anciens imports.**
+  `audit-opponent-lineups.ts` a confronté les 98 feuilles que la LNR publie à
+  leur original. Le compte, à jour :
+
+  | Anomalie | Occurrences | Nature |
+  |---|---|---|
+  | MANQUANT / EN TROP | 8 matchs | un joueur qui n'a pas joué à la place de celui qui a joué |
+  | NUMÉRO | ~100 | le bon joueur, mauvais dossard — `positionPlayed` en dépend |
+  | ÉCRITURE | ~70 | prénom divergent, dont beaucoup de diminutifs légitimes |
+  | CAPITAINE | 78 | `isCaptain` n'est renseigné pour aucun adversaire |
+
+  Les 8 matchs douteux : Clermont 15/10/2022, Racing 92 22/04/2023, Bayonne
+  18/05/2024, UBB 01/06/2024, Montauban 25/10/2025, Pau 22/02/2026, Lyon
+  21/03/2026, Bayonne 06/06/2026. Grenoble au barrage 2024-2025 relève, lui,
+  de la seule colonne ÉCRITURE : quatorze prénoms faux pour les bons joueurs.
+  Clermont 28/09/2024 a été corrigé.
+
   Devant un nom qui ne s'apparie pas, soupçonner la base avant la source.
 - Les 5 matchs de Challenge européen de 2024-2025 ont leurs marqueurs adverses
   (ESPN) mais **pas de temps de jeu** : l'EPCR reste à brancher.

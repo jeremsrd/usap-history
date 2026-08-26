@@ -16,8 +16,11 @@
  *   - les faits de match, objets `{ slugType: "point" | "exclusion-joueur",
  *     club, period, minute, additionalMinute, player, conversionPlayer? }` ;
  *   - les changements, objets `{ club, minute, type, in, out }`.
- * Les compositions, elles, sont du HTML classique et ne sont pas lues ici :
- * les feuilles en base portent déjà numéros et titulaires.
+ *
+ * Les compositions font exception : elles sont rendues en HTML classique, et
+ * `lireCompositions()` les lit à part. La LNR ne les publie d'ailleurs pas
+ * pour toutes ses archives — sur une partie de 2022-2023, la page n'affiche
+ * que les officiels de match.
  *
  * `club` vaut « home » ou « away » ; le camp de l'USAP se déduit de l'URL,
  * de la forme `{id}-{recevant}-{visiteur}`.
@@ -246,6 +249,178 @@ export async function lireFeuille(url: string): Promise<LnrFeuille> {
     faits: [...faits.values()].sort((a, b) => a.minute - b.minute),
     changements: [...changements.values()].sort((a, b) => a.minute - b.minute),
   };
+}
+
+// =============================================================================
+// COMPOSITIONS
+// =============================================================================
+
+export interface LnrTitulaire extends LnrJoueur {
+  /** Numéro de maillot, 1 à 23. */
+  numero: number;
+  isStarter: boolean;
+}
+
+export interface LnrCompositions {
+  usap: LnrTitulaire[];
+  adversaire: LnrTitulaire[];
+}
+
+/**
+ * Sépare « Giorgi AKHALADZE » en prénom et nom : la LNR met le nom de famille
+ * en capitales, ce qui reste vrai des noms composés (« Dany PRISO MOUANGUE »).
+ */
+function separerNom(complet: string): { firstName: string; lastName: string } {
+  const mots = complet.trim().split(/\s+/);
+  let debut = mots.length;
+  while (debut > 0) {
+    const mot = mots[debut - 1];
+    // Un mot est « en capitales » s'il ne contient aucune minuscule
+    if (mot !== mot.toUpperCase() || !/[A-ZÀ-Ý]/.test(mot)) break;
+    debut--;
+  }
+  if (debut === 0 || debut === mots.length) {
+    // Pas de capitales détectables : dernier mot pour nom, le reste pour prénom
+    return {
+      firstName: mots.slice(0, -1).join(" "),
+      lastName: mots[mots.length - 1] ?? complet,
+    };
+  }
+  return {
+    firstName: mots.slice(0, debut).join(" "),
+    lastName: mots.slice(debut).join(" "),
+  };
+}
+
+/**
+ * « FAINGA'A » → « Fainga'a », « LE GARREC » → « Le Garrec ».
+ *
+ * La LNR écrit les noms de famille en capitales : les reprendre tels quels
+ * ferait entrer en base des fiches criardes, et surtout incohérentes avec les
+ * 1 380 existantes. Chaque composant d'un nom composé est repris séparément,
+ * apostrophes et traits d'union compris.
+ */
+function capitaliser(nom: string): string {
+  if (nom !== nom.toUpperCase()) return nom.trim();
+  return nom
+    .trim()
+    .toLowerCase()
+    .replace(/(^|[\s'-])([a-zà-ÿ])/g, (_, avant, lettre) => avant + lettre.toUpperCase());
+}
+
+/** Fiche joueur LNR → identifiant stable, `184-giorgi-akhaladze`. */
+function identifiant(href: string): string {
+  return href.split("/joueur/")[1] ?? href;
+}
+
+/**
+ * Compositions officielles des deux équipes, numéros compris.
+ *
+ * L'onglet `/compositions` est du HTML classique, pas du JSON embarqué. Le
+ * XV de départ est dessiné sur un terrain (`player-pitch`), chaque joueur
+ * portant le maillot de son club dans l'URL de son image : c'est ce qui
+ * permet d'attribuer les blocs sans se fier à leur ordre, qui varie d'une
+ * feuille à l'autre. Les listes du bas (`player-block`) répètent le XV puis
+ * donnent les remplaçants, sans mention du club : chaque liste est rattachée
+ * en comparant son XV à ceux du terrain.
+ */
+export async function lireCompositions(url: string): Promise<LnrCompositions> {
+  // Les noms sont écrits en entités dans le HTML : « FAINGA&#039;A »
+  const html = decoderEntites(await lirePage(`${url}/compositions`));
+  const campUsap = campUsapDepuisUrl(url);
+
+  // La LNR ne publie pas les compositions de toutes ses archives : sur une
+  // partie de 2022-2023, la page n'affiche que les officiels de match.
+  if (html.includes("line-up--empty") || html.includes("ne sont pas disponibles")) {
+    throw new Error(`Compositions non publiées par la LNR : ${url}`);
+  }
+
+  // ---- XV de départ, depuis le terrain ------------------------------------
+  const parClub = new Map<string, LnrTitulaire[]>();
+  const identitesParClub = new Map<string, Set<string>>();
+
+  // Le capitaine porte une classe de plus (`player-pitch--captain`) : la
+  // liste des classes est capturée plutôt que figée.
+  const blocsTerrain = html.matchAll(
+    /class="(player-pitch[^"]*player-pitch--position-\d+)"\s*href="([^"]+)"([\s\S]*?)<\/a>/g,
+  );
+  for (const bloc of blocsTerrain) {
+    const classes = bloc[1];
+    const href = bloc[2];
+    const corps = bloc[3];
+    const club = corps.match(/cdn\.lnr\.fr\/club\/([a-z0-9-]+)\//)?.[1];
+    const numero = Number(corps.match(/player-pitch__number">(\d+)</)?.[1]);
+    const firstName = corps.match(/player-pitch__first-name">([^<]*)</)?.[1]?.trim();
+    const lastName = corps.match(/player-pitch__last-name">([^<]*)</)?.[1]?.trim();
+    if (!club || !numero || !lastName) continue;
+
+    if (!parClub.has(club)) {
+      parClub.set(club, []);
+      identitesParClub.set(club, new Set());
+    }
+    parClub.get(club)!.push({
+      numero,
+      firstName: capitaliser(firstName ?? ""),
+      lastName: capitaliser(lastName),
+      url: href,
+      isCaptain: classes.includes("player-pitch--captain"),
+      isStarter: true,
+    });
+    identitesParClub.get(club)!.add(identifiant(href));
+  }
+
+  // ---- Remplaçants, depuis les listes du bas -------------------------------
+  const sections = html.split('class="line-up__classic-team"').slice(1);
+  for (const section of sections) {
+    const blocs = [
+      ...section.matchAll(
+        /href="([^"]+)"\s+class="(player-block[^"]*player-block--lineup)"([\s\S]*?)<\/a>/g,
+      ),
+    ].map((bloc) => ({
+      href: bloc[1],
+      capitaine: bloc[2].includes("player-block--captain"),
+      numero: Number(bloc[3].match(/player-block__number">(\d+)</)?.[1]),
+      nom: bloc[3].match(/player-block__name">([^<]*)</)?.[1]?.trim() ?? "",
+    }));
+    if (blocs.length === 0) continue;
+
+    // À quel club appartient cette liste ? À celui dont le XV la recouvre.
+    let club: string | null = null;
+    for (const [candidat, identites] of identitesParClub) {
+      const communs = blocs.filter((b) => identites.has(identifiant(b.href))).length;
+      if (communs >= 8) {
+        club = candidat;
+        break;
+      }
+    }
+    if (!club) continue;
+
+    const dejaVus = identitesParClub.get(club)!;
+    for (const bloc of blocs) {
+      if (!bloc.numero || !bloc.nom || dejaVus.has(identifiant(bloc.href))) continue;
+      const { firstName, lastName } = separerNom(bloc.nom);
+      parClub.get(club)!.push({
+        numero: bloc.numero,
+        firstName: capitaliser(firstName),
+        lastName: capitaliser(lastName),
+        url: bloc.href,
+        isCaptain: bloc.capitaine,
+        isStarter: false,
+      });
+      dejaVus.add(identifiant(bloc.href));
+    }
+  }
+
+  const usap = parClub.get("perpignan") ?? [];
+  const autre = [...parClub.entries()].find(([club]) => club !== "perpignan");
+  if (usap.length === 0 || !autre) {
+    throw new Error(`Compositions illisibles : ${url} (camp USAP ${campUsap})`);
+  }
+
+  const trier = (liste: LnrTitulaire[]) =>
+    [...liste].sort((a, b) => a.numero - b.numero);
+
+  return { usap: trier(usap), adversaire: trier(autre[1]) };
 }
 
 /** Points marqués par un fait de match. */
