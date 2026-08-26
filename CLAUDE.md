@@ -48,7 +48,8 @@ usap-history/
 │   │   └── ui/ImageUpload.tsx
 │   ├── lib/                      # prisma.ts, slugs.ts, utils.ts, constants.ts, supabase/
 │   └── types/index.ts
-├── scripts/                      # ~170 scripts d'import, un par match ou par lot
+├── scripts/                      # ~180 scripts d'import, un par match ou par lot
+│   └── lib/lnr.ts                # client des feuilles de match de la LNR
 └── .claude/launch.json           # config du serveur de dev
 ```
 
@@ -100,7 +101,9 @@ Règles à appliquer **sans qu'on ait à les redemander** à chaque ajout de mat
 
 Un joueur adverse est une **vraie ligne `Player`**, reliée par
 `MatchPlayer.playerId` avec `isOpponent: true`. Le champ
-`MatchPlayer.opponentPlayerName` est **abandonné** : ne plus l'utiliser.
+`MatchPlayer.opponentPlayerName` est **abandonné** : ne plus l'utiliser. Plus
+aucune ligne de la base ne s'en sert, la colonne ne subsiste que pour le
+schéma.
 
 Cela permet de suivre une personne d'un club à l'autre, de compter ses
 confrontations avec l'USAP, et de gérer les joueurs passés par les deux camps
@@ -113,9 +116,15 @@ confrontations avec l'USAP, et de gérer les joueurs passés par les deux camps
   `lastName equals` ne suffit pas — il rate « Guerois-Galisson » vs
   « Guerois Galisson », « Bécognée » vs « Becognee ». Construire un index en
   mémoire une fois, puis chercher dedans.
-- `players` contient donc majoritairement des adversaires : environ 1 240 sur
-  1 390, seuls ~147 ont porté le maillot catalan. C'est normal. Les pages de
+- `players` contient donc majoritairement des adversaires : environ 1 236 sur
+  1 380, seuls ~144 ont porté le maillot catalan. C'est normal. Les pages de
   liste filtrent déjà sur `isOpponent: false`.
+- **Un import qui cherche sur le nom exact fabrique des doublons à chaque
+  passage.** C'est arrivé pour de bon : un script relancé après une fusion a
+  recréé « Max Hicks » à côté de « Maxwell Hicks », « Matteo Le Corvec » à côté
+  de « Mattéo Le Corvec ». Le nom normalisé ne suffit pas non plus à distinguer
+  « Jean Baptiste Gros » de « Jean-Baptiste Gros » : pour une fusion, se fonder
+  sur le nom **exact** ; pour une recherche, sur le nom **normalisé**.
 
 ### Champs à remplir des deux côtés
 
@@ -123,7 +132,18 @@ Ne jamais remplir seulement le côté USAP :
 
 - `minutesPlayed`, `subIn`, `subOut` — 80' pour un titulaire non remplacé, la
   minute de sortie sinon, `80 - subIn` pour un entrant, `null` si le
-  remplaçant n'est pas entré
+  remplaçant n'est pas entré. Trois précisions :
+  - **La fin du match n'est pas une sortie.** Un joueur resté sur le terrain
+    jusqu'au coup de sifflet garde `subOut` à `null` — sinon la fiche affiche
+    « 80'(→80') », ce qui se lit comme un remplacement.
+  - **Un joueur peut sortir puis revenir** (sang, protocole commotion). Le
+    modèle ne porte qu'une entrée et qu'une sortie : `minutesPlayed` additionne
+    les intervalles réellement joués, `subIn` et `subOut` gardent la première
+    entrée et la première sortie, et `notes` explique le retour. La somme des
+    minutes d'une équipe doit alors toujours retomber sur 1 200 (15 × 80).
+  - **Un carton jaune ne se déduit pas** des minutes jouées ; un carton rouge,
+    si : le match du joueur s'arrête à la minute du carton. Une équipe qui
+    finit à quatorze totalise donc `1200 − (80 − minute du rouge)`.
 - `tries`, `conversions`, `penalties`, `dropGoals`, `totalPoints`
 - `yellowCard` / `orangeCard` / `redCard` + minute
 - `isCaptain`, `shirtNumber`, `positionPlayed` (poste réellement tenu :
@@ -187,9 +207,21 @@ pas de `matchday` et que son `round` ne commence pas par « Poule ».
 
 - La somme des points par joueur doit retomber sur le score de l'équipe.
   Un **essai de pénalité** (7 pts) n'a pas de marqueur : le déduire du total
-  attendu et le porter sur `penaltyTriesUsap` / `penaltyTriesOpponent`.
+  attendu et le porter sur `penaltyTriesUsap` / `penaltyTriesOpponent`. Ces
+  compteurs sont **nullables et parfois `null`** (9 matchs à ce jour) : une
+  garde écrite `points <> score - 7 * penaltyTries` ne compare alors rien du
+  tout et laisse passer la ligne en silence. Traiter le `null` explicitement.
 - Déduire les réalisations de la chronologie plutôt que de les ressaisir, et
   signaler tout marqueur absent de la composition.
+- **Un nom de la source qui ne s'apparie à aucune ligne de la composition doit
+  faire échouer le match entier**, pas seulement la ligne. Sur un changement,
+  un nom non reconnu fausse les minutes des deux joueurs concernés ; et le plus
+  souvent, c'est la composition en base qui est fausse (voir « Limites
+  connues »). L'appariement se fait sur le nom **normalisé**, en acceptant
+  qu'un nom soit contenu dans l'autre — les sources officielles écrivent
+  « Lewis Wesley LUDLAM » ou « Komiti junior ALAINUUESE » — à condition que la
+  correspondance reste unique. Deux frères sur la même feuille (Moses et Paul
+  Alo Emile) se départagent au prénom.
 - Les statistiques agrégées de saison doivent correspondre au classement
   officiel avant d'être écrites (cf. `close-season-2025-2026.ts`).
 - Après toute saisie touchant les scores ou les essais, relancer
@@ -206,20 +238,70 @@ rend la fiche inaccessible (404). Voir `scripts/fix-broken-slugs.ts`.
 
 ### Où trouver les données
 
-- **Feuille de match officielle** (compositions + arbitres) :
-  `top14.lnr.fr/feuille-de-match/{saison}/{phase}/{id}-{dom}-{ext}/compositions`.
+**Pour tout match de championnat — Top 14, Pro D2, barrage d'accession — la
+LNR est la source à utiliser, et rien d'autre en première intention.** C'est
+la seule source officielle : les autres se trompent sur les noms, oublient des
+actions et décalent les minutes. Le reste de cette liste ne sert qu'aux
+compétitions que la LNR ne couvre pas, ou aux informations qu'elle ne donne
+pas (affluence).
+
+- **LNR — feuille de match officielle**, `top14.lnr.fr/feuille-de-match/{saison}/{phase}/{id}-{dom}-{ext}`.
   La phase est `j{N}` pour une journée, `access` en 2022-2023 et
-  `access-top-14` en 2025-2026 pour un barrage — le segment a changé de nom.
-  L'identifiant se retrouve sur
-  `top14.lnr.fr/calendrier-et-resultats/{saison}/{phase}`. L'onglet
-  `/resumes-replays` du même match porte les « faits de match » : chronologie
-  complète avec score courant après chaque action, et les changements notés
-  **entrant | sortant | minute**. Pages rendues en JS : les charger dans un
-  navigateur, pas en `curl`.
-- **Chronologie détaillée** : API ESPN
+  `access-top-14` depuis 2024-2025 pour un barrage — le segment a changé de
+  nom. L'identifiant se retrouve sur
+  `top14.lnr.fr/calendrier-et-resultats/{saison}/{phase}`, où il suffit de
+  chercher le lien contenant `perpignan`. Deux onglets utiles :
+  `/compositions` (compositions numérotées et officiels de match, dont
+  l'arbitre) et `/resumes-replays` (faits de match et changements).
+
+  **Passer par `scripts/lib/lnr.ts`**, qui fait déjà tout le travail :
+  `chercherFeuille(saison, phase)` puis `lireFeuille(url)`.
+
+  Contrairement à ce que laisse croire une lecture rapide du site, **une
+  requête `fetch` suffit, pas besoin de navigateur** : les pages sont rendues
+  côté serveur et embarquent la charge utile JSON du composant, échappée en
+  entités HTML (`&quot;`). Le JavaScript ne fait que l'afficher. Le module
+  décode les entités puis isole chaque objet par comptage d'accolades.
+
+  Ce que la feuille donne, et que personne d'autre ne donne aussi bien :
+  - chaque essai avec **son transformateur** (`conversionPlayer`), ce qui
+    évite de deviner qui a buté ;
+  - les **essais de pénalité**, marqués `essai-de-penalite` sans auteur
+    (« n.a. ») ;
+  - les cartons, avec leur minute officielle ;
+  - les changements avec **camp, minute, entrant, sortant**, et surtout le
+    type **définitif ou temporaire** — indispensable pour reconstituer les
+    minutes quand un joueur sort puis revient.
+
+  Trois réserves :
+  - un retour de remplacement temporaire n'est pas toujours enregistré. Le
+    total des minutes d'une équipe tombe alors sous 1 200 — le signaler, ne
+    pas inventer la minute manquante ;
+  - les **postes affichés sur `/compositions` ne sont pas fiables** (un ailier
+    y est donné « demi de mêlée »). Ils décrivent le poste de référence du
+    joueur, pas celui du jour : continuer à déduire `positionPlayed` du numéro
+    de maillot ;
+  - `/compositions` est du **HTML classique**, pas du JSON embarqué : les
+    numéros y sont dans des classes `player-pitch__number` et
+    `player-block__top`. Le module ne le lit pas encore.
+
+  Ce que la LNR ne donne pas : l'**affluence**.
+- **Chronologie détaillée, en dernier recours** : API ESPN
   `site.api.espn.com/apis/site/v2/sports/rugby/{league}/summary?event={gameId}`
-  (Top 14 = 270559, Challenge = 272073). Donne événements, remplacements,
-  cartons et compositions, mais **pas** les arbitres ni l'affluence.
+  (Top 14 = 270559, Challenge = 272073). L'identifiant se retrouve par
+  `scoreboard?dates=AAAAMMJJ` sur la même ligue. Donne événements,
+  remplacements, cartons et compositions, mais **pas** les arbitres ni
+  l'affluence.
+
+  **À n'employer que là où la LNR est muette**, et à recouper. Le passage
+  d'ESPN à la LNR sur 2024-2025 a corrigé quatre erreurs de fond en 26 matchs :
+  un essai de Théo Ntamack Muyenga attribué à **Romain Ntamack** — ESPN choisit
+  le frère célèbre —, une transformation et une pénalité de Jérémy Fernandez
+  portées à Louis Le Brun, un carton jaune fantôme à la minute même d'un essai,
+  et un drop absent du détail. ESPN **omet aussi les essais de pénalité** de sa
+  chronologie, ce qui fait manquer 7 points au contrôle, et **raccourcit les
+  noms composés** (« Dany Priso » pour Priso Mouangue). Ses minutes de carton
+  s'écartent de 1 à 3 minutes de l'officiel.
 - **Coupes d'Europe** : `epcrugby.com/fr/challenge-cup/matchs` (ou
   `/champions-cup/`). Choisir la saison dans le menu « Saison », puis la phase.
   La fiche d'un match, `/matchs/{id}/actualite`, donne **arbitre, affluence et
@@ -249,7 +331,20 @@ Un script par match ou par lot cohérent, dans `scripts/`, **idempotent**
 (supprime compositions et événements avant de les recréer), avec en en-tête le
 récapitulatif du match et les sources. Prévoir un `--dry` pour tout script qui
 modifie des données existantes en masse — et vérifier que la simulation agrège
-bien les valeurs *corrigées*, pas celles encore en base, sinon le garde-fou ment.
+bien les valeurs *corrigées*, pas celles encore en base, sinon le garde-fou ment
+(le script d'une feuille qui fusionne des doublons doit, en simulation, exclure
+de son index les fiches qu'il aurait absorbées).
+
+Le code réutilisable va dans `scripts/lib/`. Un seul module pour l'instant,
+`lnr.ts`, client des feuilles de match de la LNR.
+
+**Quand une source se révèle fautive, restreindre le script qui s'en servait**
+plutôt que de le laisser en l'état : `seed-opponent-scorers-2024-2025.ts` a été
+ramené aux seuls matchs de Challenge après le passage à la LNR, sans quoi le
+relancer aurait réécrasé la donnée officielle par celle d'ESPN. Même logique
+pour un script de match dont on découvre qu'il inventait des noms : le
+réécrire sous le même nom de fichier, pour qu'aucune ancienne version ne
+subsiste et ne puisse recréer les doublons.
 
 ### Scripts de maintenance
 
@@ -262,6 +357,8 @@ bien les valeurs *corrigées*, pas celles encore en base, sinon le garde-fou men
 | `normalize-opponent-players.ts` | rattache les anciennes lignes `opponentPlayerName` à un vrai `Player` |
 | `merge-duplicate-players-2026.ts` | fusion de doublons, paires listées en dur et vérifiées à la main |
 | `close-season-2025-2026.ts` | modèle de clôture de saison, avec garde-fou sur le classement officiel |
+| `seed-opponent-sheet-2024-2025.ts` | **modèle à suivre** pour compléter une saison côté adverse depuis la LNR : réalisations, cartons et temps de jeu reconstitués à partir des changements |
+| `seed-opponent-scorers-2024-2025.ts` | même travail depuis ESPN, restreint au Challenge européen faute de couverture LNR ; pas de temps de jeu |
 
 `fix-duplicate-players.ts` existe aussi mais apparie les prénoms par préfixe et
 par inclusion : trop large pour être lancé sans revue préalable.
@@ -319,8 +416,10 @@ authentification Supabase, statistiques et recherche. Reste la phase 4
 
 ### Couverture des données
 
-**Tous les matchs en base ont leur feuille de match complète** (46 joueurs,
-minutes, réalisations, chronologie). Ce qui varie, c'est l'annexe :
+**Tous les matchs en base ont leurs 46 joueurs et leur chronologie.** Ce qui
+varie, c'est le côté adverse et l'annexe.
+
+Annexe du match :
 
 | Saison | Matchs | Arbitres | Vidéos | Comptes-rendus | Affluences |
 |---|---|---|---|---|---|
@@ -333,6 +432,26 @@ minutes, réalisations, chronologie). Ce qui varie, c'est l'annexe :
 Les 4 arbitres manquants de 2022-2023 sont ceux des matchs de Challenge Cup :
 l'EPCR ne remonte pas au-delà de 2023-2024 et allrugby ne les publie pas.
 
+Détail des joueurs adverses — le vrai chantier restant sur les saisons déjà
+saisies. « Cohérents » compte les matchs dont la somme des points adverses
+retombe sur le score, essais de pénalité déduits :
+
+| Saison | Lignes avec minutes | Marqueurs | Matchs cohérents |
+|---|---|---|---|
+| 2025-2026 | 735 / 736 | 154 | 32 / 32 |
+| 2024-2025 | 729 / 736 | 117 | 28 / 32 |
+| 2023-2024 | 46 / 690 | 4 | 1 / 30 |
+| 2022-2023 | 107 / 713 | 23 | 0 / 31 |
+
+Les quatre manques de 2024-2025 sont des matchs de Challenge : leurs points
+sont justes, mais `penaltyTriesOpponent` y est `null`, ce qui rend la
+comparaison indécidable. **2023-2024 et 2022-2023 restent entièrement à
+reprendre côté adverse** : la LNR couvre leurs journées de Top 14, le module
+`scripts/lib/lnr.ts` et `seed-opponent-sheet-2024-2025.ts` donnent le modèle.
+
+Attention en reprenant une saison ancienne : avant 2024-2025, le segment de
+phase d'un barrage s'écrit `access` et non `access-top-14`.
+
 114 saisons sur 119 n'ont encore aucun match : c'est le chantier de la phase 4,
 menée en remontant le temps saison par saison.
 
@@ -342,8 +461,24 @@ menée en remontant le temps saison par saison.
   existe et s'affiche, mais la sanction ne peut pas figurer dans la chronologie.
 - Les fiches joueur affichent séparément « Matchs avec l'USAP » et « Matchs
   contre l'USAP ». Les statistiques ne comptent que les premiers. Toute nouvelle
-  requête sur les joueurs doit filtrer `isOpponent: false`, sinon les ~1 240
-  adversaires présents dans `players` faussent le résultat.
+  requête sur les joueurs doit filtrer `isOpponent: false`, sinon les ~1 236
+  adversaires présents dans `players` faussent le résultat. Le tableau « contre
+  l'USAP » n'affiche d'ailleurs ni minutes ni réalisations : le détail saisi
+  côté adverse n'est visible que sur les pages de match.
+- **Des compositions adverses ont été inventées par d'anciens imports.** Le
+  symptôme est toujours le même : des prénoms plausibles mais faux, parfois un
+  joueur qui n'a jamais figuré sur la feuille. Trois cas identifiés — le J20
+  2025-2026 contre Toulon (corrigé), la composition de Grenoble au barrage
+  2024-2025 (« Bill » pour Brandon Julio Tiute Nansen, « Erwan » pour Eric
+  Escande…), et Clermont-USAP du 28/09/2024, où Folau Fainga'a manque
+  purement et simplement. Les deux derniers restent à reprendre depuis la
+  page `/compositions` de la LNR, que `scripts/lib/lnr.ts` ne lit pas encore.
+  Devant un nom qui ne s'apparie pas, soupçonner la base avant la source.
+- Les 5 matchs de Challenge européen de 2024-2025 ont leurs marqueurs adverses
+  (ESPN) mais **pas de temps de jeu** : l'EPCR reste à brancher.
+- Les événements de la chronologie ne sont reliés à un joueur que du côté USAP
+  sur la plupart des saisons (2024-2025 : 247 événements adverses sans
+  `playerId`). Les nouvelles saisies relient les deux camps.
 - Erreur d'hydratation React sur les pages de match, antérieure et non
   diagnostiquée (probablement `next-themes`).
 - Affluences quasi absentes ; peu de photos et de biographies de joueurs.
