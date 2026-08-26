@@ -1,21 +1,24 @@
 /**
- * Réalisations et cartons des joueurs adverses, saison 2024-2025.
+ * Réalisations et cartons des joueurs adverses de Challenge européen,
+ * saison 2024-2025.
  *
- * Les 32 feuilles de la saison ont bien leurs 46 joueurs et leurs minutes des
- * deux côtés, mais seules les sept premières journées portent le détail des
- * réalisations adverses : sur les 25 autres rencontres, les compteurs du match
- * annoncent des essais que personne n'a marqués. Les fiches des adversaires
- * en sortent vides, et « Matchs contre l'USAP » n'affiche aucune statistique.
+ * ⚠ Ce script ne traite plus que les matchs de coupe d'Europe. Les rencontres
+ * de Top 14 et le barrage sont désormais repris de la LNR, source officielle,
+ * par seed-opponent-sheet-2024-2025.ts : elle nomme correctement les auteurs
+ * là où ESPN s'est trompé deux fois (essai de Théo Ntamack attribué à Romain,
+ * transformation et pénalité de Jérémy Fernandez portées à Louis Le Brun) et
+ * date les cartons à la minute officielle. Le laisser tourner sur ces matchs
+ * réécraserait la donnée officielle par celle d'ESPN.
  *
- * Sources :
- *   - API ESPN, `summary?event={id}` : le bloc `header.competitions[0].details`
- *     donne chaque action avec sa minute, son auteur et le score courant.
- *     Les identifiants ci-dessous ont été retrouvés via
- *     `scoreboard?dates=AAAAMMJJ` sur les ligues 270559 (Top 14) et
- *     272073 (Challenge européen), puis vérifiés un par un.
- *   - Barrage d'accession contre Grenoble : absent d'ESPN, saisi à la main
- *     depuis top14.lnr.fr/feuille-de-match/2024-2025/access-top-14
- *     /11057-grenoble-perpignan/resumes-replays
+ * Ces cinq rencontres n'avaient aucun marqueur adverse : les compteurs du
+ * match annonçaient des essais que personne n'avait marqués, et les fiches des
+ * adversaires en sortaient vides. L'EPCR reste à explorer pour leur donner
+ * aussi les temps de jeu, qu'ESPN ne permet pas de reconstituer ici.
+ *
+ * Source : API ESPN, `summary?event={id}` — le bloc
+ * `header.competitions[0].details` donne chaque action avec sa minute, son
+ * auteur et le score courant. Les identifiants ont été retrouvés via
+ * `scoreboard?dates=AAAAMMJJ` sur la ligue 272073, puis vérifiés un par un.
  *
  * Deux garde-fous avant toute écriture, par match :
  *   - le score ESPN doit correspondre au score en base, sinon l'identifiant
@@ -46,30 +49,11 @@ const SEASON = "2024-2025";
 
 /** Identifiants ESPN, par date de match. */
 const ESPN_EVENTS: Record<string, { league: string; event: string }> = {
-  "2024-10-26": { league: "270559", event: "599657" }, // Racing 92
-  "2024-11-02": { league: "270559", event: "599668" }, // Vannes
-  "2024-11-23": { league: "270559", event: "599675" }, // Toulouse
-  "2024-11-30": { league: "270559", event: "599682" }, // Toulon
   "2024-12-08": { league: "272073", event: "599836" }, // Cheetahs
   "2024-12-15": { league: "272073", event: "599853" }, // Connacht
-  "2024-12-21": { league: "270559", event: "599688" }, // Stade Français
-  "2024-12-29": { league: "270559", event: "599696" }, // La Rochelle
-  "2025-01-04": { league: "270559", event: "599698" }, // Lyon
   "2025-01-11": { league: "272073", event: "599858" }, // Cardiff
   "2025-01-19": { league: "272073", event: "599888" }, // Zebre
-  "2025-01-25": { league: "270559", event: "599710" }, // Bayonne
-  "2025-02-15": { league: "270559", event: "599717" }, // Castres
-  "2025-02-22": { league: "270559", event: "599721" }, // Pau
-  "2025-03-01": { league: "270559", event: "599731" }, // UBB
-  "2025-03-22": { league: "270559", event: "599734" }, // Toulon
-  "2025-03-29": { league: "270559", event: "599744" }, // Vannes
   "2025-04-05": { league: "272073", event: "599889" }, // Racing 92
-  "2025-04-19": { league: "270559", event: "599752" }, // Racing 92
-  "2025-04-26": { league: "270559", event: "599755" }, // Montpellier
-  "2025-05-10": { league: "270559", event: "599766" }, // Stade Français
-  "2025-05-17": { league: "270559", event: "599767" }, // Clermont
-  "2025-05-31": { league: "270559", event: "599779" }, // La Rochelle
-  "2025-06-07": { league: "270559", event: "599787" }, // Toulouse
 };
 
 interface Action {
@@ -78,23 +62,6 @@ interface Action {
   athlete: string;
   kind: "try" | "conversion" | "penalty" | "drop" | "yellow" | "red";
 }
-
-/**
- * Barrage d'accession du 14/06/2025, Grenoble 11 - 13 USAP.
- * Faits de match LNR : essai Nansen 24', pénalités Davies 38' et 74'.
- *
- * Les prénoms sont ceux de la composition déjà en base, pas ceux de la LNR,
- * qui écrit « Brandon julio tiute NANSEN » et « Samuel DAVIES ». Toute la
- * composition grenobloise enregistrée diverge de la feuille officielle sur
- * les prénoms — un import ancien à reprendre, indépendamment de ce script.
- */
-const SAISIE_MANUELLE: Record<string, Action[]> = {
-  "2025-06-14": [
-    { minute: 24, athlete: "Bill Nansen", kind: "try" },
-    { minute: 38, athlete: "Sam Davies", kind: "penalty" },
-    { minute: 74, athlete: "Sam Davies", kind: "penalty" },
-  ],
-};
 
 const POINTS = { try: 5, conversion: 2, penalty: 3, drop: 3 } as const;
 
@@ -198,7 +165,10 @@ async function main() {
   const matchs = await prisma.match.findMany({
     where: { seasonId: season.id },
     orderBy: { date: "asc" },
-    include: { opponent: { select: { name: true, shortName: true } } },
+    include: {
+      opponent: { select: { name: true, shortName: true } },
+      competition: { select: { shortName: true } },
+    },
   });
 
   let traites = 0;
@@ -206,6 +176,9 @@ async function main() {
   const echecs: string[] = [];
 
   for (const match of matchs) {
+    // Top 14 et barrage : traités par seed-opponent-sheet-2024-2025.ts
+    if (match.competition.shortName !== "Challenge Européen") continue;
+
     const jour = match.date.toISOString().slice(0, 10);
     const adversaire = match.opponent.shortName ?? match.opponent.name;
     const etiquette = `${jour} ${adversaire.padEnd(16)} ${match.scoreUsap}-${match.scoreOpponent}`;
@@ -232,12 +205,9 @@ async function main() {
 
     // ---- Collecte des actions -------------------------------------------
     let actions: Action[];
-    const manuel = SAISIE_MANUELLE[jour];
     const espn = ESPN_EVENTS[jour];
 
-    if (manuel) {
-      actions = manuel;
-    } else if (espn) {
+    if (espn) {
       const resume = await fetchJson(
         `https://site.api.espn.com/apis/site/v2/sports/rugby/${espn.league}/summary?event=${espn.event}`,
       );
