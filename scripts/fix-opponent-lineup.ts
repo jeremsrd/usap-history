@@ -16,9 +16,17 @@
  * la même source, avec seed-opponent-sheet-{saison}.ts. Le script prévient
  * quand une ligne réattribuée en portait.
  *
+ * Les **changements d'identité** — rendre un dossard à celui qui l'a porté —
+ * demandent `--identites`. Sans ce drapeau, une ligne dont l'occupant ne
+ * correspond pas à la feuille est laissée telle quelle et signalée : sur un
+ * passage global, ces cas-là méritent d'être regardés un par un, alors qu'un
+ * dossard ou un brassard de capitaine se corrige sans risque.
+ *
  * Usage :
  *   npx tsx scripts/fix-opponent-lineup.ts 2024-09-28 --dry
- *   npx tsx scripts/fix-opponent-lineup.ts 2024-09-28
+ *   npx tsx scripts/fix-opponent-lineup.ts 2024-09-28 --identites
+ *   npx tsx scripts/fix-opponent-lineup.ts 2023-2024 --dry     # une saison
+ *   npx tsx scripts/fix-opponent-lineup.ts --tout --dry        # toute la base
  */
 
 import { PrismaClient, Position } from "@prisma/client";
@@ -30,7 +38,10 @@ const prisma = new PrismaClient();
 
 const ARGS = process.argv.slice(2);
 const DRY_RUN = ARGS.includes("--dry");
+const IDENTITES = ARGS.includes("--identites");
+const TOUT = ARGS.includes("--tout");
 const DATE = ARGS.find((a) => /^\d{4}-\d{2}-\d{2}$/.test(a));
+const SAISON = ARGS.find((a) => /^\d{4}-\d{4}$/.test(a));
 
 /** Poste tenu par un titulaire, déduit de son numéro de maillot. */
 const POSTE_PAR_NUMERO: Record<number, Position> = {
@@ -72,6 +83,14 @@ async function chercherJoueur(officiel: LnrTitulaire): Promise<string | null> {
   });
   if (candidats.length === 1) return candidats[0].id;
   if (candidats.length > 1) {
+    // Une fiche qui porte exactement ce nom tranche : les autres candidates ne
+    // s'en approchent que par un prénom voisin (Jérémie / Jérémy Maurouard).
+    const exactes = candidats.filter(
+      (j) =>
+        normalize(`${j.firstName} ${j.lastName}`) ===
+        normalize(`${officiel.firstName} ${officiel.lastName}`),
+    );
+    if (exactes.length === 1) return exactes[0].id;
     throw new Error(
       `${nomCherche} : ${candidats.length} fiches candidates ` +
         `(${candidats.map((c) => `${c.firstName} ${c.lastName}`).join(", ")}) — à arbitrer`,
@@ -108,26 +127,33 @@ async function trouverOuCreerJoueur(officiel: LnrTitulaire): Promise<string> {
   return cree.id;
 }
 
-async function main() {
-  if (!DATE) {
-    console.error("Usage : npx tsx scripts/fix-opponent-lineup.ts AAAA-MM-JJ [--dry]");
-    process.exit(1);
-  }
+type MatchAvecContexte = Awaited<ReturnType<typeof chargerMatchs>>[number];
 
-  const match = await prisma.match.findFirstOrThrow({
-    where: { date: new Date(DATE) },
+async function chargerMatchs() {
+  return prisma.match.findMany({
+    where: DATE
+      ? { date: new Date(DATE) }
+      : SAISON
+        ? { season: { label: SAISON } }
+        : {},
+    orderBy: { date: "asc" },
     include: {
       season: { select: { label: true, startYear: true } },
       opponent: { select: { name: true, shortName: true } },
       competition: { select: { shortName: true } },
     },
   });
+}
 
+interface Bilan {
+  corrections: number;
+  identitesIgnorees: number;
+}
+
+async function corrigerMatch(match: MatchAvecContexte): Promise<Bilan | null> {
   const adversaire = match.opponent.shortName ?? match.opponent.name;
-  console.log(
-    `=== ${match.season.label} ${DATE} ${adversaire} ${match.scoreUsap}-${match.scoreOpponent}` +
-      `${DRY_RUN ? " (simulation)" : ""} ===\n`,
-  );
+  const jour = match.date.toISOString().slice(0, 10);
+  const entete = `${match.season.label} ${jour} ${adversaire.padEnd(16)}`;
 
   const phase =
     match.matchday != null
@@ -137,12 +163,11 @@ async function main() {
           ? "access-top-14"
           : "access"
         : null;
-  if (!phase) throw new Error(`Compétition hors périmètre LNR : ${match.competition.shortName}`);
+  if (!phase) return null; // coupe d'Europe : hors périmètre LNR
 
   const url = await chercherFeuille(match.season.label, phase);
   if (!url) throw new Error(`Feuille LNR introuvable pour ${phase}`);
   const officielle = (await lireCompositions(url)).adversaire;
-  console.log(`Feuille officielle : ${url}\n`);
 
   const enBase = await prisma.matchPlayer.findMany({
     where: { matchId: match.id, isOpponent: true },
@@ -191,6 +216,9 @@ async function main() {
 
   // ---- Corrections --------------------------------------------------------
   let corrections = 0;
+  const lignes: string[] = [];
+  const divergences: string[] = [];
+  const aEcrire: Array<{ id: string; data: Record<string, unknown> }> = [];
 
   for (const officiel of officielle) {
     const ligne = cible.get(officiel.numero)!;
@@ -204,14 +232,28 @@ async function main() {
 
     const changements: string[] = [];
     let playerId = ligne.player?.id;
+    let remiseAZero = false;
 
     if (!memeIdentite) {
+      if (!IDENTITES) {
+        // Corriger les dossards voisins sans corriger celui-ci laisserait deux
+        // lignes sur le même numéro : la feuille entière est mise de côté.
+        divergences.push(
+          `  n°${String(officiel.numero).padStart(2)} « ${nomBase} » en base pour « ${nomOfficiel} » sur la feuille`,
+        );
+        continue;
+      }
       playerId = await trouverOuCreerJoueur(officiel);
       changements.push(`identité : « ${nomBase} » → « ${nomOfficiel} »`);
+      // Minutes, réalisations et cartons de cette ligne décrivaient la
+      // rencontre de quelqu'un d'autre : les garder les attribuerait au
+      // nouveau venu. On les efface, quitte à laisser la ligne vide — le
+      // script de feuille de la saison les rétablira depuis la LNR.
+      remiseAZero = true;
       if (ligne.totalPoints > 0) {
-        console.log(
+        lignes.push(
           `    ⚠ n°${officiel.numero} portait ${ligne.totalPoints} point(s) au nom de ${nomBase} : ` +
-            `relancer le script de feuille de la saison`,
+            `effacés, à rétablir avec le script de feuille de la saison`,
         );
       }
     }
@@ -222,33 +264,115 @@ async function main() {
       changements.push(officiel.isStarter ? "remplaçant → titulaire" : "titulaire → remplaçant");
     }
     if (officiel.isCaptain && !ligne.isCaptain) changements.push("capitaine");
+    // La feuille fait foi dans les deux sens : un brassard que la base porte
+    // à tort doit disparaître, sinon un match finit avec deux capitaines.
+    if (!officiel.isCaptain && ligne.isCaptain) changements.push("capitaine retiré");
 
-    const poste = officiel.isStarter ? POSTE_PAR_NUMERO[officiel.numero] : ligne.positionPlayed;
+    // Un titulaire peut porter un numéro de remplaçant : le poste ne se déduit
+    // alors de rien, on garde celui déjà enregistré.
+    const poste = officiel.isStarter
+      ? (POSTE_PAR_NUMERO[officiel.numero] ?? ligne.positionPlayed)
+      : ligne.positionPlayed;
     if (officiel.isStarter && ligne.positionPlayed !== poste) {
       changements.push(`poste → ${poste}`);
     }
 
     if (changements.length === 0) continue;
     corrections++;
-    console.log(`  n°${String(officiel.numero).padStart(2)} ${nomOfficiel} — ${changements.join(", ")}`);
+    lignes.push(
+      `  n°${String(officiel.numero).padStart(2)} ${nomOfficiel} — ${changements.join(", ")}`,
+    );
 
-    if (DRY_RUN) continue;
-    await prisma.matchPlayer.update({
-      where: { id: ligne.id },
+    aEcrire.push({
+      id: ligne.id,
       data: {
         playerId: playerId || undefined,
         shirtNumber: officiel.numero,
         isStarter: officiel.isStarter,
         isCaptain: officiel.isCaptain ?? false,
         positionPlayed: poste,
+        ...(remiseAZero
+          ? {
+              minutesPlayed: null,
+              subIn: null,
+              subOut: null,
+              tries: 0,
+              conversions: 0,
+              penalties: 0,
+              dropGoals: 0,
+              totalPoints: 0,
+              yellowCard: false,
+              yellowCardMin: null,
+              redCard: false,
+              redCardMin: null,
+              notes: null,
+            }
+          : {}),
       },
     });
   }
 
+  // Rien n'est écrit avant d'avoir parcouru toute la feuille : une divergence
+  // d'identité annule les corrections du match, pas seulement la sienne.
+  if (divergences.length > 0) {
+    console.log(`${entete} — ${divergences.length} identité(s) divergente(s), match laissé de côté`);
+    for (const d of divergences) console.log(d);
+    return { corrections: 0, identitesIgnorees: divergences.length };
+  }
+
+  if (!DRY_RUN) {
+    for (const ecriture of aEcrire) {
+      await prisma.matchPlayer.update({ where: { id: ecriture.id }, data: ecriture.data });
+    }
+  }
+
+  if (lignes.length > 0) {
+    console.log(`${entete} — ${url.split("/").pop()}`);
+    for (const l of lignes) console.log(l);
+  }
+  return { corrections, identitesIgnorees: 0 };
+}
+
+async function main() {
+  if (!DATE && !SAISON && !TOUT) {
+    console.error(
+      "Usage : npx tsx scripts/fix-opponent-lineup.ts (AAAA-MM-JJ | AAAA-AAAA | --tout) [--identites] [--dry]",
+    );
+    process.exit(1);
+  }
+
   console.log(
-    `\n=== ${corrections} ligne(s) ${DRY_RUN ? "à corriger" : "corrigée(s)"} sur ${officielle.length} ===`,
+    `=== Compositions adverses remises en accord avec la LNR${DRY_RUN ? " (simulation)" : ""} ===` +
+      `${IDENTITES ? "" : "\n(identités laissées de côté — ajouter --identites pour les traiter)"}\n`,
   );
-  if (DRY_RUN) console.log("Simulation — relancer sans --dry pour appliquer.");
+
+  const matchs = await chargerMatchs();
+  let traites = 0;
+  let corrections = 0;
+  let ignorees = 0;
+  const echecs: string[] = [];
+
+  for (const match of matchs) {
+    try {
+      const bilan = await corrigerMatch(match);
+      if (!bilan) continue;
+      traites++;
+      corrections += bilan.corrections;
+      ignorees += bilan.identitesIgnorees;
+    } catch (erreur) {
+      echecs.push(
+        `${match.season.label} ${match.date.toISOString().slice(0, 10)} ` +
+          `${match.opponent.shortName ?? match.opponent.name} : ${(erreur as Error).message}`,
+      );
+    }
+  }
+
+  console.log(
+    `\n=== ${traites} match(s) examinés, ${corrections} ligne(s) ${DRY_RUN ? "à corriger" : "corrigée(s)"}` +
+      `${ignorees > 0 ? `, ${ignorees} identité(s) laissée(s) de côté` : ""}, ${echecs.length} en échec ===`,
+  );
+  for (const e of echecs) console.log(`  ⚠ ${e}`);
+  if (DRY_RUN) console.log("\nSimulation — relancer sans --dry pour appliquer.");
 }
 
 main()

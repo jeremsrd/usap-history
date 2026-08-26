@@ -358,6 +358,12 @@ export async function lireCompositions(url: string): Promise<LnrCompositions> {
       parClub.set(club, []);
       identitesParClub.set(club, new Set());
     }
+
+    // Certaines feuilles dessinent deux terrains : le XV de départ, puis
+    // l'équipe telle qu'elle a fini la rencontre. Le second porte les mêmes
+    // dossards avec d'autres joueurs — on s'en tient au premier, seul à
+    // décrire une composition de départ.
+    if (parClub.get(club)!.some((joueur) => joueur.numero === numero)) continue;
     parClub.get(club)!.push({
       numero,
       firstName: capitaliser(firstName ?? ""),
@@ -372,28 +378,45 @@ export async function lireCompositions(url: string): Promise<LnrCompositions> {
   // ---- Remplaçants, depuis les listes du bas -------------------------------
   const sections = html.split('class="line-up__classic-team"').slice(1);
   for (const section of sections) {
-    const blocs = [
-      ...section.matchAll(
-        /href="([^"]+)"\s+class="(player-block[^"]*player-block--lineup)"([\s\S]*?)<\/a>/g,
-      ),
-    ].map((bloc) => ({
-      href: bloc[1],
-      capitaine: bloc[2].includes("player-block--captain"),
-      numero: Number(bloc[3].match(/player-block__number">(\d+)</)?.[1]),
-      nom: bloc[3].match(/player-block__name">([^<]*)</)?.[1]?.trim() ?? "",
-    }));
-    if (blocs.length === 0) continue;
+    const lire = (extrait: string) =>
+      [
+        ...extrait.matchAll(
+          /href="([^"]+)"\s+class="(player-block[^"]*player-block--lineup)"([\s\S]*?)<\/a>/g,
+        ),
+      ].map((bloc) => ({
+        href: bloc[1],
+        capitaine: bloc[2].includes("player-block--captain"),
+        numero: Number(bloc[3].match(/player-block__number">(\d+)</)?.[1]),
+        nom: bloc[3].match(/player-block__name">([^<]*)</)?.[1]?.trim() ?? "",
+      }));
 
-    // À quel club appartient cette liste ? À celui dont le XV la recouvre.
+    // La section entière sert à reconnaître le club — elle répète le XV que
+    // le terrain a déjà donné.
+    const tousLesBlocs = lire(section);
+    if (tousLesBlocs.length === 0) continue;
+
     let club: string | null = null;
     for (const [candidat, identites] of identitesParClub) {
-      const communs = blocs.filter((b) => identites.has(identifiant(b.href))).length;
+      const communs = tousLesBlocs.filter((b) =>
+        identites.has(identifiant(b.href)),
+      ).length;
       if (communs >= 8) {
         club = candidat;
         break;
       }
     }
     if (!club) continue;
+
+    // Seule la liste des remplaçants apporte du nouveau. Sur les feuilles à
+    // double composition, elle est écrite deux fois — XV et banc de départ,
+    // puis équipe de fin de match : on ne garde que la première occurrence de
+    // chaque dossard.
+    const remplacants = section.indexOf("Remplaçants");
+    const blocs: typeof tousLesBlocs = [];
+    for (const bloc of remplacants >= 0 ? lire(section.slice(remplacants)) : tousLesBlocs) {
+      if (blocs.some((autre) => autre.numero === bloc.numero)) continue;
+      blocs.push(bloc);
+    }
 
     const dejaVus = identitesParClub.get(club)!;
     for (const bloc of blocs) {

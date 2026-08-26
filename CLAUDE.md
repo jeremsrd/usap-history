@@ -476,18 +476,19 @@ menée en remontant le temps saison par saison.
   `audit-opponent-lineups.ts` a confronté les 98 feuilles que la LNR publie à
   leur original. Le compte, à jour :
 
-  | Anomalie | Occurrences | Nature |
+  | Anomalie | Au départ | Aujourd'hui |
   |---|---|---|
-  | MANQUANT / EN TROP | 8 matchs | un joueur qui n'a pas joué à la place de celui qui a joué |
-  | NUMÉRO | ~100 | le bon joueur, mauvais dossard — `positionPlayed` en dépend |
-  | ÉCRITURE | ~70 | prénom divergent, dont beaucoup de diminutifs légitimes |
-  | CAPITAINE | 78 | `isCaptain` n'est renseigné pour aucun adversaire |
+  | MANQUANT / EN TROP | 8 matchs | **0** |
+  | NUMÉRO | ~100 | **0** |
+  | CAPITAINE | 78 | **0** |
+  | ÉCRITURE | ~70 | 66 |
 
-  Les 8 matchs douteux : Clermont 15/10/2022, Racing 92 22/04/2023, Bayonne
-  18/05/2024, UBB 01/06/2024, Montauban 25/10/2025, Pau 22/02/2026, Lyon
-  21/03/2026, Bayonne 06/06/2026. Grenoble au barrage 2024-2025 relève, lui,
-  de la seule colonne ÉCRITURE : quatorze prénoms faux pour les bons joueurs.
-  Clermont 28/09/2024 a été corrigé.
+  Les dossards, les brassards de capitaine et les neuf identités fautives ont
+  été repris depuis les feuilles officielles. Restent les ÉCRITURE, qui sont
+  pour l'essentiel des variantes de bonne foi — diminutifs (« Billy » pour
+  Viliami Vunipola, « Tom » pour Thomas Staniforth) ou prénom d'usage. Une
+  exception connue : la composition de Grenoble au barrage 2024-2025, dont
+  quatorze prénoms sont inventés pour les bons joueurs.
 
   Devant un nom qui ne s'apparie pas, soupçonner la base avant la source.
 - Les 5 matchs de Challenge européen de 2024-2025 ont leurs marqueurs adverses

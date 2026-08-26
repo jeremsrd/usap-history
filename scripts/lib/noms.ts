@@ -76,6 +76,10 @@ export function proximite(
  * écritures.
  */
 export function memeJoueur(a: string, b: string): boolean {
+  // Deux noms identiques à l'accent près : inutile d'aller plus loin. Ce
+  // raccourci rattrape les noms trop courts pour la règle des mots — « Ali
+  // Oz » n'a qu'un mot d'au moins trois lettres, son prénom.
+  if (normalize(a) === normalize(b)) return true;
   const { communs, plusLong } = proximite(a, b);
   return communs >= 2 || (communs >= 1 && plusLong >= 4);
 }
