@@ -572,11 +572,20 @@ function PlayerRow({
       {mp.minutesPlayed != null && (
         <span className="text-xs text-muted-foreground" title="Minutes jouées">
           {mp.minutesPlayed}&apos;
-          {mp.subIn != null && (
-            <span className="ml-0.5">({mp.subIn}&apos;→)</span>
-          )}
-          {mp.subOut != null && !mp.subIn && (
-            <span className="ml-0.5">(→{mp.subOut}&apos;)</span>
+          {/* Un joueur peut sortir puis revenir (sang, protocole commotion) :
+              les deux minutes sont alors affichées dans l'ordre du match. */}
+          {(mp.subIn != null || mp.subOut != null) && (
+            <span className="ml-0.5">
+              (
+              {[
+                mp.subOut != null && mp.isStarter ? `→${mp.subOut}'` : null,
+                mp.subIn != null ? `${mp.subIn}'→` : null,
+                mp.subOut != null && !mp.isStarter ? `→${mp.subOut}'` : null,
+              ]
+                .filter(Boolean)
+                .join(", ")}
+              )
+            </span>
           )}
         </span>
       )}
