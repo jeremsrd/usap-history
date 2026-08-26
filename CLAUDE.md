@@ -445,19 +445,60 @@ retombe sur le score, essais de pénalité déduits :
 
 | Saison | Lignes avec minutes | Marqueurs | Matchs cohérents |
 |---|---|---|---|
-| 2025-2026 | 735 / 736 | 154 | 32 / 32 |
-| 2024-2025 | 729 / 736 | 117 | 28 / 32 |
+| 2025-2026 | 732 / 736 | 154 | 32 / 32 |
+| 2024-2025 | 729 / 736 | 117 | 32 / 32 |
 | 2023-2024 | 46 / 690 | 4 | 1 / 30 |
-| 2022-2023 | 107 / 713 | 23 | 0 / 31 |
+| 2022-2023 | 107 / 713 | 23 | 3 / 31 |
 
-Les quatre manques de 2024-2025 sont des matchs de Challenge : leurs points
-sont justes, mais `penaltyTriesOpponent` y est `null`, ce qui rend la
-comparaison indécidable. **2023-2024 et 2022-2023 restent entièrement à
-reprendre côté adverse** : la LNR couvre leurs journées de Top 14, le module
-`scripts/lib/lnr.ts` et `seed-opponent-sheet-2024-2025.ts` donnent le modèle.
+**2023-2024 et 2022-2023 restent entièrement à reprendre côté adverse** : la
+LNR couvre leurs journées de Top 14, le module `scripts/lib/lnr.ts` et
+`seed-opponent-sheet-2024-2025.ts` donnent le modèle.
 
 Attention en reprenant une saison ancienne : avant 2024-2025, le segment de
 phase d'un barrage s'écrit `access` et non `access-top-14`.
+
+### Où reprendre
+
+Par ordre de valeur. Les trois premiers points se tiennent : le même script
+généralisé les traite tous.
+
+1. **Fusionner `fix/donnees-adverses`** dans `master` — six commits, rien n'y
+   est poussé. `git checkout master && git merge --ff-only fix/donnees-adverses`
+2. **Généraliser `seed-opponent-sheet-2024-2025.ts` à une saison quelconque.**
+   C'est la clé de tout le reste : ce script sait déjà lire une feuille LNR,
+   reconstituer les temps de jeu à partir des changements et refuser d'écrire
+   quand le compte n'y est pas. Seuls la saison et le tableau des identifiants
+   ESPN y sont figés.
+3. **Trois lignes adverses sont vides** et attendent ce script : Jérémie
+   Maurouard (Montauban 25/10/2025), Quentin Valentino (Pau 22/02/2026) et
+   Jérôme Rey (Lyon 21/03/2026), les deux derniers titulaires. Leurs
+   statistiques ont été effacées à dessein — elles décrivaient la rencontre
+   des joueurs qu'ils remplacent en base.
+4. **Reprendre 2023-2024, puis 2022-2023, côté adverse.** 690 et 713 lignes
+   quasiment vides, c'est le gros du chantier. Neuf journées de 2022-2023
+   n'ont pas de compositions publiées par la LNR : leurs feuilles resteront
+   incomplètes.
+5. **Brancher l'EPCR.** Les 5 matchs de Challenge 2024-2025 ont leurs
+   marqueurs mais aucun temps de jeu, et les coupes des autres saisons sont
+   dans le même état. Bonne nouvelle : leurs pages embarquent aussi leur
+   charge utile dans le HTML, `curl` suffit — la doc ci-dessus, qui parle
+   encore de navigateur, sera à corriger le jour où ce sera fait.
+6. **Corriger les prénoms de la composition grenobloise** du barrage
+   2024-2025 : quatorze sont inventés pour les bons joueurs.
+   `fix-opponent-lineup.ts` ne les voit pas, il ne traite que les identités
+   franchement fausses ; l'audit les classe en ÉCRITURE.
+7. **Arbitrer les doublons de fiches** que l'audit a fait apparaître :
+   Alainu'uese (Brian / Junior / Komiti), Javakhia (Giorgi / Grigol),
+   Maurouard (Jérémie / Jérémy), Rey (Jérôme / Joël / Lucas), et le choix
+   entre « Nacho Brex » et « Juan Ignacio Brex ». Huit fiches ne sont
+   rattachées à aucune feuille et peuvent disparaître.
+8. **Mettre à 0 les neuf compteurs `penaltyTries` restés `null`**, là où le
+   détail des points retombe sans essai de pénalité. Tant qu'ils sont `null`,
+   toute garde écrite avec `<>` reste muette sur ces matchs.
+9. **Relier les événements adverses à leurs joueurs** : 247 en 2024-2025,
+   258 en 2023-2024, 264 en 2022-2023 n'ont pas de `playerId`.
+10. **Le fond** : affluences (23 matchs sur 126), photos et biographies (1
+    joueur sur 144), et la phase 4 — 114 saisons sans aucun match.
 
 114 saisons sur 119 n'ont encore aucun match : c'est le chantier de la phase 4,
 menée en remontant le temps saison par saison.
