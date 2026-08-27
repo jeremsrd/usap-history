@@ -24,6 +24,7 @@ export const CLUBS_LNR: Record<string, string> = {
   montpellier: "Montpellier",
   oyonnax: "Oyonnax",
   paris: "Stade Français",
+  "provence-rugby": "Provence",
   pau: "Pau",
   "racing-92": "Racing 92",
   toulon: "Toulon",
@@ -50,4 +51,5 @@ export const CLUBS_EPCR: Record<string, string> = {
   "Racing 92": "Racing 92",
   "Toyota Cheetahs": "Cheetahs",
   "Zebre Parma": "Zebre",
+  "Toyota Cheetahs ": "Cheetahs",
 };

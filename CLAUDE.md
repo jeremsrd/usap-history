@@ -519,11 +519,33 @@ doublons.
 | `seed-cup-sheet.ts` | **le pendant pour les coupes d'Europe**, depuis l'EPCR : réalisations, cartons et temps de jeu des **deux camps**, plus l'arbitre, l'affluence et la mi-temps. Sans argument il reprend les dix-huit matchs européens ; `--dry`, `--detail`, `--match=AAAA-MM-JJ` comme le précédent |
 | `audit-opponent-lineups.ts` | confronte les compositions adverses aux feuilles officielles LNR ; lecture seule, à lancer sur une saison ou sur tout |
 | `fix-opponent-lineup.ts` | remet une composition en accord avec la feuille officielle — LNR pour le championnat, EPCR pour les coupes — (identités, dossards, titulaires, capitaine) ; `--usap` traite aussi le camp catalan |
+| `fetch-club-logos.ts` | rapatrie les logos officiels des clubs dans `public/images/logos/`, depuis les CDN de la LNR et de l'EPCR, et renseigne `Opponent.logoUrl` |
 | `fix-match-venues.ts` | met les stades en ordre : fusionne les doublons, crée les manquants, rattache chaque club à son terrain — déduit des déplacements déjà enregistrés — puis complète les matchs sans lieu |
 | `fix-null-penalty-tries.ts` | met à 0 les compteurs `penaltyTries` restés `null`, mais seulement là où les points retombent déjà sur le score |
 
 `fix-duplicate-players.ts` existe aussi mais apparie les prénoms par préfixe et
 par inclusion : trop large pour être lancé sans revue préalable.
+
+## Logos des clubs
+
+Les 33 adversaires ont leur logo, servi par le site lui-même depuis
+`public/images/logos/{club}.png` — 3,5 Mo au total. Ils viennent des sources
+officielles, que les scripts lisent déjà : `cdn.lnr.fr/club/{slug}/photo/logo.
+{empreinte}` pour les clubs français, le champ `imageUrl` du flux de l'EPCR
+pour les européens. `fetch-club-logos.ts` fait la moisson.
+
+Pourquoi les héberger plutôt que pointer vers ces CDN : leurs URL portent une
+empreinte qui change au gré des mises à jour, le lien direct peut être bloqué,
+et un chemin local évite d'autoriser des hôtes distants dans `next.config.ts`.
+
+Deux logos avaient été téléversés à la main sur Supabase — Clermont et
+Toulon ; ils ont été rapatriés **tels quels**, sans être remplacés par ceux de
+la LNR. Le script fait de même pour tout logo déjà en `https://` : il le
+recopie au lieu d'aller en chercher un autre.
+
+Les logos de club sont des marques déposées. Les afficher sur un site
+d'histoire non commercial est l'usage, mais c'est un choix qui appartient au
+propriétaire du site.
 
 ## Identité visuelle
 
