@@ -285,6 +285,11 @@ async function corrigerCamp(
   }
 
   // ---- Corrections --------------------------------------------------------
+  const capitaineConnu = officielle.some((o) => o.isCaptain);
+  // Une équipe n'a qu'un capitaine. Si la base en porte deux et que la feuille
+  // ne tranche pas, on retire les deux : une contradiction vaut moins qu'un
+  // renseignement absent, et douze matchs vivent déjà sans brassard connu.
+  const tropDeCapitaines = enBase.filter((l) => l.isCaptain).length > 1;
   let corrections = 0;
   const lignes: string[] = [];
   const divergences: string[] = [];
@@ -333,10 +338,17 @@ async function corrigerCamp(
     if (ligne.isStarter !== officiel.isStarter) {
       changements.push(officiel.isStarter ? "remplaçant → titulaire" : "titulaire → remplaçant");
     }
-    if (officiel.isCaptain && !ligne.isCaptain) changements.push("capitaine");
     // La feuille fait foi dans les deux sens : un brassard que la base porte
     // à tort doit disparaître, sinon un match finit avec deux capitaines.
-    if (!officiel.isCaptain && ligne.isCaptain) changements.push("capitaine retiré");
+    // Encore faut-il qu'elle le dise : une composition sans aucun capitaine
+    // n'apprend rien, et retirer le brassard sur cette foi-là l'effacerait
+    // sans raison.
+    if (capitaineConnu) {
+      if (officiel.isCaptain && !ligne.isCaptain) changements.push("capitaine");
+      if (!officiel.isCaptain && ligne.isCaptain) changements.push("capitaine retiré");
+    } else if (tropDeCapitaines && ligne.isCaptain) {
+      changements.push("capitaine retiré, la feuille n'en désigne aucun");
+    }
 
     // Un titulaire peut porter un numéro de remplaçant : le poste ne se déduit
     // alors de rien, on garde celui déjà enregistré.
@@ -359,7 +371,14 @@ async function corrigerCamp(
         playerId: playerId || undefined,
         shirtNumber: officiel.numero,
         isStarter: officiel.isStarter,
-        isCaptain: officiel.isCaptain ?? false,
+        // Faute de capitaine sur la feuille, on garde celui de la base — une
+        // ligne réécrite pour un dossard ne doit pas perdre son brassard —,
+        // sauf si la base s'en donne plusieurs.
+        isCaptain: capitaineConnu
+          ? (officiel.isCaptain ?? false)
+          : tropDeCapitaines
+            ? false
+            : ligne.isCaptain,
         positionPlayed: poste,
         ...(remiseAZero
           ? {

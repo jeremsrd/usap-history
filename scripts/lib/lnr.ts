@@ -454,6 +454,17 @@ export async function lireCompositions(url: string): Promise<LnrCompositions> {
     }
   }
 
+  // Une équipe n'a qu'un capitaine. Quand la feuille en désigne plusieurs —
+  // celle du 29 octobre 2022 pose le brassard sur les quinze Catalans —, le
+  // renseignement ne vaut rien : on le retire plutôt que d'en inventer un.
+  // Aucun capitaine signalé veut alors dire « la feuille ne le dit pas », et
+  // non « personne ne l'était ».
+  for (const joueurs of parClub.values()) {
+    if (joueurs.filter((j) => j.isCaptain).length > 1) {
+      for (const j of joueurs) j.isCaptain = false;
+    }
+  }
+
   const usap = parClub.get("perpignan") ?? [];
   const autre = [...parClub.entries()].find(([club]) => club !== "perpignan");
   if (usap.length === 0 || !autre) {

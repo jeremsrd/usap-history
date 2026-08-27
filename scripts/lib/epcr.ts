@@ -245,6 +245,33 @@ function tempsDeJeu(
   }
 }
 
+/**
+ * Un seul brassard par équipe.
+ *
+ * Opta signale capitaine tout joueur qui l'a été, si bien qu'un match où le
+ * brassard change de mains en désigne deux — Ben Carter et Angus O'Brien pour
+ * les Dragons, le 7 décembre 2025. Le modèle n'en garde qu'un, celui du coup
+ * d'envoi : parmi les titulaires signalés, **le premier sorti**, puisque c'est
+ * son remplacement qui a fait passer le brassard. Faute de pouvoir départager,
+ * on ne désigne personne — un brassard inventé vaut moins qu'un brassard
+ * absent.
+ */
+function unSeulCapitaine(joueurs: Map<number, EpcrJoueur>) {
+  const signales = [...joueurs.values()].filter((j) => j.isCaptain);
+  if (signales.length <= 1) return;
+
+  const titulaires = signales.filter((j) => j.isStarter);
+  const sortis = titulaires
+    .filter((j) => j.subOut != null)
+    .sort((a, b) => a.subOut! - b.subOut!);
+  const premier =
+    sortis.length > 0 && (sortis.length === 1 || sortis[0].subOut !== sortis[1].subOut)
+      ? sortis[0]
+      : null;
+
+  for (const j of signales) j.isCaptain = j === premier;
+}
+
 function versEquipe(brut: any, evenements: any[]): EpcrEquipe {
   const joueurs = new Map<number, EpcrJoueur>();
   for (const p of brut.players ?? []) {
@@ -279,6 +306,7 @@ function versEquipe(brut: any, evenements: any[]): EpcrEquipe {
   }
 
   tempsDeJeu(joueurs, evenements, brut.id);
+  unSeulCapitaine(joueurs);
 
   return {
     id: brut.id,

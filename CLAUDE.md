@@ -326,6 +326,12 @@ pas (affluence).
     affirmer que la LNR se trompe, et il faut la démonstration sous les yeux.
     Le contrôle des minutes tranche : la version corrigée retombe sur 1 200,
     pas l'autre ;
+  - **le brassard de capitaine est parfois posé sur toute l'équipe.** La
+    feuille du 29 octobre 2022 désigne quinze capitaines catalans.
+    `lireCompositions()` retire alors le renseignement : plus d'un capitaine
+    vaut aucun, et « aucun » se lit « la feuille ne le dit pas », non
+    « personne ne l'était » — `fix-opponent-lineup.ts` s'abstient de toucher
+    au brassard dans ce cas, sauf si la base elle-même en porte deux ;
   - les **postes affichés sur `/compositions` ne sont pas fiables** (un ailier
     y est donné « demi de mêlée »). Ils décrivent le poste de référence du
     joueur, pas celui du jour : continuer à déduire `positionPlayed` du numéro
@@ -401,6 +407,12 @@ pas (affluence).
     la convention du projet refuse. Les minutes sont donc reconstituées à
     partir des entrées et sorties, la valeur d'Opta ne servant que de
     contrôle ;
+  - Opta signale capitaine **tout joueur qui l'a été**, si bien qu'un match
+    où le brassard change de mains en désigne deux — Ben Carter et Angus
+    O'Brien pour les Dragons, le 7 décembre 2025. `epcr.ts` ne garde que celui
+    du coup d'envoi, c'est-à-dire, parmi les titulaires signalés, le premier
+    sorti : c'est son remplacement qui a fait passer le brassard. Quand aucun
+    des deux ne sort, on ne désigne personne ;
   - depuis 2025-2026 les coupes appliquent le **carton rouge de vingt
     minutes**, et Opta note alors la sortie de l'exclu à la minute où son
     suppléant entre. Pris au pied de la lettre, cela lui donnerait vingt
@@ -571,12 +583,7 @@ phase d'un barrage s'écrit `access` et non `access-top-14`.
 
 Par ordre de valeur.
 
-1. **Aligner les compositions de l'USAP sur les feuilles officielles.**
-   `fix-opponent-lineup.ts --usap` l'a fait sur les dix-huit matchs de coupe,
-   où six feuilles intervertissaient deux dossards catalans. Il reste une
-   quarantaine de matchs de championnat où la LNR et la base divergent, jamais
-   examinés — surtout des brassards de capitaine.
-2. **Le fond** : affluences (33 matchs sur 126), photos et biographies (1
+1. **Le fond** : affluences (33 matchs sur 126), photos et biographies (1
    joueur sur 144), et la phase 4 — 114 saisons sans aucun match.
 
 114 saisons sur 119 n'ont encore aucun match : c'est le chantier de la phase 4,
@@ -627,10 +634,21 @@ menée en remontant le temps saison par saison.
   pour l'USAP.
 
   Devant un nom qui ne s'apparie pas, soupçonner la base avant la source.
-- **Les compositions de l'USAP n'ont été alignées que sur les matchs de
-  coupe.** `fix-opponent-lineup.ts --usap` propose encore des corrections sur
-  une quarantaine de matchs de championnat — surtout des brassards de
-  capitaine — qui n'ont jamais été examinées.
+- **Les deux compositions sont désormais alignées sur les feuilles
+  officielles**, l'USAP comprise : 131 lignes reprises sur une quarantaine de
+  matchs de championnat, presque toutes des dossards de remplaçants dans le
+  désordre et des brassards de capitaine. Sur 252 compositions, 239 portent
+  exactement un capitaine, 13 aucun — les neuf feuilles que la LNR ne publie
+  pas, et le match des Dragons du 7 décembre 2025, où l'EPCR en signale deux
+  sans qu'on puisse les départager. Aucune n'en porte plusieurs.
+- **La feuille LNR du 22 février 2026 se contredit sur les deux camps.**
+  Côté palois elle fait entrer un vingt-quatrième homme (cf. la table
+  `CHANGEMENTS_CORRIGES`) ; côté catalan, ses changements font entrer Victor
+  Montgaillard et Kieran Brookes, qui ne figurent pas davantage sur les
+  vingt-trois qu'elle publie, et sortir Mathys Lotrian qui n'était pas entré.
+  La composition de l'USAP y est donc **laissée telle quelle** : la base
+  garde Montgaillard au 17 là où la feuille met James Hall au 20. C'est le
+  seul match dont `fix-opponent-lineup.ts --usap --identites` reste écarté.
 - **`MatchEvent.playerId` ne sert presque à rien en l'état.** 922 des 1 086
   événements adverses ne le renseignent pas, mais la page publique du match ne
   le lit pas : elle affiche `event.description`, où le nom du marqueur est déjà
