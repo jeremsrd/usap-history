@@ -339,7 +339,11 @@ pas (affluence).
   remplacements, cartons et compositions, mais **pas** les arbitres ni
   l'affluence.
 
-  **À n'employer que là où la LNR est muette**, et à recouper. Le passage
+  **N'a plus d'emploi** : la LNR couvre le championnat, l'EPCR les coupes.
+  Le script qui s'en servait a été supprimé plutôt que laissé à portée de
+  main, le relancer aurait réécrasé la donnée officielle. La méthode reste
+  consignée ici au cas où les deux sources viendraient à manquer, et à
+  recouper impérativement. Le passage
   d'ESPN à la LNR sur 2024-2025 a corrigé quatre erreurs de fond en 26 matchs :
   un essai de Théo Ntamack Muyenga attribué à **Romain Ntamack** — ESPN choisit
   le frère célèbre —, une transformation et une pénalité de Jérémy Fernandez
@@ -348,13 +352,49 @@ pas (affluence).
   chronologie, ce qui fait manquer 7 points au contrôle, et **raccourcit les
   noms composés** (« Dany Priso » pour Priso Mouangue). Ses minutes de carton
   s'écartent de 1 à 3 minutes de l'officiel.
-- **Coupes d'Europe** : `epcrugby.com/fr/challenge-cup/matchs` (ou
-  `/champions-cup/`). Choisir la saison dans le menu « Saison », puis la phase.
-  La fiche d'un match, `/matchs/{id}/actualite`, donne **arbitre, affluence et
-  score à la mi-temps** dans son en-tête ; l'onglet `/equipes` donne les
-  compositions et les remplacements. Site Nuxt en SSR, à charger dans un
-  navigateur. Le sélecteur de saison se pilote mal par script : passer par une
-  recherche web restreinte au domaine pour retrouver l'id du match.
+- **Coupes d'Europe — l'EPCR, et rien d'autre.** Ce que la LNR est au
+  championnat, l'EPCR l'est aux coupes : la source officielle, plus complète
+  qu'aucune autre.
+
+  Le site `epcrugby.com` est un Nuxt en rendu serveur, mais il n'y a pas à le
+  gratter — ses pages appellent un flux public alimenté par Opta, dont la clé
+  d'API est celle du front, publiée dans la page :
+
+  ```
+  https://rugby-union-feeds.incrowdsports.com/v1/matches?provider=rugbyviz&compId={comp}&season={saison}
+  https://rugby-union-feeds.incrowdsports.com/v1/matches/{id}?provider=rugbyviz
+  ```
+
+  avec les en-têtes `X-API-KEY`, `X-APP-ID: web` et `X-REALM: epcr`. `compId`
+  vaut 1026 pour le Challenge et 1008 pour la Champions Cup ; la saison
+  s'écrit `202301` pour 2023-2024. **Passer par `scripts/lib/epcr.ts`**, qui
+  fait déjà tout le travail : `chercherMatchUsap(saison, jour)` puis
+  `lireMatch(id)`.
+
+  Ce que le flux donne, et qu'aucune autre source ne donne aussi bien :
+  - les **vingt-trois joueurs de chaque équipe**, avec leur dossard
+    (`positionId`, 1 à 15 pour les titulaires) et le brassard ;
+  - les **réalisations par joueur**, qui retombent exactement sur le score,
+    essais de pénalité déduits ;
+  - les **entrées et sorties**, minute par minute ;
+  - l'**arbitre**, l'**affluence** et le **score à la mi-temps**, que la LNR ne
+    publie pas.
+
+  Trois réserves :
+  - le type d'événement `Penalty` désigne une pénalité **concédée**, pas un
+    coup de pied réussi. Compter les événements donnerait onze pénalités dans
+    un match qui en compte quatre : les points se lisent dans les `stats` du
+    joueur, jamais dans la chronologie ;
+  - `minutesPlayedTotal` **retire les dix minutes d'un carton jaune**, ce que
+    la convention du projet refuse. Les minutes sont donc reconstituées à
+    partir des entrées et sorties, la valeur d'Opta ne servant que de
+    contrôle ;
+  - depuis 2025-2026 les coupes appliquent le **carton rouge de vingt
+    minutes**, et Opta note alors la sortie de l'exclu à la minute où son
+    suppléant entre. Pris au pied de la lettre, cela lui donnerait vingt
+    minutes qu'il n'a pas jouées — Duncan Paia'aua, exclu à la 14ᵉ contre les
+    Dragons le 7 décembre 2025, est remplacé à la 35ᵉ. Le carton doit être
+    traité dans la chronologie, avant les changements de la même minute.
 - **Saisons anciennes** : `allrugby.com/saison-{saison}/matchs/{dom}-{ext}-{id}.html`,
   l'identifiant venant de `allrugby.com/competitions/{compétition}/calendrier.html`.
   Seule source retrouvée pour le Challenge Cup 2022-2023. Trois pièges :
@@ -381,21 +421,23 @@ bien les valeurs *corrigées*, pas celles encore en base, sinon le garde-fou men
 (le script d'une feuille qui fusionne des doublons doit, en simulation, exclure
 de son index les fiches qu'il aurait absorbées).
 
-Le code réutilisable va dans `scripts/lib/` : `lnr.ts`, client des feuilles de
-match de la LNR, et `noms.ts`, rapprochement des noms entre une source et la
-base. Ce dernier porte une table de **noms d'usage** — deux patronymes sans
+Le code réutilisable va dans `scripts/lib/` : `lnr.ts` pour les feuilles de la
+LNR, `epcr.ts` pour le flux des coupes d'Europe, et `noms.ts` pour le
+rapprochement des noms entre une source et la base. Ce dernier porte une table de **noms d'usage** — deux patronymes sans
 rien de commun qui désignent la même personne, comme Waisea Nayacalevu, que la
 LNR inscrit sous Vuidravuwalu. La table est **vérifiée à la main** : y ajouter
 une paire, c'est affirmer que ce sont deux noms d'un même homme, et c'est le
 seul moyen d'apparier ces cas-là sans relâcher la règle générale.
 
-**Quand une source se révèle fautive, restreindre le script qui s'en servait**
-plutôt que de le laisser en l'état : `seed-opponent-scorers-2024-2025.ts` a été
-ramené aux seuls matchs de Challenge après le passage à la LNR, sans quoi le
-relancer aurait réécrasé la donnée officielle par celle d'ESPN. Même logique
-pour un script de match dont on découvre qu'il inventait des noms : le
-réécrire sous le même nom de fichier, pour qu'aucune ancienne version ne
-subsiste et ne puisse recréer les doublons.
+**Quand une source se révèle fautive, désarmer le script qui s'en servait**
+plutôt que de le laisser en l'état. `seed-opponent-scorers-2024-2025.ts`, qui
+tenait ses marqueurs d'ESPN, a d'abord été ramené aux seuls matchs de
+Challenge après le passage à la LNR, puis **supprimé** quand l'EPCR a repris
+ces matchs-là : le relancer n'aurait plus pu que réécraser de la donnée
+officielle par de la donnée fautive. Même logique pour un script de match dont
+on découvre qu'il inventait des noms : le réécrire sous le même nom de
+fichier, pour qu'aucune ancienne version ne subsiste et ne puisse recréer les
+doublons.
 
 ### Scripts de maintenance
 
@@ -411,9 +453,10 @@ subsiste et ne puisse recréer les doublons.
 | `rename-player.ts` | renomme une fiche, slug compris — un slug refait à la main sans le CUID rend la fiche introuvable |
 | `close-season-2025-2026.ts` | modèle de clôture de saison, avec garde-fou sur le classement officiel |
 | `seed-opponent-sheet.ts` | **le script du chantier adverse** : reprend une saison entière depuis la LNR — réalisations, cartons et temps de jeu reconstitués à partir des changements. Prend la saison en argument (`2023-2024`), `--dry` pour simuler, `--detail` pour le relevé des écarts avec la base, `--match=AAAA-MM-JJ` pour n'en reprendre qu'un |
-| `seed-opponent-scorers-2024-2025.ts` | même travail depuis ESPN, restreint au Challenge européen faute de couverture LNR ; pas de temps de jeu |
+| `seed-cup-sheet.ts` | **le pendant pour les coupes d'Europe**, depuis l'EPCR : réalisations, cartons et temps de jeu des **deux camps**, plus l'arbitre, l'affluence et la mi-temps. Sans argument il reprend les dix-huit matchs européens ; `--dry`, `--detail`, `--match=AAAA-MM-JJ` comme le précédent |
 | `audit-opponent-lineups.ts` | confronte les compositions adverses aux feuilles officielles LNR ; lecture seule, à lancer sur une saison ou sur tout |
-| `fix-opponent-lineup.ts` | remet la composition adverse d'un match en accord avec la feuille officielle (identités, dossards, titulaires, capitaine) |
+| `fix-opponent-lineup.ts` | remet une composition en accord avec la feuille officielle — LNR pour le championnat, EPCR pour les coupes — (identités, dossards, titulaires, capitaine) ; `--usap` traite aussi le camp catalan |
+| `fix-null-penalty-tries.ts` | met à 0 les compteurs `penaltyTries` restés `null`, mais seulement là où les points retombent déjà sur le score |
 
 `fix-duplicate-players.ts` existe aussi mais apparie les prénoms par préfixe et
 par inclusion : trop large pour être lancé sans revue préalable.
@@ -476,16 +519,19 @@ varie, c'est le côté adverse et l'annexe.
 
 Annexe du match :
 
-| Saison | Matchs | Arbitres | Vidéos | Comptes-rendus | Affluences |
-|---|---|---|---|---|---|
-| 2025-2026 | 32 | 32 | 31 | 32 | 6 |
-| 2024-2025 | 32 | 32 | 24 | 28 | 14 |
-| 2023-2024 | 30 | 30 | 29 | 30 | 2 |
-| 2022-2023 | 31 | 27 | 21 | 31 | 0 |
-| 2008-2009 | 1 | 1 | 0 | 1 | 1 |
+| Saison | Matchs | Arbitres | Mi-temps | Vidéos | Comptes-rendus | Affluences |
+|---|---|---|---|---|---|---|
+| 2025-2026 | 32 | 32 | 32 | 31 | 32 | 7 |
+| 2024-2025 | 32 | 32 | 32 | 24 | 28 | 15 |
+| 2023-2024 | 30 | 30 | 30 | 29 | 30 | 6 |
+| 2022-2023 | 31 | 31 | 30 | 21 | 31 | 4 |
+| 2008-2009 | 1 | 1 | 1 | 0 | 1 | 1 |
 
-Les 4 arbitres manquants de 2022-2023 sont ceux des matchs de Challenge Cup :
-l'EPCR ne remonte pas au-delà de 2023-2024 et allrugby ne les publie pas.
+**Tous les arbitres sont renseignés.** Les quatre qui manquaient à 2022-2023
+étaient ceux de ses matchs de Challenge, que le flux de l'EPCR a fournis — il
+remonte plus loin que son site, dont le sélecteur de saison s'arrête à
+2023-2024. La seule mi-temps encore vide est celle du barrage 2022-2023, que
+la LNR ne donne pas.
 
 Détail des joueurs adverses — le vrai chantier restant sur les saisons déjà
 saisies. « Cohérents » compte les matchs dont la somme des points adverses
@@ -493,16 +539,15 @@ retombe sur le score, essais de pénalité déduits :
 
 | Saison | Lignes avec minutes | Marqueurs | Matchs cohérents |
 |---|---|---|---|
-| 2025-2026 | 733 / 736 | 156 | 32 / 32 |
-| 2024-2025 | 729 / 736 | 117 | 32 / 32 |
-| 2023-2024 | 598 / 690 | 103 | 26 / 30 |
-| 2022-2023 | 700 / 713 | 135 | 30 / 31 |
+| 2025-2026 | 732 / 736 | 156 | 32 / 32 |
+| 2024-2025 | 728 / 736 | 117 | 32 / 32 |
+| 2023-2024 | 690 / 690 | 115 | 30 / 30 |
+| 2022-2023 | 706 / 713 | 135 | 31 / 31 |
 
-**Les quatre saisons sont reprises côté championnat, sans exception.** Les 92
-lignes manquantes de 2023-2024 sont exactement ses quatre matchs de Challenge
-européen, que la LNR ne couvre pas, et les cinq matchs restés incohérents sont
-tous des matchs de coupe. Ce qui reste vide relève désormais de l'EPCR, pas de
-la LNR.
+**Le chantier adverse est fini : les 126 matchs de la base sont cohérents**,
+championnat depuis la LNR, coupes d'Europe depuis l'EPCR. Les lignes sans
+minutes sont celles des remplaçants qui ne sont pas entrés en jeu — `null` y
+vaut « n'a pas joué », et non « on ne sait pas ».
 
 Attention en reprenant une saison ancienne : avant 2024-2025, le segment de
 phase d'un barrage s'écrit `access` et non `access-top-14`.
@@ -514,33 +559,32 @@ Par ordre de valeur.
 
 1. **Fusionner `feat/feuilles-adverses-lnr`** dans `master` — rien n'est
    poussé sur `origin`.
-2. **Brancher l'EPCR.** C'est tout ce qui reste du chantier adverse : les
-   quatre matchs de Challenge 2023-2024 n'ont aucun détail adverse, ceux de
-   2022-2023 sont partiels, et ceux de 2024-2025 et 2025-2026 n'ont pas de
-   temps de jeu digne de ce nom. Bonne nouvelle : leurs pages embarquent aussi
-   leur charge utile dans le HTML, `curl` suffit — la doc ci-dessus, qui parle
-   encore de navigateur, sera à corriger le jour où ce sera fait.
-3. **Un seul match de championnat reste bloqué** : Pau, 22 février 2026. La
-   feuille fait entrer Clément Mondinat à la 56ᵉ, qui ne figure pas sur les 23
-   qu'elle publie elle-même. Tant que ce vingt-quatrième homme n'est pas
-   arbitré, la ligne de Quentin Valentino reste vide.
-4. **Corriger les prénoms de la composition grenobloise** du barrage
+2. **Un seul match reste bloqué** : Pau, 22 février 2026. La feuille LNR fait
+   entrer Clément Mondinat à la 56ᵉ, qui ne figure pas sur les 23 qu'elle
+   publie elle-même. Tant que ce vingt-quatrième homme n'est pas arbitré, la
+   ligne de Quentin Valentino reste vide.
+3. **Corriger les prénoms de la composition grenobloise** du barrage
    2024-2025 : quatorze sont inventés pour les bons joueurs.
    `fix-opponent-lineup.ts` ne les voit pas, il ne traite que les identités
    franchement fausses ; l'audit les classe en ÉCRITURE.
-5. **Arbitrer les doublons de fiches** que l'audit a fait apparaître :
+4. **Arbitrer les doublons de fiches** que l'audit a fait apparaître :
    Alainu'uese (Brian / Junior / Komiti), Javakhia (Giorgi / Grigol),
    Maurouard (Jérémie / Jérémy), Rey (Jérôme / Joël / Lucas), et le choix
    entre « Nacho Brex » et « Juan Ignacio Brex ». Huit fiches ne sont
    rattachées à aucune feuille et peuvent disparaître. `merge-players.ts`
    exécute la fusion une fois la paire vérifiée, `rename-player.ts` pose le nom
    retenu.
-6. **Mettre à 0 les neuf compteurs `penaltyTries` restés `null`**, là où le
-   détail des points retombe sans essai de pénalité. Tant qu'ils sont `null`,
-   toute garde écrite avec `<>` reste muette sur ces matchs.
-7. **Relier les événements adverses à leurs joueurs** : 247 en 2024-2025,
-   258 en 2023-2024, 264 en 2022-2023 n'ont pas de `playerId`.
-8. **Le fond** : affluences (23 matchs sur 126), photos et biographies (1
+5. **Relier les événements adverses à leurs joueurs** : 922 des 1 086
+   n'ont pas de `playerId` — 258 en 2023-2024, 247 en 2024-2025, 226 en
+   2022-2023, 191 en 2025-2026. Les feuilles portent désormais l'identité de
+   chaque marqueur adverse : le rapprochement se ferait sur la minute et le
+   type d'événement.
+6. **Aligner les compositions de l'USAP sur les feuilles officielles.**
+   `fix-opponent-lineup.ts --usap` l'a fait sur les dix-huit matchs de coupe,
+   où six feuilles intervertissaient deux dossards catalans. Il reste une
+   quarantaine de matchs de championnat où la LNR et la base divergent, jamais
+   examinés — surtout des brassards de capitaine.
+7. **Le fond** : affluences (33 matchs sur 126), photos et biographies (1
    joueur sur 144), et la phase 4 — 114 saisons sans aucun match.
 
 114 saisons sur 119 n'ont encore aucun match : c'est le chantier de la phase 4,
@@ -575,19 +619,23 @@ menée en remontant le temps saison par saison.
   barrage 2024-2025, dont quatorze prénoms sont inventés pour les bons joueurs.
 
   Neuf feuilles de 2022-2023 restent illisibles, la LNR n'en publiant pas les
-  compositions ; dix-neuf matchs de coupe d'Europe sont hors de son périmètre.
+  compositions. Les dix-huit matchs de coupe, eux, ont été confrontés au flux
+  de l'EPCR par `fix-opponent-lineup.ts` : aucune identité fautive, mais des
+  dossards intervertis des deux côtés — quatre matchs pour l'adversaire, six
+  pour l'USAP.
 
   Devant un nom qui ne s'apparie pas, soupçonner la base avant la source.
-- **Les matchs de coupe d'Europe sont le seul trou qui reste côté adverse.**
-  La LNR ne les couvre pas : les quatre matchs de Challenge de 2023-2024 n'ont
-  aucun détail, ceux de 2022-2023 sont partiels, et ceux de 2024-2025 tiennent
-  leurs marqueurs d'ESPN sans temps de jeu. L'EPCR reste à brancher.
+- **Les compositions de l'USAP n'ont été alignées que sur les matchs de
+  coupe.** `fix-opponent-lineup.ts --usap` propose encore des corrections sur
+  une quarantaine de matchs de championnat — surtout des brassards de
+  capitaine — qui n'ont jamais été examinées.
 - Les événements de la chronologie ne sont reliés à un joueur que du côté USAP
-  sur la plupart des saisons (2024-2025 : 247 événements adverses sans
-  `playerId`). Les nouvelles saisies relient les deux camps.
+  sur la plupart des saisons : 922 des 1 086 événements adverses n'ont pas de
+  `playerId`. Les nouvelles saisies relient les deux camps.
 - Erreur d'hydratation React sur les pages de match, antérieure et non
   diagnostiquée (probablement `next-themes`).
-- Affluences quasi absentes ; peu de photos et de biographies de joueurs.
+- Affluences éparses — 33 matchs sur 126, l'EPCR ayant fourni celles des
+  coupes ; peu de photos et de biographies de joueurs.
 - Les modèles `CareerClub`, `PlayerStint`, `PlayerInternational` et
   `PlayerAward` existent mais ne sont pas alimentés.
 

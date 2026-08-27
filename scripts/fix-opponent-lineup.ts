@@ -1,5 +1,9 @@
 /**
- * Remet une composition adverse en accord avec la feuille officielle LNR.
+ * Remet une composition adverse en accord avec la feuille officielle.
+ *
+ * Deux sources, une seule logique : la LNR pour le championnat, l'EPCR pour
+ * les coupes d'Europe. Toutes deux donnent vingt-trois joueurs avec leur
+ * dossard et le brassard, ce qui suffit à corriger la base.
  *
  * Complément de audit-opponent-lineups.ts, qui repère les écarts sans les
  * corriger. Ce script en corrige un match : bon joueur sur chaque dossard,
@@ -27,10 +31,12 @@
  *   npx tsx scripts/fix-opponent-lineup.ts 2024-09-28 --identites
  *   npx tsx scripts/fix-opponent-lineup.ts 2023-2024 --dry     # une saison
  *   npx tsx scripts/fix-opponent-lineup.ts --tout --dry        # toute la base
+ *   npx tsx scripts/fix-opponent-lineup.ts --tout --usap --dry # les deux camps
  */
 
 import { PrismaClient, Position } from "@prisma/client";
 import { chercherFeuille, lireCompositions, type LnrTitulaire } from "./lib/lnr";
+import { USAP, chercherMatchUsap, lireMatch } from "./lib/epcr";
 import { generatePlayerSlug } from "../src/lib/slugs";
 import { meilleurCandidat, normalize, proximite } from "./lib/noms";
 
@@ -40,6 +46,7 @@ const ARGS = process.argv.slice(2);
 const DRY_RUN = ARGS.includes("--dry");
 const IDENTITES = ARGS.includes("--identites");
 const TOUT = ARGS.includes("--tout");
+const AVEC_USAP = ARGS.includes("--usap");
 const DATE = ARGS.find((a) => /^\d{4}-\d{2}-\d{2}$/.test(a));
 const SAISON = ARGS.find((a) => /^\d{4}-\d{4}$/.test(a));
 
@@ -150,10 +157,48 @@ interface Bilan {
   identitesIgnorees: number;
 }
 
-async function corrigerMatch(match: MatchAvecContexte): Promise<Bilan | null> {
-  const adversaire = match.opponent.shortName ?? match.opponent.name;
-  const jour = match.date.toISOString().slice(0, 10);
-  const entete = `${match.season.label} ${jour} ${adversaire.padEnd(16)}`;
+/** Compétitions dont la LNR ne publie rien : elles relèvent de l'EPCR. */
+const COUPES_EUROPE = new Set(["Challenge Européen", "H-Cup"]);
+
+/**
+ * Composition adverse officielle : la LNR pour le championnat, l'EPCR pour les
+ * coupes d'Europe. Les deux sources disent la même chose — vingt-trois joueurs,
+ * leur dossard et le brassard —, ce qui permet de n'écrire la correction
+ * qu'une fois.
+ *
+ * `null` pour une rencontre qu'aucune des deux ne couvre : la finale 2008-2009
+ * n'a ni journée, ni barrage, ni coupe d'Europe.
+ */
+type Camp = "usap" | "adverse";
+
+async function composition(
+  match: MatchAvecContexte,
+  camp: Camp,
+): Promise<{ source: string; joueurs: LnrTitulaire[] } | null> {
+  if (COUPES_EUROPE.has(match.competition.shortName ?? "")) {
+    const jour = match.date.toISOString().slice(0, 10);
+    const resume = await chercherMatchUsap(match.season.label, jour);
+    if (!resume) throw new Error(`Match EPCR introuvable pour le ${jour}`);
+    const feuille = await lireMatch(resume.id);
+    if ((feuille.domicile.id === USAP) !== match.isHome) {
+      throw new Error(
+        `l'EPCR donne l'USAP ${feuille.domicile.id === USAP ? "à domicile" : "à l'extérieur"}, ` +
+          `la base dit l'inverse`,
+      );
+    }
+    const usap = feuille.domicile.id === USAP ? feuille.domicile : feuille.exterieur;
+    const adverse = feuille.domicile.id === USAP ? feuille.exterieur : feuille.domicile;
+    return {
+      source: `EPCR ${feuille.id}`,
+      joueurs: (camp === "usap" ? usap : adverse).joueurs.map((j) => ({
+        numero: j.numero,
+        firstName: j.firstName,
+        lastName: j.lastName,
+        isCaptain: j.isCaptain,
+        isStarter: j.isStarter,
+      })),
+    };
+  }
 
   const phase =
     match.matchday != null
@@ -163,14 +208,39 @@ async function corrigerMatch(match: MatchAvecContexte): Promise<Bilan | null> {
           ? "access-top-14"
           : "access"
         : null;
-  if (!phase) return null; // coupe d'Europe : hors périmètre LNR
+  if (!phase) return null;
 
   const url = await chercherFeuille(match.season.label, phase);
   if (!url) throw new Error(`Feuille LNR introuvable pour ${phase}`);
-  const officielle = (await lireCompositions(url)).adversaire;
+  const compositions = await lireCompositions(url);
+  return {
+    source: url.split("/").pop() ?? url,
+    joueurs: camp === "usap" ? compositions.usap : compositions.adversaire,
+  };
+}
+
+/**
+ * Les deux camps ne sont pas corrigés par défaut. La composition de l'USAP est
+ * saisie à la main et généralement juste ; celle de l'adversaire vient
+ * d'imports successifs. Les feuilles de coupe d'Europe ont montré l'exception
+ * — six d'entre elles intervertissent deux dossards catalans —, d'où `--usap`.
+ */
+async function corrigerCamp(
+  match: MatchAvecContexte,
+  camp: Camp,
+): Promise<Bilan | null> {
+  const adversaire = match.opponent.shortName ?? match.opponent.name;
+  const jour = match.date.toISOString().slice(0, 10);
+  const entete =
+    `${match.season.label} ${jour} ${adversaire.padEnd(16)}` +
+    (camp === "usap" ? " [USAP]" : "");
+
+  const source = await composition(match, camp);
+  if (!source) return null;
+  const officielle = source.joueurs;
 
   const enBase = await prisma.matchPlayer.findMany({
-    where: { matchId: match.id, isOpponent: true },
+    where: { matchId: match.id, isOpponent: camp === "adverse" },
     select: {
       id: true,
       shirtNumber: true,
@@ -327,22 +397,36 @@ async function corrigerMatch(match: MatchAvecContexte): Promise<Bilan | null> {
   }
 
   if (lignes.length > 0) {
-    console.log(`${entete} — ${url.split("/").pop()}`);
+    console.log(`${entete} — ${source.source}`);
     for (const l of lignes) console.log(l);
   }
   return { corrections, identitesIgnorees: 0 };
 }
 
+async function corrigerMatch(match: MatchAvecContexte): Promise<Bilan | null> {
+  const camps: Camp[] = AVEC_USAP ? ["adverse", "usap"] : ["adverse"];
+  let bilan: Bilan | null = null;
+  for (const camp of camps) {
+    const partiel = await corrigerCamp(match, camp);
+    if (!partiel) continue;
+    bilan = {
+      corrections: (bilan?.corrections ?? 0) + partiel.corrections,
+      identitesIgnorees: (bilan?.identitesIgnorees ?? 0) + partiel.identitesIgnorees,
+    };
+  }
+  return bilan;
+}
+
 async function main() {
   if (!DATE && !SAISON && !TOUT) {
     console.error(
-      "Usage : npx tsx scripts/fix-opponent-lineup.ts (AAAA-MM-JJ | AAAA-AAAA | --tout) [--identites] [--dry]",
+      "Usage : npx tsx scripts/fix-opponent-lineup.ts (AAAA-MM-JJ | AAAA-AAAA | --tout) [--usap] [--identites] [--dry]",
     );
     process.exit(1);
   }
 
   console.log(
-    `=== Compositions adverses remises en accord avec la LNR${DRY_RUN ? " (simulation)" : ""} ===` +
+    `=== Compositions adverses remises en accord avec les feuilles officielles${DRY_RUN ? " (simulation)" : ""} ===` +
       `${IDENTITES ? "" : "\n(identités laissées de côté — ajouter --identites pour les traiter)"}\n`,
   );
 
