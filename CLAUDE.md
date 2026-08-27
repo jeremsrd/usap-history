@@ -508,6 +508,7 @@ doublons.
 | `fix-broken-slugs.ts` | réécrit les slugs dont le suffixe ne permet plus de retrouver l'entité (fiche en 404) |
 | `normalize-opponent-players.ts` | rattache les anciennes lignes `opponentPlayerName` à un vrai `Player` |
 | `merge-duplicate-players-2026.ts` | fusion de doublons, paires listées en dur et vérifiées à la main |
+| `merge-opponents.ts` | fusionne deux fiches de club (`--keep`, `--drop`, `--nom`) ; repointe matchs, anciens noms et clubs de carrière, et fait hériter la fiche conservée des champs qu'elle n'avait pas |
 | `merge-players.ts` | fusionne deux fiches désignées par leur identifiant (`--keep`, `--drop`, `--nom`) ; ne cherche rien de lui-même, refuse la fusion si les deux figurent sur un même match |
 | `rename-player.ts` | renomme une fiche, slug compris — un slug refait à la main sans le CUID rend la fiche introuvable |
 | `reassign-match-player.ts` | change le joueur porté par un dossard sur une feuille, quand la base a mis quelqu'un d'autre et que les deux noms se ressemblent trop pour que l'audit s'en aperçoive |
@@ -528,7 +529,7 @@ par inclusion : trop large pour être lancé sans revue préalable.
 
 ## Logos des clubs
 
-Les 33 adversaires ont leur logo, servi par le site lui-même depuis
+Les 32 adversaires ont leur logo, servi par le site lui-même depuis
 `public/images/logos/{club}.png` — 3,5 Mo au total. Ils viennent des sources
 officielles, que les scripts lisent déjà : `cdn.lnr.fr/club/{slug}/photo/logo.
 {empreinte}` pour les clubs français, le champ `imageUrl` du flux de l'EPCR
