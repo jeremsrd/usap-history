@@ -497,6 +497,7 @@ doublons.
 | `seed-cup-sheet.ts` | **le pendant pour les coupes d'Europe**, depuis l'EPCR : réalisations, cartons et temps de jeu des **deux camps**, plus l'arbitre, l'affluence et la mi-temps. Sans argument il reprend les dix-huit matchs européens ; `--dry`, `--detail`, `--match=AAAA-MM-JJ` comme le précédent |
 | `audit-opponent-lineups.ts` | confronte les compositions adverses aux feuilles officielles LNR ; lecture seule, à lancer sur une saison ou sur tout |
 | `fix-opponent-lineup.ts` | remet une composition en accord avec la feuille officielle — LNR pour le championnat, EPCR pour les coupes — (identités, dossards, titulaires, capitaine) ; `--usap` traite aussi le camp catalan |
+| `fix-match-venues.ts` | met les stades en ordre : fusionne les doublons, crée les manquants, rattache chaque club à son terrain — déduit des déplacements déjà enregistrés — puis complète les matchs sans lieu |
 | `fix-null-penalty-tries.ts` | met à 0 les compteurs `penaltyTries` restés `null`, mais seulement là où les points retombent déjà sur le score |
 
 `fix-duplicate-players.ts` existe aussi mais apparie les prénoms par préfixe et
@@ -695,8 +696,14 @@ classement d'époque — le tableau de `fix-bonus-points.ts` ne le connaît pas.
   donnée personnelle qui l'est (cf. `delete-orphan-players.ts`).
 - Erreur d'hydratation React sur les pages de match, antérieure et non
   diagnostiquée (probablement `next-themes`).
-- Affluences éparses — 33 matchs sur 126, l'EPCR ayant fourni celles des
+- Affluences éparses — 37 matchs sur 157, l'EPCR ayant fourni celles des
   coupes ; peu de photos et de biographies de joueurs.
+- **Le lieu d'un match ne se saisit pas à la main** : il se déduit du camp —
+  Aimé-Giral à domicile, `Opponent.venueId` à l'extérieur. Les 157 matchs ont
+  désormais leur stade. Quatre clubs n'ont pas encore de terrain rattaché —
+  Connacht, Cardiff, Dragons, Lions —, l'USAP ne les ayant reçus qu'à
+  Aimé-Giral : `fix-match-venues.ts` déduit un terrain des déplacements
+  enregistrés, il ne peut rien pour ceux-là.
 - Les modèles `CareerClub`, `PlayerStint`, `PlayerInternational` et
   `PlayerAward` existent mais ne sont pas alimentés.
 
