@@ -117,9 +117,10 @@ confrontations avec l'USAP, et de gérer les joueurs passés par les deux camps
   `lastName equals` ne suffit pas — il rate « Guerois-Galisson » vs
   « Guerois Galisson », « Bécognée » vs « Becognee ». Construire un index en
   mémoire une fois, puis chercher dedans.
-- `players` contient donc majoritairement des adversaires : environ 1 236 sur
-  1 380, seuls ~144 ont porté le maillot catalan. C'est normal. Les pages de
-  liste filtrent déjà sur `isOpponent: false`.
+- `players` contient donc majoritairement des adversaires : 1 259 sur 1 383,
+  quand 144 seulement ont porté le maillot catalan — 28 figurent des deux
+  côtés. C'est normal. Les pages de liste filtrent déjà sur
+  `isOpponent: false`.
 - **Un import qui cherche sur le nom exact fabrique des doublons à chaque
   passage.** C'est arrivé pour de bon : un script relancé après une fusion a
   recréé « Max Hicks » à côté de « Maxwell Hicks », « Matteo Le Corvec » à côté
@@ -218,11 +219,29 @@ pas de `matchday` et que son `round` ne commence pas par « Poule ».
   faire échouer le match entier**, pas seulement la ligne. Sur un changement,
   un nom non reconnu fausse les minutes des deux joueurs concernés ; et le plus
   souvent, c'est la composition en base qui est fausse (voir « Limites
-  connues »). L'appariement se fait sur le nom **normalisé**, en acceptant
-  qu'un nom soit contenu dans l'autre — les sources officielles écrivent
-  « Lewis Wesley LUDLAM » ou « Komiti junior ALAINUUESE » — à condition que la
-  correspondance reste unique. Deux frères sur la même feuille (Moses et Paul
-  Alo Emile) se départagent au prénom.
+  connues »).
+
+  L'appariement compare les **noms complets mot à mot**, jamais le seul nom de
+  famille : les deux sources ne coupent pas le nom au même endroit, la LNR
+  écrivant « Levani Botia | VEIVUKE » là où la base porte « Levani | Botia ».
+  Un mot en vaut un autre s'il en est le début (« Nafi » pour « Nafitalai »),
+  ce qui absorbe les seconds prénoms des feuilles officielles — « Lewis Wesley
+  LUDLAM », « Komiti junior ALAINUUESE ». Un **mot du nom de famille pèse plus
+  lourd** qu'un prénom partagé : le banc bayonnais aligne Lucas Martin et Lucas
+  Paulos quand la feuille annonce « Lucas Martin PAULOS ADLER ». Un seul mot
+  commun ne suffit que s'il vient du nom de famille, ou si les noms de famille
+  sont identiques — « Biyi Alo » pour « Akinbiyi Olabamigbe ALO ». En cas
+  d'ex æquo, on échoue plutôt que de trancher : deux frères sur la même feuille
+  (Moses et Paul Alo Emile) se départagent d'eux-mêmes au prénom.
+
+  Deux patronymes sans rien de commun qui désignent la même personne relèvent
+  de la table de **noms d'usage** de `scripts/lib/noms.ts`, à compléter à la
+  main — jamais d'un assouplissement de la règle générale.
+- **Une composition qui n'aligne pas quinze titulaires fait échouer le match.**
+  Chaque titulaire de trop ajoute jusqu'à 80 minutes fictives au total de
+  l'équipe, sans qu'aucun autre contrôle ne s'en aperçoive : les points
+  retombent, les essais aussi. La LNR elle-même dessinait seize Lyonnais sur
+  son terrain du 29 octobre 2022.
 - Les statistiques agrégées de saison doivent correspondre au classement
   officiel avant d'être écrites (cf. `close-season-2025-2026.ts`).
 - Après toute saisie touchant les scores ou les essais, relancer
@@ -533,7 +552,7 @@ menée en remontant le temps saison par saison.
   existe et s'affiche, mais la sanction ne peut pas figurer dans la chronologie.
 - Les fiches joueur affichent séparément « Matchs avec l'USAP » et « Matchs
   contre l'USAP ». Les statistiques ne comptent que les premiers. Toute nouvelle
-  requête sur les joueurs doit filtrer `isOpponent: false`, sinon les ~1 236
+  requête sur les joueurs doit filtrer `isOpponent: false`, sinon les 1 259
   adversaires présents dans `players` faussent le résultat. Le tableau « contre
   l'USAP » n'affiche d'ailleurs ni minutes ni réalisations : le détail saisi
   côté adverse n'est visible que sur les pages de match.
@@ -546,14 +565,17 @@ menée en remontant le temps saison par saison.
   | MANQUANT / EN TROP | 8 matchs | **0** |
   | NUMÉRO | ~100 | **0** |
   | CAPITAINE | 78 | **0** |
-  | ÉCRITURE | ~70 | 66 |
+  | ÉCRITURE | ~70 | 65 |
 
   Les dossards, les brassards de capitaine et les neuf identités fautives ont
-  été repris depuis les feuilles officielles. Restent les ÉCRITURE, qui sont
-  pour l'essentiel des variantes de bonne foi — diminutifs (« Billy » pour
-  Viliami Vunipola, « Tom » pour Thomas Staniforth) ou prénom d'usage. Une
-  exception connue : la composition de Grenoble au barrage 2024-2025, dont
-  quatorze prénoms sont inventés pour les bons joueurs.
+  été repris depuis les feuilles officielles. Restent les ÉCRITURE, réparties
+  sur 29 matchs, qui sont pour l'essentiel des variantes de bonne foi —
+  diminutifs (« Billy » pour Viliami Vunipola, « Tom » pour Thomas Staniforth)
+  ou prénom d'usage. Une exception connue : la composition de Grenoble au
+  barrage 2024-2025, dont quatorze prénoms sont inventés pour les bons joueurs.
+
+  Neuf feuilles de 2022-2023 restent illisibles, la LNR n'en publiant pas les
+  compositions ; dix-neuf matchs de coupe d'Europe sont hors de son périmètre.
 
   Devant un nom qui ne s'apparie pas, soupçonner la base avant la source.
 - **Les matchs de coupe d'Europe sont le seul trou qui reste côté adverse.**
