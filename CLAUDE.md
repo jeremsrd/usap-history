@@ -574,17 +574,12 @@ Par ordre de valeur.
    rattachées à aucune feuille et peuvent disparaître. `merge-players.ts`
    exécute la fusion une fois la paire vérifiée, `rename-player.ts` pose le nom
    retenu.
-5. **Relier les événements adverses à leurs joueurs** : 922 des 1 086
-   n'ont pas de `playerId` — 258 en 2023-2024, 247 en 2024-2025, 226 en
-   2022-2023, 191 en 2025-2026. Les feuilles portent désormais l'identité de
-   chaque marqueur adverse : le rapprochement se ferait sur la minute et le
-   type d'événement.
-6. **Aligner les compositions de l'USAP sur les feuilles officielles.**
+5. **Aligner les compositions de l'USAP sur les feuilles officielles.**
    `fix-opponent-lineup.ts --usap` l'a fait sur les dix-huit matchs de coupe,
    où six feuilles intervertissaient deux dossards catalans. Il reste une
    quarantaine de matchs de championnat où la LNR et la base divergent, jamais
    examinés — surtout des brassards de capitaine.
-7. **Le fond** : affluences (33 matchs sur 126), photos et biographies (1
+6. **Le fond** : affluences (33 matchs sur 126), photos et biographies (1
    joueur sur 144), et la phase 4 — 114 saisons sans aucun match.
 
 114 saisons sur 119 n'ont encore aucun match : c'est le chantier de la phase 4,
@@ -629,9 +624,14 @@ menée en remontant le temps saison par saison.
   coupe.** `fix-opponent-lineup.ts --usap` propose encore des corrections sur
   une quarantaine de matchs de championnat — surtout des brassards de
   capitaine — qui n'ont jamais été examinées.
-- Les événements de la chronologie ne sont reliés à un joueur que du côté USAP
-  sur la plupart des saisons : 922 des 1 086 événements adverses n'ont pas de
-  `playerId`. Les nouvelles saisies relient les deux camps.
+- **`MatchEvent.playerId` ne sert presque à rien en l'état.** 922 des 1 086
+  événements adverses ne le renseignent pas, mais la page publique du match ne
+  le lit pas : elle affiche `event.description`, où le nom du marqueur est déjà
+  écrit en clair. Seul le gestionnaire d'événements de l'admin s'en sert, pour
+  afficher le nom à côté de la ligne. Le remplir ne se justifiera que le jour
+  où la chronologie renverra vers les fiches joueur — c'est le travail
+  d'interface qui a de la valeur, pas la colonne. Les réalisations par joueur
+  adverse, elles, sont complètes : elles vivent dans `MatchPlayer`.
 - Erreur d'hydratation React sur les pages de match, antérieure et non
   diagnostiquée (probablement `next-themes`).
 - Affluences éparses — 33 matchs sur 126, l'EPCR ayant fourni celles des
