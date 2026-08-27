@@ -40,9 +40,26 @@ export function mots(nom: string): string[] {
     .filter((mot) => mot.length >= 3);
 }
 
-/** Un mot en vaut un autre s'il en est le début : « Nafi » pour « Nafitalai ». */
+/**
+ * Noms d'usage : deux mots sans rien de commun qui désignent la même personne.
+ *
+ * Le seul cas qui ne relève ni de l'accent, ni de l'abréviation, ni de la
+ * coupure — un joueur connu sous deux patronymes différents. La table est
+ * **vérifiée à la main**, jamais devinée : y ajouter une paire, c'est affirmer
+ * que ce sont deux noms d'un même homme.
+ *
+ * Waisea Nayacalevu Vuidravuwalu : la LNR l'inscrit sous Vuidravuwalu, la base
+ * le porte sous Nayacalevu, comme la presse française.
+ */
+const NOMS_DUSAGE: string[][] = [["nayacalevu", "vuidravuwalu"]];
+
+/**
+ * Un mot en vaut un autre s'il en est le début — « Nafi » pour « Nafitalai » —
+ * ou s'il en est le nom d'usage déclaré.
+ */
 export function memeMot(a: string, b: string): boolean {
-  return a === b || a.startsWith(b) || b.startsWith(a);
+  if (a === b || a.startsWith(b) || b.startsWith(a)) return true;
+  return NOMS_DUSAGE.some((noms) => noms.includes(a) && noms.includes(b));
 }
 
 /** Mots de `nom` sans correspondant dans `reference`. */

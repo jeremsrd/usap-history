@@ -362,8 +362,13 @@ bien les valeurs *corrigées*, pas celles encore en base, sinon le garde-fou men
 (le script d'une feuille qui fusionne des doublons doit, en simulation, exclure
 de son index les fiches qu'il aurait absorbées).
 
-Le code réutilisable va dans `scripts/lib/`. Un seul module pour l'instant,
-`lnr.ts`, client des feuilles de match de la LNR.
+Le code réutilisable va dans `scripts/lib/` : `lnr.ts`, client des feuilles de
+match de la LNR, et `noms.ts`, rapprochement des noms entre une source et la
+base. Ce dernier porte une table de **noms d'usage** — deux patronymes sans
+rien de commun qui désignent la même personne, comme Waisea Nayacalevu, que la
+LNR inscrit sous Vuidravuwalu. La table est **vérifiée à la main** : y ajouter
+une paire, c'est affirmer que ce sont deux noms d'un même homme, et c'est le
+seul moyen d'apparier ces cas-là sans relâcher la règle générale.
 
 **Quand une source se révèle fautive, restreindre le script qui s'en servait**
 plutôt que de le laisser en l'état : `seed-opponent-scorers-2024-2025.ts` a été
@@ -384,6 +389,7 @@ subsiste et ne puisse recréer les doublons.
 | `normalize-opponent-players.ts` | rattache les anciennes lignes `opponentPlayerName` à un vrai `Player` |
 | `merge-duplicate-players-2026.ts` | fusion de doublons, paires listées en dur et vérifiées à la main |
 | `merge-players.ts` | fusionne deux fiches désignées par leur identifiant (`--keep`, `--drop`, `--nom`) ; ne cherche rien de lui-même, refuse la fusion si les deux figurent sur un même match |
+| `rename-player.ts` | renomme une fiche, slug compris — un slug refait à la main sans le CUID rend la fiche introuvable |
 | `close-season-2025-2026.ts` | modèle de clôture de saison, avec garde-fou sur le classement officiel |
 | `seed-opponent-sheet.ts` | **le script du chantier adverse** : reprend une saison entière depuis la LNR — réalisations, cartons et temps de jeu reconstitués à partir des changements. Prend la saison en argument (`2023-2024`), `--dry` pour simuler, `--detail` pour le relevé des écarts avec la base, `--match=AAAA-MM-JJ` pour n'en reprendre qu'un |
 | `seed-opponent-scorers-2024-2025.ts` | même travail depuis ESPN, restreint au Challenge européen faute de couverture LNR ; pas de temps de jeu |
@@ -508,10 +514,8 @@ Par ordre de valeur.
    Maurouard (Jérémie / Jérémy), Rey (Jérôme / Joël / Lucas), et le choix
    entre « Nacho Brex » et « Juan Ignacio Brex ». Huit fiches ne sont
    rattachées à aucune feuille et peuvent disparaître. `merge-players.ts`
-   exécute la fusion une fois la paire vérifiée. Une piste à vérifier : la
-   fiche « Waisea Naituvi », rattachée au seul huitième de finale de Challenge
-   du 5 avril 2025 face au Racing 92, pourrait être une troisième écriture de
-   Waisea Vuidravuwalu — elle vient d'ESPN, qui écorche les noms composés.
+   exécute la fusion une fois la paire vérifiée, `rename-player.ts` pose le nom
+   retenu.
 6. **Mettre à 0 les neuf compteurs `penaltyTries` restés `null`**, là où le
    détail des points retombe sans essai de pénalité. Tant qu'ils sont `null`,
    toute garde écrite avec `<>` reste muette sur ces matchs.
