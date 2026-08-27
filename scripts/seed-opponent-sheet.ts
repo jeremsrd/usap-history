@@ -86,6 +86,56 @@ if (!SAISON) {
 const DUREE = 80;
 
 /**
+ * Changements que la feuille officielle rapporte de travers, corrigés à la
+ * main. Une entrée ici, c'est affirmer que la LNR se trompe — à ne poser
+ * qu'avec la démonstration sous les yeux.
+ *
+ * **Pau, 22 février 2026.** La feuille annonce à la 56ᵉ « entre Clément
+ * MONDINAT, sort Grégoire ARFEUIL ». Deux choses l'interdisent :
+ *   - Arfeuil ne peut pas sortir, il n'était jamais entré. Il porte le 22, et
+ *     aucun changement ne le fait entrer ;
+ *   - Mondinat ne figure pas parmi les vingt-trois que la LNR publie
+ *     elle-même, et n'apparaît sur aucun des deux terrains qu'elle dessine.
+ *
+ * Le second terrain, celui de la fin de match, dit ce qui s'est passé :
+ * Valentino n'y est plus, la ligne de trois-quarts a glissé
+ * (Grandidier-Nkanang 14→11, Decron 13→12, Maddocks 15→13, Luc 11→15) et
+ * **Arfeuil occupe le 14**. Valentino, lui, ne figure dans aucun changement
+ * alors que tous les autres sortants pauois en ont un.
+ *
+ * Les deux noms de ce seul enregistrement sont donc décalés d'un cran : le
+ * sortant est Valentino, l'entrant Arfeuil, et Mondinat n'est que l'occupant
+ * du 22 sur le banc de fin de match. La feuille ment sur les noms — ce n'est
+ * pas la première fois, `conversionPlayer` en fait autant.
+ */
+const CHANGEMENTS_CORRIGES: Record<
+  string,
+  Array<{ minute: number; entrant: string; sortant: string }>
+> = {
+  "2026-02-22": [{ minute: 56, entrant: "Grégoire Arfeuil", sortant: "Quentin Valentino" }],
+};
+
+/** Applique les corrections connues aux changements d'une feuille. */
+function corriger(feuille: LnrFeuille, jour: string): LnrFeuille {
+  const corrections = CHANGEMENTS_CORRIGES[jour];
+  if (!corrections) return feuille;
+
+  const nom = (complet: string) => {
+    const mots = complet.trim().split(/\s+/);
+    return { firstName: mots.slice(0, -1).join(" "), lastName: mots[mots.length - 1] };
+  };
+
+  return {
+    ...feuille,
+    changements: feuille.changements.map((c) => {
+      const correction = corrections.find((x) => x.minute === c.minute);
+      if (!correction) return c;
+      return { ...c, entrant: nom(correction.entrant), sortant: nom(correction.sortant) };
+    }),
+  };
+}
+
+/**
  * Segment d'URL du barrage d'accession. La LNR l'a renommé au fil des
  * saisons — « access » jusqu'en 2023-2024, « access-top-14 » depuis
  * 2024-2025 : on essaie les deux, en commençant par le plus probable.
@@ -385,7 +435,7 @@ async function main() {
       continue;
     }
 
-    const feuille = await lireFeuille(url);
+    const feuille = corriger(await lireFeuille(url), jour);
     if ((feuille.campUsap === "home") !== match.isHome) {
       echecs.push(
         `${etiquette} : ${url} donne l'USAP ${feuille.campUsap}, la base dit ${match.isHome ? "home" : "away"}`,

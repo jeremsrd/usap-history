@@ -314,6 +314,18 @@ pas (affluence).
   - un retour de remplacement temporaire n'est pas toujours enregistré. Le
     total des minutes d'une équipe tombe alors sous 1 200 — le signaler, ne
     pas inventer la minute manquante ;
+  - **un changement peut porter deux noms faux à la fois.** À Aimé-Giral le
+    22 février 2026, la feuille fait entrer Clément Mondinat à la 56ᵉ à la
+    place de Grégoire Arfeuil : or Arfeuil ne peut pas sortir, il n'était
+    jamais entré, et Mondinat ne figure ni parmi les vingt-trois publiés, ni
+    sur aucun des deux terrains dessinés. Le terrain de fin de match, lui, est
+    cohérent — Valentino n'y est plus, la ligne de trois-quarts a glissé et
+    Arfeuil occupe le 14. Les deux noms de l'enregistrement sont décalés d'un
+    cran. `seed-opponent-sheet.ts` porte une table `CHANGEMENTS_CORRIGES`
+    pour ces cas-là, **vérifiés à la main** : y ajouter une ligne, c'est
+    affirmer que la LNR se trompe, et il faut la démonstration sous les yeux.
+    Le contrôle des minutes tranche : la version corrigée retombe sur 1 200,
+    pas l'autre ;
   - les **postes affichés sur `/compositions` ne sont pas fiables** (un ailier
     y est donné « demi de mêlée »). Ils décrivent le poste de référence du
     joueur, pas celui du jour : continuer à déduire `positionPlayed` du numéro
@@ -539,7 +551,7 @@ retombe sur le score, essais de pénalité déduits :
 
 | Saison | Lignes avec minutes | Marqueurs | Matchs cohérents |
 |---|---|---|---|
-| 2025-2026 | 732 / 736 | 156 | 32 / 32 |
+| 2025-2026 | 733 / 736 | 155 | 32 / 32 |
 | 2024-2025 | 728 / 736 | 117 | 32 / 32 |
 | 2023-2024 | 690 / 690 | 115 | 30 / 30 |
 | 2022-2023 | 706 / 713 | 135 | 31 / 31 |
@@ -557,29 +569,23 @@ phase d'un barrage s'écrit `access` et non `access-top-14`.
 
 Par ordre de valeur.
 
-1. **Fusionner `feat/feuilles-adverses-lnr`** dans `master` — rien n'est
-   poussé sur `origin`.
-2. **Un seul match reste bloqué** : Pau, 22 février 2026. La feuille LNR fait
-   entrer Clément Mondinat à la 56ᵉ, qui ne figure pas sur les 23 qu'elle
-   publie elle-même. Tant que ce vingt-quatrième homme n'est pas arbitré, la
-   ligne de Quentin Valentino reste vide.
-3. **Corriger les prénoms de la composition grenobloise** du barrage
+1. **Corriger les prénoms de la composition grenobloise** du barrage
    2024-2025 : quatorze sont inventés pour les bons joueurs.
    `fix-opponent-lineup.ts` ne les voit pas, il ne traite que les identités
    franchement fausses ; l'audit les classe en ÉCRITURE.
-4. **Arbitrer les doublons de fiches** que l'audit a fait apparaître :
+2. **Arbitrer les doublons de fiches** que l'audit a fait apparaître :
    Alainu'uese (Brian / Junior / Komiti), Javakhia (Giorgi / Grigol),
    Maurouard (Jérémie / Jérémy), Rey (Jérôme / Joël / Lucas), et le choix
    entre « Nacho Brex » et « Juan Ignacio Brex ». Huit fiches ne sont
    rattachées à aucune feuille et peuvent disparaître. `merge-players.ts`
    exécute la fusion une fois la paire vérifiée, `rename-player.ts` pose le nom
    retenu.
-5. **Aligner les compositions de l'USAP sur les feuilles officielles.**
+3. **Aligner les compositions de l'USAP sur les feuilles officielles.**
    `fix-opponent-lineup.ts --usap` l'a fait sur les dix-huit matchs de coupe,
    où six feuilles intervertissaient deux dossards catalans. Il reste une
    quarantaine de matchs de championnat où la LNR et la base divergent, jamais
    examinés — surtout des brassards de capitaine.
-6. **Le fond** : affluences (33 matchs sur 126), photos et biographies (1
+4. **Le fond** : affluences (33 matchs sur 126), photos et biographies (1
    joueur sur 144), et la phase 4 — 114 saisons sans aucun match.
 
 114 saisons sur 119 n'ont encore aucun match : c'est le chantier de la phase 4,
