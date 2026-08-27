@@ -117,7 +117,7 @@ confrontations avec l'USAP, et de gérer les joueurs passés par les deux camps
   `lastName equals` ne suffit pas — il rate « Guerois-Galisson » vs
   « Guerois Galisson », « Bécognée » vs « Becognee ». Construire un index en
   mémoire une fois, puis chercher dedans.
-- `players` contient donc majoritairement des adversaires : 1 259 sur 1 383,
+- `players` contient donc majoritairement des adversaires : 1 251 sur 1 375,
   quand 144 seulement ont porté le maillot catalan — 28 figurent des deux
   côtés. C'est normal. Les pages de liste filtrent déjà sur
   `isOpponent: false`.
@@ -463,6 +463,7 @@ doublons.
 | `merge-duplicate-players-2026.ts` | fusion de doublons, paires listées en dur et vérifiées à la main |
 | `merge-players.ts` | fusionne deux fiches désignées par leur identifiant (`--keep`, `--drop`, `--nom`) ; ne cherche rien de lui-même, refuse la fusion si les deux figurent sur un même match |
 | `rename-player.ts` | renomme une fiche, slug compris — un slug refait à la main sans le CUID rend la fiche introuvable |
+| `reassign-match-player.ts` | change le joueur porté par un dossard sur une feuille, quand la base a mis quelqu'un d'autre et que les deux noms se ressemblent trop pour que l'audit s'en aperçoive |
 | `close-season-2025-2026.ts` | modèle de clôture de saison, avec garde-fou sur le classement officiel |
 | `seed-opponent-sheet.ts` | **le script du chantier adverse** : reprend une saison entière depuis la LNR — réalisations, cartons et temps de jeu reconstitués à partir des changements. Prend la saison en argument (`2023-2024`), `--dry` pour simuler, `--detail` pour le relevé des écarts avec la base, `--match=AAAA-MM-JJ` pour n'en reprendre qu'un |
 | `seed-cup-sheet.ts` | **le pendant pour les coupes d'Europe**, depuis l'EPCR : réalisations, cartons et temps de jeu des **deux camps**, plus l'arbitre, l'affluence et la mi-temps. Sans argument il reprend les dix-huit matchs européens ; `--dry`, `--detail`, `--match=AAAA-MM-JJ` comme le précédent |
@@ -569,23 +570,21 @@ phase d'un barrage s'écrit `access` et non `access-top-14`.
 
 Par ordre de valeur.
 
-1. **Corriger les prénoms de la composition grenobloise** du barrage
-   2024-2025 : quatorze sont inventés pour les bons joueurs.
-   `fix-opponent-lineup.ts` ne les voit pas, il ne traite que les identités
-   franchement fausses ; l'audit les classe en ÉCRITURE.
-2. **Arbitrer les doublons de fiches** que l'audit a fait apparaître :
-   Alainu'uese (Brian / Junior / Komiti), Javakhia (Giorgi / Grigol),
-   Maurouard (Jérémie / Jérémy), Rey (Jérôme / Joël / Lucas), et le choix
-   entre « Nacho Brex » et « Juan Ignacio Brex ». Huit fiches ne sont
-   rattachées à aucune feuille et peuvent disparaître. `merge-players.ts`
-   exécute la fusion une fois la paire vérifiée, `rename-player.ts` pose le nom
-   retenu.
-3. **Aligner les compositions de l'USAP sur les feuilles officielles.**
+1. **Arbitrer les doublons de fiches** qui restent : Alainu'uese (Brian /
+   Junior / Komiti), Maurouard (Jérémie / Jérémy), Rey (Jérôme / Joël /
+   Lucas), et le choix entre « Nacho Brex » et « Juan Ignacio Brex ». Huit
+   fiches ne sont rattachées à aucune feuille — dont Clément Mondinat, que la
+   feuille de Pau du 22 février 2026 inventait — mais d'autres sont des
+   figures historiques (Aimé Giral, Jean-François Imbernon) qu'on n'efface pas
+   sans réfléchir. `merge-players.ts` fusionne une paire vérifiée,
+   `rename-player.ts` pose le nom retenu, `reassign-match-player.ts` change le
+   joueur porté par un dossard.
+2. **Aligner les compositions de l'USAP sur les feuilles officielles.**
    `fix-opponent-lineup.ts --usap` l'a fait sur les dix-huit matchs de coupe,
    où six feuilles intervertissaient deux dossards catalans. Il reste une
    quarantaine de matchs de championnat où la LNR et la base divergent, jamais
    examinés — surtout des brassards de capitaine.
-4. **Le fond** : affluences (33 matchs sur 126), photos et biographies (1
+3. **Le fond** : affluences (33 matchs sur 126), photos et biographies (1
    joueur sur 144), et la phase 4 — 114 saisons sans aucun match.
 
 114 saisons sur 119 n'ont encore aucun match : c'est le chantier de la phase 4,
@@ -597,7 +596,7 @@ menée en remontant le temps saison par saison.
   existe et s'affiche, mais la sanction ne peut pas figurer dans la chronologie.
 - Les fiches joueur affichent séparément « Matchs avec l'USAP » et « Matchs
   contre l'USAP ». Les statistiques ne comptent que les premiers. Toute nouvelle
-  requête sur les joueurs doit filtrer `isOpponent: false`, sinon les 1 259
+  requête sur les joueurs doit filtrer `isOpponent: false`, sinon les 1 251
   adversaires présents dans `players` faussent le résultat. Le tableau « contre
   l'USAP » n'affiche d'ailleurs ni minutes ni réalisations : le détail saisi
   côté adverse n'est visible que sur les pages de match.
@@ -610,14 +609,24 @@ menée en remontant le temps saison par saison.
   | MANQUANT / EN TROP | 8 matchs | **0** |
   | NUMÉRO | ~100 | **0** |
   | CAPITAINE | 78 | **0** |
-  | ÉCRITURE | ~70 | 65 |
+  | ÉCRITURE | ~70 | 51 |
 
-  Les dossards, les brassards de capitaine et les neuf identités fautives ont
-  été repris depuis les feuilles officielles. Restent les ÉCRITURE, réparties
-  sur 29 matchs, qui sont pour l'essentiel des variantes de bonne foi —
-  diminutifs (« Billy » pour Viliami Vunipola, « Tom » pour Thomas Staniforth)
-  ou prénom d'usage. Une exception connue : la composition de Grenoble au
-  barrage 2024-2025, dont quatorze prénoms sont inventés pour les bons joueurs.
+  Les dossards, les brassards de capitaine et les identités fautives ont été
+  repris depuis les feuilles officielles. Restent les ÉCRITURE, réparties sur
+  28 matchs, qui sont des variantes de bonne foi — diminutifs (« Billy » pour
+  Viliami Vunipola, « Tom » pour Thomas Staniforth) ou prénom d'usage
+  (« Jonny » pour Jonathan Gray, « Paddy » pour David Patrick Jackson).
+
+  **Une divergence d'écriture peut cacher un doublon.** La composition de
+  Grenoble au barrage 2024-2025 en portait dix-sept, toutes sur le prénom, le
+  nom de famille étant juste. Neuf d'entre elles n'étaient pas des fautes
+  d'orthographe mais des **fiches en double** de joueurs déjà en base sous
+  leur vrai prénom — Zack Gauthier, Mathis Sarragallet, Pio Muarua, Wilfried
+  Hulleu, Julien Hériteau, Julien Farnoux, Tommy Raynaud, Giorgi Javakhia,
+  Eric Escande —, fusionnées depuis. Une dixième était une confusion de
+  personnes : le 9 grenoblois était rattaché à **Baptiste** Couilloud, demi de
+  mêlée de Lyon, au lieu de son frère **Barnabé**. Devant un prénom qui
+  diverge, chercher d'abord si le bon joueur n'existe pas déjà ailleurs.
 
   Neuf feuilles de 2022-2023 restent illisibles, la LNR n'en publiant pas les
   compositions. Les dix-huit matchs de coupe, eux, ont été confrontés au flux
