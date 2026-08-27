@@ -70,6 +70,12 @@ export interface LnrFeuille {
   url: string;
   /** Camp occupé par l'USAP sur cette feuille. */
   campUsap: Camp;
+  /**
+   * Coup d'envoi réel, ISO avec fuseau — « 2021-09-04T16:05:00+02:00 ». Seule
+   * source de l'heure du match : le calendrier n'affiche l'horaire que des
+   * rencontres à venir.
+   */
+  coupDEnvoi: string | null;
   faits: LnrFait[];
   changements: LnrChangement[];
 }
@@ -108,6 +114,48 @@ export async function chercherFeuille(
   );
   if (!liens?.length) return null;
   return `${RACINE}/${liens[0].replace(/'+$/, "")}`;
+}
+
+export interface LnrRencontre {
+  url: string;
+  /** Club recevant et club visiteur, tels que la LNR les nomme dans l'URL. */
+  recevant: string;
+  visiteur: string;
+  scoreRecevant: number;
+  scoreVisiteur: number;
+}
+
+/**
+ * Résultat de l'USAP sur une phase donnée, lu sur la page de calendrier.
+ *
+ * Le score ne se trouve nulle part ailleurs de façon sûre : celui que la
+ * feuille de match égrène au fil des actions saute parfois une transformation
+ * (cf. `lireFeuille`). Le lien de la carte, lui, porte le score final.
+ */
+export async function lireCalendrier(
+  saison: string,
+  phase: string,
+): Promise<LnrRencontre | null> {
+  const html = (await lirePage(`${RACINE}/calendrier-et-resultats/${saison}/${phase}`))
+    .replace(/\s+/g, " ");
+  const carte = html.match(
+    new RegExp(
+      `href="${RACINE}/feuille-de-match/${saison}/${phase}/(\\d+)-([a-z0-9-]*perpignan[a-z0-9-]*)"` +
+        `\\s*class="match-line__score"\\s*>\\s*(\\d+) - (\\d+)\\s*<`,
+    ),
+  );
+  if (!carte) return null;
+
+  const [, identifiant, slug, dom, ext] = carte;
+  const clubs = slug.replace(/^perpignan-/, "perpignan|").replace(/-perpignan$/, "|perpignan");
+  const [recevant, visiteur] = clubs.split("|");
+  return {
+    url: `${RACINE}/feuille-de-match/${saison}/${phase}/${identifiant}-${slug}`,
+    recevant,
+    visiteur,
+    scoreRecevant: Number(dom),
+    scoreVisiteur: Number(ext),
+  };
 }
 
 // =============================================================================
@@ -260,6 +308,10 @@ export async function lireFeuille(url: string): Promise<LnrFeuille> {
   return {
     url,
     campUsap: campUsapDepuisUrl(url),
+    // Le bandeau de la prochaine journée porte le même champ en haut de page :
+    // on s'ancre sur le composant du match, pas sur le premier venu.
+    coupDEnvoi:
+      html.match(/header-timeline[\s\S]{0,600}?"firstPeriodStartDate":"([^"]+)"/)?.[1] ?? null,
     faits: [...faits.values()].sort((a, b) => a.minute - b.minute),
     changements: [...changements.values()].sort((a, b) => a.minute - b.minute),
   };
@@ -278,6 +330,8 @@ export interface LnrTitulaire extends LnrJoueur {
 export interface LnrCompositions {
   usap: LnrTitulaire[];
   adversaire: LnrTitulaire[];
+  /** Arbitre central, tel que la page le nomme parmi les officiels. */
+  arbitre: string | null;
 }
 
 /**
@@ -474,7 +528,15 @@ export async function lireCompositions(url: string): Promise<LnrCompositions> {
   const trier = (liste: LnrTitulaire[]) =>
     [...liste].sort((a, b) => a.numero - b.numero);
 
-  return { usap: trier(usap), adversaire: trier(autre[1]) };
+  // Les officiels sont rendus comme des joueurs, leur poste portant le rôle.
+  const arbitre =
+    html
+      .match(
+        /player-block__name">([^<]*)<\/p>\s*<p class="player-block__position">\s*Arbitre Central/,
+      )?.[1]
+      ?.trim() ?? null;
+
+  return { usap: trier(usap), adversaire: trier(autre[1]), arbitre };
 }
 
 /** Points marqués par un fait de match. */

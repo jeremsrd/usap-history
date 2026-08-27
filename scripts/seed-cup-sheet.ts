@@ -41,8 +41,8 @@
 
 import { PrismaClient } from "@prisma/client";
 import { memeJoueur } from "./lib/noms";
+import { trouverOuCreerArbitre } from "./lib/arbitres";
 import { USAP, chercherMatchUsap, lireMatch, type EpcrEquipe, type EpcrJoueur } from "./lib/epcr";
-import { generateRefereeSlug } from "../src/lib/slugs";
 
 const prisma = new PrismaClient();
 
@@ -68,38 +68,6 @@ interface Ligne {
     points: number;
     tries: number;
   };
-}
-
-/** « Adam Leal » → prénom et nom, le dernier mot faisant le patronyme. */
-function separerNom(complet: string): { firstName: string; lastName: string } {
-  const mots = complet.trim().split(/\s+/);
-  return {
-    firstName: mots.slice(0, -1).join(" "),
-    lastName: mots[mots.length - 1] ?? complet,
-  };
-}
-
-/** Fiche arbitre correspondant au nom donné, créée au besoin. */
-async function trouverOuCreerArbitre(nom: string): Promise<string | null> {
-  const { firstName, lastName } = separerNom(nom);
-  if (!lastName) return null;
-
-  const tous = await prisma.referee.findMany({ select: { id: true, firstName: true, lastName: true } });
-  const candidats = tous.filter((a) => memeJoueur(`${a.firstName} ${a.lastName}`, nom));
-  if (candidats.length === 1) return candidats[0].id;
-  if (candidats.length > 1) {
-    throw new Error(`arbitre « ${nom} » : ${candidats.length} fiches candidates — à arbitrer`);
-  }
-  if (DRY_RUN) return null;
-
-  const cree = await prisma.referee.create({
-    data: { firstName, lastName, slug: `temp-${Date.now()}` },
-  });
-  await prisma.referee.update({
-    where: { id: cree.id },
-    data: { slug: generateRefereeSlug(firstName, lastName, cree.id) },
-  });
-  return cree.id;
 }
 
 /** Écarts entre la feuille et la base, pour le relevé de simulation. */
@@ -335,7 +303,9 @@ async function main() {
     }
 
     const refereeId =
-      feuille.arbitre && !match.referee ? await trouverOuCreerArbitre(feuille.arbitre) : null;
+      feuille.arbitre && !match.referee
+        ? await trouverOuCreerArbitre(prisma, feuille.arbitre, DRY_RUN)
+        : null;
     await prisma.match.update({
       where: { id: match.id },
       data: {

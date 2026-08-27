@@ -283,6 +283,17 @@ pas (affluence).
   entités HTML (`&quot;`). Le JavaScript ne fait que l'afficher. Le module
   décode les entités puis isole chaque objet par comptage d'accolades.
 
+  Trois choses ne sont pas sur la feuille elle-même :
+  - le **score final** se lit sur la page de calendrier
+    (`lireCalendrier(saison, phase)`), et c'est lui qui fait foi — celui que la
+    feuille égrène au fil des actions saute parfois une transformation ;
+  - le **coup d'envoi** à la minute près se lit dans le composant
+    `header-timeline` de la feuille (`coupDEnvoi`), et nulle part ailleurs : le
+    calendrier n'affiche l'horaire que des rencontres à venir. Attention, le
+    bandeau de la prochaine journée porte le même champ en haut de chaque page ;
+  - l'**arbitre central** est rendu comme un joueur sur `/compositions`, son
+    poste portant le rôle (`lireCompositions().arbitre`).
+
   Ce que la feuille donne, et que personne d'autre ne donne aussi bien :
   - le **score après chaque fait de match** (`score`, `[recevant, visiteur]`),
     la seule donnée vraiment sûre de la feuille — voir plus bas ;
@@ -446,8 +457,11 @@ bien les valeurs *corrigées*, pas celles encore en base, sinon le garde-fou men
 de son index les fiches qu'il aurait absorbées).
 
 Le code réutilisable va dans `scripts/lib/` : `lnr.ts` pour les feuilles de la
-LNR, `epcr.ts` pour le flux des coupes d'Europe, et `noms.ts` pour le
-rapprochement des noms entre une source et la base. Ce dernier porte une table de **noms d'usage** — deux patronymes sans
+LNR, `epcr.ts` pour le flux des coupes d'Europe, `noms.ts` pour le
+rapprochement des noms entre une source et la base, et `arbitres.ts` pour
+celui des arbitres — plus strict, puisqu'il exige le nom de famille : le corps
+arbitral français aligne assez d'Adrien pour qu'un rapprochement au prénom
+confonde Adrien Marbot et Adrien Descottes. Ce dernier porte une table de **noms d'usage** — deux patronymes sans
 rien de commun qui désignent la même personne, comme Waisea Nayacalevu, que la
 LNR inscrit sous Vuidravuwalu. La table est **vérifiée à la main** : y ajouter
 une paire, c'est affirmer que ce sont deux noms d'un même homme, et c'est le
@@ -479,6 +493,7 @@ doublons.
 | `delete-orphan-players.ts` | supprime les fiches vides de bout en bout — aucune feuille, aucun événement, aucune donnée personnelle ; les figures historiques sans match saisi sont ainsi protégées |
 | `close-season-2025-2026.ts` | modèle de clôture de saison, avec garde-fou sur le classement officiel |
 | `seed-opponent-sheet.ts` | **le script du chantier adverse** : reprend une saison entière depuis la LNR — réalisations, cartons et temps de jeu reconstitués à partir des changements. Prend la saison en argument (`2023-2024`), `--dry` pour simuler, `--detail` pour le relevé des écarts avec la base, `--match=AAAA-MM-JJ` pour n'en reprendre qu'un |
+| `seed-season-2021-2022.ts` | crée les rencontres d'une saison entière — date et heure, compétition, adversaire, lieu, score, réalisations, résultat, bonus, arbitre — puis les agrégats de saison. Premier jalon de la phase 4 |
 | `seed-cup-sheet.ts` | **le pendant pour les coupes d'Europe**, depuis l'EPCR : réalisations, cartons et temps de jeu des **deux camps**, plus l'arbitre, l'affluence et la mi-temps. Sans argument il reprend les dix-huit matchs européens ; `--dry`, `--detail`, `--match=AAAA-MM-JJ` comme le précédent |
 | `audit-opponent-lineups.ts` | confronte les compositions adverses aux feuilles officielles LNR ; lecture seule, à lancer sur une saison ou sur tout |
 | `fix-opponent-lineup.ts` | remet une composition en accord avec la feuille officielle — LNR pour le championnat, EPCR pour les coupes — (identités, dossards, titulaires, capitaine) ; `--usap` traite aussi le camp catalan |
@@ -540,8 +555,10 @@ authentification Supabase, statistiques et recherche. Reste la phase 4
 
 ### Couverture des données
 
-**Tous les matchs en base ont leurs 46 joueurs et leur chronologie.** Ce qui
-varie, c'est le côté adverse et l'annexe.
+**Les matchs de 2022-2023 à 2025-2026 ont leurs 46 joueurs et leur
+chronologie.** 2021-2022, première saison de la phase 4, n'a pour l'instant
+que ses rencontres : ni compositions, ni chronologie — la mi-temps et les
+comptes-rendus non plus, la LNR ne les publiant pas.
 
 Annexe du match :
 
@@ -551,6 +568,7 @@ Annexe du match :
 | 2024-2025 | 32 | 32 | 32 | 24 | 28 | 15 |
 | 2023-2024 | 30 | 30 | 30 | 29 | 30 | 6 |
 | 2022-2023 | 31 | 31 | 30 | 21 | 31 | 4 |
+| 2021-2022 | 31 | 30 | 4 | 0 | 0 | 4 |
 | 2008-2009 | 1 | 1 | 1 | 0 | 1 | 1 |
 
 **Tous les arbitres sont renseignés.** Les quatre qui manquaient à 2022-2023
@@ -570,24 +588,36 @@ retombe sur le score, essais de pénalité déduits :
 | 2023-2024 | 690 / 690 | 115 | 30 / 30 |
 | 2022-2023 | 706 / 713 | 135 | 31 / 31 |
 
-**Le chantier adverse est fini : les 126 matchs de la base sont cohérents**,
-championnat depuis la LNR, coupes d'Europe depuis l'EPCR. Les lignes sans
+**Le chantier adverse est fini sur les quatre saisons saisies : leurs 126
+matchs sont cohérents**, championnat depuis la LNR, coupes d'Europe depuis
+l'EPCR. Les 31 matchs de 2021-2022 n'ont pas encore de composition. Les lignes sans
 minutes sont celles des remplaçants qui ne sont pas entrés en jeu — `null` y
 vaut « n'a pas joué », et non « on ne sait pas ».
 
-Attention en reprenant une saison ancienne : avant 2024-2025, le segment de
-phase d'un barrage s'écrit `access` et non `access-top-14`.
-`seed-opponent-sheet.ts` essaie les deux.
+Attention en reprenant une saison ancienne : le segment de phase du barrage a
+changé trois fois — `match-daccession` en 2021-2022, `access` en 2022-2023,
+`access-top-14` depuis 2024-2025. `seed-opponent-sheet.ts` essaie les deux
+derniers.
 
 ### Où reprendre
 
 Par ordre de valeur.
 
-1. **Le fond** : affluences (33 matchs sur 126), photos et biographies (1
-   joueur sur 144), et la phase 4 — 114 saisons sans aucun match.
+1. **Compléter 2021-2022** : ses 31 rencontres existent, il leur manque les
+   compositions, la chronologie et la clôture éditoriale — entraîneur,
+   président, bilan rédigé. La LNR publie les compositions de la saison, et le
+   flux de l'EPCR celles des matchs de Challenge.
+2. **Poursuivre la phase 4** en remontant : 2020-2021 (Pro D2, titre et
+   montée), puis 2019-2020. `seed-season-2021-2022.ts` donne le modèle — mais
+   la LNR sépare le Top 14 de la Pro D2, et `lnr.ts` ne connaît que le premier.
+3. **Le fond** : affluences (37 matchs sur 157), photos et biographies (1
+   joueur sur 144), et 113 saisons sans aucun match.
 
-114 saisons sur 119 n'ont encore aucun match : c'est le chantier de la phase 4,
-menée en remontant le temps saison par saison.
+113 saisons sur 119 n'ont encore aucun match : c'est le chantier de la phase 4,
+menée en remontant le temps saison par saison. 2021-2022 est la première
+reprise ; son bilan, 9V 0N 17D et 43 points pour une treizième place, est
+calculé depuis les scores officiels mais n'a pas encore été confronté à un
+classement d'époque — le tableau de `fix-bonus-points.ts` ne le connaît pas.
 
 ### Limites connues
 
