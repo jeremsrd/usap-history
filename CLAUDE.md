@@ -383,6 +383,7 @@ subsiste et ne puisse recréer les doublons.
 | `fix-broken-slugs.ts` | réécrit les slugs dont le suffixe ne permet plus de retrouver l'entité (fiche en 404) |
 | `normalize-opponent-players.ts` | rattache les anciennes lignes `opponentPlayerName` à un vrai `Player` |
 | `merge-duplicate-players-2026.ts` | fusion de doublons, paires listées en dur et vérifiées à la main |
+| `merge-players.ts` | fusionne deux fiches désignées par leur identifiant (`--keep`, `--drop`, `--nom`) ; ne cherche rien de lui-même, refuse la fusion si les deux figurent sur un même match |
 | `close-season-2025-2026.ts` | modèle de clôture de saison, avec garde-fou sur le classement officiel |
 | `seed-opponent-sheet.ts` | **le script du chantier adverse** : reprend une saison entière depuis la LNR — réalisations, cartons et temps de jeu reconstitués à partir des changements. Prend la saison en argument (`2023-2024`), `--dry` pour simuler, `--detail` pour le relevé des écarts avec la base, `--match=AAAA-MM-JJ` pour n'en reprendre qu'un |
 | `seed-opponent-scorers-2024-2025.ts` | même travail depuis ESPN, restreint au Challenge européen faute de couverture LNR ; pas de temps de jeu |
@@ -470,12 +471,13 @@ retombe sur le score, essais de pénalité déduits :
 | 2025-2026 | 733 / 736 | 156 | 32 / 32 |
 | 2024-2025 | 729 / 736 | 117 | 32 / 32 |
 | 2023-2024 | 598 / 690 | 103 | 26 / 30 |
-| 2022-2023 | 677 / 713 | 128 | 29 / 31 |
+| 2022-2023 | 700 / 713 | 135 | 30 / 31 |
 
-**Les quatre saisons sont reprises côté championnat.** Les 92 lignes manquantes
-de 2023-2024 sont exactement ses quatre matchs de Challenge européen, que la
-LNR ne couvre pas ; celles de 2022-2023 s'y ajoutent un match de championnat
-resté bloqué. Ce qui reste vide relève désormais de l'EPCR, pas de la LNR.
+**Les quatre saisons sont reprises côté championnat, sans exception.** Les 92
+lignes manquantes de 2023-2024 sont exactement ses quatre matchs de Challenge
+européen, que la LNR ne couvre pas, et les cinq matchs restés incohérents sont
+tous des matchs de coupe. Ce qui reste vide relève désormais de l'EPCR, pas de
+la LNR.
 
 Attention en reprenant une saison ancienne : avant 2024-2025, le segment de
 phase d'un barrage s'écrit `access` et non `access-top-14`.
@@ -493,17 +495,10 @@ Par ordre de valeur.
    temps de jeu digne de ce nom. Bonne nouvelle : leurs pages embarquent aussi
    leur charge utile dans le HTML, `curl` suffit — la doc ci-dessus, qui parle
    encore de navigateur, sera à corriger le jour où ce sera fait.
-3. **Deux matchs de championnat restent bloqués**, tous deux sur une identité
-   que la feuille et la base ne racontent pas pareil :
-   - Toulon, 15 avril 2023 : la LNR fait entrer « Waisea VUIDRAVUWALU », la
-     base porte « Waisea Nayacalevu ». C'est le même homme — Waisea Nayacalevu
-     Vuidravuwalu —, mais les deux noms n'ont aucun mot commun hors le prénom,
-     et l'appariement refuse à juste titre de trancher sur un prénom seul.
-     Renommer la fiche règle les 23 lignes du match.
-   - Pau, 22 février 2026 : la feuille fait entrer Clément Mondinat à la 56ᵉ,
-     qui ne figure pas sur les 23 qu'elle publie elle-même. Tant que ce
-     vingt-quatrième homme n'est pas arbitré, la ligne de Quentin Valentino
-     reste vide.
+3. **Un seul match de championnat reste bloqué** : Pau, 22 février 2026. La
+   feuille fait entrer Clément Mondinat à la 56ᵉ, qui ne figure pas sur les 23
+   qu'elle publie elle-même. Tant que ce vingt-quatrième homme n'est pas
+   arbitré, la ligne de Quentin Valentino reste vide.
 4. **Corriger les prénoms de la composition grenobloise** du barrage
    2024-2025 : quatorze sont inventés pour les bons joueurs.
    `fix-opponent-lineup.ts` ne les voit pas, il ne traite que les identités
@@ -512,7 +507,11 @@ Par ordre de valeur.
    Alainu'uese (Brian / Junior / Komiti), Javakhia (Giorgi / Grigol),
    Maurouard (Jérémie / Jérémy), Rey (Jérôme / Joël / Lucas), et le choix
    entre « Nacho Brex » et « Juan Ignacio Brex ». Huit fiches ne sont
-   rattachées à aucune feuille et peuvent disparaître.
+   rattachées à aucune feuille et peuvent disparaître. `merge-players.ts`
+   exécute la fusion une fois la paire vérifiée. Une piste à vérifier : la
+   fiche « Waisea Naituvi », rattachée au seul huitième de finale de Challenge
+   du 5 avril 2025 face au Racing 92, pourrait être une troisième écriture de
+   Waisea Vuidravuwalu — elle vient d'ESPN, qui écorche les noms composés.
 6. **Mettre à 0 les neuf compteurs `penaltyTries` restés `null`**, là où le
    détail des points retombe sans essai de pénalité. Tant qu'ils sont `null`,
    toute garde écrite avec `<>` reste muette sur ces matchs.
