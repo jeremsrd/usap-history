@@ -21,13 +21,25 @@
  * Usage :
  *   npx tsx scripts/fetch-club-logos.ts --dry
  *   npx tsx scripts/fetch-club-logos.ts
- *   npx tsx scripts/fetch-club-logos.ts --tout   # réécrit même les existants
+ *   npx tsx scripts/fetch-club-logos.ts --tout            # réécrit tout
+ *   npx tsx scripts/fetch-club-logos.ts --club=Clermont   # un seul club
+ *   npx tsx scripts/fetch-club-logos.ts --usap            # l'écusson catalan
  *
- * Idempotent : un fichier déjà présent n'est pas retéléchargé, sauf `--tout`.
+ * `--club` désigne un ou plusieurs clubs par leur nom court, séparés par des
+ * virgules, et **force le retéléchargement** : c'est ce qu'il faut pour
+ * reprendre un logo à la source officielle quand celui en place vient
+ * d'ailleurs. Clermont était ainsi le seul JPEG de la série, donc sans
+ * transparence — un rectangle blanc derrière l'écusson en thème sombre.
+ *
+ * `--usap` rafraîchit `public/images/usap/logo.png`, l'écusson catalan que le
+ * site affiche partout ailleurs que sur les fiches d'adversaire.
+ *
+ * Idempotent : un fichier déjà présent n'est pas retéléchargé, sauf `--tout`
+ * ou `--club`.
  */
 
 import { PrismaClient } from "@prisma/client";
-import { mkdir, writeFile, stat } from "node:fs/promises";
+import { mkdir, writeFile, stat, rm } from "node:fs/promises";
 import { join } from "node:path";
 import { CLUBS_LNR, CLUBS_EPCR } from "./lib/clubs";
 import { slugify } from "../src/lib/slugs";
@@ -36,9 +48,18 @@ const prisma = new PrismaClient();
 
 const DRY_RUN = process.argv.includes("--dry");
 const TOUT = process.argv.includes("--tout");
+const USAP = process.argv.includes("--usap");
+const CIBLES = process.argv
+  .find((a) => a.startsWith("--club="))
+  ?.slice("--club=".length)
+  .split(",")
+  .map((c) => c.trim())
+  .filter(Boolean);
 
 const DOSSIER = join(process.cwd(), "public", "images", "logos");
 const CHEMIN_PUBLIC = "/images/logos";
+/** L'écusson catalan, hors du dossier des adversaires et référencé en dur. */
+const LOGO_USAP = join(process.cwd(), "public", "images", "usap", "logo.png");
 
 /** Pages de calendrier où la LNR expose les logos de tous les clubs engagés. */
 const PAGES_LNR = [
@@ -140,11 +161,16 @@ async function main() {
 
   for (const club of clubs) {
     const nomCourt = club.shortName ?? club.name;
+    const vise = CIBLES?.includes(nomCourt) ?? false;
+    if (CIBLES && !vise) continue;
     // Un logo déjà téléversé sur Supabase est rapatrié tel quel : c'est une
-    // image choisie à la main, on ne la remplace pas par celle de la LNR.
-    const source = club.logoUrl?.startsWith("http")
-      ? club.logoUrl
-      : (lnr.get(nomCourt) ?? epcr.get(nomCourt));
+    // image choisie à la main, on ne la remplace pas par celle de la LNR —
+    // sauf demande expresse, `--club` allant justement chercher la source
+    // officielle.
+    const source =
+      club.logoUrl?.startsWith("http") && !vise
+        ? club.logoUrl
+        : (lnr.get(nomCourt) ?? epcr.get(nomCourt));
     if (!source) {
       sans.push(nomCourt);
       continue;
@@ -156,7 +182,7 @@ async function main() {
     const url = `${CHEMIN_PUBLIC}/${fichier}`;
     const dejaLa = await existe(chemin);
 
-    if (dejaLa && !TOUT) {
+    if (dejaLa && !TOUT && !vise) {
       if (club.logoUrl !== url && !DRY_RUN) {
         await prisma.opponent.update({ where: { id: club.id }, data: { logoUrl: url } });
       }
@@ -176,10 +202,34 @@ async function main() {
     }
     const contenu = Buffer.from(await reponse.arrayBuffer());
     await writeFile(chemin, contenu);
+    // Le nouveau fichier peut changer d'extension — le JPEG de Clermont cède
+    // la place à un PNG : l'ancien ne doit pas rester derrière.
+    if (club.logoUrl?.startsWith(CHEMIN_PUBLIC) && club.logoUrl !== url) {
+      await rm(join(process.cwd(), "public", club.logoUrl), { force: true });
+    }
     await prisma.opponent.update({ where: { id: club.id }, data: { logoUrl: url } });
     console.log(`  ${nomCourt.padEnd(18)} → ${fichier} (${Math.round(contenu.length / 1024)} ko)`);
     recuperes++;
     octets += contenu.length;
+  }
+
+  if (USAP) {
+    const source = lnr.get("Perpignan") ?? lnr.get("USAP");
+    if (!source) sans.push("USAP (aucune source LNR)");
+    else if (DRY_RUN) {
+      console.log("  USAP               → images/usap/logo.png");
+      recuperes++;
+    } else {
+      const reponse = await fetch(source, { signal: AbortSignal.timeout(30_000) });
+      if (!reponse.ok) sans.push(`USAP (téléchargement ${reponse.status})`);
+      else {
+        const contenu = Buffer.from(await reponse.arrayBuffer());
+        await writeFile(LOGO_USAP, contenu);
+        console.log(`  USAP               → images/usap/logo.png (${Math.round(contenu.length / 1024)} ko)`);
+        recuperes++;
+        octets += contenu.length;
+      }
+    }
   }
 
   console.log(

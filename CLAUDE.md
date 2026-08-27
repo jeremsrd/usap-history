@@ -540,9 +540,18 @@ empreinte qui change au gré des mises à jour, le lien direct peut être bloqu�
 et un chemin local évite d'autoriser des hôtes distants dans `next.config.ts`.
 
 Deux logos avaient été téléversés à la main sur Supabase — Clermont et
-Toulon ; ils ont été rapatriés **tels quels**, sans être remplacés par ceux de
-la LNR. Le script fait de même pour tout logo déjà en `https://` : il le
-recopie au lieu d'aller en chercher un autre.
+Toulon. Le script les rapatrie **tels quels** par défaut, comme tout logo déjà
+en `https://` : il recopie au lieu d'aller en chercher un autre. Celui de
+Clermont a ensuite été repris à la source, car c'était le seul JPEG de la
+série, donc sans transparence — un rectangle blanc derrière l'écusson en thème
+sombre. `--club=Clermont` force ce retéléchargement ; `--usap` fait de même
+pour `public/images/usap/logo.png`, l'écusson catalan que le site affiche
+partout ailleurs.
+
+Les originaux de la LNR sont de tailles très inégales : 2000×2000 pour
+Bordeaux, 151×151 pour Clermont et Perpignan. Le plus petit reste confortable
+— le plus grand affichage est de 48 pixels — mais il ne faut pas s'attendre à
+la même finesse partout.
 
 Les logos de club sont des marques déposées. Les afficher sur un site
 d'histoire non commercial est l'usage, mais c'est un choix qui appartient au

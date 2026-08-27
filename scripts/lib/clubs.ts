@@ -26,6 +26,8 @@ export const CLUBS_LNR: Record<string, string> = {
   paris: "Stade Français",
   "provence-rugby": "Provence",
   pau: "Pau",
+  // L'USAP elle-même, pour récupérer son écusson à la source.
+  perpignan: "Perpignan",
   "racing-92": "Racing 92",
   toulon: "Toulon",
   toulouse: "Toulouse",
