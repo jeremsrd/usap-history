@@ -1,6 +1,7 @@
 import Link from "next/link";
 import Image from "next/image";
 import { prisma } from "@/lib/prisma";
+import { MATCH_JOUE, estJoue } from "@/lib/matchs";
 import { POSITIONS } from "@/lib/constants";
 import { formatDateFR } from "@/lib/utils";
 import {
@@ -27,7 +28,8 @@ export default async function StatistiquesPage() {
   // ── Compteurs globaux ──────────────────────────────────────────────
   // Nombre de joueurs USAP = joueurs ayant au moins 1 apparition non-adversaire
   const [totalMatches, totalSeasons] = await Promise.all([
-    prisma.match.count(),
+    // Les rencontres à venir ne comptent pas : elles n'ont pas de résultat.
+    prisma.match.count({ where: MATCH_JOUE }),
     prisma.season.count(),
   ]);
 
@@ -61,6 +63,7 @@ export default async function StatistiquesPage() {
 
   // ── Points totaux marqués/encaissés ────────────────────────────────
   const pointsAgg = await prisma.match.aggregate({
+    where: MATCH_JOUE,
     _sum: { scoreUsap: true, scoreOpponent: true },
   });
   const totalPointsFor = pointsAgg._sum.scoreUsap ?? 0;
@@ -215,12 +218,14 @@ export default async function StatistiquesPage() {
   } as const;
 
   // Plus grosse victoire (écart max)
-  const biggestWins = await prisma.match.findMany({
-    where: { result: "VICTOIRE" },
-    orderBy: { scoreUsap: "desc" },
-    take: 20,
-    select: matchSelect,
-  });
+  const biggestWins = (
+    await prisma.match.findMany({
+      where: { result: "VICTOIRE" },
+      orderBy: { scoreUsap: "desc" },
+      take: 20,
+      select: matchSelect,
+    })
+  ).filter(estJoue);
   // Trier par écart côté JS (Prisma ne supporte pas les colonnes calculées dans orderBy)
   const biggestWin = biggestWins
     .sort(
@@ -230,12 +235,14 @@ export default async function StatistiquesPage() {
     .slice(0, 5);
 
   // Plus grosse défaite (écart max)
-  const biggestLosses = await prisma.match.findMany({
-    where: { result: "DEFAITE" },
-    orderBy: { scoreOpponent: "desc" },
-    take: 20,
-    select: matchSelect,
-  });
+  const biggestLosses = (
+    await prisma.match.findMany({
+      where: { result: "DEFAITE" },
+      orderBy: { scoreOpponent: "desc" },
+      take: 20,
+      select: matchSelect,
+    })
+  ).filter(estJoue);
   const biggestLoss = biggestLosses
     .sort(
       (a, b) =>
@@ -244,11 +251,14 @@ export default async function StatistiquesPage() {
     .slice(0, 5);
 
   // Plus gros score total
-  const highestScoring = await prisma.match.findMany({
-    orderBy: [{ scoreUsap: "desc" }],
-    take: 50,
-    select: matchSelect,
-  });
+  const highestScoring = (
+    await prisma.match.findMany({
+      where: MATCH_JOUE,
+      orderBy: [{ scoreUsap: "desc" }],
+      take: 50,
+      select: matchSelect,
+    })
+  ).filter(estJoue);
   const topHighScoring = highestScoring
     .sort(
       (a, b) =>

@@ -158,6 +158,21 @@ export async function lireCalendrier(
   };
 }
 
+/**
+ * Coup d'envoi d'une rencontre, y compris à venir.
+ *
+ * La feuille d'un match non joué n'a ni faits ni changements, mais elle porte
+ * déjà son horaire — que le calendrier, lui, n'affiche pas une fois la saison
+ * commencée. Attention au bandeau de la prochaine journée, qui pose le même
+ * champ en haut de chaque page : on s'ancre sur le composant du match.
+ */
+export async function lireCoupDEnvoi(url: string): Promise<string | null> {
+  const html = decoderEntites(await lirePage(url));
+  return (
+    html.match(/header-timeline[\s\S]{0,600}?"firstPeriodStartDate":"([^"]+)"/)?.[1] ?? null
+  );
+}
+
 // =============================================================================
 // EXTRACTION
 // =============================================================================

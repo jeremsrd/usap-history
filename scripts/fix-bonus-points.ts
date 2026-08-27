@@ -25,6 +25,7 @@
  */
 
 import { PrismaClient } from "@prisma/client";
+import { MATCH_JOUE } from "../src/lib/matchs";
 import { computeBonuses, matchPoints } from "../src/lib/scoring";
 
 const prisma = new PrismaClient();
@@ -48,6 +49,9 @@ async function main() {
   console.log(`=== Recalcul des points de bonus${DRY_RUN ? " (simulation)" : ""} ===\n`);
 
   const matches = await prisma.match.findMany({
+    // Une rencontre à venir n'a ni score ni résultat : elle n'a pas de bonus
+    // à recalculer, et ne compte dans aucun agrégat de saison.
+    where: MATCH_JOUE,
     orderBy: { date: "asc" },
     include: { competition: true, season: true, opponent: true },
   });
@@ -129,6 +133,7 @@ async function main() {
   for (const s of seasons) {
     const ms = await prisma.match.findMany({
       where: {
+        ...MATCH_JOUE,
         seasonId: s.id,
         competition: { shortName: { in: ["Top 14", "Pro D2"] } },
         matchday: { not: null },

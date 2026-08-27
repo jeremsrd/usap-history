@@ -2,6 +2,8 @@ import Link from "next/link";
 import Image from "next/image";
 import { notFound, redirect } from "next/navigation";
 import { prisma } from "@/lib/prisma";
+import { estJoue } from "@/lib/matchs";
+import type { MatchResult } from "@prisma/client";
 import { POSITIONS } from "@/lib/constants";
 import { formatDateFR, countryCodeToFlag } from "@/lib/utils";
 import {
@@ -124,12 +126,17 @@ export default async function JoueurDetailPage({ params }: Props) {
 
   // Un même joueur peut avoir porté le maillot catalan ET l'avoir affronté
   // sous d'autres couleurs : les deux carrières sont séparées.
-  const usapAppearances = player.matchAppearances.filter(
-    (ma) => !ma.isOpponent,
+  // Une rencontre à venir n'a pas de composition, mais rien ne l'interdit en
+  // base : on ne garde que celles qui ont un score.
+  const jouees = player.matchAppearances.filter(
+    (
+      ma,
+    ): ma is typeof ma & {
+      match: typeof ma.match & { scoreUsap: number; scoreOpponent: number; result: MatchResult };
+    } => estJoue(ma.match) && ma.match.result != null,
   );
-  const againstAppearances = player.matchAppearances.filter(
-    (ma) => ma.isOpponent,
-  );
+  const usapAppearances = jouees.filter((ma) => !ma.isOpponent);
+  const againstAppearances = jouees.filter((ma) => ma.isOpponent);
 
   // Stats agrégées : uniquement les matchs joués SOUS le maillot de l'USAP
   const totalAppearances = usapAppearances.length;

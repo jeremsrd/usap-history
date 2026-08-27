@@ -296,9 +296,11 @@ export default async function MatchsPage({
                       <span
                         className={`inline-block rounded px-2 py-0.5 text-xs font-bold ${resultColor}`}
                       >
-                        {match.isHome
-                          ? `${match.scoreUsap} - ${match.scoreOpponent}`
-                          : `${match.scoreOpponent} - ${match.scoreUsap}`}
+                        {!match.result
+                          ? "à venir"
+                          : match.isHome
+                            ? `${match.scoreUsap} - ${match.scoreOpponent}`
+                            : `${match.scoreOpponent} - ${match.scoreUsap}`}
                       </span>
                     </td>
                     <td className="hidden whitespace-nowrap px-3 py-3 text-muted-foreground md:table-cell">

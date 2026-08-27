@@ -1,6 +1,7 @@
 import Link from "next/link";
 import Image from "next/image";
 import { prisma } from "@/lib/prisma";
+import { MATCH_JOUE } from "@/lib/matchs";
 import { formatDateFR } from "@/lib/utils";
 import { PALMARES, DIVISIONS } from "@/lib/constants";
 import {
@@ -38,7 +39,9 @@ export default async function Home() {
 
   // Requêtes séquentielles pour éviter de saturer le pool de connexions Supabase
   const lastMatch = await prisma.match.findFirst({
-    where: { date: { lte: now } },
+    // Un match dont le score n'est pas encore saisi n'est pas « le dernier
+    // match » : le calendrier d'une saison entre en base avant ses résultats.
+    where: { date: { lte: now }, ...MATCH_JOUE },
     orderBy: { date: "desc" },
     select: {
       slug: true,
@@ -61,6 +64,9 @@ export default async function Home() {
     include: {
       coach: { select: { firstName: true, lastName: true } },
       matches: {
+        // La série des cinq derniers résultats ne parle que de matchs joués :
+        // une rencontre à venir n'est pas un match nul.
+        where: MATCH_JOUE,
         orderBy: { date: "desc" },
         take: 5,
         select: { result: true },
@@ -69,7 +75,9 @@ export default async function Home() {
   });
 
   const [matchCount, playerCount, seasonCount] = await Promise.all([
-    prisma.match.count(),
+    // Les rencontres à venir ne sont pas des matchs référencés : la page des
+    // statistiques compte de la même façon.
+    prisma.match.count({ where: MATCH_JOUE }),
     prisma.player.count({
       where: {
         OR: [

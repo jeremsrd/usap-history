@@ -62,11 +62,12 @@ interface MatchData {
   leg: number | null;
   isHome: boolean;
   isNeutralVenue: boolean;
-  scoreUsap: number;
-  scoreOpponent: number;
+  // Nuls tant que la rencontre n'a pas été jouée
+  scoreUsap: number | null;
+  scoreOpponent: number | null;
   halfTimeUsap: number | null;
   halfTimeOpponent: number | null;
-  result: string;
+  result: string | null;
   bonusOffensif: boolean;
   bonusDefensif: boolean;
   refereeId: string | null;
@@ -337,9 +338,9 @@ export default function MatchList({
                   {/* Score */}
                   <td className="whitespace-nowrap px-4 py-3 text-center">
                     <span
-                      className={`font-bold ${resultColors[m.result] ?? ""}`}
+                      className={`font-bold ${(m.result && resultColors[m.result]) ?? ""}`}
                     >
-                      {m.scoreUsap} - {m.scoreOpponent}
+                      {m.result ? `${m.scoreUsap} - ${m.scoreOpponent}` : "à venir"}
                     </span>
                     {(m.bonusOffensif || m.bonusDefensif) && (
                       <span className="ml-1.5 text-xs text-muted-foreground">

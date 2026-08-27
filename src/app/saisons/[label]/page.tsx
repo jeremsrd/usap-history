@@ -457,9 +457,11 @@ export default async function SaisonDetailPage({ params }: Props) {
                               <span
                                 className={`inline-block rounded px-2 py-0.5 text-xs font-bold ${resultColor}`}
                               >
-                                {match.isHome
-                                  ? `${match.scoreUsap} - ${match.scoreOpponent}`
-                                  : `${match.scoreOpponent} - ${match.scoreUsap}`}
+                                {!match.result
+                                  ? "à venir"
+                                  : match.isHome
+                                    ? `${match.scoreUsap} - ${match.scoreOpponent}`
+                                    : `${match.scoreOpponent} - ${match.scoreUsap}`}
                               </span>
                             </td>
                             <td className="hidden whitespace-nowrap px-3 py-2 text-muted-foreground sm:table-cell">

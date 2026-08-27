@@ -2,6 +2,7 @@ import Link from "next/link";
 import Image from "next/image";
 import { notFound, redirect } from "next/navigation";
 import { prisma } from "@/lib/prisma";
+import { estJoue } from "@/lib/matchs";
 import { formatDateFR, countryCodeToFlag } from "@/lib/utils";
 import {
   Shield,
@@ -77,29 +78,21 @@ export default async function AdversaireDetailPage({ params }: Props) {
 
   const displayName = opponent.shortName || opponent.name;
 
-  // Stats head-to-head calculees depuis les matchs
-  const totalMatches = opponent.matches.length;
-  const victories = opponent.matches.filter(
-    (m) => m.result === "VICTOIRE",
-  ).length;
-  const defeats = opponent.matches.filter(
-    (m) => m.result === "DEFAITE",
-  ).length;
-  const draws = opponent.matches.filter((m) => m.result === "NUL").length;
-  const pointsFor = opponent.matches.reduce(
-    (sum, m) => sum + m.scoreUsap,
-    0,
-  );
-  const pointsAgainst = opponent.matches.reduce(
-    (sum, m) => sum + m.scoreOpponent,
-    0,
-  );
+  // Stats head-to-head calculees depuis les matchs deja joues : une rencontre
+  // a venir n'a ni score ni resultat, elle ne compte dans aucun bilan.
+  const played = opponent.matches.filter(estJoue);
+  const totalMatches = played.length;
+  const victories = played.filter((m) => m.result === "VICTOIRE").length;
+  const defeats = played.filter((m) => m.result === "DEFAITE").length;
+  const draws = played.filter((m) => m.result === "NUL").length;
+  const pointsFor = played.reduce((sum, m) => sum + m.scoreUsap, 0);
+  const pointsAgainst = played.reduce((sum, m) => sum + m.scoreOpponent, 0);
   const winPct =
     totalMatches > 0 ? Math.round((victories / totalMatches) * 100) : 0;
 
   // Records : plus grosse victoire et plus lourde defaite
-  const winsOnly = opponent.matches.filter((m) => m.result === "VICTOIRE");
-  const lossesOnly = opponent.matches.filter((m) => m.result === "DEFAITE");
+  const winsOnly = played.filter((m) => m.result === "VICTOIRE");
+  const lossesOnly = played.filter((m) => m.result === "DEFAITE");
 
   const biggestWin = winsOnly.length > 0
     ? winsOnly.reduce((best, m) => {

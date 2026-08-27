@@ -129,12 +129,14 @@ export default async function AdminMatchDetailPage({
               {/* Score */}
               <div className="text-center">
                 <div className="text-3xl font-black text-foreground">
-                  {match.scoreUsap} - {match.scoreOpponent}
+                  {match.result ? `${match.scoreUsap} - ${match.scoreOpponent}` : "—"}
                 </div>
                 <span
-                  className={`mt-1 inline-block rounded px-2 py-0.5 text-xs font-semibold ${RESULT_STYLES[match.result] ?? ""}`}
+                  className={`mt-1 inline-block rounded px-2 py-0.5 text-xs font-semibold ${
+                    (match.result && RESULT_STYLES[match.result]) ?? ""
+                  }`}
                 >
-                  {RESULT_LABELS[match.result] ?? match.result}
+                  {match.result ? (RESULT_LABELS[match.result] ?? match.result) : "À venir"}
                 </span>
               </div>
 

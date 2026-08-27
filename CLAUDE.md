@@ -248,6 +248,27 @@ pas de `matchday` et que son `round` ne commence pas par « Poule ».
   `npx tsx scripts/fix-bonus-points.ts --dry` : il recalcule tous les bonus et
   confronte les totaux de saison aux classements officiels connus.
 
+### Rencontres à venir
+
+Le calendrier d'une saison entre en base **avant** que ses matchs ne se
+jouent : les 26 journées de 2026-2027 y sont depuis août 2026. Une rencontre à
+venir n'a donc ni score ni résultat.
+
+- `scoreUsap`, `scoreOpponent` et `result` sont **nullables** depuis la
+  migration `match_scores_nullable`. `null` s'y lit « pas encore joué », jamais
+  « zéro ».
+- **Toute requête qui compte, classe ou agrège des matchs doit filtrer sur
+  `MATCH_JOUE`** (`src/lib/matchs.ts`), sinon un calendrier à venir se compte
+  en matchs nuls : c'est ce que faisait la série des cinq derniers résultats de
+  l'accueil, qui affichait cinq N pour cinq rencontres non jouées. Le garde de
+  type `estJoue()` accompagne le filtre, Prisma ne resserrant pas ses types sur
+  un `where`.
+- Les pages qui **listent** les rencontres, elles, les montrent avec la mention
+  « à venir » : la fiche de match, le calendrier de la saison, la liste des
+  matchs et l'admin.
+- `fix-bonus-points.ts` les ignore : une saison sans match joué n'apparaît plus
+  dans ses agrégats.
+
 ### Slugs
 
 Toujours passer par `generatePlayerSlug(firstName, lastName, player.id)` et ses
@@ -493,6 +514,7 @@ doublons.
 | `delete-orphan-players.ts` | supprime les fiches vides de bout en bout — aucune feuille, aucun événement, aucune donnée personnelle ; les figures historiques sans match saisi sont ainsi protégées |
 | `close-season-2025-2026.ts` | modèle de clôture de saison, avec garde-fou sur le classement officiel |
 | `seed-opponent-sheet.ts` | **le script du chantier adverse** : reprend une saison entière depuis la LNR — réalisations, cartons et temps de jeu reconstitués à partir des changements. Prend la saison en argument (`2023-2024`), `--dry` pour simuler, `--detail` pour le relevé des écarts avec la base, `--match=AAAA-MM-JJ` pour n'en reprendre qu'un |
+| `seed-calendrier-2026-2027.ts` | crée une saison et son calendrier de championnat **avant** qu'elle ne commence : date, heure, journée, adversaire, lieu, sans score ni résultat. Une relance met à jour les dates au fur et à mesure que la LNR les cale |
 | `seed-season-2021-2022.ts` | crée les rencontres d'une saison entière — date et heure, compétition, adversaire, lieu, score, réalisations, résultat, bonus, arbitre — puis les agrégats de saison. Premier jalon de la phase 4 |
 | `seed-cup-sheet.ts` | **le pendant pour les coupes d'Europe**, depuis l'EPCR : réalisations, cartons et temps de jeu des **deux camps**, plus l'arbitre, l'affluence et la mi-temps. Sans argument il reprend les dix-huit matchs européens ; `--dry`, `--detail`, `--match=AAAA-MM-JJ` comme le précédent |
 | `audit-opponent-lineups.ts` | confronte les compositions adverses aux feuilles officielles LNR ; lecture seule, à lancer sur une saison ou sur tout |
@@ -556,6 +578,12 @@ authentification Supabase, statistiques et recherche. Reste la phase 4
 
 ### Couverture des données
 
+2026-2027 n'est encore qu'un calendrier : ses 26 journées de Top 14 sont en
+base avec leur date, leur adversaire et leur terrain, sans score ni résultat.
+Seules les cinq premières ont un horaire — la LNR ne cale les coups d'envoi
+qu'au fil des désignations télévisées, et pose d'ici là une date de référence
+que le script rafraîchira à chaque relance.
+
 **Les matchs de 2022-2023 à 2025-2026 ont leurs 46 joueurs et leur
 chronologie.** 2021-2022, première saison de la phase 4, n'a pour l'instant
 que ses rencontres : ni compositions, ni chronologie — la mi-temps et les
@@ -565,6 +593,7 @@ Annexe du match :
 
 | Saison | Matchs | Arbitres | Mi-temps | Vidéos | Comptes-rendus | Affluences |
 |---|---|---|---|---|---|---|
+| 2026-2027 | 26 à venir | — | — | — | — | — |
 | 2025-2026 | 32 | 32 | 32 | 31 | 32 | 7 |
 | 2024-2025 | 32 | 32 | 32 | 24 | 28 | 15 |
 | 2023-2024 | 30 | 30 | 30 | 29 | 30 | 6 |

@@ -448,14 +448,15 @@ model Match {
   opponentId      String   @map("opponent_id")
   opponent        Opponent @relation(fields: [opponentId], references: [id])
 
-  // Score
-  scoreUsap       Int      @map("score_usap")
-  scoreOpponent   Int      @map("score_opponent")
+  // Score — nuls tant que la rencontre n'a pas été jouée : le calendrier
+  // d'une saison à venir est en base avant ses résultats.
+  scoreUsap       Int?     @map("score_usap")
+  scoreOpponent   Int?     @map("score_opponent")
   halfTimeUsap    Int?     @map("half_time_usap")
   halfTimeOpponent Int?    @map("half_time_opponent")
 
-  // Résultat
-  result          MatchResult
+  // Résultat — nul tant que la rencontre n'a pas été jouée
+  result          MatchResult?
   bonusOffensif   Boolean  @default(false) @map("bonus_offensif")
   bonusDefensif   Boolean  @default(false) @map("bonus_defensif")
 

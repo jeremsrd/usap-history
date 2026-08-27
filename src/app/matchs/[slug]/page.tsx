@@ -2,6 +2,7 @@ import Link from "next/link";
 import Image from "next/image";
 import { notFound } from "next/navigation";
 import { prisma } from "@/lib/prisma";
+import { estJoue } from "@/lib/matchs";
 import { POSITIONS } from "@/lib/constants";
 import { formatDateFR } from "@/lib/utils";
 import {
@@ -40,9 +41,14 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   if (!match) return { title: "Match introuvable - USAP Historia" };
 
   const opp = match.opponent.shortName || match.opponent.name;
-  const score = match.isHome
-    ? `USAP ${match.scoreUsap} - ${match.scoreOpponent} ${opp}`
-    : `${opp} ${match.scoreOpponent} - ${match.scoreUsap} USAP`;
+  // Une rencontre à venir n'a pas de score : le titre annonce l'affiche.
+  const score = !estJoue(match)
+    ? match.isHome
+      ? `USAP - ${opp}`
+      : `${opp} - USAP`
+    : match.isHome
+      ? `USAP ${match.scoreUsap} - ${match.scoreOpponent} ${opp}`
+      : `${opp} ${match.scoreOpponent} - ${match.scoreUsap} USAP`;
 
   return {
     title: `${score} - USAP Historia`,
@@ -152,15 +158,23 @@ export default async function MatchDetailPage({ params }: Props) {
             </p>
           </div>
 
-          {/* Score */}
+          {/* Score, ou l'affiche si la rencontre reste à jouer */}
           <div className="flex items-center gap-3">
-            <span className="text-4xl font-bold text-foreground sm:text-5xl">
-              {match.isHome ? match.scoreUsap : match.scoreOpponent}
-            </span>
-            <span className="text-2xl text-muted-foreground">-</span>
-            <span className="text-4xl font-bold text-foreground sm:text-5xl">
-              {match.isHome ? match.scoreOpponent : match.scoreUsap}
-            </span>
+            {estJoue(match) ? (
+              <>
+                <span className="text-4xl font-bold text-foreground sm:text-5xl">
+                  {match.isHome ? match.scoreUsap : match.scoreOpponent}
+                </span>
+                <span className="text-2xl text-muted-foreground">-</span>
+                <span className="text-4xl font-bold text-foreground sm:text-5xl">
+                  {match.isHome ? match.scoreOpponent : match.scoreUsap}
+                </span>
+              </>
+            ) : (
+              <span className="text-2xl font-bold uppercase tracking-wider text-muted-foreground">
+                à venir
+              </span>
+            )}
           </div>
 
           {/* Équipe extérieur */}
@@ -211,7 +225,9 @@ export default async function MatchDetailPage({ params }: Props) {
               ? "Victoire"
               : match.result === "DEFAITE"
                 ? "Défaite"
-                : "Match nul"}
+                : match.result === "NUL"
+                  ? "Match nul"
+                  : "À venir"}
           </span>
           {match.bonusOffensif && (
             <span className="ml-2 rounded bg-usap-or/10 px-2 py-1 text-xs font-medium text-usap-or">
@@ -316,7 +332,8 @@ export default async function MatchDetailPage({ params }: Props) {
       )}
 
       {/* Évolution du score */}
-      {match.matchEvents.filter((e) => ["ESSAI", "TRANSFORMATION", "PENALITE", "DROP", "ESSAI_PENALITE"].includes(e.type)).length > 0 && (
+      {estJoue(match) &&
+        match.matchEvents.filter((e) => ["ESSAI", "TRANSFORMATION", "PENALITE", "DROP", "ESSAI_PENALITE"].includes(e.type)).length > 0 && (
         <section className="mb-10">
           <h2 className="mb-4 text-2xl font-bold uppercase tracking-wider text-foreground">
             Évolution du score

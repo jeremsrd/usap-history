@@ -48,11 +48,12 @@ interface MatchData {
   leg: number | null;
   isHome: boolean;
   isNeutralVenue: boolean;
-  scoreUsap: number;
-  scoreOpponent: number;
+  // Nuls tant que la rencontre n'a pas été jouée
+  scoreUsap: number | null;
+  scoreOpponent: number | null;
   halfTimeUsap: number | null;
   halfTimeOpponent: number | null;
-  result: string;
+  result: string | null;
   bonusOffensif: boolean;
   bonusDefensif: boolean;
   refereeId: string | null;

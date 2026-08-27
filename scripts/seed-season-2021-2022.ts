@@ -53,6 +53,7 @@ import { PrismaClient, MatchResult, Prisma } from "@prisma/client";
 import { lireCalendrier, lireFeuille, lireCompositions, type LnrFait, type Camp } from "./lib/lnr";
 import { COMPETITIONS, USAP, chercherMatchs, lireMatch, type EpcrEquipe } from "./lib/epcr";
 import { trouverOuCreerArbitre } from "./lib/arbitres";
+import { CLUBS_LNR, CLUBS_EPCR } from "./lib/clubs";
 import { computeBonuses, matchPoints } from "../src/lib/scoring";
 import { generateMatchSlug, generateOpponentSlug } from "../src/lib/slugs";
 
@@ -62,32 +63,6 @@ const DRY_RUN = process.argv.includes("--dry");
 
 const SAISON = "2021-2022";
 const JOURNEES = 26;
-
-/** Clubs du Top 14 2021-2022, du slug de la LNR au nom porté en base. */
-const ADVERSAIRES_LNR: Record<string, string> = {
-  biarritz: "Biarritz",
-  "bordeaux-begles": "UBB",
-  brive: "Brive",
-  "mont-de-marsan": "Mont-de-Marsan",
-  castres: "Castres",
-  clermont: "Clermont",
-  "la-rochelle": "La Rochelle",
-  lyon: "Lyon",
-  montpellier: "Montpellier",
-  paris: "Stade Français",
-  pau: "Pau",
-  "racing-92": "Racing 92",
-  toulon: "Toulon",
-  toulouse: "Toulouse",
-};
-
-/** Adversaires européens, du nom de l'EPCR au nom porté en base. */
-const ADVERSAIRES_EPCR: Record<string, string> = {
-  "Dragons RFC": "Dragons",
-  "Lyon O.U.": "Lyon",
-  "Gloucester Rugby": "Gloucester",
-  "Benetton Rugby": "Benetton",
-};
 
 /** Phases de la coupe, du numéro de tour de l'EPCR au libellé de la base. */
 const PHASES_EPCR: Record<number, string> = {
@@ -270,7 +245,7 @@ async function championnat(echecs: string[]): Promise<Rencontre[]> {
     }
     const isHome = carte.recevant === "perpignan";
     const adversaireSlug = isHome ? carte.visiteur : carte.recevant;
-    const nom = ADVERSAIRES_LNR[adversaireSlug];
+    const nom = CLUBS_LNR[adversaireSlug];
     if (!nom) {
       echecs.push(`${phase} : club « ${adversaireSlug} » inconnu de la table`);
       continue;
@@ -339,7 +314,7 @@ async function coupe(echecs: string[]): Promise<Rencontre[]> {
     const isHome = feuille.domicile.id === USAP;
     const equipeUsap = isHome ? feuille.domicile : feuille.exterieur;
     const equipeAdverse = isHome ? feuille.exterieur : feuille.domicile;
-    const nom = ADVERSAIRES_EPCR[equipeAdverse.nom];
+    const nom = CLUBS_EPCR[equipeAdverse.nom];
     if (!nom) {
       echecs.push(`EPCR ${feuille.id} : club « ${equipeAdverse.nom} » inconnu de la table`);
       continue;
