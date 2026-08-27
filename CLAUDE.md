@@ -265,8 +265,8 @@ pas (affluence).
   décode les entités puis isole chaque objet par comptage d'accolades.
 
   Ce que la feuille donne, et que personne d'autre ne donne aussi bien :
-  - chaque essai avec **son transformateur** (`conversionPlayer`), ce qui
-    évite de deviner qui a buté ;
+  - le **score après chaque fait de match** (`score`, `[recevant, visiteur]`),
+    la seule donnée vraiment sûre de la feuille — voir plus bas ;
   - les **essais de pénalité**, marqués `essai-de-penalite` sans auteur
     (« n.a. ») ;
   - les cartons, avec leur minute officielle ;
@@ -274,7 +274,24 @@ pas (affluence).
     type **définitif ou temporaire** — indispensable pour reconstituer les
     minutes quand un joueur sort puis revient.
 
-  Trois réserves :
+  Cinq réserves :
+  - **`conversionPlayer` ment.** On l'a longtemps pris pour le transformateur
+    de l'essai : il l'est souvent, pas toujours. Il porte parfois un joueur de
+    l'**autre équipe** (l'essai lyonnais de Monty Ioane, le 20 avril 2024, est
+    donné transformé par Jake McIntyre, ouvreur catalan) ; il se pose parfois
+    sur un fait qui n'est pas un essai — un carton — pour désigner en réalité
+    la transformation de l'essai précédent ; et il manque parfois alors que la
+    transformation a bien eu lieu. **Ne jamais s'en servir pour décider qu'il y
+    a eu transformation** : seul le `score` le dit. Tout reliquat de deux
+    points entre le score affiché et les points reconstitués est une
+    transformation, à porter au dernier essai qui n'en a pas. Ne se servir de
+    `conversionPlayer` que pour **nommer** le buteur, et seulement s'il figure
+    dans la composition de l'équipe concernée ; sinon, prendre le buteur de
+    l'équipe le plus proche dans le temps ;
+  - le score courant lui-même déraille : à Toulouse le 13 septembre 2025, deux
+    points sont inscrits **avant** l'essai qui les vaut, et le 6 mai 2023 à
+    Lyon la dernière transformation du match n'apparaît nulle part. Le total
+    final du match, lui, est toujours juste : c'est lui qui doit trancher ;
   - un retour de remplacement temporaire n'est pas toujours enregistré. Le
     total des minutes d'une équipe tombe alors sous 1 200 — le signaler, ne
     pas inventer la minute manquante ;
@@ -288,7 +305,12 @@ pas (affluence).
     remplaçants, ne mentionnent aucun club et se rattachent en comparant leur
     XV à celui du terrain. La LNR **ne publie pas** ces compositions pour
     toutes ses archives : neuf journées de 2022-2023 n'affichent que les
-    officiels de match.
+    officiels de match. Certaines feuilles dessinent deux terrains — le XV de
+    départ, puis l'équipe telle qu'elle a fini —, et le second introduit
+    parfois un dossard que la liste des remplaçants oublie : Alfred Parisien,
+    entré avec le 22 à Aimé-Giral le 29 octobre 2022, donnait seize titulaires
+    à Lyon. `lireCompositions()` s'en tient désormais à quinze et verse le
+    surnuméraire au banc.
 
   Ce que la LNR ne donne pas : l'**affluence**.
 - **Chronologie détaillée, en dernier recours** : API ESPN
@@ -362,7 +384,7 @@ subsiste et ne puisse recréer les doublons.
 | `normalize-opponent-players.ts` | rattache les anciennes lignes `opponentPlayerName` à un vrai `Player` |
 | `merge-duplicate-players-2026.ts` | fusion de doublons, paires listées en dur et vérifiées à la main |
 | `close-season-2025-2026.ts` | modèle de clôture de saison, avec garde-fou sur le classement officiel |
-| `seed-opponent-sheet-2024-2025.ts` | **modèle à suivre** pour compléter une saison côté adverse depuis la LNR : réalisations, cartons et temps de jeu reconstitués à partir des changements |
+| `seed-opponent-sheet.ts` | **le script du chantier adverse** : reprend une saison entière depuis la LNR — réalisations, cartons et temps de jeu reconstitués à partir des changements. Prend la saison en argument (`2023-2024`), `--dry` pour simuler, `--detail` pour le relevé des écarts avec la base, `--match=AAAA-MM-JJ` pour n'en reprendre qu'un |
 | `seed-opponent-scorers-2024-2025.ts` | même travail depuis ESPN, restreint au Challenge européen faute de couverture LNR ; pas de temps de jeu |
 | `audit-opponent-lineups.ts` | confronte les compositions adverses aux feuilles officielles LNR ; lecture seule, à lancer sur une saison ou sur tout |
 | `fix-opponent-lineup.ts` | remet la composition adverse d'un match en accord avec la feuille officielle (identités, dossards, titulaires, capitaine) |
@@ -445,60 +467,59 @@ retombe sur le score, essais de pénalité déduits :
 
 | Saison | Lignes avec minutes | Marqueurs | Matchs cohérents |
 |---|---|---|---|
-| 2025-2026 | 732 / 736 | 154 | 32 / 32 |
+| 2025-2026 | 733 / 736 | 156 | 32 / 32 |
 | 2024-2025 | 729 / 736 | 117 | 32 / 32 |
-| 2023-2024 | 46 / 690 | 4 | 1 / 30 |
-| 2022-2023 | 107 / 713 | 23 | 3 / 31 |
+| 2023-2024 | 598 / 690 | 103 | 26 / 30 |
+| 2022-2023 | 677 / 713 | 128 | 29 / 31 |
 
-**2023-2024 et 2022-2023 restent entièrement à reprendre côté adverse** : la
-LNR couvre leurs journées de Top 14, le module `scripts/lib/lnr.ts` et
-`seed-opponent-sheet-2024-2025.ts` donnent le modèle.
+**Les quatre saisons sont reprises côté championnat.** Les 92 lignes manquantes
+de 2023-2024 sont exactement ses quatre matchs de Challenge européen, que la
+LNR ne couvre pas ; celles de 2022-2023 s'y ajoutent un match de championnat
+resté bloqué. Ce qui reste vide relève désormais de l'EPCR, pas de la LNR.
 
 Attention en reprenant une saison ancienne : avant 2024-2025, le segment de
 phase d'un barrage s'écrit `access` et non `access-top-14`.
+`seed-opponent-sheet.ts` essaie les deux.
 
 ### Où reprendre
 
-Par ordre de valeur. Les trois premiers points se tiennent : le même script
-généralisé les traite tous.
+Par ordre de valeur.
 
-1. **Fusionner `fix/donnees-adverses`** dans `master` — six commits, rien n'y
-   est poussé. `git checkout master && git merge --ff-only fix/donnees-adverses`
-2. **Généraliser `seed-opponent-sheet-2024-2025.ts` à une saison quelconque.**
-   C'est la clé de tout le reste : ce script sait déjà lire une feuille LNR,
-   reconstituer les temps de jeu à partir des changements et refuser d'écrire
-   quand le compte n'y est pas. Seuls la saison et le tableau des identifiants
-   ESPN y sont figés.
-3. **Trois lignes adverses sont vides** et attendent ce script : Jérémie
-   Maurouard (Montauban 25/10/2025), Quentin Valentino (Pau 22/02/2026) et
-   Jérôme Rey (Lyon 21/03/2026), les deux derniers titulaires. Leurs
-   statistiques ont été effacées à dessein — elles décrivaient la rencontre
-   des joueurs qu'ils remplacent en base.
-4. **Reprendre 2023-2024, puis 2022-2023, côté adverse.** 690 et 713 lignes
-   quasiment vides, c'est le gros du chantier. Neuf journées de 2022-2023
-   n'ont pas de compositions publiées par la LNR : leurs feuilles resteront
-   incomplètes.
-5. **Brancher l'EPCR.** Les 5 matchs de Challenge 2024-2025 ont leurs
-   marqueurs mais aucun temps de jeu, et les coupes des autres saisons sont
-   dans le même état. Bonne nouvelle : leurs pages embarquent aussi leur
-   charge utile dans le HTML, `curl` suffit — la doc ci-dessus, qui parle
+1. **Fusionner `feat/feuilles-adverses-lnr`** dans `master` — rien n'est
+   poussé sur `origin`.
+2. **Brancher l'EPCR.** C'est tout ce qui reste du chantier adverse : les
+   quatre matchs de Challenge 2023-2024 n'ont aucun détail adverse, ceux de
+   2022-2023 sont partiels, et ceux de 2024-2025 et 2025-2026 n'ont pas de
+   temps de jeu digne de ce nom. Bonne nouvelle : leurs pages embarquent aussi
+   leur charge utile dans le HTML, `curl` suffit — la doc ci-dessus, qui parle
    encore de navigateur, sera à corriger le jour où ce sera fait.
-6. **Corriger les prénoms de la composition grenobloise** du barrage
+3. **Deux matchs de championnat restent bloqués**, tous deux sur une identité
+   que la feuille et la base ne racontent pas pareil :
+   - Toulon, 15 avril 2023 : la LNR fait entrer « Waisea VUIDRAVUWALU », la
+     base porte « Waisea Nayacalevu ». C'est le même homme — Waisea Nayacalevu
+     Vuidravuwalu —, mais les deux noms n'ont aucun mot commun hors le prénom,
+     et l'appariement refuse à juste titre de trancher sur un prénom seul.
+     Renommer la fiche règle les 23 lignes du match.
+   - Pau, 22 février 2026 : la feuille fait entrer Clément Mondinat à la 56ᵉ,
+     qui ne figure pas sur les 23 qu'elle publie elle-même. Tant que ce
+     vingt-quatrième homme n'est pas arbitré, la ligne de Quentin Valentino
+     reste vide.
+4. **Corriger les prénoms de la composition grenobloise** du barrage
    2024-2025 : quatorze sont inventés pour les bons joueurs.
    `fix-opponent-lineup.ts` ne les voit pas, il ne traite que les identités
    franchement fausses ; l'audit les classe en ÉCRITURE.
-7. **Arbitrer les doublons de fiches** que l'audit a fait apparaître :
+5. **Arbitrer les doublons de fiches** que l'audit a fait apparaître :
    Alainu'uese (Brian / Junior / Komiti), Javakhia (Giorgi / Grigol),
    Maurouard (Jérémie / Jérémy), Rey (Jérôme / Joël / Lucas), et le choix
    entre « Nacho Brex » et « Juan Ignacio Brex ». Huit fiches ne sont
    rattachées à aucune feuille et peuvent disparaître.
-8. **Mettre à 0 les neuf compteurs `penaltyTries` restés `null`**, là où le
+6. **Mettre à 0 les neuf compteurs `penaltyTries` restés `null`**, là où le
    détail des points retombe sans essai de pénalité. Tant qu'ils sont `null`,
    toute garde écrite avec `<>` reste muette sur ces matchs.
-9. **Relier les événements adverses à leurs joueurs** : 247 en 2024-2025,
+7. **Relier les événements adverses à leurs joueurs** : 247 en 2024-2025,
    258 en 2023-2024, 264 en 2022-2023 n'ont pas de `playerId`.
-10. **Le fond** : affluences (23 matchs sur 126), photos et biographies (1
-    joueur sur 144), et la phase 4 — 114 saisons sans aucun match.
+8. **Le fond** : affluences (23 matchs sur 126), photos et biographies (1
+   joueur sur 144), et la phase 4 — 114 saisons sans aucun match.
 
 114 saisons sur 119 n'ont encore aucun match : c'est le chantier de la phase 4,
 menée en remontant le temps saison par saison.
@@ -532,8 +553,10 @@ menée en remontant le temps saison par saison.
   quatorze prénoms sont inventés pour les bons joueurs.
 
   Devant un nom qui ne s'apparie pas, soupçonner la base avant la source.
-- Les 5 matchs de Challenge européen de 2024-2025 ont leurs marqueurs adverses
-  (ESPN) mais **pas de temps de jeu** : l'EPCR reste à brancher.
+- **Les matchs de coupe d'Europe sont le seul trou qui reste côté adverse.**
+  La LNR ne les couvre pas : les quatre matchs de Challenge de 2023-2024 n'ont
+  aucun détail, ceux de 2022-2023 sont partiels, et ceux de 2024-2025 tiennent
+  leurs marqueurs d'ESPN sans temps de jeu. L'EPCR reste à brancher.
 - Les événements de la chronologie ne sont reliés à un joueur que du côté USAP
   sur la plupart des saisons (2024-2025 : 247 événements adverses sans
   `playerId`). Les nouvelles saisies relient les deux camps.

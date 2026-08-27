@@ -4,7 +4,7 @@
  *
  * ⚠ Ce script ne traite plus que les matchs de coupe d'Europe. Les rencontres
  * de Top 14 et le barrage sont désormais repris de la LNR, source officielle,
- * par seed-opponent-sheet-2024-2025.ts : elle nomme correctement les auteurs
+ * par seed-opponent-sheet.ts : elle nomme correctement les auteurs
  * là où ESPN s'est trompé deux fois (essai de Théo Ntamack attribué à Romain,
  * transformation et pénalité de Jérémy Fernandez portées à Louis Le Brun) et
  * date les cartons à la minute officielle. Le laisser tourner sur ces matchs
@@ -176,7 +176,7 @@ async function main() {
   const echecs: string[] = [];
 
   for (const match of matchs) {
-    // Top 14 et barrage : traités par seed-opponent-sheet-2024-2025.ts
+    // Top 14 et barrage : traités par seed-opponent-sheet.ts
     if (match.competition.shortName !== "Challenge Européen") continue;
 
     const jour = match.date.toISOString().slice(0, 10);

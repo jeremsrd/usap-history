@@ -13,7 +13,7 @@
  *
  * Ce que le script **ne touche pas** : réalisations, cartons et temps de jeu.
  * Ils dépendent de l'identité qu'on vient de changer, et se réécrivent depuis
- * la même source, avec seed-opponent-sheet-{saison}.ts. Le script prévient
+ * la même source, avec seed-opponent-sheet.ts. Le script prévient
  * quand une ligne réattribuée en portait.
  *
  * Les **changements d'identité** — rendre un dossard à celui qui l'a porté —

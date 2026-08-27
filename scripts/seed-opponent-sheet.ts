@@ -1,0 +1,715 @@
+/**
+ * Feuille adverse complète d'une saison de championnat, depuis la LNR.
+ *
+ * Reconstitue, pour chaque match de Top 14 et pour le barrage d'accession,
+ * les réalisations, les cartons et surtout les temps de jeu adverses — ces
+ * derniers déduits des changements officiels, seule source qui les donne
+ * avec leur camp, leur minute et leur caractère définitif ou temporaire.
+ *
+ * Écrit d'abord pour 2024-2025, dont les minutes adverses étaient une
+ * fiction : 474 titulaires à exactement 80' et 256 remplaçants à 0', aucune
+ * entrée renseignée sur les 32 matchs. Des joueurs figuraient donc comme
+ * marqueurs sans avoir joué une minute.
+ *
+ * La LNR est la source de référence : ses noms sont ceux des feuilles
+ * officielles, elle donne le score après chaque fait de match, et elle
+ * n'oublie pas les essais de pénalité — trois points sur lesquels ESPN s'est
+ * montré fautif. Toute divergence est signalée, et c'est la LNR qui l'emporte.
+ *
+ * Une réserve, coûteuse à découvrir : `conversionPlayer` ment. Il désigne
+ * parfois un joueur de l'autre équipe, se pose parfois sur un carton pour
+ * dire la transformation de l'essai précédent, et manque parfois tout à fait.
+ * C'est donc le **score courant** qui décide s'il y a eu transformation —
+ * tout reliquat de deux points en est une —, `conversionPlayer` ne servant
+ * qu'à nommer le buteur quand il appartient bien à l'équipe.
+ *
+ * Source : top14.lnr.fr/feuille-de-match/{saison}/{phase}/{id}-{dom}-{ext}
+ *          /resumes-replays, via scripts/lib/lnr.ts
+ *
+ * Périmètre : les journées de Top 14 (`matchday` renseigné) et le barrage
+ * d'accession. Les matchs de coupe d'Europe en sont exclus — ils relèvent de
+ * l'EPCR, que la LNR ne couvre pas.
+ *
+ * Contrôles avant écriture, par match :
+ *   - le camp de l'USAP déduit de l'URL doit correspondre à `isHome` ;
+ *   - tout auteur ou remplaçant absent de la composition en base fait échouer
+ *     le match entier : un nom non apparié fausserait les temps de jeu des
+ *     deux joueurs concernés — et le plus souvent, c'est la composition en
+ *     base qui est fautive (cf. audit-opponent-lineups.ts) ;
+ *   - la somme des points doit retomber sur le score, essais de pénalité
+ *     déduits, et le nombre d'essais sur le compteur du match.
+ * Les temps de jeu font l'objet d'un simple avertissement : un carton rouge
+ * ou un remplacement temporaire non refermé décale le total sans invalider
+ * la feuille.
+ *
+ * Usage :
+ *   npx tsx scripts/seed-opponent-sheet.ts 2023-2024 --dry
+ *   npx tsx scripts/seed-opponent-sheet.ts 2023-2024
+ *   npx tsx scripts/seed-opponent-sheet.ts 2025-2026 --dry --detail
+ *   npx tsx scripts/seed-opponent-sheet.ts 2022-2023 --dry --match=2023-06-03
+ *
+ * Sur une saison déjà renseignée, la simulation chiffre l'écart entre la
+ * feuille officielle et la base, ligne par ligne : `--detail` en donne le
+ * relevé.
+ *
+ * Idempotent : la feuille adverse est remise à zéro avant d'être réécrite.
+ */
+
+import { PrismaClient } from "@prisma/client";
+import { memeMot, mots, normalize, proximite } from "./lib/noms";
+import {
+  chercherFeuille,
+  lireFeuille,
+  type Camp,
+  type LnrFeuille,
+  type LnrJoueur,
+} from "./lib/lnr";
+
+const prisma = new PrismaClient();
+
+const DRY_RUN = process.argv.includes("--dry");
+const DETAIL = process.argv.includes("--detail");
+const SAISON = process.argv.slice(2).find((a) => /^\d{4}-\d{4}$/.test(a));
+const SEUL = process.argv
+  .find((a) => a.startsWith("--match="))
+  ?.slice("--match=".length);
+
+if (!SAISON) {
+  console.error(
+    "Saison manquante.\n" +
+      "  npx tsx scripts/seed-opponent-sheet.ts 2023-2024 --dry\n" +
+      "Options : --dry (simulation), --detail (relevé des écarts), --match=AAAA-MM-JJ",
+  );
+  process.exit(1);
+}
+
+const DUREE = 80;
+
+/**
+ * Segment d'URL du barrage d'accession. La LNR l'a renommé au fil des
+ * saisons — « access » jusqu'en 2023-2024, « access-top-14 » depuis
+ * 2024-2025 : on essaie les deux, en commençant par le plus probable.
+ */
+function phasesBarrage(saison: string): string[] {
+  const debut = Number(saison.slice(0, 4));
+  return debut >= 2024 ? ["access-top-14", "access"] : ["access", "access-top-14"];
+}
+
+interface Ligne {
+  id: string;
+  firstName: string;
+  lastName: string;
+  shirtNumber: number | null;
+  isStarter: boolean;
+  /** Valeurs actuellement en base, pour chiffrer l'écart avec la feuille. */
+  actuel: Bilan;
+}
+
+interface Bilan {
+  minutes: number | null;
+  subIn: number | null;
+  subOut: number | null;
+  tries: number;
+  conversions: number;
+  penalties: number;
+  drops: number;
+  points: number;
+  jaune: number | null;
+  rouge: number | null;
+}
+
+const bilanVide = (): Bilan => ({
+  minutes: null,
+  subIn: null,
+  subOut: null,
+  tries: 0,
+  conversions: 0,
+  penalties: 0,
+  drops: 0,
+  points: 0,
+  jaune: null,
+  rouge: null,
+});
+
+/**
+ * Mots de `nom` qui trouvent un correspondant dans `reference`, un mot pouvant
+ * en abréger un autre (« Nafi » pour « Nafitalai »).
+ */
+function motsCommuns(nom: string, reference: string): string[] {
+  const cibles = mots(reference);
+  return mots(nom).filter((mot) => cibles.some((cible) => memeMot(mot, cible)));
+}
+
+/**
+ * Rattache un joueur de la feuille officielle à une ligne de la composition
+ * en base, en comparant les **noms complets** mot à mot.
+ *
+ * Comparer le seul nom de famille ne suffit pas : les deux sources ne coupent
+ * pas le nom au même endroit. La LNR écrit « Levani Botia | VEIVUKE » là où la
+ * base porte « Levani | Botia », « Iakopo | PETELO MAPU » pour « Iakopo |
+ * Mapu ». Le nom de famille de l'une est le prénom de l'autre.
+ *
+ * Un mot du nom de famille pèse plus lourd qu'un prénom partagé, et un seul
+ * mot commun ne suffit que s'il vient du nom de famille de la feuille
+ * et qu'il est assez long : sur un banc où six joueurs s'appellent Thomas, se
+ * contenter du prénom rattacherait n'importe qui à n'importe qui — et un
+ * appariement fautif fausse les minutes de deux joueurs à la fois. En cas
+ * d'ex æquo, on préfère échouer : le match entier sera signalé.
+ *
+ * Deux noms identiques à l'accent près court-circuitent tout le reste : les
+ * noms de famille de moins de trois lettres — Connor Sa, à Bordeaux — ne
+ * laissent aucun mot significatif à comparer. Un nom de famille identique
+ * suffit d'ailleurs à lui seul, quand bien même les prénoms divergeraient :
+ * la feuille écrit « Akinbiyi Olabamigbe ALO » là où la base porte
+ * « Biyi Alo ».
+ */
+function apparier(roster: Ligne[], joueur: LnrJoueur): Ligne | null {
+  const cherche = `${joueur.firstName} ${joueur.lastName}`;
+  const famille = mots(joueur.lastName);
+  const nomDeFamille = normalize(joueur.lastName);
+
+  const identiques = roster.filter(
+    (l) => normalize(`${l.firstName} ${l.lastName}`) === normalize(cherche),
+  );
+  if (identiques.length === 1) return identiques[0];
+
+  const notes = roster
+    .map((ligne) => {
+      const communs = motsCommuns(`${ligne.firstName} ${ligne.lastName}`, cherche);
+      const { plusLong } = proximite(`${ligne.firstName} ${ligne.lastName}`, cherche);
+      // Un mot du nom de famille pèse plus lourd qu'un prénom partagé : le
+      // banc bayonnais aligne Lucas Martin et Lucas Paulos quand la feuille
+      // annonce « Lucas Martin PAULOS ADLER ».
+      const parFamille = communs.filter((mot) =>
+        famille.some((autre) => memeMot(mot, autre)),
+      ).length;
+      return {
+        ligne,
+        communs,
+        plusLong,
+        note: communs.length * 10 + plusLong + parFamille * 20,
+      };
+    })
+    .filter(
+      (c) =>
+        c.communs.length >= 2 ||
+        (c.communs.length === 1 &&
+          (normalize(c.ligne.lastName) === nomDeFamille ||
+            (c.plusLong >= 4 && famille.some((mot) => memeMot(mot, c.communs[0]))))),
+    )
+    .sort((a, b) => b.note - a.note);
+
+  if (notes.length === 0) return null;
+  if (notes.length > 1 && notes[1].note === notes[0].note) return null;
+  return notes[0].ligne;
+}
+
+/**
+ * Coups de pied placés identifiés de l'équipe, avec leur minute : pénalités
+ * réussies et transformations nommées. Sert à retrouver le buteur d'une
+ * transformation que la feuille ne nomme pas — c'est presque toujours celui
+ * qui a botté juste avant ou juste après.
+ */
+function repererButeurs(
+  roster: Ligne[],
+  feuille: LnrFeuille,
+  camp: Camp,
+): { minute: number; ligne: Ligne }[] {
+  const buteurs: { minute: number; ligne: Ligne }[] = [];
+  for (const fait of feuille.faits) {
+    if (fait.club === camp && fait.type === "penalite" && fait.joueur) {
+      const ligne = apparier(roster, fait.joueur);
+      if (ligne) buteurs.push({ minute: fait.minute, ligne });
+    }
+    // Un `conversionPlayer` peut être porté par un fait de l'autre équipe :
+    // l'appariement au effectif fait le tri.
+    if (fait.transformePar) {
+      const ligne = apparier(roster, fait.transformePar);
+      if (ligne) buteurs.push({ minute: fait.minute, ligne });
+    }
+  }
+  return buteurs;
+}
+
+/** Buteur le plus proche d'une minute ; `null` si deux se disputent la place. */
+function buteurLePlusProche(
+  buteurs: { minute: number; ligne: Ligne }[],
+  minute: number,
+): Ligne | null {
+  let meilleur: Ligne | null = null;
+  let ecart = Infinity;
+  let partage = false;
+  for (const buteur of buteurs) {
+    const distance = Math.abs(buteur.minute - minute);
+    if (distance < ecart) {
+      ecart = distance;
+      meilleur = buteur.ligne;
+      partage = false;
+    } else if (distance === ecart && buteur.ligne.id !== meilleur?.id) {
+      partage = true;
+    }
+  }
+  return partage ? null : meilleur;
+}
+
+/**
+ * Temps de jeu de chaque ligne, reconstitué à partir des changements.
+ * Un joueur peut sortir puis revenir : on additionne les intervalles, et on
+ * ne garde comme `subIn` / `subOut` que la première entrée et la première
+ * sortie, seules valeurs que porte le modèle.
+ */
+function calculerTempsDeJeu(
+  roster: Ligne[],
+  feuille: LnrFeuille,
+  campAdverse: Camp,
+  bilans: Map<string, Bilan>,
+  echecs: string[],
+) {
+  const surLeTerrain = new Map<string, number | null>();
+  const total = new Map<string, number>();
+
+  for (const ligne of roster) {
+    surLeTerrain.set(ligne.id, ligne.isStarter ? 0 : null);
+    total.set(ligne.id, 0);
+  }
+
+  /**
+   * @param sortie vraie sortie (remplacement, carton rouge) plutôt que la
+   *   fin de la rencontre : seule une vraie sortie se note dans `subOut`.
+   */
+  const fermer = (id: string, minute: number, sortie: boolean) => {
+    const depuis = surLeTerrain.get(id);
+    if (depuis == null) return;
+    total.set(id, (total.get(id) ?? 0) + Math.max(0, minute - depuis));
+    surLeTerrain.set(id, null);
+    const bilan = bilans.get(id)!;
+    if (sortie && bilan.subOut == null) bilan.subOut = minute;
+  };
+
+  for (const changement of feuille.changements.filter((c) => c.club === campAdverse)) {
+    const entrant = apparier(roster, changement.entrant);
+    const sortant = apparier(roster, changement.sortant);
+    if (!entrant || !sortant) {
+      echecs.push(
+        `changement ${changement.minute}' non apparié : ` +
+          `${changement.entrant.firstName} ${changement.entrant.lastName} ← ` +
+          `${changement.sortant.firstName} ${changement.sortant.lastName}`,
+      );
+      continue;
+    }
+    fermer(sortant.id, changement.minute, true);
+    if (surLeTerrain.get(entrant.id) == null) {
+      surLeTerrain.set(entrant.id, changement.minute);
+      const bilan = bilans.get(entrant.id)!;
+      if (bilan.subIn == null) bilan.subIn = changement.minute;
+    }
+  }
+
+  for (const ligne of roster) {
+    // Un carton rouge met fin au match du joueur
+    const rouge = bilans.get(ligne.id)!.rouge;
+    fermer(ligne.id, rouge ?? DUREE, rouge != null);
+    const joue = total.get(ligne.id) ?? 0;
+    const bilan = bilans.get(ligne.id)!;
+    // Remplaçant jamais entré : minutes inconnues plutôt que zéro
+    bilan.minutes = !ligne.isStarter && bilan.subIn == null ? null : joue;
+  }
+}
+
+/** Champs sur lesquels la feuille officielle et la base sont confrontées. */
+const CHAMPS: (keyof Bilan)[] = [
+  "minutes",
+  "subIn",
+  "subOut",
+  "tries",
+  "conversions",
+  "penalties",
+  "drops",
+  "points",
+  "jaune",
+  "rouge",
+];
+
+/** Écarts entre la feuille et la base, sous forme « champ base→feuille ». */
+function ecarts(actuel: Bilan, retenu: Bilan): string[] {
+  return CHAMPS.filter((champ) => actuel[champ] !== retenu[champ]).map(
+    (champ) => `${champ} ${actuel[champ] ?? "∅"}→${retenu[champ] ?? "∅"}`,
+  );
+}
+
+async function main() {
+  console.log(
+    `=== Feuille adverse ${SAISON} depuis la LNR${DRY_RUN ? " (simulation)" : ""} ===\n`,
+  );
+
+  const saison = await prisma.season.findFirstOrThrow({ where: { label: SAISON } });
+  const matchs = await prisma.match.findMany({
+    where: { seasonId: saison.id },
+    orderBy: { date: "asc" },
+    include: {
+      opponent: { select: { name: true, shortName: true } },
+      competition: { select: { shortName: true } },
+    },
+  });
+
+  let traites = 0;
+  let lignesModifiees = 0;
+  const horsPerimetre: string[] = [];
+  const echecs: string[] = [];
+  const divergences: string[] = [];
+
+  for (const match of matchs) {
+    const jour = match.date.toISOString().slice(0, 10);
+    if (SEUL && jour !== SEUL) continue;
+    const adversaire = match.opponent.shortName ?? match.opponent.name;
+    const etiquette = `${jour} ${adversaire.padEnd(16)} ${match.scoreUsap}-${match.scoreOpponent}`;
+
+    const phases =
+      match.matchday != null
+        ? [`j${match.matchday}`]
+        : match.competition.shortName === "Barrages"
+          ? phasesBarrage(SAISON!)
+          : [];
+    if (phases.length === 0) {
+      horsPerimetre.push(`${etiquette} (${match.competition.shortName})`);
+      continue;
+    }
+
+    let url: string | null = null;
+    for (const phase of phases) {
+      url = await chercherFeuille(SAISON!, phase);
+      if (url) break;
+    }
+    if (!url) {
+      echecs.push(`${etiquette} : feuille LNR introuvable pour ${phases.join(" / ")}`);
+      continue;
+    }
+
+    const feuille = await lireFeuille(url);
+    if ((feuille.campUsap === "home") !== match.isHome) {
+      echecs.push(
+        `${etiquette} : ${url} donne l'USAP ${feuille.campUsap}, la base dit ${match.isHome ? "home" : "away"}`,
+      );
+      continue;
+    }
+    const campAdverse: Camp = feuille.campUsap === "home" ? "away" : "home";
+
+    const roster: Ligne[] = (
+      await prisma.matchPlayer.findMany({
+        where: { matchId: match.id, isOpponent: true },
+        select: {
+          id: true,
+          isStarter: true,
+          shirtNumber: true,
+          minutesPlayed: true,
+          subIn: true,
+          subOut: true,
+          tries: true,
+          conversions: true,
+          penalties: true,
+          dropGoals: true,
+          totalPoints: true,
+          yellowCardMin: true,
+          redCardMin: true,
+          player: { select: { firstName: true, lastName: true } },
+        },
+      })
+    )
+      .filter((l) => l.player)
+      .map((l) => ({
+        id: l.id,
+        firstName: l.player!.firstName,
+        lastName: l.player!.lastName,
+        shirtNumber: l.shirtNumber,
+        isStarter: l.isStarter,
+        actuel: {
+          minutes: l.minutesPlayed,
+          subIn: l.subIn,
+          subOut: l.subOut,
+          tries: l.tries,
+          conversions: l.conversions,
+          penalties: l.penalties,
+          drops: l.dropGoals,
+          points: l.totalPoints,
+          jaune: l.yellowCardMin,
+          rouge: l.redCardMin,
+        },
+      }));
+
+    const bilans = new Map<string, Bilan>(roster.map((l) => [l.id, bilanVide()]));
+
+    const ennuis: string[] = [];
+    const inferences: string[] = [];
+    let essaisDePenalite = 0;
+
+    // Une composition qui n'aligne pas quinze titulaires ne permet pas de
+    // reconstituer les temps de jeu : chaque titulaire de trop ajoute jusqu'à
+    // 80 minutes fictives. La LNR dessine parfois seize joueurs sur son
+    // terrain — Lyon à Aimé-Giral le 29 octobre 2022.
+    const titulaires = roster.filter((l) => l.isStarter).length;
+    if (titulaires !== 15) {
+      ennuis.push(`${titulaires} titulaires dans la composition en base`);
+    }
+
+    // ---- Réalisations et cartons ------------------------------------------
+    // Le score courant est la seule donnée sûre de la feuille : on additionne
+    // les points de base au fil des faits, et tout reliquat de deux points est
+    // une transformation — nommée ou non.
+    const cote: 0 | 1 = campAdverse === "home" ? 0 : 1;
+    const avecScore = feuille.faits.some((f) => f.score);
+    const buteurs = repererButeurs(roster, feuille, campAdverse);
+    const essaisAdverses: { minute: number; ligne: Ligne; transforme: boolean }[] = [];
+    /** Points adverses reconstitués, essais de pénalité compris. */
+    let courant = 0;
+
+    /**
+     * Crédite une transformation au dernier essai qui n'en a pas. Le buteur
+     * proposé par la feuille l'emporte s'il appartient bien à l'équipe ;
+     * sinon c'est le buteur de l'équipe le plus proche dans le temps.
+     */
+    const transformer = (propose: LnrJoueur | null) => {
+      const essai = [...essaisAdverses].reverse().find((e) => !e.transforme);
+      if (!essai) {
+        ennuis.push("une transformation de plus que d'essais à transformer");
+        return;
+      }
+      essai.transforme = true;
+      const nomme = propose ? apparier(roster, propose) : null;
+      const buteur = nomme ?? buteurLePlusProche(buteurs, essai.minute);
+      if (!buteur) {
+        ennuis.push(`transformation de l'essai de ${essai.minute}' : buteur introuvable`);
+        return;
+      }
+      const bilan = bilans.get(buteur.id)!;
+      bilan.conversions++;
+      bilan.points += 2;
+      if (!nomme) {
+        inferences.push(
+          `transformation de l'essai de ${essai.minute}' non nommée, portée au crédit de ` +
+            `${buteur.firstName} ${buteur.lastName}`,
+        );
+      }
+    };
+
+    for (const fait of feuille.faits) {
+      if (fait.club === campAdverse) {
+        if (fait.type === "essai-de-penalite") {
+          essaisDePenalite++;
+          courant += 7;
+        } else if (!fait.joueur) {
+          ennuis.push(`fait ${fait.minute}' ${fait.type} sans auteur`);
+        } else {
+          const ligne = apparier(roster, fait.joueur);
+          if (!ligne) {
+            ennuis.push(
+              `${fait.type} ${fait.minute}' : ${fait.joueur.firstName} ${fait.joueur.lastName} hors composition`,
+            );
+          } else {
+            const bilan = bilans.get(ligne.id)!;
+            switch (fait.type) {
+              case "essai":
+                bilan.tries++;
+                bilan.points += 5;
+                courant += 5;
+                essaisAdverses.push({ minute: fait.minute, ligne, transforme: false });
+                break;
+              case "penalite":
+                bilan.penalties++;
+                bilan.points += 3;
+                courant += 3;
+                break;
+              case "drop":
+                bilan.drops++;
+                bilan.points += 3;
+                courant += 3;
+                break;
+              case "jaune":
+                bilan.jaune = fait.minute;
+                break;
+              case "rouge":
+                bilan.rouge = fait.minute;
+                break;
+            }
+          }
+        }
+      }
+
+      // Le reliquat se lit sur n'importe quel fait, pas seulement sur ceux de
+      // l'équipe : la LNR inscrit volontiers la transformation sur le score du
+      // fait suivant, fût-il un carton de l'adversaire.
+      if (!fait.score) continue;
+      let residu = fait.score[cote] - courant;
+      while (residu >= 2 && essaisAdverses.some((e) => !e.transforme)) {
+        transformer(fait.transformePar);
+        courant += 2;
+        residu -= 2;
+      }
+      if (residu !== 0) {
+        // Le score courant de la LNR déraille parfois — deux points inscrits
+        // avant l'essai qui les vaut. On le signale sans écarter la feuille :
+        // c'est le total final, contrôlé plus bas, qui fait foi.
+        inferences.push(
+          `score ${fait.score.join("-")} à la ${fait.minute}' pour ${courant} points reconstitués`,
+        );
+      }
+    }
+
+    // La feuille s'arrête parfois avant la dernière transformation : le score
+    // du match, lui, la compte.
+    if (avecScore) {
+      let manque = match.scoreOpponent - courant;
+      while (manque >= 2 && essaisAdverses.some((e) => !e.transforme)) {
+        transformer(null);
+        courant += 2;
+        manque -= 2;
+      }
+    } else {
+      // Feuille sans score courant : faute de mieux, on s'en remet aux noms.
+      for (const fait of feuille.faits.filter(
+        (f) => f.club === campAdverse && f.type === "essai" && f.transformePar,
+      )) {
+        transformer(fait.transformePar);
+        courant += 2;
+      }
+    }
+
+    // ---- Temps de jeu ------------------------------------------------------
+    calculerTempsDeJeu(roster, feuille, campAdverse, bilans, ennuis);
+
+    if (ennuis.length > 0) {
+      echecs.push(`${etiquette} :\n      ${ennuis.join("\n      ")}`);
+      continue;
+    }
+
+    // ---- Contrôles ---------------------------------------------------------
+    const lignes = [...bilans.entries()];
+    const points = lignes.reduce((s, [, b]) => s + b.points, 0);
+    const essais = lignes.reduce((s, [, b]) => s + b.tries, 0);
+    const attendu = match.scoreOpponent - 7 * essaisDePenalite;
+
+    if (points !== attendu) {
+      echecs.push(
+        `${etiquette} : ${points} points reconstitués pour ${attendu} attendus ` +
+          `(${match.scoreOpponent} au score, ${essaisDePenalite} essai(s) de pénalité)`,
+      );
+      continue;
+    }
+    if (match.triesOpponent != null && essais !== match.triesOpponent) {
+      echecs.push(
+        `${etiquette} : ${essais} essais reconstitués pour ${match.triesOpponent} au compteur`,
+      );
+      continue;
+    }
+    // `penaltyTriesOpponent` est nullable et parfois nul : comparer sans le
+    // traiter fait passer la ligne en silence.
+    if (essaisDePenalite !== (match.penaltyTriesOpponent ?? 0)) {
+      divergences.push(
+        `${etiquette} : ${essaisDePenalite} essai(s) de pénalité selon la LNR, ` +
+          `${match.penaltyTriesOpponent ?? "aucun compteur"} en base`,
+      );
+    }
+
+    for (const inference of inferences) divergences.push(`${etiquette} : ${inference}`);
+
+    const minutes = lignes.reduce((s, [, b]) => s + (b.minutes ?? 0), 0);
+    const perduesRouge = lignes.reduce(
+      (s, [, b]) => s + (b.rouge != null ? DUREE - b.rouge : 0),
+      0,
+    );
+    const minutesAttendues = 15 * DUREE - perduesRouge;
+    const alerte = minutes !== minutesAttendues ? ` ⚠ ${minutes}/${minutesAttendues} minutes` : "";
+
+    // ---- Écart avec la base --------------------------------------------------
+    const modifiees = lignes.filter(([id, b]) => {
+      const ligne = roster.find((l) => l.id === id)!;
+      return ecarts(ligne.actuel, b).length > 0;
+    });
+    lignesModifiees += modifiees.length;
+
+    const joueurs = lignes.filter(([, b]) => b.points > 0 || b.jaune != null || b.rouge != null);
+    const entres = lignes.filter(([, b]) => b.subIn != null).length;
+    console.log(
+      `${etiquette} → ${essais} essai(s), ${points} pts, ${entres} entrée(s), ` +
+        `${modifiees.length} ligne(s) modifiée(s)${alerte}`,
+    );
+    for (const [id, b] of joueurs) {
+      const ligne = roster.find((l) => l.id === id)!;
+      const detail = [
+        b.tries ? `${b.tries}E` : null,
+        b.conversions ? `${b.conversions}T` : null,
+        b.penalties ? `${b.penalties}P` : null,
+        b.drops ? `${b.drops}D` : null,
+        b.jaune != null ? `🟨${b.jaune}'` : null,
+        b.rouge != null ? `🟥${b.rouge}'` : null,
+      ]
+        .filter(Boolean)
+        .join(" ");
+      console.log(
+        `    ${String(ligne.shirtNumber ?? "").padStart(2)} ${ligne.firstName} ${ligne.lastName} — ${detail} (${b.minutes ?? "?"}')`,
+      );
+    }
+    if (DETAIL) {
+      for (const [id, b] of modifiees) {
+        const ligne = roster.find((l) => l.id === id)!;
+        console.log(
+          `    ~ ${String(ligne.shirtNumber ?? "").padStart(2)} ${ligne.firstName} ${ligne.lastName} : ` +
+            ecarts(ligne.actuel, b).join(", "),
+        );
+      }
+    }
+
+    if (DRY_RUN) {
+      traites++;
+      continue;
+    }
+
+    // ---- Écriture -----------------------------------------------------------
+    for (const [id, b] of lignes) {
+      await prisma.matchPlayer.update({
+        where: { id },
+        data: {
+          minutesPlayed: b.minutes,
+          subIn: b.subIn,
+          subOut: b.subOut,
+          tries: b.tries,
+          conversions: b.conversions,
+          penalties: b.penalties,
+          dropGoals: b.drops,
+          totalPoints: b.points,
+          yellowCard: b.jaune != null,
+          yellowCardMin: b.jaune,
+          redCard: b.rouge != null,
+          redCardMin: b.rouge,
+        },
+      });
+    }
+
+    const verif = await prisma.matchPlayer.aggregate({
+      where: { matchId: match.id, isOpponent: true },
+      _sum: { totalPoints: true },
+    });
+    if ((verif._sum.totalPoints ?? 0) !== attendu) {
+      throw new Error(`${etiquette} : ${verif._sum.totalPoints} points écrits pour ${attendu}`);
+    }
+    traites++;
+  }
+
+  console.log(
+    `\n=== ${traites} match(s) ${DRY_RUN ? "prêts" : "écrits"}, ` +
+      `${lignesModifiees} ligne(s) ${DRY_RUN ? "à modifier" : "modifiées"}, ` +
+      `${horsPerimetre.length} hors périmètre, ${echecs.length} en échec ===`,
+  );
+  for (const h of horsPerimetre) console.log(`  — ${h}`);
+  for (const d of divergences) console.log(`  ⚠ ${d}`);
+  for (const e of echecs) console.log(`  ⚠ ${e}`);
+  if (DRY_RUN) console.log("\nSimulation — relancer sans --dry pour appliquer.");
+}
+
+main()
+  .catch((e) => {
+    console.error("Erreur :", e);
+    process.exit(1);
+  })
+  .finally(async () => {
+    await prisma.$disconnect();
+  });

@@ -43,8 +43,18 @@ export interface LnrFait {
   club: Camp;
   minute: number;
   joueur: LnrJoueur | null;
-  /** Auteur de la transformation, sur un essai transformé. */
+  /**
+   * Auteur de la transformation, sur un essai transformé. Champ à recouper :
+   * la LNR y met parfois un joueur de l'autre équipe, et l'omet parfois alors
+   * que le score prouve la transformation — d'où `score`.
+   */
   transformePar: LnrJoueur | null;
+  /**
+   * Score après le fait, `[recevant, visiteur]`, tel que la LNR l'affiche.
+   * Seuls les faits marquants en portent un ; c'est la seule donnée qui dise
+   * de façon sûre si un essai a été transformé.
+   */
+  score: [number, number] | null;
 }
 
 export interface LnrChangement {
@@ -221,6 +231,10 @@ export async function lireFeuille(url: string): Promise<LnrFeuille> {
       minute: Number(brut.minute ?? 0) + Number(brut.additionalMinute ?? 0),
       joueur: versJoueur(brut.player),
       transformePar: versJoueur(brut.conversionPlayer),
+      score:
+        Array.isArray(brut.score) && brut.score.length === 2
+          ? [Number(brut.score[0]), Number(brut.score[1])]
+          : null,
     });
   }
 
@@ -364,13 +378,19 @@ export async function lireCompositions(url: string): Promise<LnrCompositions> {
     // dossards avec d'autres joueurs — on s'en tient au premier, seul à
     // décrire une composition de départ.
     if (parClub.get(club)!.some((joueur) => joueur.numero === numero)) continue;
+    // Le second terrain peut aussi introduire un dossard neuf : Alfred
+    // Parisien, entré avec le 22, figure sur celui de Lyon à Aimé-Giral le
+    // 29 octobre 2022, et la liste des remplaçants l'oublie. Une équipe ne
+    // commence jamais à seize : passé le quinzième, on le tient pour un
+    // remplaçant.
+    const titulaires = parClub.get(club)!.filter((j) => j.isStarter).length;
     parClub.get(club)!.push({
       numero,
       firstName: capitaliser(firstName ?? ""),
       lastName: capitaliser(lastName),
       url: href,
       isCaptain: classes.includes("player-pitch--captain"),
-      isStarter: true,
+      isStarter: titulaires < 15,
     });
     identitesParClub.get(club)!.add(identifiant(href));
   }
