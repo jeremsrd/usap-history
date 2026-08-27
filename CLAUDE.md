@@ -108,7 +108,7 @@ schéma.
 
 Cela permet de suivre une personne d'un club à l'autre, de compter ses
 confrontations avec l'USAP, et de gérer les joueurs passés par les deux camps
-(Yato, Urdapilleta, les Lotrian…).
+(Yato, Urdapilleta, les Lotrian, Jérémie Maurouard…).
 
 - Créer l'adversaire avec `isActive: false` (ce drapeau signifie « actuellement
   à l'USAP »).
@@ -117,8 +117,8 @@ confrontations avec l'USAP, et de gérer les joueurs passés par les deux camps
   `lastName equals` ne suffit pas — il rate « Guerois-Galisson » vs
   « Guerois Galisson », « Bécognée » vs « Becognee ». Construire un index en
   mémoire une fois, puis chercher dedans.
-- `players` contient donc majoritairement des adversaires : 1 251 sur 1 375,
-  quand 144 seulement ont porté le maillot catalan — 28 figurent des deux
+- `players` contient donc majoritairement des adversaires : 1 248 sur 1 368,
+  quand 144 seulement ont porté le maillot catalan — 29 figurent des deux
   côtés. C'est normal. Les pages de liste filtrent déjà sur
   `isOpponent: false`.
 - **Un import qui cherche sur le nom exact fabrique des doublons à chaque
@@ -464,6 +464,7 @@ doublons.
 | `merge-players.ts` | fusionne deux fiches désignées par leur identifiant (`--keep`, `--drop`, `--nom`) ; ne cherche rien de lui-même, refuse la fusion si les deux figurent sur un même match |
 | `rename-player.ts` | renomme une fiche, slug compris — un slug refait à la main sans le CUID rend la fiche introuvable |
 | `reassign-match-player.ts` | change le joueur porté par un dossard sur une feuille, quand la base a mis quelqu'un d'autre et que les deux noms se ressemblent trop pour que l'audit s'en aperçoive |
+| `delete-orphan-players.ts` | supprime les fiches vides de bout en bout — aucune feuille, aucun événement, aucune donnée personnelle ; les figures historiques sans match saisi sont ainsi protégées |
 | `close-season-2025-2026.ts` | modèle de clôture de saison, avec garde-fou sur le classement officiel |
 | `seed-opponent-sheet.ts` | **le script du chantier adverse** : reprend une saison entière depuis la LNR — réalisations, cartons et temps de jeu reconstitués à partir des changements. Prend la saison en argument (`2023-2024`), `--dry` pour simuler, `--detail` pour le relevé des écarts avec la base, `--match=AAAA-MM-JJ` pour n'en reprendre qu'un |
 | `seed-cup-sheet.ts` | **le pendant pour les coupes d'Europe**, depuis l'EPCR : réalisations, cartons et temps de jeu des **deux camps**, plus l'arbitre, l'affluence et la mi-temps. Sans argument il reprend les dix-huit matchs européens ; `--dry`, `--detail`, `--match=AAAA-MM-JJ` comme le précédent |
@@ -570,21 +571,12 @@ phase d'un barrage s'écrit `access` et non `access-top-14`.
 
 Par ordre de valeur.
 
-1. **Arbitrer les doublons de fiches** qui restent : Alainu'uese (Brian /
-   Junior / Komiti), Maurouard (Jérémie / Jérémy), Rey (Jérôme / Joël /
-   Lucas), et le choix entre « Nacho Brex » et « Juan Ignacio Brex ». Huit
-   fiches ne sont rattachées à aucune feuille — dont Clément Mondinat, que la
-   feuille de Pau du 22 février 2026 inventait — mais d'autres sont des
-   figures historiques (Aimé Giral, Jean-François Imbernon) qu'on n'efface pas
-   sans réfléchir. `merge-players.ts` fusionne une paire vérifiée,
-   `rename-player.ts` pose le nom retenu, `reassign-match-player.ts` change le
-   joueur porté par un dossard.
-2. **Aligner les compositions de l'USAP sur les feuilles officielles.**
+1. **Aligner les compositions de l'USAP sur les feuilles officielles.**
    `fix-opponent-lineup.ts --usap` l'a fait sur les dix-huit matchs de coupe,
    où six feuilles intervertissaient deux dossards catalans. Il reste une
    quarantaine de matchs de championnat où la LNR et la base divergent, jamais
    examinés — surtout des brassards de capitaine.
-3. **Le fond** : affluences (33 matchs sur 126), photos et biographies (1
+2. **Le fond** : affluences (33 matchs sur 126), photos et biographies (1
    joueur sur 144), et la phase 4 — 114 saisons sans aucun match.
 
 114 saisons sur 119 n'ont encore aucun match : c'est le chantier de la phase 4,
@@ -596,7 +588,7 @@ menée en remontant le temps saison par saison.
   existe et s'affiche, mais la sanction ne peut pas figurer dans la chronologie.
 - Les fiches joueur affichent séparément « Matchs avec l'USAP » et « Matchs
   contre l'USAP ». Les statistiques ne comptent que les premiers. Toute nouvelle
-  requête sur les joueurs doit filtrer `isOpponent: false`, sinon les 1 251
+  requête sur les joueurs doit filtrer `isOpponent: false`, sinon les 1 248
   adversaires présents dans `players` faussent le résultat. Le tableau « contre
   l'USAP » n'affiche d'ailleurs ni minutes ni réalisations : le détail saisi
   côté adverse n'est visible que sur les pages de match.
@@ -609,11 +601,11 @@ menée en remontant le temps saison par saison.
   | MANQUANT / EN TROP | 8 matchs | **0** |
   | NUMÉRO | ~100 | **0** |
   | CAPITAINE | 78 | **0** |
-  | ÉCRITURE | ~70 | 51 |
+  | ÉCRITURE | ~70 | 49 |
 
   Les dossards, les brassards de capitaine et les identités fautives ont été
   repris depuis les feuilles officielles. Restent les ÉCRITURE, réparties sur
-  28 matchs, qui sont des variantes de bonne foi — diminutifs (« Billy » pour
+  26 matchs, qui sont des variantes de bonne foi — diminutifs (« Billy » pour
   Viliami Vunipola, « Tom » pour Thomas Staniforth) ou prénom d'usage
   (« Jonny » pour Jonathan Gray, « Paddy » pour David Patrick Jackson).
 
@@ -647,6 +639,12 @@ menée en remontant le temps saison par saison.
   où la chronologie renverra vers les fiches joueur — c'est le travail
   d'interface qui a de la valeur, pas la colonne. Les réalisations par joueur
   adverse, elles, sont complètes : elles vivent dans `MatchPlayer`.
+- **Cinq fiches ne sont rattachées à aucun match, et c'est normal** : Dan
+  Carter, Joseph Desclaux, Aimé Giral, Percy Montgomery et Jean-François
+  Imbernon sont des figures citées pour mémoire, avec date de naissance et
+  biographie. Ne pas les prendre pour des débris d'import : `players` sans
+  `matchAppearances` n'est pas un critère suffisant, c'est l'absence de toute
+  donnée personnelle qui l'est (cf. `delete-orphan-players.ts`).
 - Erreur d'hydratation React sur les pages de match, antérieure et non
   diagnostiquée (probablement `next-themes`).
 - Affluences éparses — 33 matchs sur 126, l'EPCR ayant fourni celles des
