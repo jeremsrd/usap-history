@@ -554,6 +554,7 @@ doublons.
 
 | Script | Rôle |
 |---|---|
+| `etat-couverture.ts` | lecture seule : l'état de la couverture saison par saison, ce que les tableaux de CLAUDE.md faisaient à la main |
 | `fix-bonus-points.ts` | recalcule tous les bonus et les totaux de saison, refuse d'écrire si un classement officiel connu diverge |
 | `fix-broken-slugs.ts` | réécrit les slugs dont le suffixe ne permet plus de retrouver l'entité (fiche en 404) |
 | `normalize-opponent-players.ts` | rattache les anciennes lignes `opponentPlayerName` à un vrai `Player` |
@@ -674,79 +675,44 @@ authentification Supabase, statistiques et recherche. Reste la phase 4
 
 ### Couverture des données
 
-2026-2027 n'est encore qu'un calendrier : ses 26 journées de Top 14 sont en
-base avec leur date, leur adversaire et leur terrain, sans score ni résultat.
-Seules les cinq premières ont un horaire — la LNR ne cale les coups d'envoi
-qu'au fil des désignations télévisées, et pose d'ici là une date de référence
-que le script rafraîchira à chaque relance.
+**Les chiffres se lisent dans la base, ils ne se recopient pas ici.** Cette
+section portait trois tableaux qu'il fallait tenir à jour à chaque saison
+reprise, et qui se contredisaient dès qu'on en oubliait un. Un script les
+remplace :
 
-Son **effectif**, lui, est à jour au 29 août 2026 : 50 joueurs portent
-`isActive`, repris de la LNR par `sync-effectif.ts`. Six fiches ont été créées
-à cette occasion — Riccioni, Amituanai, McGrath, Reece, Kubunakaravi, Ennor —
-et neuf réactivées, dont plusieurs qui n'existaient en base que comme
-adversaires. Trente-trois joueurs de 2025-2026 ont été abaissés. Deux points
-restent ouverts : les postes de Riccioni et d'Amituanai, que la LNR range en
-« 1ère ligne » sans trancher entre pilier et talonneur, et l'absence de lignes
-`SeasonPlayer` pour 2026-2027 — le modèle est alimenté de 2022-2023 à
-2025-2026, mais il porte un dossard que la LNR ne publie pas avant les
-premières feuilles.
+```bash
+npx tsx scripts/etat-couverture.ts
+```
 
-**Les matchs de 2022-2023 à 2025-2026 ont leurs 46 joueurs et leur
-chronologie.** 2021-2022, première saison de la phase 4, n'a que ses
-rencontres — sauf **tous ses matchs, repris le 29 août 2026** : les
-31 rencontres portent leurs 46 joueurs et leur chronologie, 1 200 minutes par
-camp, et des points qui retombent sur le score.
+Il donne, par saison : matchs, compositions et chronologies écrites, puis
+l'annexe — arbitre, mi-temps, vidéo, compte-rendu, affluence.
 
-Une seule composition ne vient pas d'une source lue par machine, celle du
-**barrage d'accession du 12 juin 2022** : la LNR ne la publie ni sur son site
-Top 14 ni sur celui de Pro D2 — la page `/compositions` existe et ne contient
-aucun joueur —, ESPN ne couvre pas le match d'accession et allrugby.com était
-injoignable. Elle a été fournie à la main puis recoupée avec la feuille
-officielle, qui la corrobore largement (cf. l'en-tête de
-`seed-lineup-barrage-2022.ts`). **Ses numéros restent incertains** : ils ne
-viennent que de la source fournie, la feuille ne les mentionnant nulle part. La mi-temps et les comptes-rendus manquent
-pour toute la saison, la LNR ne les publiant pas.
+Ce qui ne se déduit pas de la base, en revanche :
 
-Annexe du match :
+**Ce que les sources ne publient pas.** La LNR ne donne ni affluence, ni score
+à la mi-temps, ni compte-rendu : les saisons qui n'ont qu'elle pour source —
+2021-2022 et 2020-2021 — resteront vides sur ces trois colonnes, sauf à
+trouver ailleurs. L'EPCR, lui, donne les trois, d'où les mi-temps et les
+affluences des matchs de coupe d'Europe. Les vidéos viennent de la chaîne
+YouTube « TOP 14 - Officiel », qui ne remonte pas au-delà de 2022-2023.
 
-| Saison | Matchs | Arbitres | Mi-temps | Vidéos | Comptes-rendus | Affluences |
-|---|---|---|---|---|---|---|
-| 2026-2027 | 26 à venir | — | — | — | — | — |
-| 2025-2026 | 32 | 32 | 32 | 31 | 32 | 7 |
-| 2024-2025 | 32 | 32 | 32 | 24 | 28 | 15 |
-| 2023-2024 | 30 | 30 | 30 | 29 | 30 | 6 |
-| 2022-2023 | 31 | 31 | 30 | 21 | 31 | 4 |
-| 2021-2022 | 31 | 30 | 5 | 0 | 0 | 4 |
-| 2020-2021 | 32 | 32 | — | — | — | — |
-| 2008-2009 | 1 | 1 | 1 | 0 | 1 | 1 |
+**Ce qu'un `null` veut dire.** Sur `MatchPlayer.minutesPlayed`, « n'est pas
+entré en jeu », et non « on ne sait pas » — les remplaçants non utilisés sont
+les seuls concernés. Sur `Match.scoreUsap` et `result`, « pas encore joué »,
+jamais « zéro » : toute requête qui compte ou classe doit filtrer sur
+`MATCH_JOUE` (`src/lib/matchs.ts`).
 
-**Tous les arbitres sont renseignés.** Les quatre qui manquaient à 2022-2023
-étaient ceux de ses matchs de Challenge, que le flux de l'EPCR a fournis — il
-remonte plus loin que son site, dont le sélecteur de saison s'arrête à
-2023-2024. La seule mi-temps encore vide est celle du barrage 2022-2023, que
-la LNR ne donne pas.
+**2026-2027 n'est qu'un calendrier** : ses 26 journées ont leur date, leur
+adversaire et leur terrain, sans score. Seules les premières ont un horaire —
+la LNR ne cale les coups d'envoi qu'au fil des désignations télévisées et pose
+d'ici là une date de référence, que `seed-calendrier-2026-2027.ts` rafraîchit
+à chaque relance.
 
-Détail des joueurs adverses — le vrai chantier restant sur les saisons déjà
-saisies. « Cohérents » compte les matchs dont la somme des points adverses
-retombe sur le score, essais de pénalité déduits :
-
-| Saison | Lignes avec minutes | Marqueurs | Matchs cohérents |
-|---|---|---|---|
-| 2025-2026 | 733 / 736 | 155 | 32 / 32 |
-| 2024-2025 | 728 / 736 | 117 | 32 / 32 |
-| 2023-2024 | 690 / 690 | 115 | 30 / 30 |
-| 2022-2023 | 706 / 713 | 135 | 31 / 31 |
-
-**Le chantier adverse est fini sur les quatre saisons saisies : leurs 126
-matchs sont cohérents**, championnat depuis la LNR, coupes d'Europe depuis
-l'EPCR. Les 31 matchs de 2021-2022 n'ont pas encore de composition. Les lignes sans
-minutes sont celles des remplaçants qui ne sont pas entrés en jeu — `null` y
-vaut « n'a pas joué », et non « on ne sait pas ».
-
-Attention en reprenant une saison ancienne : le segment de phase du barrage a
-changé trois fois — `match-daccession` en 2021-2022, `access` en 2022-2023,
-`access-top-14` depuis 2024-2025. `seed-opponent-sheet.ts` essaie les deux
-derniers.
+**Deux points ouverts sur l'effectif 2026-2027** : les postes de Riccioni et
+d'Amituanai, que la LNR range en « 1ère ligne » sans trancher entre pilier et
+talonneur, et l'absence de lignes `SeasonPlayer` pour la saison — le modèle
+est alimenté de 2022-2023 à 2025-2026, mais il porte un dossard que la LNR ne
+publie pas avant les premières feuilles.
 
 ### Où reprendre
 
