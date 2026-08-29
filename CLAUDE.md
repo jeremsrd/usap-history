@@ -793,98 +793,81 @@ officiels mais n'a pas été confronté à un classement d'époque ; celui de
 
 ### Limites connues
 
+**Ce que la base ne sait pas faire**
+
 - `EventType` ne comporte pas `CARTON_ORANGE`. Le champ `MatchPlayer.orangeCard`
   existe et s'affiche, mais la sanction ne peut pas figurer dans la chronologie.
-- Les fiches joueur affichent séparément « Matchs avec l'USAP » et « Matchs
-  contre l'USAP ». Les statistiques ne comptent que les premiers. Toute nouvelle
-  requête sur les joueurs doit filtrer `isOpponent: false`, sinon les 1 246
-  adversaires présents dans `players` faussent le résultat. Le tableau « contre
-  l'USAP » n'affiche d'ailleurs ni minutes ni réalisations : le détail saisi
-  côté adverse n'est visible que sur les pages de match.
-- **Des compositions adverses ont été inventées par d'anciens imports.**
-  `audit-opponent-lineups.ts` a confronté les 98 feuilles que la LNR publie à
-  leur original. Le compte, à jour :
-
-  | Anomalie | Au départ | Aujourd'hui |
-  |---|---|---|
-  | MANQUANT / EN TROP | 8 matchs | **0** |
-  | NUMÉRO | ~100 | **0** |
-  | CAPITAINE | 78 | **0** |
-  | ÉCRITURE | ~70 | 49 |
-
-  Les dossards, les brassards de capitaine et les identités fautives ont été
-  repris depuis les feuilles officielles. Restent les ÉCRITURE, réparties sur
-  26 matchs, qui sont des variantes de bonne foi — diminutifs (« Billy » pour
-  Viliami Vunipola, « Tom » pour Thomas Staniforth) ou prénom d'usage
-  (« Jonny » pour Jonathan Gray, « Paddy » pour David Patrick Jackson).
-
-  **Une divergence d'écriture peut cacher un doublon.** La composition de
-  Grenoble au barrage 2024-2025 en portait dix-sept, toutes sur le prénom, le
-  nom de famille étant juste. Neuf d'entre elles n'étaient pas des fautes
-  d'orthographe mais des **fiches en double** de joueurs déjà en base sous
-  leur vrai prénom — Zack Gauthier, Mathis Sarragallet, Pio Muarua, Wilfried
-  Hulleu, Julien Hériteau, Julien Farnoux, Tommy Raynaud, Giorgi Javakhia,
-  Eric Escande —, fusionnées depuis. Une dixième était une confusion de
-  personnes : le 9 grenoblois était rattaché à **Baptiste** Couilloud, demi de
-  mêlée de Lyon, au lieu de son frère **Barnabé**. Devant un prénom qui
-  diverge, chercher d'abord si le bon joueur n'existe pas déjà ailleurs.
-
-  Neuf feuilles de 2022-2023 restent illisibles, la LNR n'en publiant pas les
-  compositions. Les dix-huit matchs de coupe, eux, ont été confrontés au flux
-  de l'EPCR par `fix-opponent-lineup.ts` : aucune identité fautive, mais des
-  dossards intervertis des deux côtés — quatre matchs pour l'adversaire, six
-  pour l'USAP.
-
-  Devant un nom qui ne s'apparie pas, soupçonner la base avant la source.
-- **Les deux compositions sont désormais alignées sur les feuilles
-  officielles**, l'USAP comprise : 131 lignes reprises sur une quarantaine de
-  matchs de championnat, presque toutes des dossards de remplaçants dans le
-  désordre et des brassards de capitaine. Sur 252 compositions, 239 portent
-  exactement un capitaine, 13 aucun — les neuf feuilles que la LNR ne publie
-  pas, et le match des Dragons du 7 décembre 2025, où l'EPCR en signale deux
-  sans qu'on puisse les départager. Aucune n'en porte plusieurs.
-- **La feuille LNR du 22 février 2026 se contredit sur les deux camps.**
-  Côté palois elle fait entrer un vingt-quatrième homme (cf. la table
-  `CHANGEMENTS_CORRIGES`) ; côté catalan, ses changements font entrer Victor
-  Montgaillard et Kieran Brookes, qui ne figurent pas davantage sur les
-  vingt-trois qu'elle publie, et sortir Mathys Lotrian qui n'était pas entré.
-  La composition de l'USAP y est donc **laissée telle quelle** : la base
-  garde Montgaillard au 17 là où la feuille met James Hall au 20. C'est le
-  seul match dont `fix-opponent-lineup.ts --usap --identites` reste écarté.
-- **`MatchEvent.playerId` ne sert presque à rien en l'état.** 922 des 1 086
-  événements adverses ne le renseignent pas, mais la page publique du match ne
-  le lit pas : elle affiche `event.description`, où le nom du marqueur est déjà
-  écrit en clair. Seul le gestionnaire d'événements de l'admin s'en sert, pour
-  afficher le nom à côté de la ligne. Le remplir ne se justifiera que le jour
-  où la chronologie renverra vers les fiches joueur — c'est le travail
-  d'interface qui a de la valeur, pas la colonne. Les réalisations par joueur
-  adverse, elles, sont complètes : elles vivent dans `MatchPlayer`.
-- **Onze fiches ne sont rattachées à aucun match, et c'est normal.** Cinq sont
-  des figures citées pour mémoire, avec date de naissance et biographie — Dan
-  Carter, Joseph Desclaux, Aimé Giral, Percy Montgomery et Jean-François
-  Imbernon. Les six autres sont les recrues de 2026-2027, créées par
-  `sync-effectif.ts` avant leur premier match. Ne pas les prendre pour des
-  débris d'import : `players` sans `matchAppearances` n'est pas un critère
-  suffisant, c'est l'absence de toute donnée personnelle qui l'est (cf.
-  `delete-orphan-players.ts`).
-- **`isActive` se lit « dans l'effectif professionnel », pas « au club ».**
-  `sync-effectif.ts` ne connaît que la page de la LNR, qui ignore les espoirs :
-  un joueur versé chez les jeunes est donc abaissé alors qu'il n'a pas quitté
-  l'USAP. Thomas Serezat est dans ce cas — abaissé le 29 août 2026, il figure
-  sur la page espoirs d'`usap.fr`. Simon Taty et Diego Mascarenc, eux,
-  apparaissent sur les deux listes et restent actifs.
+- Les modèles `CareerClub`, `PlayerStint`, `PlayerInternational` et
+  `PlayerAward` existent et ne sont pas alimentés.
 - Erreur d'hydratation React sur les pages de match, antérieure et non
   diagnostiquée (probablement `next-themes`).
-- Affluences éparses — 37 matchs sur 157, l'EPCR ayant fourni celles des
-  coupes ; peu de photos et de biographies de joueurs.
-- **Le lieu d'un match ne se saisit pas à la main** : il se déduit du camp —
-  Aimé-Giral à domicile, `Opponent.venueId` à l'extérieur. Les 157 matchs ont
-  désormais leur stade. Quatre clubs n'ont pas encore de terrain rattaché —
-  Connacht, Cardiff, Dragons, Lions —, l'USAP ne les ayant reçus qu'à
-  Aimé-Giral : `fix-match-venues.ts` déduit un terrain des déplacements
-  enregistrés, il ne peut rien pour ceux-là.
-- Les modèles `CareerClub`, `PlayerStint`, `PlayerInternational` et
-  `PlayerAward` existent mais ne sont pas alimentés.
+
+**Ce à quoi il faut penser en écrivant une requête**
+
+- **`players` est aux trois quarts des adversaires** : 1 738 sur 1 924 n'ont
+  jamais porté le maillot, 175 l'ont porté. Toute requête sur les joueurs doit
+  filtrer `isOpponent: false`, sinon le résultat est faux. Les fiches
+  affichent séparément « Matchs avec l'USAP » et « Matchs contre l'USAP », et
+  les statistiques ne comptent que les premiers ; le tableau « contre » ne
+  montre ni minutes ni réalisations, ce détail n'étant visible que sur les
+  pages de match.
+- **Onze fiches ne sont rattachées à aucun match, et c'est normal** : cinq
+  figures citées pour mémoire, avec biographie — Dan Carter, Joseph Desclaux,
+  Aimé Giral, Percy Montgomery, Jean-François Imbernon —, et six recrues de
+  2026-2027 créées avant leur premier match. `players` sans `matchAppearances`
+  n'est donc pas un critère d'orphelin ; c'est l'absence de toute donnée
+  personnelle qui l'est (cf. `delete-orphan-players.ts`).
+- **`isActive` se lit « dans l'effectif professionnel »**, pas « au club ».
+  `sync-effectif.ts` ne connaît que la page de la LNR, qui ignore les espoirs :
+  Thomas Serezat a ainsi été abaissé le 29 août 2026 alors qu'il n'a pas quitté
+  l'USAP.
+- **Une composition peut légitimement ne porter aucun capitaine** : sur 378,
+  358 en portent exactement un, 20 aucun — les feuilles que la LNR ne publie
+  pas, et le match des Dragons du 7 décembre 2025 où l'EPCR en signale deux
+  sans qu'on puisse les départager. Aucune n'en porte plusieurs. « Aucun » se
+  lit « la source ne le dit pas », non « personne ne l'était ».
+- **`MatchEvent.playerId` n'est pas toujours renseigné** : 950 événements sur
+  3 406 ne le portent pas, les plus anciens surtout — la chaîne actuelle le
+  remplit systématiquement. La page publique ne le lit pas, elle affiche
+  `event.description`, où le nom figure en clair ; seul l'admin s'en sert.
+
+**Ce qui manque dans les données**
+
+- **Huit matchs n'ont pas de stade**, tous les déplacements de 2020-2021 chez
+  les clubs créés avec cette saison — Carcassonne, Nevers, Valence-Romans,
+  Colomiers, Angoulême, Aurillac, Béziers, Rouen. Le lieu se déduit du camp
+  (Aimé-Giral à domicile, `Opponent.venueId` à l'extérieur) et ces huit clubs
+  n'ont pas de terrain rattaché. `fix-match-venues.ts` ne peut rien : il
+  déduit un terrain des déplacements déjà enregistrés, or ce sont justement
+  ceux-là qui manquent. Il faut créer les huit stades depuis une source.
+  Quatre clubs européens sont dans le même cas pour la raison inverse —
+  Connacht, Cardiff, Dragons, Lions, que l'USAP n'a reçus qu'à Aimé-Giral.
+- **Affluences éparses** : 36 matchs sur 215, l'EPCR ayant fourni celles des
+  coupes. Peu de photos et de biographies de joueurs.
+- **49 divergences d'écriture** subsistent entre la base et les feuilles
+  officielles, sur 26 matchs : des variantes de bonne foi, diminutifs
+  (« Billy » pour Viliami Vunipola) ou prénoms d'usage (« Paddy » pour David
+  Patrick Jackson). Les anomalies graves — joueurs manquants, dossards faux,
+  brassards, identités fautives — ont toutes été soldées depuis les feuilles
+  officielles.
+
+**Deux exceptions nommées**
+
+- **La feuille LNR du 22 février 2026 se contredit sur les deux camps.** Côté
+  catalan, ses changements font entrer deux joueurs absents des vingt-trois
+  qu'elle publie et sortir un joueur jamais entré. La composition de l'USAP y
+  est donc **laissée telle quelle**, et c'est le seul match dont
+  `fix-opponent-lineup.ts --usap --identites` reste écarté.
+- **La composition du barrage du 12 juin 2022 ne vient d'aucune source lue par
+  machine** : elle a été fournie à la main puis recoupée avec les changements
+  officiels. Ses numéros restent incertains (cf. l'en-tête de
+  `seed-lineup-barrage-2022.ts`).
+
+**Une règle qui vaut pour tout ce qui précède** : devant un nom qui ne
+s'apparie pas, **soupçonner la base avant la source** — et devant un prénom
+qui diverge, chercher d'abord si le bon joueur n'existe pas déjà ailleurs sous
+son vrai prénom. C'est ainsi qu'on a trouvé neuf doublons dans la seule
+composition de Grenoble au barrage 2024-2025.
 
 ## Commandes
 
