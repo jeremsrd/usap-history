@@ -418,268 +418,102 @@ puisqu'il porte son CUID : créer avec un slug provisoire, puis le réécrire.
 
 ### Où trouver les données
 
-**Pour tout match de championnat — Top 14, Pro D2, barrage d'accession — la
-LNR est la source à utiliser, et rien d'autre en première intention.** C'est
-la seule source officielle : les autres se trompent sur les noms, oublient des
-actions et décalent les minutes. Le reste de cette liste ne sert qu'aux
-compétitions que la LNR ne couvre pas, ou aux informations qu'elle ne donne
-pas (affluence).
+**Une source par compétition, et rien d'autre en première intention** : la LNR
+pour le championnat — Top 14, Pro D2, barrage —, l'EPCR pour les coupes
+d'Europe. Ce sont les seules sources officielles ; les autres se trompent sur
+les noms, oublient des actions et décalent les minutes.
 
-- **LNR — feuille de match officielle**, `top14.lnr.fr/feuille-de-match/{saison}/{phase}/{id}-{dom}-{ext}`.
-  La phase est `j{N}` pour une journée, `access` en 2022-2023 et
-  `access-top-14` depuis 2024-2025 pour un barrage — le segment a changé de
-  nom. L'identifiant se retrouve sur
-  `top14.lnr.fr/calendrier-et-resultats/{saison}/{phase}`, où il suffit de
-  chercher le lien contenant `perpignan`. Deux onglets utiles :
-  `/compositions` (compositions numérotées et officiels de match, dont
-  l'arbitre) et `/resumes-replays` (faits de match et changements).
+**Les modules font le travail, et portent les démonstrations.** Chaque
+bizarrerie de chaque source est documentée dans `scripts/lib/lnr.ts` et
+`scripts/lib/epcr.ts`, au code qui la contourne — c'est là qu'il faut aller
+avant de toucher à l'un d'eux, pas ici.
 
-  **Passer par `scripts/lib/lnr.ts`**, qui fait déjà tout le travail :
-  `chercherFeuille(saison, phase)` puis `lireFeuille(url)`.
+#### La LNR — championnat
 
-  Contrairement à ce que laisse croire une lecture rapide du site, **une
-  requête `fetch` suffit, pas besoin de navigateur** : les pages sont rendues
-  côté serveur et embarquent la charge utile JSON du composant, échappée en
-  entités HTML (`&quot;`). Le JavaScript ne fait que l'afficher. Le module
-  décode les entités puis isole chaque objet par comptage d'accolades.
+`{top14|prod2}.lnr.fr/feuille-de-match/{saison}/{phase}/{id}-{dom}-{ext}`,
+l'identifiant venant de `/calendrier-et-resultats/{saison}/{phase}`. Deux
+onglets : `/compositions` (les vingt-trois, numérotés, et l'arbitre central) et
+`/resumes-replays` (faits de match et changements). Un simple `fetch` suffit.
 
-  Trois choses ne sont pas sur la feuille elle-même :
-  - le **score final** se lit sur la page de calendrier
-    (`lireCalendrier(saison, phase)`), et c'est lui qui fait foi — celui que la
-    feuille égrène au fil des actions saute parfois une transformation ;
-  - le **coup d'envoi** à la minute près se lit dans le composant
-    `header-timeline` de la feuille (`coupDEnvoi`), et nulle part ailleurs : le
-    calendrier n'affiche l'horaire que des rencontres à venir. Attention, le
-    bandeau de la prochaine journée porte le même champ en haut de chaque page ;
-  - l'**arbitre central** est rendu comme un joueur sur `/compositions`, son
-    poste portant le rôle (`lireCompositions().arbitre`).
+Par `scripts/lib/lnr.ts` : `chercherFeuille` puis `lireFeuille`,
+`lireCompositions`, `lireCalendrier`, `lireEffectif`, `phasesLnr`,
+`utiliserDivision`.
 
-  Ce que la feuille donne, et que personne d'autre ne donne aussi bien :
-  - le **score après chaque fait de match** (`score`, `[recevant, visiteur]`),
-    la seule donnée vraiment sûre de la feuille — voir plus bas ;
-  - les **essais de pénalité**, marqués `essai-de-penalite` sans auteur
-    (« n.a. ») ;
-  - les cartons, avec leur minute officielle ;
-  - les changements avec **camp, minute, entrant, sortant**, et surtout le
-    type **définitif ou temporaire** — indispensable pour reconstituer les
-    minutes quand un joueur sort puis revient.
+| Donnée | Où |
+|---|---|
+| score final | `lireCalendrier` — **il fait foi**, la feuille saute parfois une transformation |
+| coup d'envoi à la minute | `lireFeuille().coupDEnvoi`, et nulle part ailleurs |
+| arbitre central | `lireCompositions().arbitre` |
+| score après chaque fait, cartons, essais de pénalité | `lireFeuille().faits` |
+| changements, avec définitif ou temporaire | `lireFeuille().changements` |
+| affluence, mi-temps | **nulle part** |
 
-  Cinq réserves :
-  - **`conversionPlayer` ment.** On l'a longtemps pris pour le transformateur
-    de l'essai : il l'est souvent, pas toujours. Il porte parfois un joueur de
-    l'**autre équipe** (l'essai lyonnais de Monty Ioane, le 20 avril 2024, est
-    donné transformé par Jake McIntyre, ouvreur catalan) ; il se pose parfois
-    sur un fait qui n'est pas un essai — un carton — pour désigner en réalité
-    la transformation de l'essai précédent ; et il manque parfois alors que la
-    transformation a bien eu lieu. **Ne jamais s'en servir pour décider qu'il y
-    a eu transformation** : seul le `score` le dit. Tout reliquat de deux
-    points entre le score affiché et les points reconstitués est une
-    transformation, à porter au dernier essai qui n'en a pas. Ne se servir de
-    `conversionPlayer` que pour **nommer** le buteur, et seulement s'il figure
-    dans la composition de l'équipe concernée ; sinon, prendre le buteur de
-    l'équipe le plus proche dans le temps ;
-  - le score courant lui-même déraille : à Toulouse le 13 septembre 2025, deux
-    points sont inscrits **avant** l'essai qui les vaut, et le 6 mai 2023 à
-    Lyon la dernière transformation du match n'apparaît nulle part. Le total
-    final du match, lui, est toujours juste : c'est lui qui doit trancher ;
-  - un retour de remplacement temporaire n'est pas toujours enregistré. Le
-    total des minutes d'une équipe tombe alors sous 1 200 — le signaler, ne
-    pas inventer la minute manquante ;
-  - **un changement peut porter deux noms faux à la fois.** À Aimé-Giral le
-    22 février 2026, la feuille fait entrer Clément Mondinat à la 56ᵉ à la
-    place de Grégoire Arfeuil : or Arfeuil ne peut pas sortir, il n'était
-    jamais entré, et Mondinat ne figure ni parmi les vingt-trois publiés, ni
-    sur aucun des deux terrains dessinés. Le terrain de fin de match, lui, est
-    cohérent — Valentino n'y est plus, la ligne de trois-quarts a glissé et
-    Arfeuil occupe le 14. Les deux noms de l'enregistrement sont décalés d'un
-    cran. `seed-opponent-sheet.ts` porte une table `CHANGEMENTS_CORRIGES`
-    pour ces cas-là, **vérifiés à la main** : y ajouter une ligne, c'est
-    affirmer que la LNR se trompe, et il faut la démonstration sous les yeux.
-    Le contrôle des minutes tranche : la version corrigée retombe sur 1 200,
-    pas l'autre ;
-  - **le brassard de capitaine est parfois posé sur toute l'équipe.** La
-    feuille du 29 octobre 2022 désigne quinze capitaines catalans.
-    `lireCompositions()` retire alors le renseignement : plus d'un capitaine
-    vaut aucun, et « aucun » se lit « la feuille ne le dit pas », non
-    « personne ne l'était » — `fix-opponent-lineup.ts` s'abstient de toucher
-    au brassard dans ce cas, sauf si la base elle-même en porte deux ;
-  - les **postes affichés sur `/compositions` ne sont pas fiables** (un ailier
-    y est donné « demi de mêlée »). Ils décrivent le poste de référence du
-    joueur, pas celui du jour : continuer à déduire `positionPlayed` du numéro
-    de maillot ;
-  - `/compositions` est du **HTML classique**, pas du JSON embarqué :
-    `lireCompositions()` s'en charge à part. Le camp de chaque joueur du XV se
-    lit dans l'URL de son maillot ; les listes du bas, qui portent les
-    remplaçants, ne mentionnent aucun club et se rattachent en comparant leur
-    XV à celui du terrain. La LNR **ne publie pas** ces compositions pour
-    toutes ses archives : neuf journées de 2022-2023 n'affichent que les
-    officiels de match. Certaines feuilles dessinent deux terrains — le XV de
-    départ, puis l'équipe telle qu'elle a fini —, et le second introduit
-    parfois un dossard que la liste des remplaçants oublie : Alfred Parisien,
-    entré avec le 22 à Aimé-Giral le 29 octobre 2022, donnait seize titulaires
-    à Lyon. `lireCompositions()` s'en tient désormais à quinze et verse le
-    surnuméraire au banc.
+Ce qu'il faut savoir avant d'écrire du code :
 
-  Ce que la LNR ne donne pas : l'**affluence**.
+- **`conversionPlayer` ment** : il ne dit pas qu'il y a eu transformation, seul
+  le score courant le dit. S'en servir pour *nommer* le buteur, jamais pour
+  décider ;
+- **le score courant déraille aussi** ; le total final tranche ;
+- **les postes de `/compositions` ne sont pas fiables** : `positionPlayed` se
+  déduit du numéro de maillot ;
+- la LNR **ampute les accents** — ne jamais réécrire une orthographe déjà en
+  base à partir d'elle ;
+- elle **ne publie pas toutes ses compositions** : neuf journées de 2022-2023
+  et le barrage 2021-2022 n'affichent que les officiels, quand ils affichent
+  quelque chose ;
+- un changement peut porter **deux noms faux à la fois** ; la table
+  `CHANGEMENTS_CORRIGES` de `seed-opponent-sheet.ts` est faite pour ça, et ne
+  s'écrit qu'avec la démonstration sous les yeux.
 
-  **La Pro D2 est sur un autre site**, `prod2.lnr.fr`, de structure identique.
-  `utiliserDivision("prod2")` bascule `lnr.ts` dessus, et il faut le faire
-  avant tout appel — l'état est global au module, ce qui suffit : une saison
-  appartient à une division et une seule. Les trois scripts de la chaîne le
-  font d'eux-mêmes d'après `Season.division`.
+**La Pro D2 est sur un autre site**, `prod2.lnr.fr`, de structure identique :
+`utiliserDivision("prod2")` avant tout appel, ce que les trois scripts de la
+chaîne font d'eux-mêmes d'après `Season.division`. Il **archive mieux que
+celui du Top 14** — il publie les compositions de 2020-2021, et c'est lui qui
+a fourni les prénoms manquants du barrage 2021-2022 : y penser dès que le
+site Top 14 reste muet sur un match qui concerne un club de deuxième division.
 
-  Ce site **archive mieux que celui du Top 14** : il publie les compositions
-  de 2020-2021, et c'est lui qui a fourni les prénoms manquants du barrage
-  2021-2022. Y penser quand le site Top 14 reste muet sur un match qui
-  concerne un club de deuxième division.
+#### L'EPCR — coupes d'Europe
 
-  Ses phases finales ont leurs propres segments — `demi-finales`, `finale`,
-  `barrages` —, que `phasesLnr()` déduit du libellé de tour.
+Flux public alimenté par Opta, `rugby-union-feeds.incrowdsports.com`, appelé
+par les pages d'`epcrugby.com`. Par `scripts/lib/epcr.ts` :
+`chercherMatchUsap`, `lireMatch`, `lireEvenements`, `entetesEpcr`.
 
-  Trois particularités des archives anciennes, rencontrées sur 2020-2021 :
-  - **« Essai collectif »** : la LNR n'attribue pas certains essais. Ils
-    comptent pour l'équipe et pour personne — comme un essai de pénalité, mais
-    à cinq points. `seed-opponent-sheet.ts` les retranche du total attendu par
-    joueur, `seed-chronologie.ts` écrit l'événement sans nom ;
-  - **une feuille peut n'aligner que vingt-deux joueurs** : le 23 oyonnaxien
-    manque au 18 décembre 2020. `seed-lineup.ts` l'accepte en le signalant,
-    les quinze titulaires restant intangibles ;
-  - **le score courant révèle des transformations que la feuille n'inscrit
-    pas**, et parfois pour l'autre équipe — à Béziers le 14 novembre 2020,
-    c'est une pénalité adverse qui trahit une transformation catalane.
-    `seed-chronologie.ts` réconcilie les deux camps à chaque fait.
+Il donne les vingt-trois de chaque camp avec dossard et brassard, les
+réalisations par joueur, les entrées et sorties, la chronologie, **et ce que
+la LNR ne donne pas : arbitre, affluence, mi-temps**. Les joueurs y portent un
+identifiant Opta, qu'on rattache à la composition **par le dossard** — aucun
+rapprochement de noms, donc aucune erreur d'identité possible.
 
-  **L'effectif d'un club** se lit sur `top14.lnr.fr/club/{club}/effectif-staff`,
-  par `lireEffectif(club)`. Page en HTML ordinaire, une ancre `player-block` par
-  joueur, dont le lien porte l'identifiant LNR ; le staff n'a pas de lien
-  `/joueur/` et ne remonte donc pas. Le nom y est écrit « Prénom NOM », le nom
-  de famille tout en capitales : c'est la **seule source qui dise où couper**,
-  et elle règle les cas que les feuilles rendent ambigus — « Sama Leonardo |
-  MALOLO », « Cedate | GOMES SA », « Jacobus | VAN TONDER ».
+- **La clé d'API se lit dans `EPCR_API_KEY`**, à poser dans `.env` et **non**
+  dans `.env.local`, que les scripts ne voient pas. Clé publique du front, sans
+  rien de sensible ; elle est sortie du dépôt parce qu'un scanner de secrets la
+  signalait à chaque poussée.
+- **Une affluence à zéro veut dire « inconnue »**, pas « aucun spectateur ».
 
-  Deux réserves. Le **poste y est plus grossier que l'enum du projet** :
-  « 1ère ligne » confond les deux piliers et le talonneur, « 3ème ligne »
-  englobe le numéro 8, et la fiche individuelle du joueur n'en dit pas plus. Et
-  la LNR **ampute les accents** — « Noe DELLA SCHIAVA », « Theo FORNER »,
-  « Jeronimo DE LA FUENTE » — : ne jamais réécrire une orthographe déjà en base
-  à partir d'elle.
+#### Les autres, et ce qu'elles valent
 
-  **Ne pas se fier à `usap.fr` pour l'effectif.** Le 29 août 2026, sa page
-  « équipe pro » affichait encore celui de la saison écoulée — Allan, Petaia,
-  Ritchie et Brookes y figuraient toujours. La LNR, elle, était à jour : quatre
-  des joueurs qu'elle avait retirés de Perpignan apparaissaient déjà dans
-  l'effectif d'un autre club. Le site du club reste utile pour les **espoirs**,
-  que la LNR ne publie pas, et pour les **postes précis** (il distingue pilier
-  gauche, talonneur et pilier droit), sous réserve de sa fraîcheur.
-- **Chronologie détaillée, en dernier recours** : API ESPN
-  `site.api.espn.com/apis/site/v2/sports/rugby/{league}/summary?event={gameId}`
-  (Top 14 = 270559, Challenge = 272073). L'identifiant se retrouve par
-  `scoreboard?dates=AAAAMMJJ` sur la même ligue. Donne événements,
-  remplacements, cartons et compositions, mais **pas** les arbitres ni
-  l'affluence.
-
-  **N'a plus d'emploi** : la LNR couvre le championnat, l'EPCR les coupes.
-  Le script qui s'en servait a été supprimé plutôt que laissé à portée de
-  main, le relancer aurait réécrasé la donnée officielle. La méthode reste
-  consignée ici au cas où les deux sources viendraient à manquer, et à
-  recouper impérativement. Le passage
-  d'ESPN à la LNR sur 2024-2025 a corrigé quatre erreurs de fond en 26 matchs :
-  un essai de Théo Ntamack Muyenga attribué à **Romain Ntamack** — ESPN choisit
-  le frère célèbre —, une transformation et une pénalité de Jérémy Fernandez
-  portées à Louis Le Brun, un carton jaune fantôme à la minute même d'un essai,
-  et un drop absent du détail. ESPN **omet aussi les essais de pénalité** de sa
-  chronologie, ce qui fait manquer 7 points au contrôle, et **raccourcit les
-  noms composés** (« Dany Priso » pour Priso Mouangue). Ses minutes de carton
-  s'écartent de 1 à 3 minutes de l'officiel.
-- **Coupes d'Europe — l'EPCR, et rien d'autre.** Ce que la LNR est au
-  championnat, l'EPCR l'est aux coupes : la source officielle, plus complète
-  qu'aucune autre.
-
-  Le site `epcrugby.com` est un Nuxt en rendu serveur, mais il n'y a pas à le
-  gratter — ses pages appellent un flux public alimenté par Opta, dont la clé
-  d'API est celle du front, publiée dans la page :
-
-  ```
-  https://rugby-union-feeds.incrowdsports.com/v1/matches?provider=rugbyviz&compId={comp}&season={saison}
-  https://rugby-union-feeds.incrowdsports.com/v1/matches/{id}?provider=rugbyviz
-  ```
-
-  avec les en-têtes `X-API-KEY`, `X-APP-ID: web` et `X-REALM: epcr`. `compId`
-  vaut 1026 pour le Challenge et 1008 pour la Champions Cup ; la saison
-  s'écrit `202301` pour 2023-2024. **Passer par `scripts/lib/epcr.ts`**, qui
-  fait déjà tout le travail : `chercherMatchUsap(saison, jour)` puis
-  `lireMatch(id)`, `entetesEpcr()` si l'on doit interroger le flux ailleurs.
-
-  **La clé ne vit plus dans le dépôt** : elle se lit dans `EPCR_API_KEY`, à
-  poser dans `.env` (cf. `env.example`). Non qu'elle soit sensible — c'est la
-  clé publique du front, écrite dans la configuration de ses pages, en lecture
-  seule, et elle n'est pas à nous : rien à révoquer si elle circule. Mais un
-  scanner de secrets la signalait à chaque poussée, le motif `X-API-KEY`
-  suffisant à déclencher l'alerte. La retrouver, si besoin : chercher
-  « apiKey » dans la source d'une page de match d'`epcrugby.com`.
-
-  Attention, `.env` et non `.env.local` : les scripts ne voient que le premier,
-  chargé au passage par `@prisma/client`. `entetesEpcr()` lit la variable **à
-  l'appel** et se replie sur `process.loadEnvFile()`, pour ne dépendre ni de
-  l'ordre des imports ni de la présence de Prisma.
-
-  Ce que le flux donne, et qu'aucune autre source ne donne aussi bien :
-  - les **vingt-trois joueurs de chaque équipe**, avec leur dossard
-    (`positionId`, 1 à 15 pour les titulaires) et le brassard ;
-  - les **réalisations par joueur**, qui retombent exactement sur le score,
-    essais de pénalité déduits ;
-  - les **entrées et sorties**, minute par minute ;
-  - l'**arbitre**, l'**affluence** et le **score à la mi-temps**, que la LNR ne
-    publie pas ;
-  - la **chronologie**, par `lireEvenements(id)` : essais, transformations,
-    pénalités, drops, essais de pénalité et cartons, chacun avec sa minute,
-    son équipe et son joueur. Les joueurs y sont désignés par leur identifiant
-    Opta, qu'on rattache à la composition **par le dossard** — aucun
-    rapprochement de noms, donc aucune des erreurs d'identité que le
-    championnat a values. Voir la réserve sur `Penalty` ci-dessous : la
-    reconstitution ne vaut que confrontée au score officiel, ce que
-    `seed-chronologie.ts` fait avant d'écrire.
-
-  Une **affluence à zéro** veut dire « le flux ne la donne pas », pas
-  « aucun spectateur » — Benetton-USAP du 9 avril 2022. `seed-cup-sheet.ts`
-  l'écarte désormais plutôt que d'écrire 0.
-
-  Trois réserves :
-  - le type d'événement `Penalty` désigne une pénalité **concédée**, pas un
-    coup de pied réussi. Compter les événements donnerait onze pénalités dans
-    un match qui en compte quatre : les points se lisent dans les `stats` du
-    joueur, jamais dans la chronologie ;
-  - `minutesPlayedTotal` **retire les dix minutes d'un carton jaune**, ce que
-    la convention du projet refuse. Les minutes sont donc reconstituées à
-    partir des entrées et sorties, la valeur d'Opta ne servant que de
-    contrôle ;
-  - Opta signale capitaine **tout joueur qui l'a été**, si bien qu'un match
-    où le brassard change de mains en désigne deux — Ben Carter et Angus
-    O'Brien pour les Dragons, le 7 décembre 2025. `epcr.ts` ne garde que celui
-    du coup d'envoi, c'est-à-dire, parmi les titulaires signalés, le premier
-    sorti : c'est son remplacement qui a fait passer le brassard. Quand aucun
-    des deux ne sort, on ne désigne personne ;
-  - depuis 2025-2026 les coupes appliquent le **carton rouge de vingt
-    minutes**, et Opta note alors la sortie de l'exclu à la minute où son
-    suppléant entre. Pris au pied de la lettre, cela lui donnerait vingt
-    minutes qu'il n'a pas jouées — Duncan Paia'aua, exclu à la 14ᵉ contre les
-    Dragons le 7 décembre 2025, est remplacé à la 35ᵉ. Le carton doit être
-    traité dans la chronologie, avant les changements de la même minute.
-- **Saisons anciennes** : `allrugby.com/saison-{saison}/matchs/{dom}-{ext}-{id}.html`,
-  l'identifiant venant de `allrugby.com/competitions/{compétition}/calendrier.html`.
-  Seule source retrouvée pour le Challenge Cup 2022-2023. Trois pièges :
-  le tableau doit être **parsé colonne par colonne** (13 colonnes, les
-  réalisations de l'USAP à gauche du nom, celles de l'adversaire à droite) —
-  mis à plat, on ne sait plus à qui attribuer une minute ; le **club recevant
-  est à gauche**, pas l'USAP ; et les remplacements de la colonne droite
-  écrivent la **minute avant le nom**, l'inverse de la gauche. Ni arbitre, ni
-  affluence, ni score à la mi-temps.
-- **Direct commenté** : rugbyrama.fr, ici.fr — utiles pour l'arbitre, le score
-  à la mi-temps et les faits de match.
+- **`usap.fr`** — à ne pas croire sur l'effectif : le 29 août 2026 sa page
+  « équipe pro » affichait encore celui de la saison écoulée. Utile pour les
+  **espoirs**, que la LNR ne publie pas, et pour les **postes précis**, sous
+  réserve de sa fraîcheur.
+- **ESPN** (`site.api.espn.com/apis/site/v2/sports/rugby/{league}/summary`,
+  Top 14 = 270559) — **n'a plus d'emploi**, et son script a été supprimé
+  plutôt que laissé à portée de main. Le passage d'ESPN à la LNR sur
+  2024-2025 a corrigé quatre erreurs de fond en 26 matchs : ESPN attribue les
+  essais au frère célèbre, invente des cartons, oublie les essais de pénalité
+  et raccourcit les noms composés. À ne ressortir que si les deux sources
+  officielles venaient à manquer, et à recouper impérativement.
+- **allrugby.com** — seule source retrouvée pour le Challenge Cup 2022-2023,
+  mais **injoignable au 29 août 2026** (son hôte `www` ne répond plus). Si
+  elle revient : son tableau se lit **colonne par colonne** — treize colonnes,
+  les réalisations de l'USAP à gauche du nom, celles de l'adversaire à droite,
+  le club recevant à gauche et non l'USAP, et les remplacements de droite
+  écrivent la minute avant le nom, l'inverse de la gauche.
+- **Direct commenté** : rugbyrama.fr, ici.fr — pour l'arbitre, la mi-temps et
+  les faits de match.
 - **Résumé vidéo** : chaîne YouTube « TOP 14 - Officiel ». **Vérifier chaque
-  identifiant** via `https://www.youtube.com/oembed?url=…&format=json` avant
-  de l'enregistrer : le HTML de recherche YouTube désaligne titres et
-  identifiants.
+  identifiant** par `youtube.com/oembed?url=…&format=json` : le HTML de
+  recherche désaligne titres et identifiants.
 
 ### Scripts
 

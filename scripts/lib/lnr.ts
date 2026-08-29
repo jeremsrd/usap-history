@@ -63,15 +63,30 @@ export interface LnrFait {
   minute: number;
   joueur: LnrJoueur | null;
   /**
-   * Auteur de la transformation, sur un essai transformé. Champ à recouper :
-   * la LNR y met parfois un joueur de l'autre équipe, et l'omet parfois alors
-   * que le score prouve la transformation — d'où `score`.
+   * Auteur de la transformation, sur un essai transformé — **et il ment**.
+   *
+   * Il l'est souvent, pas toujours. Trois façons de se tromper, toutes
+   * rencontrées : il porte parfois un joueur de l'**autre équipe** — l'essai
+   * lyonnais de Monty Ioane, le 20 avril 2024, est donné transformé par Jake
+   * McIntyre, ouvreur catalan ; il se pose parfois sur un fait qui n'est pas
+   * un essai, un carton, pour désigner en réalité la transformation de
+   * l'essai précédent ; et il manque parfois alors que la transformation a
+   * bien eu lieu.
+   *
+   * **Ne jamais s'en servir pour décider qu'il y a eu transformation** : seul
+   * `score` le dit. Ne l'employer que pour **nommer** le buteur, et seulement
+   * s'il figure dans la composition de l'équipe concernée.
    */
   transformePar: LnrJoueur | null;
   /**
    * Score après le fait, `[recevant, visiteur]`, tel que la LNR l'affiche.
    * Seuls les faits marquants en portent un ; c'est la seule donnée qui dise
    * de façon sûre si un essai a été transformé.
+   *
+   * Il déraille pourtant lui aussi : à Toulouse le 13 septembre 2025, deux
+   * points sont inscrits **avant** l'essai qui les vaut, et le 6 mai 2023 à
+   * Lyon la dernière transformation du match n'apparaît nulle part. Le total
+   * final, lui, est toujours juste — c'est lui qui tranche.
    */
   score: [number, number] | null;
 }
@@ -425,6 +440,12 @@ function identifiant(href: string): string {
  * feuille à l'autre. Les listes du bas (`player-block`) répètent le XV puis
  * donnent les remplaçants, sans mention du club : chaque liste est rattachée
  * en comparant son XV à ceux du terrain.
+ */
+/**
+ * Les postes que cette page affiche **ne sont pas fiables** : un ailier y est
+ * donné « demi de mêlée ». Ils décrivent le poste de référence du joueur, pas
+ * celui du jour — `positionPlayed` se déduit du numéro de maillot, jamais
+ * d'ici.
  */
 export async function lireCompositions(url: string): Promise<LnrCompositions> {
   // Les noms sont écrits en entités dans le HTML : « FAINGA&#039;A »
