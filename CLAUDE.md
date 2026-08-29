@@ -705,8 +705,8 @@ premières feuilles.
 
 **Les matchs de 2022-2023 à 2025-2026 ont leurs 46 joueurs et leur
 chronologie.** 2021-2022, première saison de la phase 4, n'a que ses
-rencontres — sauf ses **dix-huit premières journées, reprises le 29 août
-2026** : chacune porte ses 46 joueurs et sa chronologie. Les 13 autres
+rencontres — sauf ses **vingt-deux premières journées, reprises le 29 août
+2026** : chacune porte ses 46 joueurs et sa chronologie. Les 9 autres
 attendent. La mi-temps et les comptes-rendus manquent
 pour toute la saison, la LNR ne les publiant pas.
 
@@ -770,13 +770,13 @@ Par ordre de valeur.
 
    Compositions, puis réalisations et temps de jeu des deux camps, puis ligne
    de temps. Chacun a son `--dry`, et le second refuse d'écrire si les points
-   ne retombent pas sur le score. Restent 13 matchs.
+   ne retombent pas sur le score. Restent 9 matchs.
 
    **Relire la composition écrite, systématiquement** : c'est ce contrôle, et
    lui seul, qui a rattrapé les deux identités fausses des deux premières
    journées. Confronter chaque dossard au nom de la feuille, et regarder de
    près tout écart où le nom de famille ou le prénom diffère vraiment. Sur les
-   dix-huit premières journées, il ne reste qu'un écart, répété à chaque
+   vingt-deux premières journées, il ne reste qu'un écart, répété à chaque
    feuille où il figure : « Matthieu Ugena » sur la feuille pour « Mathieu »
    en base — variante d'écriture, laissée telle quelle comme les 49 autres de
    la base.
