@@ -40,6 +40,7 @@
 
 import { PrismaClient } from "@prisma/client";
 import { mkdir, writeFile, stat, rm } from "node:fs/promises";
+import sharp from "sharp";
 import { join } from "node:path";
 import { CLUBS_LNR, CLUBS_EPCR } from "./lib/clubs";
 import { entetesEpcr } from "./lib/epcr";
@@ -56,6 +57,44 @@ const CIBLES = process.argv
   .split(",")
   .map((c) => c.trim())
   .filter(Boolean);
+
+/**
+ * Côté le plus long d'un écusson stocké, en pixels.
+ *
+ * Le plus grand affichage du site est de 48 pixels, et `next/image` sert des
+ * variantes optimisées — 1,4 Ko pour Carcassonne. L'original n'a donc besoin
+ * d'être ni immense ni petit : il pèse sur le dépôt, pas sur les pages. Or la
+ * LNR sert du 5420 par 6346 pour Carcassonne, 1,1 Mo à lui seul, quand
+ * Clermont fait 151 par 151.
+ *
+ * Ce qui dépasse est réduit, transparence comprise ; ce qui est en dessous
+ * n'est pas touché, un agrandissement n'ajouterait rien.
+ */
+const COTE_MAX = 1200;
+
+/**
+ * Réduit un écusson trop grand, laisse les autres tels quels.
+ *
+ * Deux précautions apprises à la dure. **L'encodage par défaut de sharp est
+ * plus lourd que celui de la LNR** : redimensionner dix écussons sans y penser
+ * a fait passer leur total de 2 724 à 2 911 Ko, alors que les images étaient
+ * plus petites. Un écusson est une image à plat, quelques couleurs : la
+ * palette lui va, et Carcassonne tombe de 1 093 à 94 Ko.
+ *
+ * Et l'on **ne garde le résultat que s'il est réellement plus léger**. Réduire
+ * une image bien compressée peut l'alourdir, et l'original a alors tout pour
+ * lui : plus fin, et moins gros.
+ */
+async function reduire(contenu: Buffer): Promise<Buffer> {
+  const { width = 0, height = 0 } = await sharp(contenu).metadata();
+  if (Math.max(width, height) <= COTE_MAX) return contenu;
+
+  const reduit = await sharp(contenu)
+    .resize({ width: COTE_MAX, height: COTE_MAX, fit: "inside" })
+    .png({ palette: true, compressionLevel: 9 })
+    .toBuffer();
+  return reduit.length < contenu.length ? reduit : contenu;
+}
 
 const DOSSIER = join(process.cwd(), "public", "images", "logos");
 const CHEMIN_PUBLIC = "/images/logos";
@@ -200,7 +239,7 @@ async function main() {
       sans.push(`${nomCourt} (téléchargement ${reponse.status})`);
       continue;
     }
-    const contenu = Buffer.from(await reponse.arrayBuffer());
+    const contenu = await reduire(Buffer.from(await reponse.arrayBuffer()));
     await writeFile(chemin, contenu);
     // Le nouveau fichier peut changer d'extension — le JPEG de Clermont cède
     // la place à un PNG : l'ancien ne doit pas rester derrière.

@@ -588,7 +588,7 @@ par inclusion : trop large pour être lancé sans revue préalable.
 ## Logos des clubs
 
 Les 40 adversaires ont leur logo, servi par le site lui-même depuis
-`public/images/logos/{club}.png` — 5,3 Mo au total. Ils viennent des sources
+`public/images/logos/{club}.png` — 2,9 Mo au total. Ils viennent des sources
 officielles, que les scripts lisent déjà : `cdn.lnr.fr/club/{slug}/photo/logo.
 {empreinte}` pour les clubs français, le champ `imageUrl` du flux de l'EPCR
 pour les européens. `fetch-club-logos.ts` fait la moisson, sur les calendriers
@@ -609,11 +609,22 @@ sombre. `--club=Clermont` force ce retéléchargement ; `--usap` fait de même
 pour `public/images/usap/logo.png`, l'écusson catalan que le site affiche
 partout ailleurs.
 
-Les originaux de la LNR sont de tailles très inégales : **5420×6346 pour
-Carcassonne**, à lui seul 1,1 Mo, contre 151×151 pour Clermont et Perpignan.
-Le plus petit reste confortable — le plus grand affichage est de 48 pixels, et
-`next/image` sert 1,4 Ko pour Carcassonne — mais il ne faut pas s'attendre à
-la même finesse partout, et le poids du dépôt en souffre un peu.
+Les originaux de la LNR sont de tailles très inégales — 5420×6346 pour
+Carcassonne, 151×151 pour Clermont — et **`fetch-club-logos.ts` réduit ce qui
+dépasse 1 200 pixels**. Le plus grand affichage du site est de 48 pixels et
+`next/image` sert des variantes optimisées : l'original ne pèse que sur le
+dépôt.
+
+Deux précautions dans ce redimensionnement, apprises à la dure. L'encodage PNG
+par défaut de sharp est **plus lourd** que celui de la LNR : réduire dix
+écussons sans y penser a fait passer leur total de 2 724 à 2 911 Ko, alors que
+les images étaient plus petites. Un écusson est une image à plat : la palette
+lui va, et Carcassonne tombe alors de 1 093 à 94 Ko. Et l'on ne garde le
+résultat **que s'il est réellement plus léger**, l'original ayant sinon tout
+pour lui — plus fin, et moins gros.
+
+Le passage sur les onze écussons de plus de 1 200 pixels a ramené leur total
+de 3 817 à 1 299 Ko.
 
 Les logos de club sont des marques déposées. Les afficher sur un site
 d'histoire non commercial est l'usage, mais c'est un choix qui appartient au
