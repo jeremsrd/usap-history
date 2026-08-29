@@ -34,6 +34,7 @@ import { EventType, PrismaClient } from "@prisma/client";
 import {
   chercherFeuille,
   lireFeuille,
+  phasesLnr,
   type LnrFait,
   type LnrJoueur,
 } from "./lib/lnr";
@@ -112,8 +113,15 @@ async function main() {
   if (match.scoreUsap == null || match.scoreOpponent == null) {
     throw new Error("Rencontre non jouée : pas de chronologie à écrire.");
   }
+  // Une chronologie sans composition reste utile — elle porte les noms en
+  // clair, que la page affiche telle quelle. C'est le cas du barrage
+  // d'accession du 12 juin 2022, dont la LNR ne publie les compositions ni
+  // sur son site Top 14 ni sur celui de Pro D2.
   if (match.players.length === 0) {
-    throw new Error("Aucune composition en base : lancer seed-lineup.ts d'abord.");
+    console.log(
+      "Aucune composition en base : les événements porteront les noms de la " +
+        "feuille, sans lien vers les fiches joueur.",
+    );
   }
 
   /** Points d'un fait, transformation comprise puisqu'elle est un fait à part. */
@@ -206,6 +214,13 @@ async function main() {
     return { evenements, usap, adverse };
   }
 
+  /** « LAOUSSE AZPIAZU » → « Laousse Azpiazu ». */
+  const casseNom = (nom: string) =>
+    nom
+      .split(/\s+/)
+      .map((mot) => mot.charAt(0) + mot.slice(1).toLowerCase())
+      .join(" ");
+
   /** « de Tristan Tedder », mais « d'Enzo Hervé ». */
   const de = (nom: string) =>
     /^[aeiouyàâéèêëîïôöûü]/i.test(nom) ? `d'${nom}` : `de ${nom}`;
@@ -216,11 +231,22 @@ async function main() {
     return terminer(match.id, evenements, usap, adverse, match.scoreUsap!, match.scoreOpponent!);
   }
 
-  if (match.matchday == null) {
-    throw new Error("Match de championnat sans journée : phase LNR inconnue.");
+  const phases = phasesLnr(
+    match.season.label,
+    match.matchday,
+    /Barrage/i.test(match.competition.name),
+  );
+  if (phases.length === 0) {
+    throw new Error(
+      `Compétition « ${match.competition.name} » sans journée : phase LNR inconnue.`,
+    );
   }
-  const url = await chercherFeuille(match.season.label, `j${match.matchday}`);
-  if (!url) throw new Error(`Feuille LNR introuvable pour la J${match.matchday}`);
+  let url: string | null = null;
+  for (const phase of phases) {
+    url = await chercherFeuille(match.season.label, phase);
+    if (url) break;
+  }
+  if (!url) throw new Error(`Feuille LNR introuvable pour ${phases.join(" / ")}`);
   const feuille = await lireFeuille(url);
   const campUsap = feuille.campUsap;
 
@@ -266,10 +292,13 @@ async function main() {
     const club = isUsap ? "USAP" : adversaire;
     const trouve = fait.joueur ? chercher(fait.joueur, !isUsap) : null;
     const playerId = trouve?.id ?? null;
-    // Faute de fiche, on garde le nom de la feuille plutôt que rien.
+    // Faute de fiche, on garde le nom de la feuille — remis en casse normale,
+    // la LNR écrivant les patronymes en capitales.
     const nom =
       trouve?.nom ??
-      (fait.joueur ? `${fait.joueur.firstName} ${fait.joueur.lastName}` : null);
+      (fait.joueur
+        ? `${fait.joueur.firstName} ${casseNom(fait.joueur.lastName)}`
+        : null);
 
     // Ce que le fait vaut, et ce que le score dit qu'il a valu.
     const attendu = POINTS[fait.type];

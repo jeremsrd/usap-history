@@ -42,7 +42,12 @@
  */
 
 import { PrismaClient, type Position } from "@prisma/client";
-import { chercherFeuille, lireCompositions, type LnrTitulaire } from "./lib/lnr";
+import {
+  chercherFeuille,
+  lireCompositions,
+  phasesLnr,
+  type LnrTitulaire,
+} from "./lib/lnr";
 import { USAP, chercherMatchUsap, lireMatch } from "./lib/epcr";
 import { POSTE_PAR_NUMERO, trouverOuCreerJoueur } from "./lib/joueurs";
 
@@ -215,11 +220,24 @@ async function main() {
       adversaire: autres.joueurs.map(versTitulaire),
     };
   } else {
-    if (match.matchday == null) {
-      throw new Error("Match de championnat sans journée : phase LNR inconnue, à traiter à part.");
+    // Journée de championnat, ou barrage d'accession — dont le segment d'URL
+    // a changé trois fois de nom, d'où plusieurs candidats.
+    const phases = phasesLnr(
+      match.season.label,
+      match.matchday,
+      /Barrage/i.test(match.competition.name),
+    );
+    if (phases.length === 0) {
+      throw new Error(
+        `Compétition « ${match.competition.name} » sans journée : phase LNR inconnue.`,
+      );
     }
-    const url = await chercherFeuille(match.season.label, `j${match.matchday}`);
-    if (!url) throw new Error(`Feuille LNR introuvable pour la J${match.matchday}`);
+    let url: string | null = null;
+    for (const phase of phases) {
+      url = await chercherFeuille(match.season.label, phase);
+      if (url) break;
+    }
+    if (!url) throw new Error(`Feuille LNR introuvable pour ${phases.join(" / ")}`);
     console.log(`Feuille : ${url}`);
 
     compositions = await lireCompositions(url);

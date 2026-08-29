@@ -569,6 +569,37 @@ export function pointsDuFait(type: LnrFait["type"], transforme: boolean): number
   }
 }
 
+/**
+ * Segments d'URL possibles pour le barrage d'accession, du plus probable au
+ * moins, selon la saison.
+ *
+ * La LNR l'a renommé trois fois : « match-daccession » en 2021-2022,
+ * « access » en 2022-2023, « access-top-14 » depuis 2024-2025. On essaie dans
+ * l'ordre le plus vraisemblable plutôt que de trancher, les bornes n'étant
+ * connues que par les saisons effectivement reprises.
+ */
+export function phasesBarrage(saison: string): string[] {
+  const debut = Number(saison.slice(0, 4));
+  if (debut >= 2024) return ["access-top-14", "access"];
+  if (debut >= 2022) return ["access", "access-top-14"];
+  return ["match-daccession", "access"];
+}
+
+/**
+ * Phases à essayer pour un match, journée ou barrage.
+ *
+ * Rend une liste vide pour un match qui n'est ni l'une ni l'autre — une
+ * rencontre de coupe d'Europe, que la LNR ne couvre pas.
+ */
+export function phasesLnr(
+  saison: string,
+  matchday: number | null,
+  estBarrage: boolean,
+): string[] {
+  if (matchday != null) return [`j${matchday}`];
+  return estBarrage ? phasesBarrage(saison) : [];
+}
+
 // =============================================================================
 // EFFECTIF D'UN CLUB
 // =============================================================================

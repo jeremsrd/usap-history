@@ -60,6 +60,7 @@ import { memeMot, mots, normalize, proximite } from "./lib/noms";
 import {
   chercherFeuille,
   lireFeuille,
+  phasesBarrage,
   type Camp,
   type LnrFeuille,
   type LnrJoueur,
@@ -134,16 +135,6 @@ function corriger(feuille: LnrFeuille, jour: string): LnrFeuille {
       return { ...c, entrant: nom(correction.entrant), sortant: nom(correction.sortant) };
     }),
   };
-}
-
-/**
- * Segment d'URL du barrage d'accession. La LNR l'a renommé au fil des
- * saisons — « access » jusqu'en 2023-2024, « access-top-14 » depuis
- * 2024-2025 : on essaie les deux, en commençant par le plus probable.
- */
-function phasesBarrage(saison: string): string[] {
-  const debut = Number(saison.slice(0, 4));
-  return debut >= 2024 ? ["access-top-14", "access"] : ["access", "access-top-14"];
 }
 
 interface Ligne {

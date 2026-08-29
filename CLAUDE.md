@@ -717,10 +717,15 @@ premières feuilles.
 
 **Les matchs de 2022-2023 à 2025-2026 ont leurs 46 joueurs et leur
 chronologie.** 2021-2022, première saison de la phase 4, n'a que ses
-rencontres — sauf **trente de ses trente et un matchs, repris le 29 août
-2026** : les 26 journées de Top 14 et les 4 matchs de Challenge européen
-portent chacun leurs 46 joueurs et leur chronologie. Seul le barrage
-d'accession du 12 juin 2022 reste à faire. La mi-temps et les comptes-rendus manquent
+rencontres — sauf **tous ses matchs, repris le 29 août 2026** : les
+31 rencontres portent leur chronologie, et 30 d'entre elles leurs 46 joueurs.
+La seule exception est le **barrage d'accession du 12 juin 2022**, dont la
+LNR ne publie la composition ni sur son site Top 14 ni sur celui de Pro D2 —
+la page existe mais ne contient aucun joueur. ESPN ne couvre pas ce match et
+allrugby.com était injoignable. Sa chronologie, elle, est complète : les
+noms y figurent en clair, sans lien vers les fiches joueur, et les
+transformations restent anonymes faute de composition pour vérifier que le
+buteur annoncé appartient bien à l'équipe. La mi-temps et les comptes-rendus manquent
 pour toute la saison, la LNR ne les publiant pas.
 
 Annexe du match :
@@ -792,10 +797,14 @@ Par ordre de valeur.
    `seed-cup-sheet.ts` pour les coupes. La commande à enchaîner est rappelée en
    fin de `seed-lineup.ts`, selon la compétition.
 
-   **Reste un seul match** : le **barrage d'accession du 12 juin 2022** contre
-   Mont-de-Marsan, qui n'a pas de `matchday`, or `seed-lineup.ts` déduit la
-   phase de ce champ. Son segment d'URL est `match-daccession` pour cette
-   saison-là — le nom a changé trois fois depuis.
+   **La saison 2021-2022 est faite.** Ne manquent que la composition du
+   barrage, introuvable (voir plus haut), et la clôture éditoriale de la
+   saison : entraîneur, président, bilan rédigé.
+
+   `phasesLnr(saison, matchday, estBarrage)` de `lnr.ts` porte la déduction de
+   phase, barrage compris — son segment d'URL a changé trois fois de nom,
+   `match-daccession` en 2021-2022, `access` en 2022-2023, `access-top-14`
+   depuis 2024-2025.
 
    **Relire la composition écrite, systématiquement** : c'est ce contrôle, et
    lui seul, qui a rattrapé les deux identités fausses des deux premières
