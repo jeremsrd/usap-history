@@ -705,9 +705,10 @@ premières feuilles.
 
 **Les matchs de 2022-2023 à 2025-2026 ont leurs 46 joueurs et leur
 chronologie.** 2021-2022, première saison de la phase 4, n'a que ses
-rencontres — sauf ses **vingt-deux premières journées, reprises le 29 août
-2026** : chacune porte ses 46 joueurs et sa chronologie. Les 9 autres
-attendent. La mi-temps et les comptes-rendus manquent
+rencontres — sauf **tout son championnat, repris le 29 août 2026** : les
+26 journées de Top 14 portent chacune leurs 46 joueurs et leur chronologie.
+Restent les quatre matchs de Challenge européen et le barrage d'accession,
+que la chaîne actuelle ne sait pas traiter (cf. « Où reprendre »). La mi-temps et les comptes-rendus manquent
 pour toute la saison, la LNR ne les publiant pas.
 
 Annexe du match :
@@ -770,13 +771,25 @@ Par ordre de valeur.
 
    Compositions, puis réalisations et temps de jeu des deux camps, puis ligne
    de temps. Chacun a son `--dry`, et le second refuse d'écrire si les points
-   ne retombent pas sur le score. Restent 9 matchs.
+   ne retombent pas sur le score.
+
+   **Restent cinq matchs, qu'elle ne sait pas traiter**, et pour deux raisons
+   distinctes :
+   - les **quatre matchs de Challenge européen** (11 décembre 2021, 15 et
+     22 janvier, 9 avril 2022) relèvent de l'EPCR, que la LNR ne couvre pas.
+     `seed-cup-sheet.ts` lit déjà réalisations et minutes depuis ce flux, mais
+     aucun script ne crée la composition : il manque l'équivalent EPCR de
+     `seed-lineup.ts` ;
+   - le **barrage d'accession du 12 juin 2022** contre Mont-de-Marsan n'a pas
+     de `matchday`, or `seed-lineup.ts` déduit la phase de ce champ. Son
+     segment d'URL est `match-daccession` pour cette saison-là — le nom a
+     changé trois fois depuis.
 
    **Relire la composition écrite, systématiquement** : c'est ce contrôle, et
    lui seul, qui a rattrapé les deux identités fausses des deux premières
    journées. Confronter chaque dossard au nom de la feuille, et regarder de
    près tout écart où le nom de famille ou le prénom diffère vraiment. Sur les
-   vingt-deux premières journées, il ne reste qu'un écart, répété à chaque
+   vingt-six journées de championnat, il ne reste qu'un écart, répété à chaque
    feuille où il figure : « Matthieu Ugena » sur la feuille pour « Mathieu »
    en base — variante d'écriture, laissée telle quelle comme les 49 autres de
    la base.
