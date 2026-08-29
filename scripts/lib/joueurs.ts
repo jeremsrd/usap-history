@@ -49,6 +49,25 @@ export interface JoueurOfficiel {
  * Fiche correspondante, ou `null`. Lève quand plusieurs fiches se valent :
  * un doublon se tranche à la main, jamais au hasard.
  */
+/**
+ * Particules de nom, qui ne désignent personne. `mots()` écarte déjà ce qui
+ * fait moins de trois lettres — « le », « de » —, mais « van » et « der » en
+ * font exactement trois : sans cette liste, « Van Der Mescht », « Van Der
+ * Westhuizen » et « Van Der Merwe » se valent tous, et trois Sud-Africains
+ * sans rapport deviennent candidats l'un pour l'autre.
+ */
+const PARTICULES = new Set([
+  "van", "der", "den", "von", "dos", "das", "del", "della", "ter", "vander",
+]);
+
+/** Mots d'un nom qui identifient réellement quelqu'un. */
+function motsUtiles(nom: string): string[] {
+  const utiles = mots(nom).filter((mot) => !PARTICULES.has(mot));
+  // Un nom fait entièrement de particules n'existe pas, mais on ne rend pas
+  // une liste vide : elle ferait correspondre n'importe qui à n'importe qui.
+  return utiles.length > 0 ? utiles : mots(nom);
+}
+
 /** Distance d'édition, arrêtée à 2 : au-delà, seul le fait qu'elle dépasse importe. */
 function distance(a: string, b: string): number {
   if (Math.abs(a.length - b.length) > 2) return 3;
@@ -82,8 +101,8 @@ export async function chercherJoueur(
   // de Brive — « Ratu » est le début de « Ratuva », et le prénom faisait le
   // second mot commun. Deux Fidjiens, deux hommes.
   const memeFamille = (candidat: string) => {
-    const cibles = mots(officiel.lastName);
-    return mots(candidat).some((mot) => cibles.some((cible) => memeMot(mot, cible)));
+    const cibles = motsUtiles(officiel.lastName);
+    return motsUtiles(candidat).some((mot) => cibles.some((cible) => memeMot(mot, cible)));
   };
 
   // Nom de famille concordant, et un prénom qui suit : c'est solide.

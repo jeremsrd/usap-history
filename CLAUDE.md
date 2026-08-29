@@ -132,7 +132,14 @@ confrontations avec l'USAP, et de gérer les joueurs passés par les deux camps
     « Ratuva », et le prénom faisait le second mot commun. Tout rapprochement
     exige donc désormais un mot du **nom de famille**.
 
-  Dans les deux cas, à défaut de conclure, on crée une fiche après avoir
+  S'y ajoute une troisième précaution, née des noms sud-africains : **les
+  particules ne désignent personne.** `mots()` écarte déjà ce qui fait moins de
+  trois lettres, mais « van » et « der » en font exactement trois — sans les
+  écarter, « Van Der Mescht », « Van Der Westhuizen » et « Van Der Merwe » se
+  valent tous, et trois hommes sans rapport deviennent candidats l'un pour
+  l'autre. `joueurs.ts` porte la liste.
+
+  Dans les trois cas, à défaut de conclure, on crée une fiche après avoir
   prévenu. C'est délibéré : un doublon se repère et se fusionne, une identité
   fausse ne se voit pas.
 - `players` contient donc majoritairement des adversaires : 1 246 sur 1 370,
@@ -698,9 +705,8 @@ premières feuilles.
 
 **Les matchs de 2022-2023 à 2025-2026 ont leurs 46 joueurs et leur
 chronologie.** 2021-2022, première saison de la phase 4, n'a que ses
-rencontres — sauf ses **six premières journées, reprises le 29 août 2026** :
-chacune porte ses 46 joueurs, sa chronologie et 1 200 minutes par camp. Les
-25 autres attendent. La mi-temps et les comptes-rendus manquent
+rencontres — sauf ses **dix premières journées, reprises le 29 août 2026** :
+chacune porte ses 46 joueurs et sa chronologie. Les 21 autres attendent. La mi-temps et les comptes-rendus manquent
 pour toute la saison, la LNR ne les publiant pas.
 
 Annexe du match :
@@ -763,7 +769,7 @@ Par ordre de valeur.
 
    Compositions, puis réalisations et temps de jeu des deux camps, puis ligne
    de temps. Chacun a son `--dry`, et le second refuse d'écrire si les points
-   ne retombent pas sur le score. Restent 25 matchs.
+   ne retombent pas sur le score. Restent 21 matchs.
 
    **Relire la composition écrite, systématiquement** : c'est ce contrôle, et
    lui seul, qui a rattrapé les deux identités fausses des deux premières
@@ -773,10 +779,24 @@ Par ordre de valeur.
    « Matthieu Ugena » sur la feuille pour « Mathieu » en base — variante
    d'écriture, laissée telle quelle comme les 49 autres de la base.
 
-   **Le total des minutes n'est 1 200 que si personne n'a été exclu.** Pau n'en
-   totalise que 1 147 le 2 octobre 2021, et c'est juste : Aminiasi Tuimaba a
-   pris un rouge à la 27ᵉ, l'équipe a fini à quatorze — 1 200 − (80 − 27).
-   Un contrôle qui exige 1 200 sans regarder les cartons crie au loup.
+   **Un contrôle trop naïf crie au loup**, et il y a deux façons de se
+   tromper :
+   - **les minutes ne font 1 200 que si personne n'a été exclu.** Pau n'en
+     totalise que 1 147 le 2 octobre 2021, et c'est juste : Aminiasi Tuimaba a
+     pris un rouge à la 27ᵉ, l'équipe a fini à quatorze — 1 200 − (80 − 27) ;
+   - **la somme des points par joueur ne fait le score que sans essai de
+     pénalité.** L'UBB en marque un le 23 octobre 2021 : 32 points répartis
+     entre ses joueurs, 39 au tableau. Un essai de pénalité n'a pas de
+     marqueur, il vit dans `penaltyTriesOpponent`.
+
+   **Une seule anomalie réelle sur ces dix journées**, et elle vient de la
+   source : le 30 octobre 2021, La Rochelle totalise 1 206 minutes. Sa feuille
+   se contredit — Victor Vito sort **définitivement** à la 25ᵉ sur protocole
+   commotion, puis elle le fait sortir encore à la 35ᵉ et rentrer deux fois.
+   Aucune correction n'a été posée : on peut démontrer que la feuille est
+   fausse, pas ce qui s'est réellement passé, et `CHANGEMENTS_CORRIGES` ne
+   s'écrit qu'avec la démonstration sous les yeux. L'avertissement du script
+   suffit.
 
    Deux choses que la chaîne ne fait pas : la **mi-temps**, que la LNR ne
    publie pas — elle se déduirait du dernier fait avant la 40ᵉ, mais c'est une
