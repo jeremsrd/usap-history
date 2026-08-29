@@ -630,6 +630,41 @@ Les logos de club sont des marques déposées. Les afficher sur un site
 d'histoire non commercial est l'usage, mais c'est un choix qui appartient au
 propriétaire du site.
 
+## Ce que les pages affichent
+
+**Page de saison — deux séries de chiffres, et ce n'est pas une incohérence.**
+L'en-tête porte les agrégats stockés sur `Season` : le **championnat seul**,
+pour coller au classement officiel de la LNR. La liste des matchs, elle, est
+groupée par compétition, la phase finale formant son propre bloc, et **chaque
+bloc porte son bilan recalculé** sur ses rencontres jouées.
+
+D'où, pour 2020-2021, un en-tête à « 30 joués, 24V 1N 5D, 107 points » et une
+liste de 32 matchs :
+
+```
+Pro D2                    30 joués — 24V 1N 5D — 821 pts pour, 504 contre
+Pro D2 — phase finale      2 joués — 2V 0N 0D — 60 pts pour, 29 contre
+```
+
+Les 107 points sont ceux du classement, la demi-finale et la finale n'en
+donnent pas. Mais elles ont fait le titre, et elles ne pouvaient pas rester
+noyées au milieu des trente journées — le premier de la phase régulière ne
+monte plus d'office.
+
+Le découpage vient d'`estCouperet()` (`src/lib/matchs.ts`), la même règle qui
+prive un match couperet de points de bonus. Il ne s'applique qu'aux
+compétitions qui ont les deux phases : un barrage d'accession, seul match de
+sa compétition, garde son intitulé, et une poule de coupe d'Europe reste d'un
+bloc. Les bilans ne comptent que les rencontres **jouées** (`estJoue`), un
+calendrier à venir ne pesant pas dans un bilan.
+
+**Fiche de match — le titre qu'elle a décidé.** Une finale affiche une
+bannière « Champion » ou « Finaliste » avec un lien vers le palmarès. Le
+rapprochement avec `Trophy` se fait sur l'**année de fin de saison** et la
+compétition ; l'expression est ancrée au début du libellé de tour, faute de
+quoi une demi-finale en hériterait. Il n'y a pas de clé étrangère entre un
+match et un titre : le jour où il en faudrait une, c'est là qu'elle irait.
+
 ## Identité visuelle
 
 - **Couleur principale** : Rouge sang (#C8102E) - couleur dominante USAP
