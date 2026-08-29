@@ -698,9 +698,9 @@ premières feuilles.
 
 **Les matchs de 2022-2023 à 2025-2026 ont leurs 46 joueurs et leur
 chronologie.** 2021-2022, première saison de la phase 4, n'a que ses
-rencontres — sauf les **J1 et J2, reprises le 29 août 2026** : Brive-USAP
-36-15 et USAP-Biarritz 33-20 portent chacune leurs 46 joueurs, leur
-chronologie et 1 200 minutes de chaque côté. Les 29 autres attendent. La mi-temps et les comptes-rendus manquent
+rencontres — sauf ses **six premières journées, reprises le 29 août 2026** :
+chacune porte ses 46 joueurs, sa chronologie et 1 200 minutes par camp. Les
+25 autres attendent. La mi-temps et les comptes-rendus manquent
 pour toute la saison, la LNR ne les publiant pas.
 
 Annexe du match :
@@ -763,12 +763,20 @@ Par ordre de valeur.
 
    Compositions, puis réalisations et temps de jeu des deux camps, puis ligne
    de temps. Chacun a son `--dry`, et le second refuse d'écrire si les points
-   ne retombent pas sur le score. Restent 29 matchs.
+   ne retombent pas sur le score. Restent 25 matchs.
 
    **Relire la composition écrite, systématiquement** : c'est ce contrôle, et
    lui seul, qui a rattrapé les deux identités fausses des deux premières
    journées. Confronter chaque dossard au nom de la feuille, et regarder de
-   près tout écart où le nom de famille ou le prénom diffère vraiment.
+   près tout écart où le nom de famille ou le prénom diffère vraiment. Sur les
+   six premières journées, il ne reste qu'un écart, cinq fois répété :
+   « Matthieu Ugena » sur la feuille pour « Mathieu » en base — variante
+   d'écriture, laissée telle quelle comme les 49 autres de la base.
+
+   **Le total des minutes n'est 1 200 que si personne n'a été exclu.** Pau n'en
+   totalise que 1 147 le 2 octobre 2021, et c'est juste : Aminiasi Tuimaba a
+   pris un rouge à la 27ᵉ, l'équipe a fini à quatorze — 1 200 − (80 − 27).
+   Un contrôle qui exige 1 200 sans regarder les cartons crie au loup.
 
    Deux choses que la chaîne ne fait pas : la **mi-temps**, que la LNR ne
    publie pas — elle se déduirait du dernier fait avant la 40ᵉ, mais c'est une

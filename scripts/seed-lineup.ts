@@ -18,6 +18,9 @@
  * réalisations et les minutes restent vides : elles viennent de
  * `seed-opponent-sheet.ts`, qui les reconstitue depuis la même feuille.
  *
+ * Rien n'est écrit avant que les quarante-six identités soient résolues : un
+ * nom qui coince au milieu laisserait sinon une feuille à moitié remplie.
+ *
  * Idempotent, et prudent avec ça : un match qui porte déjà des lignes est
  * laissé tel quel, sauf `--force`. La réécriture efface alors réalisations et
  * minutes avec les lignes — il faut relancer le script de feuille derrière.
@@ -74,12 +77,29 @@ function verifier(camp: string, joueurs: LnrTitulaire[]): void {
   }
 }
 
-async function ecrireCamp(
-  matchId: string,
+interface LigneAEcrire {
+  isOpponent: boolean;
+  playerId: string;
+  shirtNumber: number;
+  isStarter: boolean;
+  isCaptain: boolean;
+  positionPlayed: Position | null;
+}
+
+/**
+ * Résout les vingt-trois identités d'un camp **sans écrire de composition**.
+ *
+ * Rien n'est posé sur le match avant que les deux camps soient résolus : un
+ * nom qui coince au milieu laisserait sinon une feuille à moitié remplie, ce
+ * qui est arrivé pour Pau le 2 octobre 2021 — 23 Catalans et 7 Palois, le
+ * script s'étant arrêté sur un doublon de la base.
+ */
+async function resoudreCamp(
   camp: string,
   isOpponent: boolean,
   joueurs: LnrTitulaire[],
-): Promise<void> {
+): Promise<LigneAEcrire[]> {
+  const lignes: LigneAEcrire[] = [];
   console.log(`\n  --- ${camp} ---`);
   for (const officiel of [...joueurs].sort((a, b) => a.numero - b.numero)) {
     const playerId = await trouverOuCreerJoueur(prisma, officiel, {
@@ -108,19 +128,16 @@ async function ecrireCamp(
       `${poste ? ` [${poste}]` : ""}`;
     console.log(etiquette);
 
-    if (DRY_RUN) continue;
-    await prisma.matchPlayer.create({
-      data: {
-        matchId,
-        playerId,
-        isOpponent,
-        shirtNumber: officiel.numero,
-        isStarter: officiel.isStarter,
-        isCaptain: officiel.isCaptain,
-        positionPlayed: poste,
-      },
+    lignes.push({
+      isOpponent,
+      playerId,
+      shirtNumber: officiel.numero,
+      isStarter: officiel.isStarter,
+      isCaptain: officiel.isCaptain ?? false,
+      positionPlayed: poste,
     });
   }
+  return lignes;
 }
 
 async function main() {
@@ -172,17 +189,25 @@ async function main() {
   verifier("USAP", compositions.usap);
   verifier(adversaire, compositions.adversaire);
 
-  if (match.players.length > 0 && !DRY_RUN) {
-    await prisma.matchEvent.deleteMany({ where: { matchId: match.id } });
-    await prisma.matchPlayer.deleteMany({ where: { matchId: match.id } });
-    console.log(`\n${match.players.length} ligne(s) effacée(s) avant réécriture.`);
+  // Les deux camps d'abord, l'écriture ensuite.
+  const lignes = [
+    ...(await resoudreCamp("USAP", false, compositions.usap)),
+    ...(await resoudreCamp(adversaire, true, compositions.adversaire)),
+  ];
+
+  if (!DRY_RUN) {
+    if (match.players.length > 0) {
+      await prisma.matchEvent.deleteMany({ where: { matchId: match.id } });
+      await prisma.matchPlayer.deleteMany({ where: { matchId: match.id } });
+      console.log(`\n${match.players.length} ligne(s) effacée(s) avant réécriture.`);
+    }
+    await prisma.matchPlayer.createMany({
+      data: lignes.map((l) => ({ ...l, matchId: match.id })),
+    });
   }
 
-  await ecrireCamp(match.id, "USAP", false, compositions.usap);
-  await ecrireCamp(match.id, adversaire, true, compositions.adversaire);
-
   console.log(
-    `\n=== 46 lignes ${DRY_RUN ? "à écrire" : "écrites"} ===\n` +
+    `\n=== ${lignes.length} lignes ${DRY_RUN ? "à écrire" : "écrites"} ===\n` +
       "Réalisations et temps de jeu : enchaîner avec\n" +
       `  npx tsx scripts/seed-opponent-sheet.ts ${match.season.label} --match=${DATE} --usap`,
   );
