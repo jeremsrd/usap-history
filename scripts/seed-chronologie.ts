@@ -35,6 +35,7 @@ import {
   chercherFeuille,
   lireFeuille,
   phasesLnr,
+  utiliserDivision,
   type LnrFait,
   type LnrJoueur,
 } from "./lib/lnr";
@@ -98,7 +99,7 @@ async function main() {
     include: {
       opponent: { select: { name: true, shortName: true } },
       competition: { select: { name: true } },
-      season: { select: { label: true } },
+      season: { select: { label: true, division: true } },
       players: {
         select: {
           isOpponent: true,
@@ -108,6 +109,9 @@ async function main() {
       },
     },
   });
+  // La LNR sépare Top 14 et Pro D2 sur deux sites.
+  utiliserDivision(match.season.division === "PRO_D2" ? "prod2" : "top14");
+
   const adversaire = match.opponent.shortName ?? match.opponent.name;
 
   if (match.scoreUsap == null || match.scoreOpponent == null) {
@@ -186,7 +190,7 @@ async function main() {
       const score = `${usap}-${adverse}`;
 
       const libelle: Record<EpcrTypeEvenement, string> = {
-        essai: `Essai ${de(nom ?? "")} (${club}).`,
+        essai: nom ? `Essai ${de(nom)} (${club}).` : `Essai (${club}).`,
         "essai-de-penalite": `Essai de pénalité (${club}).`,
         transformation: `Transformation ${de(nom ?? "")} (${club}).`,
         penalite: `Pénalité ${de(nom ?? "")} (${club}).`,
@@ -234,7 +238,7 @@ async function main() {
   const phases = phasesLnr(
     match.season.label,
     match.matchday,
-    /Barrage/i.test(match.competition.name),
+    `${match.competition.name} ${match.round ?? ""}`,
   );
   if (phases.length === 0) {
     throw new Error(
@@ -285,38 +289,30 @@ async function main() {
   const evenements: Evenement[] = [];
   // Score courant, [recevant, visiteur], comme la LNR l'écrit.
   const courant: [number, number] = [0, 0];
+  /** Minutes des essais encore à transformer, par camp. */
+  const aTransformer: [number[], number[]] = [[], []];
 
   for (const fait of feuille.faits) {
     const cote = fait.club === "home" ? 0 : 1;
     const isUsap = fait.club === campUsap;
     const club = isUsap ? "USAP" : adversaire;
-    const trouve = fait.joueur ? chercher(fait.joueur, !isUsap) : null;
+    // « Essai collectif » : la LNR n'attribue pas cet essai-là. On ne cherche
+    // donc personne, et l'événement se passe de nom.
+    const collectif =
+      fait.joueur != null &&
+      /essai collectif/i.test(`${fait.joueur.firstName} ${fait.joueur.lastName}`);
+    const trouve = fait.joueur && !collectif ? chercher(fait.joueur, !isUsap) : null;
     const playerId = trouve?.id ?? null;
     // Faute de fiche, on garde le nom de la feuille — remis en casse normale,
     // la LNR écrivant les patronymes en capitales.
-    const nom =
-      trouve?.nom ??
-      (fait.joueur
-        ? `${fait.joueur.firstName} ${casseNom(fait.joueur.lastName)}`
-        : null);
+    const nom = collectif
+      ? null
+      : (trouve?.nom ??
+        (fait.joueur
+          ? `${fait.joueur.firstName} ${casseNom(fait.joueur.lastName)}`
+          : null));
 
-    // Ce que le fait vaut, et ce que le score dit qu'il a valu.
     const attendu = POINTS[fait.type];
-    const constate = fait.score ? fait.score[cote] - courant[cote] : attendu;
-    if (fait.score && fait.score[1 - cote] !== courant[1 - cote]) {
-      throw new Error(
-        `${fait.minute}' ${fait.type} : le score de l'autre équipe bouge ` +
-          `(${courant.join("-")} → ${fait.score.join("-")})`,
-      );
-    }
-    const transforme = fait.type === "essai" && constate === 7;
-    if (constate !== attendu && !transforme) {
-      throw new Error(
-        `${fait.minute}' ${fait.type} : ${constate} point(s) au score courant, ` +
-          `${attendu} attendus (${courant.join("-")} → ${fait.score?.join("-")})`,
-      );
-    }
-
     courant[cote] += attendu;
     const scoreLisible = () =>
       campUsap === "home"
@@ -324,7 +320,7 @@ async function main() {
         : `${courant[1]}-${courant[0]}`;
 
     const libelle: Record<LnrFait["type"], string> = {
-      essai: `Essai ${de(nom ?? "")} (${club}).`,
+      essai: nom ? `Essai ${de(nom)} (${club}).` : `Essai (${club}).`,
       "essai-de-penalite": `Essai de pénalité (${club}).`,
       penalite: `Pénalité ${de(nom ?? "")} (${club}).`,
       drop: `Drop ${de(nom ?? "")} (${club}).`,
@@ -339,21 +335,46 @@ async function main() {
       description:
         attendu > 0 ? `${libelle[fait.type]} ${scoreLisible()}.` : libelle[fait.type],
     });
+    if (fait.type === "essai") aTransformer[cote].push(fait.minute);
 
-    if (transforme) {
-      // Le buteur n'est nommé que s'il appartient bien à l'équipe : la LNR y
-      // met parfois l'ouvreur d'en face.
-      const buteur = fait.transformePar ? chercher(fait.transformePar, !isUsap) : null;
-      courant[cote] += 2;
-      evenements.push({
-        minute: fait.minute,
-        type: EventType.TRANSFORMATION,
-        isUsap,
-        playerId: buteur?.id ?? null,
-        description: buteur
-          ? `Transformation ${de(buteur.nom)} (${club}). ${scoreLisible()}.`
-          : `Transformation (${club}). ${scoreLisible()}.`,
-      });
+    // Le score courant est la seule donnée sûre de la feuille : tout reliquat
+    // de deux points est une transformation que la feuille n'a pas inscrite.
+    // Elle peut concerner **l'autre équipe** — à Béziers le 14 novembre 2020,
+    // c'est une pénalité adverse qui révèle une transformation catalane.
+    if (fait.score) {
+      for (const s of [0, 1] as const) {
+        let residu = fait.score[s] - courant[s];
+        while (residu >= 2 && aTransformer[s].length > 0) {
+          const minuteEssai = aTransformer[s].shift()!;
+          const coteUsap = campUsap === "home" ? 0 : 1;
+          const sUsap = s === coteUsap;
+          const sClub = sUsap ? "USAP" : adversaire;
+          // Le buteur n'est nommé que si la feuille le désigne pour cette
+          // équipe-là : elle y met parfois l'ouvreur d'en face.
+          const buteur =
+            s === cote && fait.transformePar
+              ? chercher(fait.transformePar, !sUsap)
+              : null;
+          courant[s] += 2;
+          residu -= 2;
+          evenements.push({
+            minute: Math.max(fait.minute, minuteEssai),
+            type: EventType.TRANSFORMATION,
+            isUsap: sUsap,
+            playerId: buteur?.id ?? null,
+            description: buteur
+              ? `Transformation ${de(buteur.nom)} (${sClub}). ${scoreLisible()}.`
+              : `Transformation (${sClub}). ${scoreLisible()}.`,
+          });
+        }
+        if (residu !== 0) {
+          throw new Error(
+            `${fait.minute}' ${fait.type} : ${residu} point(s) inexpliqué(s) ` +
+              `pour ${s === cote ? "l'équipe du fait" : "l'autre équipe"} ` +
+              `(${courant.join("-")} attendu ${fait.score.join("-")})`,
+          );
+        }
+      }
     }
   }
 

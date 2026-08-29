@@ -105,11 +105,18 @@ export async function chercherJoueur(
     return motsUtiles(candidat).some((mot) => cibles.some((cible) => memeMot(mot, cible)));
   };
 
-  // Nom de famille concordant, et un prénom qui suit : c'est solide.
+  // Nom de famille concordant, et un prénom qui suit : c'est solide. Les
+  // particules sont retirées des deux côtés avant de compter les mots
+  // communs, sans quoi « Christiaan Van Der Merwe » et « Gideon Van Der
+  // Merwe » en partagent deux — « van » et « der » — et se valent.
+  const sansParticules = (nom: string) => motsUtiles(nom).join(" ");
   const candidats = tous.filter(
     (j) =>
       memeFamille(j.lastName) &&
-      proximite(`${j.firstName} ${j.lastName}`, nomCherche).communs >= 2,
+      proximite(
+        sansParticules(`${j.firstName} ${j.lastName}`),
+        sansParticules(nomCherche),
+      ).communs >= 2,
   );
 
   // Le nom de famille seul ne suffit pas. « Kane Douglas », deuxième ligne de

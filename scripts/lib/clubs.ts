@@ -25,6 +25,15 @@ export const CLUBS_LNR: Record<string, string> = {
   oyonnax: "Oyonnax",
   paris: "Stade Français",
   "provence-rugby": "Provence",
+  // Clubs de Pro D2 croisés en 2020-2021.
+  angouleme: "Angoulême",
+  aurillac: "Aurillac",
+  beziers: "Béziers",
+  carcassonne: "Carcassonne",
+  colomiers: "Colomiers",
+  nevers: "Nevers",
+  rouen: "Rouen",
+  "valence-romans": "Valence-Romans",
   pau: "Pau",
   // L'USAP elle-même, pour récupérer son écusson à la source.
   perpignan: "Perpignan",

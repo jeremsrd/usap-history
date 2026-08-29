@@ -418,6 +418,33 @@ pas (affluence).
 
   Ce que la LNR ne donne pas : l'**affluence**.
 
+  **La Pro D2 est sur un autre site**, `prod2.lnr.fr`, de structure identique.
+  `utiliserDivision("prod2")` bascule `lnr.ts` dessus, et il faut le faire
+  avant tout appel — l'état est global au module, ce qui suffit : une saison
+  appartient à une division et une seule. Les trois scripts de la chaîne le
+  font d'eux-mêmes d'après `Season.division`.
+
+  Ce site **archive mieux que celui du Top 14** : il publie les compositions
+  de 2020-2021, et c'est lui qui a fourni les prénoms manquants du barrage
+  2021-2022. Y penser quand le site Top 14 reste muet sur un match qui
+  concerne un club de deuxième division.
+
+  Ses phases finales ont leurs propres segments — `demi-finales`, `finale`,
+  `barrages` —, que `phasesLnr()` déduit du libellé de tour.
+
+  Trois particularités des archives anciennes, rencontrées sur 2020-2021 :
+  - **« Essai collectif »** : la LNR n'attribue pas certains essais. Ils
+    comptent pour l'équipe et pour personne — comme un essai de pénalité, mais
+    à cinq points. `seed-opponent-sheet.ts` les retranche du total attendu par
+    joueur, `seed-chronologie.ts` écrit l'événement sans nom ;
+  - **une feuille peut n'aligner que vingt-deux joueurs** : le 23 oyonnaxien
+    manque au 18 décembre 2020. `seed-lineup.ts` l'accepte en le signalant,
+    les quinze titulaires restant intangibles ;
+  - **le score courant révèle des transformations que la feuille n'inscrit
+    pas**, et parfois pour l'autre équipe — à Béziers le 14 novembre 2020,
+    c'est une pénalité adverse qui trahit une transformation catalane.
+    `seed-chronologie.ts` réconcilie les deux camps à chaque fait.
+
   **L'effectif d'un club** se lit sur `top14.lnr.fr/club/{club}/effectif-staff`,
   par `lireEffectif(club)`. Page en HTML ordinaire, une ancre `player-block` par
   joueur, dont le lien porte l'identifiant LNR ; le staff n'a pas de lien
@@ -601,6 +628,7 @@ doublons.
 | `close-season-2025-2026.ts` | modèle de clôture de saison, avec garde-fou sur le classement officiel |
 | `seed-opponent-sheet.ts` | **le script du chantier adverse** : reprend une saison entière depuis la LNR — réalisations, cartons et temps de jeu reconstitués à partir des changements. Prend la saison en argument (`2023-2024`), `--dry` pour simuler, `--detail` pour le relevé des écarts avec la base, `--match=AAAA-MM-JJ` pour n'en reprendre qu'un, `--usap` pour traiter **aussi le camp catalan** — il passe alors deux fois, l'adverse puis l'USAP |
 | `seed-lineup.ts` | crée les **deux compositions** d'un match depuis la LNR quand il n'en a aucune — dossards, titulaires, capitaine, poste déduit du numéro. Premier temps de la reprise d'une rencontre ancienne ; `--dry`, `--force` pour réécrire |
+| `seed-season-2020-2021.ts` | crée les 32 matchs de la saison du titre de Pro D2, phases finales comprises ; refuse d'écrire les agrégats s'ils s'écartent du classement officiel de la LNR |
 | `seed-lineup-barrage-2022.ts` | la composition du barrage du 12 juin 2022, seule de la saison qu'aucune source ne publie : listes fournies à la main, recoupées avec les changements de la feuille officielle |
 | `seed-chronologie.ts` | écrit la **ligne de temps** d'un match depuis la LNR : essais, transformations déduites du score courant, pénalités, drops et cartons, avec les noms tels que la base les écrit. Troisième temps ; `--dry` |
 | `seed-calendrier-2026-2027.ts` | crée une saison et son calendrier de championnat **avant** qu'elle ne commence : date, heure, journée, adversaire, lieu, sans score ni résultat. Une relance met à jour les dates au fur et à mesure que la LNR les cale |
@@ -750,7 +778,8 @@ Annexe du match :
 | 2024-2025 | 32 | 32 | 32 | 24 | 28 | 15 |
 | 2023-2024 | 30 | 30 | 30 | 29 | 30 | 6 |
 | 2022-2023 | 31 | 31 | 30 | 21 | 31 | 4 |
-| 2021-2022 | 31 | 30 | 4 | 0 | 0 | 4 |
+| 2021-2022 | 31 | 30 | 5 | 0 | 0 | 4 |
+| 2020-2021 | 32 | 32 | — | — | — | — |
 | 2008-2009 | 1 | 1 | 1 | 0 | 1 | 1 |
 
 **Tous les arbitres sont renseignés.** Les quatre qui manquaient à 2022-2023
@@ -851,17 +880,21 @@ Par ordre de valeur.
    publie pas — elle se déduirait du dernier fait avant la 40ᵉ, mais c'est une
    inférence, pas une donnée —, et les **notes de retour en jeu**, écrites à
    la main comme les six autres de la base.
-2. **Poursuivre la phase 4** en remontant : 2020-2021 (Pro D2, titre et
-   montée), puis 2019-2020. `seed-season-2021-2022.ts` donne le modèle — mais
-   la LNR sépare le Top 14 de la Pro D2, et `lnr.ts` ne connaît que le premier.
+2. **Poursuivre la phase 4** en remontant : **2020-2021 est faite** — trente
+   journées de Pro D2, une demi-finale et la finale, soit 32 matchs avec leurs
+   compositions et leur chronologie, conformes au classement officiel (24V 1N
+   5D, 821-504, 107 points, premier). Reste 2019-2020, puis 2018-2019.
+   `seed-season-2020-2021.ts` donne le modèle pour une saison de deuxième
+   division, `seed-season-2021-2022.ts` pour une saison avec coupe d'Europe.
 3. **Le fond** : affluences (37 matchs sur 157), photos et biographies (1
    joueur sur 144), et 113 saisons sans aucun match.
 
-113 saisons sur 119 n'ont encore aucun match : c'est le chantier de la phase 4,
-menée en remontant le temps saison par saison. 2021-2022 est la première
-reprise ; son bilan, 9V 0N 17D et 43 points pour une treizième place, est
-calculé depuis les scores officiels mais n'a pas encore été confronté à un
-classement d'époque — le tableau de `fix-bonus-points.ts` ne le connaît pas.
+112 saisons sur 119 n'ont encore aucun match : c'est le chantier de la phase 4,
+menée en remontant le temps saison par saison. Deux sont faites. Le bilan de
+2021-2022 — 9V 0N 17D, 43 points, treizième — est calculé depuis les scores
+officiels mais n'a pas été confronté à un classement d'époque ; celui de
+2020-2021 l'a été, et le script refuse d'écrire ses agrégats s'ils s'en
+écartent.
 
 ### Limites connues
 

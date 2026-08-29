@@ -1,49 +1,40 @@
 /**
- * Crée les trente matchs de la saison 2021-2022, la première du chantier de
- * phase 4 — l'enrichissement historique, mené en remontant le temps.
+ * Crée les trente-deux matchs de la saison 2020-2021, celle du titre de
+ * Pro D2 et de la remontée.
  *
- * Vingt-six journées de Top 14, montée de Pro D2 oblige, quatre matchs de
- * Challenge européen, et le match d'accession du 12 juin 2022 face à
- * Mont-de-Marsan — treizième du Top 14, l'USAP a dû défendre sa place, et l'a
- * fait de belle manière (41-16).
+ * Trente journées, une demi-finale contre Oyonnax et la finale contre
+ * Biarritz. L'USAP termine premier de la phase régulière avec 107 points —
+ * 24 victoires, 1 nul, 5 défaites, 821 points marqués pour 504 encaissés —
+ * puis remporte le titre. Le classement officiel de la LNR sert de garde-fou
+ * aux agrégats, et l'arithmétique tombe juste : 24×4 + 1×2 + 9 points de
+ * bonus font 107.
  *
- * Attention au segment d'URL du barrage : la LNR l'écrit `match-daccession`
- * cette saison-là, `access` en 2022-2023 et `access-top-14` depuis 2024-2025.
+ * PREMIÈRE SAISON DE PRO D2 REPRISE. La LNR sépare ses deux divisions sur
+ * deux sites de structure identique ; `utiliserDivision("prod2")` bascule
+ * `lnr.ts` sur `prod2.lnr.fr`. Les phases finales y ont leurs propres
+ * segments d'URL — `demi-finales` et `finale` —, que `phasesLnr()` déduit du
+ * libellé de tour.
  *
- * Sources :
- *   - championnat : la LNR, qui couvre bien 2021-2022. Le calendrier donne le
- *     score final — celui que la feuille égrène au fil des actions saute
- *     parfois une transformation —, la feuille de match donne le coup d'envoi
- *     à la minute près et le détail des réalisations, l'onglet compositions
- *     donne l'arbitre central ;
- *   - coupe d'Europe : le flux de l'EPCR, qui donne en plus l'affluence et le
- *     score à la mi-temps.
+ * Ce site archive mieux que celui du Top 14 : il publie les compositions de
+ * 2020-2021, quand le site Top 14 ne le fait pas pour toutes ses archives.
  *
- * Ce que le script écrit : la rencontre elle-même — date et heure, compétition,
- * journée ou phase, adversaire, lieu, score, réalisations des deux camps,
- * résultat, bonus et arbitre —, plus les agrégats de la saison, calculés sur
- * les seules vingt-six journées de championnat. **Pas les compositions ni la
- * chronologie** : elles viendront ensuite, avec les scripts de feuille. Pas
- * non plus la clôture éditoriale — entraîneur, président, bilan rédigé —, qui
- * demande des sources que la LNR ne donne pas.
+ * Source unique, la LNR : pas de campagne européenne cette saison-là, l'USAP
+ * jouait en deuxième division.
  *
- * Le classement final, 13e, n'est pas lu quelque part : il se déduit du match
- * d'accession lui-même, que seul le treizième du Top 14 dispute.
+ * Ce que le script écrit : la rencontre elle-même — date et heure,
+ * compétition, journée ou phase, adversaire, lieu, score, réalisations des
+ * deux camps, résultat, bonus et arbitre —, plus les agrégats de la saison,
+ * calculés sur les seules trente journées de championnat. **Pas les
+ * compositions ni la chronologie** : elles viennent ensuite, avec
+ * `seed-lineup.ts`, `seed-opponent-sheet.ts` et `seed-chronologie.ts`.
  *
- * Les réalisations se déduisent des faits de match sans avoir besoin d'une
- * composition : essais, pénalités et drops se comptent, et les transformations
- * se lisent dans le reliquat du score courant — deux points de plus que ce que
- * les faits expliquent, c'est une transformation. Le total doit retomber
- * exactement sur le score, sinon le match est refusé.
- *
- * La poule de Challenge n'a que trois journées pour l'USAP : sa deuxième
- * rencontre, décembre 2021, n'a jamais été jouée — le Covid a emporté une
- * bonne partie de la phase de poules cette saison-là. Le flux de l'EPCR ne la
- * connaît pas davantage.
+ * Huit clubs manquaient à la base — Colomiers, Nevers, Carcassonne,
+ * Aurillac, Béziers, Rouen, Valence-Romans et Soyaux-Angoulême. Leurs noms
+ * viennent du classement officiel de la LNR, pas de mémoire.
  *
  * Usage :
- *   npx tsx scripts/seed-season-2021-2022.ts --dry
- *   npx tsx scripts/seed-season-2021-2022.ts
+ *   npx tsx scripts/seed-season-2020-2021.ts --dry
+ *   npx tsx scripts/seed-season-2020-2021.ts
  *
  * Idempotent : un match déjà créé est mis à jour, jamais dupliqué —
  * l'appariement se fait sur la saison, l'adversaire et le jour.
@@ -55,10 +46,10 @@ import {
   lireFeuille,
   lireCompositions,
   realisationsDepuisFaits as realisations,
+  utiliserDivision,
   type Realisations,
   type Camp,
 } from "./lib/lnr";
-import { COMPETITIONS, USAP, chercherMatchs, lireMatch, type EpcrEquipe } from "./lib/epcr";
 import { trouverOuCreerArbitre } from "./lib/arbitres";
 import { CLUBS_LNR, CLUBS_EPCR } from "./lib/clubs";
 import { computeBonuses, matchPoints } from "../src/lib/scoring";
@@ -68,38 +59,8 @@ const prisma = new PrismaClient();
 
 const DRY_RUN = process.argv.includes("--dry");
 
-const SAISON = "2021-2022";
-const JOURNEES = 26;
-
-/** Phases de la coupe, du numéro de tour de l'EPCR au libellé de la base. */
-const PHASES_EPCR: Record<number, string> = {
-  1: "Poule J1",
-  2: "Poule J2",
-  3: "Poule J3",
-  4: "Poule J4",
-  5: "Huitième de finale",
-};
-
-/** Réalisations d'un camp selon l'EPCR, où les stats des joueurs font foi. */
-function realisationsEpcr(equipe: EpcrEquipe): Realisations {
-  const somme = (choix: (j: EpcrEquipe["joueurs"][number]) => number) =>
-    equipe.joueurs.reduce((s, j) => s + choix(j), 0);
-  const bilan: Realisations = {
-    essais: somme((j) => j.essais),
-    transformations: somme((j) => j.transformations),
-    penalites: somme((j) => j.penalites),
-    drops: somme((j) => j.drops),
-    essaisDePenalite: equipe.essaisDePenalite,
-    total: 0,
-  };
-  bilan.total =
-    5 * bilan.essais +
-    2 * bilan.transformations +
-    3 * bilan.penalites +
-    3 * bilan.drops +
-    7 * bilan.essaisDePenalite;
-  return bilan;
-}
+const SAISON = "2020-2021";
+const JOURNEES = 30;
 
 async function trouverAdversaire(nom: string): Promise<string> {
   const trouve = await prisma.opponent.findFirst({
@@ -110,10 +71,20 @@ async function trouverAdversaire(nom: string): Promise<string> {
   throw new Error(`adversaire « ${nom} » introuvable en base`);
 }
 
-/** Les deux clubs de 2021-2022 que la base ne connaît pas encore. */
+/**
+ * Les huit clubs de Pro D2 que la base ne connaît pas encore. Les noms sont
+ * ceux du classement officiel de la LNR, relevé sur `prod2.lnr.fr/classement`,
+ * et non de mémoire.
+ */
 const NOUVEAUX_ADVERSAIRES = [
-  { name: "Gloucester Rugby", shortName: "Gloucester", city: "Gloucester", pays: "ENG" },
-  { name: "Stade Montois", shortName: "Mont-de-Marsan", city: "Mont-de-Marsan", pays: "FR" },
+  { name: "Colomiers Rugby", shortName: "Colomiers", city: "Colomiers", pays: "FR" },
+  { name: "USON Nevers", shortName: "Nevers", city: "Nevers", pays: "FR" },
+  { name: "US Carcassonnaise", shortName: "Carcassonne", city: "Carcassonne", pays: "FR" },
+  { name: "Stade Aurillacois", shortName: "Aurillac", city: "Aurillac", pays: "FR" },
+  { name: "AS Béziers Hérault", shortName: "Béziers", city: "Béziers", pays: "FR" },
+  { name: "Rouen Normandie Rugby", shortName: "Rouen", city: "Rouen", pays: "FR" },
+  { name: "Valence Romans", shortName: "Valence-Romans", city: "Valence", pays: "FR" },
+  { name: "Soyaux-Angoulême XV", shortName: "Angoulême", city: "Angoulême", pays: "FR" },
 ];
 
 async function assurerAdversaires() {
@@ -167,8 +138,14 @@ async function championnat(echecs: string[]): Promise<Rencontre[]> {
   const rencontres: Rencontre[] = [];
   const phases = [
     ...Array.from({ length: JOURNEES }, (_, i) => `j${i + 1}`),
-    "match-daccession",
+    "demi-finales",
+    "finale",
   ];
+  /** Libellé de tour, pour les phases qui n'ont pas de journée. */
+  const TOURS: Record<string, string> = {
+    "demi-finales": "Demi-finale",
+    finale: "Finale",
+  };
   for (const phase of phases) {
     const n = phase.startsWith("j") ? Number(phase.slice(1)) : null;
     const carte = await lireCalendrier(SAISON, phase);
@@ -218,9 +195,9 @@ async function championnat(echecs: string[]): Promise<Rencontre[]> {
     rencontres.push({
       date: new Date(feuille.coupDEnvoi),
       kickoffTime: feuille.coupDEnvoi.slice(11, 16),
-      competitionShortName: n != null ? "Top 14" : "Barrages",
+      competitionShortName: "Pro D2",
       matchday: n,
-      round: n != null ? null : "Access Match",
+      round: n != null ? null : (TOURS[phase] ?? null),
       isHome,
       opponentNom: nom,
       scoreUsap,
@@ -236,72 +213,6 @@ async function championnat(echecs: string[]): Promise<Rencontre[]> {
   return rencontres;
 }
 
-/** Les matchs de Challenge européen, depuis le flux de l'EPCR. */
-async function coupe(echecs: string[]): Promise<Rencontre[]> {
-  const rencontres: Rencontre[] = [];
-  const calendrier = await chercherMatchs(SAISON, COMPETITIONS["challenge-cup"]);
-  const siens = calendrier.filter((m) => m.domicile.id === USAP || m.exterieur.id === USAP);
-
-  for (const resume of siens.sort((a, b) => a.date.localeCompare(b.date))) {
-    const feuille = await lireMatch(resume.id);
-    const isHome = feuille.domicile.id === USAP;
-    const equipeUsap = isHome ? feuille.domicile : feuille.exterieur;
-    const equipeAdverse = isHome ? feuille.exterieur : feuille.domicile;
-    const nom = CLUBS_EPCR[equipeAdverse.nom];
-    if (!nom) {
-      echecs.push(`EPCR ${feuille.id} : club « ${equipeAdverse.nom} » inconnu de la table`);
-      continue;
-    }
-    const round = PHASES_EPCR[feuille.round ?? 0];
-    if (!round) {
-      echecs.push(`EPCR ${feuille.id} : tour ${feuille.round} sans libellé`);
-      continue;
-    }
-
-    const usap = realisationsEpcr(equipeUsap);
-    const adverse = realisationsEpcr(equipeAdverse);
-    const ecart: string[] = [];
-    if (usap.total !== equipeUsap.score) ecart.push(`USAP ${usap.total} pour ${equipeUsap.score}`);
-    if (adverse.total !== equipeAdverse.score) {
-      ecart.push(`${nom} ${adverse.total} pour ${equipeAdverse.score}`);
-    }
-    if (ecart.length > 0) {
-      echecs.push(`EPCR ${feuille.id} : réalisations incohérentes — ${ecart.join(", ")}`);
-      continue;
-    }
-
-    const date = new Date(feuille.date);
-    rencontres.push({
-      date,
-      // L'heure est donnée en UTC : on l'affiche à l'heure de Perpignan, comme
-      // le reste de la base.
-      kickoffTime: date.toLocaleTimeString("fr-FR", {
-        timeZone: "Europe/Paris",
-        hour: "2-digit",
-        minute: "2-digit",
-      }),
-      competitionShortName: "Challenge Européen",
-      matchday: null,
-      round,
-      isHome,
-      opponentNom: nom,
-      scoreUsap: equipeUsap.score ?? 0,
-      scoreOpponent: equipeAdverse.score ?? 0,
-      halfTimeUsap: equipeUsap.miTemps,
-      halfTimeOpponent: equipeAdverse.miTemps,
-      arbitre: feuille.arbitre,
-      attendance: feuille.affluence,
-      usap,
-      adverse,
-    });
-  }
-  return rencontres;
-}
-
-/**
- * Agrégats de la saison, sur les seules journées de championnat : le barrage
- * et la coupe d'Europe ne comptent pas au classement.
- */
 async function cloreLaSaison(seasonId: string, startYear: number) {
   const journees = await prisma.match.findMany({
     where: { seasonId, matchday: { not: null } },
@@ -312,20 +223,33 @@ async function cloreLaSaison(seasonId: string, startYear: number) {
     return;
   }
 
-  const compte = (r: MatchResult) => journees.filter((m) => m.result === r).length;
+  // `scoreUsap` et `result` sont nullables depuis que les calendriers à venir
+  // entrent en base : une saison close n'en porte pas, mais le type l'ignore.
+  const jouees = journees.filter(
+    (m): m is typeof m & { scoreUsap: number; scoreOpponent: number; result: MatchResult } =>
+      m.scoreUsap != null && m.scoreOpponent != null && m.result != null,
+  );
+  if (jouees.length !== journees.length) {
+    console.log(
+      `\n  ⚠ ${journees.length - jouees.length} journée(s) sans score — agrégats non écrits`,
+    );
+    return;
+  }
+
+  const compte = (r: MatchResult) => jouees.filter((m) => m.result === r).length;
   const agregats = {
-    matchesPlayed: journees.length,
+    matchesPlayed: jouees.length,
     wins: compte(MatchResult.VICTOIRE),
     draws: compte(MatchResult.NUL),
     losses: compte(MatchResult.DEFAITE),
-    pointsFor: journees.reduce((s, m) => s + m.scoreUsap, 0),
-    pointsAgainst: journees.reduce((s, m) => s + m.scoreOpponent, 0),
-    bonusOffensif: journees.filter((m) => m.bonusOffensif).length,
-    bonusDefensif: journees.filter((m) => m.bonusDefensif).length,
-    // Seul le treizième du Top 14 dispute le match d'accession.
-    finalRanking: 13,
+    pointsFor: jouees.reduce((s, m) => s + m.scoreUsap, 0),
+    pointsAgainst: jouees.reduce((s, m) => s + m.scoreOpponent, 0),
+    bonusOffensif: jouees.filter((m) => m.bonusOffensif).length,
+    bonusDefensif: jouees.filter((m) => m.bonusDefensif).length,
+    // Premier de la phase régulière, puis champion.
+    finalRanking: 1,
   };
-  const points = journees.reduce(
+  const points = jouees.reduce(
     (s, m) =>
       s +
       matchPoints(m.result, m.bonusOffensif, m.bonusDefensif, startYear),
@@ -338,6 +262,25 @@ async function cloreLaSaison(seasonId: string, startYear: number) {
       `${agregats.bonusOffensif} BO, ${agregats.bonusDefensif} BD — ${points} points — ` +
       `${agregats.finalRanking}e`,
   );
+  // Le classement officiel de la LNR fait foi : on refuse d'écrire des
+  // agrégats qui s'en écartent.
+  const OFFICIEL = { wins: 24, draws: 1, losses: 5, pointsFor: 821, pointsAgainst: 504, points: 107 };
+  const ecarts = [
+    agregats.wins !== OFFICIEL.wins ? `${agregats.wins}V pour ${OFFICIEL.wins}` : null,
+    agregats.draws !== OFFICIEL.draws ? `${agregats.draws}N pour ${OFFICIEL.draws}` : null,
+    agregats.losses !== OFFICIEL.losses ? `${agregats.losses}D pour ${OFFICIEL.losses}` : null,
+    agregats.pointsFor !== OFFICIEL.pointsFor
+      ? `${agregats.pointsFor} marqués pour ${OFFICIEL.pointsFor}` : null,
+    agregats.pointsAgainst !== OFFICIEL.pointsAgainst
+      ? `${agregats.pointsAgainst} encaissés pour ${OFFICIEL.pointsAgainst}` : null,
+    points !== OFFICIEL.points ? `${points} points pour ${OFFICIEL.points}` : null,
+  ].filter(Boolean);
+  if (ecarts.length > 0) {
+    console.log(`  ⚠ écart avec le classement officiel : ${ecarts.join(", ")} — agrégats non écrits`);
+    return;
+  }
+  console.log("  ✔ conforme au classement officiel de la LNR");
+
   if (!DRY_RUN) {
     await prisma.season.update({
       where: { id: seasonId },
@@ -349,11 +292,14 @@ async function cloreLaSaison(seasonId: string, startYear: number) {
 async function main() {
   console.log(`=== Saison ${SAISON}${DRY_RUN ? " (simulation)" : ""} ===\n`);
 
+  // La LNR sépare ses deux divisions sur deux sites.
+  utiliserDivision("prod2");
+
   const saison = await prisma.season.findFirstOrThrow({ where: { label: SAISON } });
   await assurerAdversaires();
 
   const echecs: string[] = [];
-  const rencontres = [...(await championnat(echecs)), ...(await coupe(echecs))].sort(
+  const rencontres = (await championnat(echecs)).sort(
     (a, b) => a.date.getTime() - b.date.getTime(),
   );
 

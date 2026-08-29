@@ -60,7 +60,8 @@ import { memeMot, mots, normalize, proximite } from "./lib/noms";
 import {
   chercherFeuille,
   lireFeuille,
-  phasesBarrage,
+  phasesLnr,
+  utiliserDivision,
   type Camp,
   type LnrFeuille,
   type LnrJoueur,
@@ -358,6 +359,16 @@ function calculerTempsDeJeu(
   }
 }
 
+/**
+ * Un essai que la LNR n'attribue à personne. Les archives anciennes en portent
+ * — « Essai collectif » à Carcassonne le 27 septembre 2020 —, et l'auteur y
+ * est un nom de famille sans prénom.
+ */
+function estCollectif(joueur: LnrJoueur | null): boolean {
+  if (!joueur) return true;
+  return /essai collectif/i.test(`${joueur.firstName} ${joueur.lastName}`);
+}
+
 /** Champs sur lesquels la feuille officielle et la base sont confrontées. */
 const CHAMPS: (keyof Bilan)[] = [
   "minutes",
@@ -386,12 +397,14 @@ async function main(cible: "adverse" | "usap") {
   );
 
   const saison = await prisma.season.findFirstOrThrow({ where: { label: SAISON } });
+  // La LNR sépare Top 14 et Pro D2 sur deux sites.
+  utiliserDivision(saison.division === "PRO_D2" ? "prod2" : "top14");
   const matchs = await prisma.match.findMany({
     where: { seasonId: saison.id },
     orderBy: { date: "asc" },
     include: {
       opponent: { select: { name: true, shortName: true } },
-      competition: { select: { shortName: true } },
+      competition: { select: { name: true, shortName: true } },
     },
   });
 
@@ -407,12 +420,13 @@ async function main(cible: "adverse" | "usap") {
     const adversaire = match.opponent.shortName ?? match.opponent.name;
     const etiquette = `${jour} ${adversaire.padEnd(16)} ${match.scoreUsap}-${match.scoreOpponent}`;
 
-    const phases =
-      match.matchday != null
-        ? [`j${match.matchday}`]
-        : match.competition.shortName === "Barrages"
-          ? phasesBarrage(SAISON!)
-          : [];
+    // Journée, phase finale ou barrage — `phasesLnr` déduit le segment d'URL
+    // du libellé de tour, la LNR l'ayant renommé au fil des saisons.
+    const phases = phasesLnr(
+      SAISON!,
+      match.matchday,
+      `${match.competition.name} ${match.round ?? ""}`,
+    );
     if (phases.length === 0) {
       horsPerimetre.push(`${etiquette} (${match.competition.shortName})`);
       continue;
@@ -501,6 +515,8 @@ async function main(cible: "adverse" | "usap") {
     const ennuis: string[] = [];
     const inferences: string[] = [];
     let essaisDePenalite = 0;
+    /** Essais que la feuille n'attribue à personne, hors essais de pénalité. */
+    let essaisCollectifs = 0;
 
     // Une composition qui n'aligne pas quinze titulaires ne permet pas de
     // reconstituer les temps de jeu : chaque titulaire de trop ajoute jusqu'à
@@ -518,7 +534,8 @@ async function main(cible: "adverse" | "usap") {
     const cote: 0 | 1 = campTraite === "home" ? 0 : 1;
     const avecScore = feuille.faits.some((f) => f.score);
     const buteurs = repererButeurs(roster, feuille, campTraite);
-    const essaisAdverses: { minute: number; ligne: Ligne; transforme: boolean }[] = [];
+    // `ligne` est nulle pour un essai que la feuille n'attribue à personne.
+    const essaisAdverses: { minute: number; ligne: Ligne | null; transforme: boolean }[] = [];
     /** Points adverses reconstitués, essais de pénalité compris. */
     let courant = 0;
 
@@ -556,6 +573,13 @@ async function main(cible: "adverse" | "usap") {
         if (fait.type === "essai-de-penalite") {
           essaisDePenalite++;
           courant += 7;
+        } else if (fait.type === "essai" && estCollectif(fait.joueur)) {
+          // « Essai collectif » : la LNR n'attribue pas cet essai-là. Il compte
+          // pour l'équipe, jamais pour un joueur — comme un essai de pénalité,
+          // mais à cinq points, et transformable.
+          essaisCollectifs++;
+          courant += 5;
+          essaisAdverses.push({ minute: fait.minute, ligne: null, transforme: false });
         } else if (!fait.joueur) {
           ennuis.push(`fait ${fait.minute}' ${fait.type} sans auteur`);
         } else {
@@ -645,7 +669,9 @@ async function main(cible: "adverse" | "usap") {
     const lignes = [...bilans.entries()];
     const points = lignes.reduce((s, [, b]) => s + b.points, 0);
     const essais = lignes.reduce((s, [, b]) => s + b.tries, 0);
-    const attendu = score - 7 * essaisDePenalite;
+    // Ni les essais de pénalité ni les essais collectifs n'ont d'auteur :
+    // leurs points ne figurent sur aucune ligne de joueur.
+    const attendu = score - 7 * essaisDePenalite - 5 * essaisCollectifs;
 
     if (points !== attendu) {
       echecs.push(
@@ -654,9 +680,9 @@ async function main(cible: "adverse" | "usap") {
       );
       continue;
     }
-    if (essaisCompteur != null && essais !== essaisCompteur) {
+    if (essaisCompteur != null && essais + essaisCollectifs !== essaisCompteur) {
       echecs.push(
-        `${etiquette} : ${essais} essais reconstitués pour ${essaisCompteur} au compteur`,
+        `${etiquette} : ${essais + essaisCollectifs} essais reconstitués pour ${essaisCompteur} au compteur`,
       );
       continue;
     }

@@ -26,7 +26,26 @@
  * de la forme `{id}-{recevant}-{visiteur}`.
  */
 
-const RACINE = "https://top14.lnr.fr";
+/**
+ * La LNR sépare ses deux divisions sur deux sites, de structure identique.
+ * Le Top 14 est le défaut ; une saison de Pro D2 demande de basculer avant
+ * tout appel, par `utiliserDivision("prod2")`.
+ *
+ * L'état est global au module, ce qui suffit ici : une saison appartient à une
+ * division et une seule, et aucun script n'en traite deux à la fois.
+ */
+const RACINES = {
+  top14: "https://top14.lnr.fr",
+  prod2: "https://prod2.lnr.fr",
+} as const;
+
+export type Division = keyof typeof RACINES;
+
+let RACINE: string = RACINES.top14;
+
+export function utiliserDivision(division: Division): void {
+  RACINE = RACINES[division];
+}
 
 export type Camp = "home" | "away";
 
@@ -586,18 +605,103 @@ export function phasesBarrage(saison: string): string[] {
 }
 
 /**
- * Phases à essayer pour un match, journée ou barrage.
+ * Phases à essayer pour un match : journée, phase finale ou barrage.
  *
- * Rend une liste vide pour un match qui n'est ni l'une ni l'autre — une
- * rencontre de coupe d'Europe, que la LNR ne couvre pas.
+ * `contexte` est ce que la base dit du match — nom de compétition et libellé
+ * de tour, concaténés. La demi-finale se teste avant la finale, « demi-finale »
+ * contenant « finale ».
+ *
+ * Rend une liste vide quand rien ne correspond : une rencontre de coupe
+ * d'Europe, que la LNR ne couvre pas.
  */
 export function phasesLnr(
   saison: string,
   matchday: number | null,
-  estBarrage: boolean,
+  contexte: string,
 ): string[] {
   if (matchday != null) return [`j${matchday}`];
-  return estBarrage ? phasesBarrage(saison) : [];
+  if (/demi[\s-]?finale/i.test(contexte)) return ["demi-finales"];
+  if (/finale/i.test(contexte)) return ["finale"];
+  if (/barrage|accession|access/i.test(contexte)) return phasesBarrage(saison);
+  return [];
+}
+
+export interface Realisations {
+  essais: number;
+  transformations: number;
+  penalites: number;
+  drops: number;
+  essaisDePenalite: number;
+  /** Points reconstitués, à confronter au score. */
+  total: number;
+}
+
+/**
+ * Réalisations d'un camp, déduites des faits de match.
+ *
+ * Les essais, pénalités et drops se comptent. Les transformations, non : la
+ * feuille ne les inscrit pas comme des faits, et `conversionPlayer` ment (cf.
+ * lib/lnr.ts). C'est le **score courant** qui les révèle — tout reliquat de
+ * deux points sur un essai qui n'en a pas encore est une transformation. Le
+ * total du match tranche en dernier ressort, la feuille s'arrêtant parfois
+ * avant la dernière.
+ */
+export function realisationsDepuisFaits(
+  faits: LnrFait[],
+  camp: Camp,
+  score: number,
+): Realisations {
+  const cote = camp === "home" ? 0 : 1;
+  const bilan: Realisations = {
+    essais: 0,
+    transformations: 0,
+    penalites: 0,
+    drops: 0,
+    essaisDePenalite: 0,
+    total: 0,
+  };
+  let aTransformer = 0;
+
+  for (const fait of faits) {
+    if (fait.club === camp) {
+      switch (fait.type) {
+        case "essai":
+          bilan.essais++;
+          bilan.total += 5;
+          aTransformer++;
+          break;
+        case "essai-de-penalite":
+          bilan.essaisDePenalite++;
+          bilan.total += 7;
+          break;
+        case "penalite":
+          bilan.penalites++;
+          bilan.total += 3;
+          break;
+        case "drop":
+          bilan.drops++;
+          bilan.total += 3;
+          break;
+      }
+    }
+    if (!fait.score) continue;
+    let residu = fait.score[cote] - bilan.total;
+    while (residu >= 2 && aTransformer > 0) {
+      bilan.transformations++;
+      bilan.total += 2;
+      aTransformer--;
+      residu -= 2;
+    }
+  }
+
+  let manque = score - bilan.total;
+  while (manque >= 2 && aTransformer > 0) {
+    bilan.transformations++;
+    bilan.total += 2;
+    aTransformer--;
+    manque -= 2;
+  }
+  return bilan;
 }
 
 // =============================================================================

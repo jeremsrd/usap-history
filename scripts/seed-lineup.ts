@@ -46,6 +46,7 @@ import {
   chercherFeuille,
   lireCompositions,
   phasesLnr,
+  utiliserDivision,
   type LnrTitulaire,
 } from "./lib/lnr";
 import { USAP, chercherMatchUsap, lireMatch } from "./lib/epcr";
@@ -69,8 +70,18 @@ if (!DATE) {
 
 /** Contrôles de forme sur une composition, avant toute écriture. */
 function verifier(camp: string, joueurs: LnrTitulaire[]): void {
-  if (joueurs.length !== 23) {
-    throw new Error(`${camp} : ${joueurs.length} joueurs sur la feuille, 23 attendus`);
+  // Vingt-trois est la règle, mais la LNR en oublie parfois un au banc : le
+  // 23 oyonnaxien manque à sa feuille du 18 décembre 2020, les vingt-deux
+  // autres étant là. Un remplaçant absent ne coûte qu'une ligne — et s'il
+  // était entré en jeu, le script de feuille buterait sur son nom.
+  if (joueurs.length > 23) {
+    throw new Error(`${camp} : ${joueurs.length} joueurs sur la feuille, 23 au plus`);
+  }
+  if (joueurs.length < 22) {
+    throw new Error(`${camp} : ${joueurs.length} joueurs sur la feuille, 22 au moins`);
+  }
+  if (joueurs.length < 23) {
+    console.log(`  ⚠ ${camp} : ${joueurs.length} joueurs sur la feuille, la LNR en oublie un`);
   }
   const titulaires = joueurs.filter((j) => j.isStarter);
   if (titulaires.length !== 15) {
@@ -80,7 +91,7 @@ function verifier(camp: string, joueurs: LnrTitulaire[]): void {
     );
   }
   const numeros = new Set(joueurs.map((j) => j.numero));
-  if (numeros.size !== 23) throw new Error(`${camp} : dossards en double`);
+  if (numeros.size !== joueurs.length) throw new Error(`${camp} : dossards en double`);
   const capitaines = joueurs.filter((j) => j.isCaptain);
   if (capitaines.length > 1) {
     throw new Error(`${camp} : ${capitaines.length} capitaines sur la feuille`);
@@ -160,10 +171,13 @@ async function main() {
     include: {
       opponent: { select: { name: true, shortName: true } },
       competition: { select: { name: true, shortName: true } },
-      season: { select: { label: true } },
+      season: { select: { label: true, division: true } },
       players: { select: { id: true } },
     },
   });
+
+  // La LNR sépare Top 14 et Pro D2 sur deux sites.
+  utiliserDivision(match.season.division === "PRO_D2" ? "prod2" : "top14");
 
   const adversaire = match.opponent.shortName ?? match.opponent.name;
   console.log(
@@ -225,7 +239,7 @@ async function main() {
     const phases = phasesLnr(
       match.season.label,
       match.matchday,
-      /Barrage/i.test(match.competition.name),
+      `${match.competition.name} ${match.round ?? ""}`,
     );
     if (phases.length === 0) {
       throw new Error(
