@@ -691,6 +691,15 @@ numéro de maillot pour les titulaires — un joueur fiché troisième ligne qui
 porte le 4 est enregistré `DEUXIEME_LIGNE` sur cette feuille de match.
 `Player.position` reste son poste de référence.
 
+**Un poste de référence faux se propage.** Le numéro ne dit rien du poste d'un
+remplaçant — 16 à 23 ne désignent aucune place sur le terrain —, si bien que
+`positionPlayed` reprend alors `Player.position`. Matteo Rodor était fiché
+`NUMERO_HUIT` alors qu'il est demi de mêlée, accessoirement ouvreur : quatorze
+de ses cinquante-huit feuilles le donnaient numéro 8, toutes des lignes de
+banc. Fiche et lignes corrigées le 29 août 2026. Avant de créer une fiche
+depuis une feuille officielle, se rappeler que son poste servira de repli sur
+tous ses futurs remplacements.
+
 ## État du projet
 
 Phases 1 à 3 terminées : schéma, pages publiques, admin complet avec
@@ -729,9 +738,7 @@ aucun joueur —, ESPN ne couvre pas le match d'accession et allrugby.com était
 injoignable. Elle a été fournie à la main puis recoupée avec la feuille
 officielle, qui la corrobore largement (cf. l'en-tête de
 `seed-lineup-barrage-2022.ts`). **Ses numéros restent incertains** : ils ne
-viennent que de la source fournie. Le cas de Matteo Rodor le montre — il y
-porte le 20, alors que la feuille le fait entrer à la place d'Ecochard, le
-demi de mêlée, ce qu'un troisième ligne ne fait pas. La mi-temps et les comptes-rendus manquent
+viennent que de la source fournie, la feuille ne les mentionnant nulle part. La mi-temps et les comptes-rendus manquent
 pour toute la saison, la LNR ne les publiant pas.
 
 Annexe du match :
