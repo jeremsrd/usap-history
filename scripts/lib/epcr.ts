@@ -33,14 +33,37 @@
 const RACINE = "https://rugby-union-feeds.incrowdsports.com";
 
 /**
- * Clé publique du front epcrugby.com, lue dans la configuration de ses pages.
- * Elle n'ouvre que la lecture des données déjà affichées sur le site.
+ * En-têtes du flux, dont la clé publique du front epcrugby.com — celle qui est
+ * écrite dans la configuration de ses pages. Elle n'ouvre que la lecture des
+ * données déjà affichées sur le site, et elle n'est pas à nous : il n'y a rien
+ * à révoquer ni à faire tourner si elle circule.
+ *
+ * Elle est tout de même sortie du dépôt et lue dans `EPCR_API_KEY`, parce
+ * qu'un scanner de secrets la signale à chaque poussée : le motif `X-API-KEY`
+ * suffit à déclencher l'alerte, sans regarder ce que la clé ouvre.
+ *
+ * Lue à l'appel et non à l'évaluation du module, pour ne pas dépendre de
+ * l'ordre des imports : c'est `@prisma/client` qui charge `.env`, à son propre
+ * import. `.env.local` ne l'est pas — il n'est lu que par Next.
  */
-const ENTETES: Record<string, string> = {
-  "X-API-KEY": "2At3OgFAzAWfB0Pv8hn9mU4x",
-  "X-APP-ID": "web",
-  "X-REALM": "epcr",
-};
+export function entetesEpcr(): Record<string, string> {
+  if (!process.env.EPCR_API_KEY) {
+    try {
+      process.loadEnvFile();
+    } catch {
+      // pas de .env : le message ci-dessous dira quoi faire
+    }
+  }
+  const cle = process.env.EPCR_API_KEY;
+  if (!cle) {
+    throw new Error(
+      "EPCR_API_KEY manquante : l'ajouter dans .env (cf. env.example). " +
+        "C'est la clé du front epcrugby.com, visible dans la configuration " +
+        "de ses pages — chercher « apiKey » dans la source d'une page de match.",
+    );
+  }
+  return { "X-API-KEY": cle, "X-APP-ID": "web", "X-REALM": "epcr" };
+}
 
 /** Identifiants de compétition, tels que le site les configure. */
 export const COMPETITIONS = {
@@ -124,7 +147,7 @@ async function lire(chemin: string): Promise<any> {
   for (let essai = 1; essai <= 3; essai++) {
     try {
       const reponse = await fetch(`${RACINE}${chemin}`, {
-        headers: ENTETES,
+        headers: entetesEpcr(),
         signal: AbortSignal.timeout(30_000),
       });
       if (reponse.ok) {

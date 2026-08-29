@@ -419,7 +419,20 @@ pas (affluence).
   vaut 1026 pour le Challenge et 1008 pour la Champions Cup ; la saison
   s'écrit `202301` pour 2023-2024. **Passer par `scripts/lib/epcr.ts`**, qui
   fait déjà tout le travail : `chercherMatchUsap(saison, jour)` puis
-  `lireMatch(id)`.
+  `lireMatch(id)`, `entetesEpcr()` si l'on doit interroger le flux ailleurs.
+
+  **La clé ne vit plus dans le dépôt** : elle se lit dans `EPCR_API_KEY`, à
+  poser dans `.env` (cf. `env.example`). Non qu'elle soit sensible — c'est la
+  clé publique du front, écrite dans la configuration de ses pages, en lecture
+  seule, et elle n'est pas à nous : rien à révoquer si elle circule. Mais un
+  scanner de secrets la signalait à chaque poussée, le motif `X-API-KEY`
+  suffisant à déclencher l'alerte. La retrouver, si besoin : chercher
+  « apiKey » dans la source d'une page de match d'`epcrugby.com`.
+
+  Attention, `.env` et non `.env.local` : les scripts ne voient que le premier,
+  chargé au passage par `@prisma/client`. `entetesEpcr()` lit la variable **à
+  l'appel** et se replie sur `process.loadEnvFile()`, pour ne dépendre ni de
+  l'ordre des imports ni de la présence de Prisma.
 
   Ce que le flux donne, et qu'aucune autre source ne donne aussi bien :
   - les **vingt-trois joueurs de chaque équipe**, avec leur dossard

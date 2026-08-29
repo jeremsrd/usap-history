@@ -42,6 +42,7 @@ import { PrismaClient } from "@prisma/client";
 import { mkdir, writeFile, stat, rm } from "node:fs/promises";
 import { join } from "node:path";
 import { CLUBS_LNR, CLUBS_EPCR } from "./lib/clubs";
+import { entetesEpcr } from "./lib/epcr";
 import { slugify } from "../src/lib/slugs";
 
 const prisma = new PrismaClient();
@@ -71,12 +72,6 @@ const PAGES_LNR = [
   "https://top14.lnr.fr/calendrier-et-resultats/2024-2025/access-top-14",
   "https://top14.lnr.fr/calendrier-et-resultats/2025-2026/access-top-14",
 ];
-
-const ENTETES_EPCR = {
-  "X-API-KEY": "2At3OgFAzAWfB0Pv8hn9mU4x",
-  "X-APP-ID": "web",
-  "X-REALM": "epcr",
-};
 
 async function lire(url: string, entetes?: Record<string, string>): Promise<string> {
   for (let essai = 1; essai <= 3; essai++) {
@@ -117,7 +112,7 @@ async function moissonEpcr(): Promise<Map<string, string>> {
       const corps = await lire(
         `https://rugby-union-feeds.incrowdsports.com/v1/matches` +
           `?provider=rugbyviz&compId=${comp}&season=${saison}&images=true`,
-        ENTETES_EPCR,
+        entetesEpcr(),
       );
       if (!corps) continue;
       const data = JSON.parse(corps)?.data ?? [];
