@@ -16,7 +16,7 @@
 import type { PrismaClient, Position } from "@prisma/client";
 import { Position as Postes } from "@prisma/client";
 import { generatePlayerSlug } from "../../src/lib/slugs";
-import { motsOrphelins, normalize, proximite } from "./noms";
+import { memeMot, mots, motsOrphelins, normalize, proximite } from "./noms";
 
 /** Poste tenu par un titulaire, déduit de son numéro de maillot. */
 export const POSTE_PAR_NUMERO: Record<number, Position> = {
@@ -76,9 +76,21 @@ export async function chercherJoueur(
     select: { id: true, firstName: true, lastName: true },
   });
 
-  // Deux mots communs : le prénom concorde autant que le nom, c'est solide.
+  // Tout rapprochement passe par le **nom de famille** : deux mots communs ne
+  // suffisent pas si aucun ne vient de là. « Ratu Tevita KURIDRANI », centre
+  // de Biarritz, s'est ainsi retrouvé rattaché à Tevita Ratuva, deuxième ligne
+  // de Brive — « Ratu » est le début de « Ratuva », et le prénom faisait le
+  // second mot commun. Deux Fidjiens, deux hommes.
+  const memeFamille = (candidat: string) => {
+    const cibles = mots(officiel.lastName);
+    return mots(candidat).some((mot) => cibles.some((cible) => memeMot(mot, cible)));
+  };
+
+  // Nom de famille concordant, et un prénom qui suit : c'est solide.
   const candidats = tous.filter(
-    (j) => proximite(`${j.firstName} ${j.lastName}`, nomCherche).communs >= 2,
+    (j) =>
+      memeFamille(j.lastName) &&
+      proximite(`${j.firstName} ${j.lastName}`, nomCherche).communs >= 2,
   );
 
   // Le nom de famille seul ne suffit pas. « Kane Douglas », deuxième ligne de
@@ -89,9 +101,7 @@ export async function chercherJoueur(
   // rattache rien, et l'appelant crée une fiche après avoir été prévenu : un
   // doublon se repère et se fusionne, une identité fausse ne se voit pas.
   if (candidats.length === 0) {
-    const homonymes = tous.filter(
-      (j) => normalize(j.lastName) === normalize(officiel.lastName),
-    );
+    const homonymes = tous.filter((j) => memeFamille(j.lastName));
     const proches = homonymes.filter(
       (j) => distance(normalize(j.firstName), normalize(officiel.firstName)) <= 1,
     );

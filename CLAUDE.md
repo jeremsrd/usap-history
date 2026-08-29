@@ -117,14 +117,24 @@ confrontations avec l'USAP, et de gérer les joueurs passés par les deux camps
   `lastName equals` ne suffit pas — il rate « Guerois-Galisson » vs
   « Guerois Galisson », « Bécognée » vs « Becognee ». Construire un index en
   mémoire une fois, puis chercher dedans.
-- **Le nom de famille seul ne suffit pas** à identifier quelqu'un sur 1 370
-  fiches. « Kane Douglas », deuxième ligne de La Rochelle et de l'UBB, s'est
-  retrouvé ailier de Brive le 4 septembre 2021 parce que la feuille annonçait
-  « Wesley DOUGLAS » : un patronyme commun, deux hommes. `scripts/lib/joueurs.ts`
-  n'accepte donc l'homonyme que si les prénoms sont **à une lettre l'un de
-  l'autre** — « Mathieu » et « Matthieu » Ugena sont bien le même joueur —, et
-  laisse créer une fiche sinon, après avoir prévenu. C'est délibéré : un
-  doublon se repère et se fusionne, une identité fausse ne se voit pas.
+- **Chercher sur toute la table demande deux garde-fous**, que
+  `scripts/lib/joueurs.ts` porte tous les deux. Ils ont chacun leur accident
+  fondateur, l'un et l'autre découverts en relisant une feuille reprise :
+  - **le nom de famille seul ne suffit pas.** « Kane Douglas », deuxième ligne
+    de La Rochelle et de l'UBB, s'est retrouvé ailier de Brive le 4 septembre
+    2021 parce que la feuille annonçait « Wesley DOUGLAS » : un patronyme
+    commun, deux hommes. L'homonyme n'est donc retenu que si les prénoms sont
+    **à une lettre l'un de l'autre** — « Mathieu » et « Matthieu » Ugena sont
+    bien le même joueur ;
+  - **deux mots communs ne suffisent pas non plus s'ils ne viennent pas du nom
+    de famille.** « Ratu Tevita KURIDRANI », centre de Biarritz, a été rattaché
+    à Tevita Ratuva, deuxième ligne de Brive : « Ratu » est le début de
+    « Ratuva », et le prénom faisait le second mot commun. Tout rapprochement
+    exige donc désormais un mot du **nom de famille**.
+
+  Dans les deux cas, à défaut de conclure, on crée une fiche après avoir
+  prévenu. C'est délibéré : un doublon se repère et se fusionne, une identité
+  fausse ne se voit pas.
 - `players` contient donc majoritairement des adversaires : 1 246 sur 1 370,
   quand 141 seulement ont porté le maillot catalan — 28 figurent des deux
   côtés. C'est normal. Les pages de liste filtrent déjà sur
@@ -688,9 +698,9 @@ premières feuilles.
 
 **Les matchs de 2022-2023 à 2025-2026 ont leurs 46 joueurs et leur
 chronologie.** 2021-2022, première saison de la phase 4, n'a que ses
-rencontres — sauf la **J1, reprise entièrement le 29 août 2026** : Brive-USAP
-36-15 porte ses 46 joueurs, ses 17 événements, et 1 200 minutes de chaque
-côté. Les 30 autres attendent. La mi-temps et les comptes-rendus manquent
+rencontres — sauf les **J1 et J2, reprises le 29 août 2026** : Brive-USAP
+36-15 et USAP-Biarritz 33-20 portent chacune leurs 46 joueurs, leur
+chronologie et 1 200 minutes de chaque côté. Les 29 autres attendent. La mi-temps et les comptes-rendus manquent
 pour toute la saison, la LNR ne les publiant pas.
 
 Annexe du match :
@@ -753,7 +763,12 @@ Par ordre de valeur.
 
    Compositions, puis réalisations et temps de jeu des deux camps, puis ligne
    de temps. Chacun a son `--dry`, et le second refuse d'écrire si les points
-   ne retombent pas sur le score. Restent 30 matchs.
+   ne retombent pas sur le score. Restent 29 matchs.
+
+   **Relire la composition écrite, systématiquement** : c'est ce contrôle, et
+   lui seul, qui a rattrapé les deux identités fausses des deux premières
+   journées. Confronter chaque dossard au nom de la feuille, et regarder de
+   près tout écart où le nom de famille ou le prénom diffère vraiment.
 
    Deux choses que la chaîne ne fait pas : la **mi-temps**, que la LNR ne
    publie pas — elle se déduirait du dernier fait avant la 40ᵉ, mais c'est une
