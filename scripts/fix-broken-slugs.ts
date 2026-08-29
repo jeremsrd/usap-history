@@ -15,6 +15,12 @@
  * backfill-slugs.ts ne corrige pas ces cas : il ne cible que les slugs vides
  * (`slug: ""`), or ceux-ci sont non vides mais malformés.
  *
+ * Les joueurs ont été soldés depuis, mais le mal se reproduit dès qu'un script
+ * fabrique un slug de son côté : `fix-match-venues.ts` a ainsi créé trois
+ * stades sans CUID le 27 août 2026, réparés le 29. D'où le partage du
+ * générateur — ce script et celui-là appellent tous deux `generateVenueSlug`,
+ * la convention n'est plus écrite qu'à un endroit.
+ *
  * Aucun slug cassé ne pointe vers une autre entité (vérifié : les 419
  * donnent un 404 franc, aucune mauvaise fiche), la réécriture est donc sans
  * risque de régression.
@@ -27,7 +33,7 @@
  */
 
 import { PrismaClient } from "@prisma/client";
-import { generatePlayerSlug, slugify } from "../src/lib/slugs";
+import { generatePlayerSlug, generateVenueSlug } from "../src/lib/slugs";
 
 const prisma = new PrismaClient();
 
@@ -84,8 +90,7 @@ async function main() {
 
   console.log(`Stades : ${brokenVenues.length} slug(s) à réparer sur ${venues.length}`);
   for (const v of brokenVenues) {
-    // Même convention que fix-venues-2022-2023.ts
-    const slug = `${slugify(v.name)}-${slugify(v.city)}-${v.id}`;
+    const slug = generateVenueSlug(v.name, v.city, v.id);
     console.log(`  ${v.name} (${v.city})\n    ${v.slug === "" ? "(vide)" : v.slug}\n    → ${slug}`);
     if (!DRY_RUN) {
       await prisma.venue.update({ where: { id: v.id }, data: { slug } });

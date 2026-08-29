@@ -87,6 +87,23 @@ export function generateOpponentSlug(name: string, id: string): string {
 }
 
 /**
+ * Génère le slug d'un stade : "parc-des-sports-aguilera-biarritz-clxyz123abc"
+ *
+ * La ville désambiguïse les noms trop communs — il y a un stade municipal par
+ * département —, mais c'est le CUID final qui compte : la page `/stades/[slug]`
+ * l'extrait de la fin du slug pour retrouver la ligne. Un slug fabriqué sans
+ * lui rend la fiche inaccessible, et trois stades créés le 27 août 2026 ont
+ * répondu 404 pour cette raison.
+ */
+export function generateVenueSlug(
+  name: string,
+  city: string,
+  id: string,
+): string {
+  return `${slugify(name)}-${slugify(city)}-${id}`;
+}
+
+/**
  * Génère le slug d'un match.
  *
  * Domicile : "top-14-usap-vs-toulouse-j5-14-09-2024"

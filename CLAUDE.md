@@ -277,6 +277,16 @@ l'enregistrement en extrayant le CUID de la fin du slug
 (`/([a-z0-9]{25,})$/`) : un suffixe fabriqué avec `Date.now()` ou un aléatoire
 rend la fiche inaccessible (404). Voir `scripts/fix-broken-slugs.ts`.
 
+**Et un slug fabriqué sans CUID du tout ne vaut pas mieux.** Il n'existait pas
+de générateur pour les stades : `fix-match-venues.ts` s'était donc écrit un
+`slugify(nom)` à lui, et les trois stades qu'il a créés le 27 août 2026 —
+Aguiléra, Kingsholm, Guy-Boniface — ont répondu 404 jusqu'au 29. La leçon n'est
+pas « faire attention » mais **fournir la fonction** : `generateVenueSlug(name,
+city, id)` existe désormais, `fix-match-venues.ts` et `fix-broken-slugs.ts`
+l'appellent tous deux, et la convention n'est plus écrite qu'à un seul endroit.
+Le slug d'une entité ne peut de toute façon pas être calculé avant sa création,
+puisqu'il porte son CUID : créer avec un slug provisoire, puis le réécrire.
+
 ### Où trouver les données
 
 **Pour tout match de championnat — Top 14, Pro D2, barrage d'accession — la

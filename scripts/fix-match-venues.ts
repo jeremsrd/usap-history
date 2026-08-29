@@ -11,7 +11,9 @@
  *   1. **fusion des doublons**, listés à la main : « Stade du Hameau » et
  *      « Matmut Stadium de Gerland » existaient chacun en deux exemplaires,
  *      leurs matchs répartis entre les deux ;
- *   2. **création des stades manquants**, listés à la main eux aussi ;
+ *   2. **création des stades manquants**, listés à la main eux aussi — avec un
+ *      slug provisoire, réécrit aussitôt par `generateVenueSlug` : le slug
+ *      porte le CUID de la ligne, il ne peut donc pas être calculé avant elle ;
  *   3. **rattachement des clubs à leur terrain** : quand `Opponent.venueId`
  *      manque, il se déduit des matchs déjà joués là-bas — c'est la base qui
  *      renseigne la base, sans rien inventer ;
@@ -23,10 +25,17 @@
  *
  * Idempotent : un doublon déjà fusionné est introuvable, un stade déjà créé
  * est retrouvé sur son nom, un rattachement déjà posé n'est pas réécrit.
+ *
+ * ATTENTION AU SLUG. Ce script a créé trois stades le 27 août 2026 — Aguiléra,
+ * Kingsholm, Guy-Boniface — avec un `slugify(nom)` improvisé, sans le CUID que
+ * la page de détail extrait de la fin du slug : leurs trois fiches ont répondu
+ * 404 jusqu'au 29. Il n'existait alors pas de générateur pour les stades, et
+ * le script s'en était écrit un. Ne jamais refabriquer une convention de slug
+ * ici : `generateVenueSlug` est dans `src/lib/slugs.ts`, c'est la seule.
  */
 
 import { PrismaClient } from "@prisma/client";
-import { slugify } from "../src/lib/slugs";
+import { generateVenueSlug, slugify } from "../src/lib/slugs";
 
 const prisma = new PrismaClient();
 
@@ -105,8 +114,15 @@ async function creerManquants() {
       crees.set(stade.nom, null);
       continue;
     }
+    // Le slug ne peut pas être calculé avant la création : la page de détail
+    // retrouve le stade par le CUID qu'elle extrait de la fin du slug, et ce
+    // CUID n'existe qu'une fois la ligne écrite.
     const cree = await prisma.venue.create({
-      data: { name: stade.nom, city: stade.ville, slug: slugify(stade.nom) },
+      data: { name: stade.nom, city: stade.ville, slug: `temp-${slugify(stade.nom)}` },
+    });
+    await prisma.venue.update({
+      where: { id: cree.id },
+      data: { slug: generateVenueSlug(stade.nom, stade.ville, cree.id) },
     });
     crees.set(stade.nom, cree.id);
   }
