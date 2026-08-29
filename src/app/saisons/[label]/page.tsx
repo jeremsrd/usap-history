@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { estCouperet } from "@/lib/matchs";
 import { notFound } from "next/navigation";
 import { prisma } from "@/lib/prisma";
 import { DIVISIONS, POSITIONS } from "@/lib/constants";
@@ -212,16 +213,27 @@ export default async function SaisonDetailPage({ params }: Props) {
     ...playerMap.get(agg.playerId!)!, count: agg._count.id,
   }));
 
-  // Grouper les matchs par compétition
-  const matchesByCompetition = new Map<
-    string,
-    typeof season.matches
-  >();
+  // Grouper les matchs par compétition, en détachant la phase finale de la
+  // phase régulière : une demi-finale n'a pas à se perdre au milieu des trente
+  // journées, c'est elle qui fait le titre. La distinction ne vaut que pour
+  // les compétitions qui ont les deux — le barrage d'accession, seul match de
+  // sa compétition, garde son intitulé.
+  const nomCompetition = (match: (typeof season.matches)[number]) =>
+    match.competition.shortName || match.competition.name;
+  const avecJournees = new Set(
+    season.matches.filter((m) => m.matchday != null).map(nomCompetition),
+  );
+
+  const matchesByCompetition = new Map<string, typeof season.matches>();
   for (const match of season.matches) {
-    const compName = match.competition.shortName || match.competition.name;
-    const existing = matchesByCompetition.get(compName) || [];
+    const compName = nomCompetition(match);
+    const cle =
+      estCouperet(match) && avecJournees.has(compName)
+        ? `${compName} — phase finale`
+        : compName;
+    const existing = matchesByCompetition.get(cle) || [];
     existing.push(match);
-    matchesByCompetition.set(compName, existing);
+    matchesByCompetition.set(cle, existing);
   }
 
   return (

@@ -25,3 +25,21 @@ export function estJoue<T extends Scores>(
 ): match is T & { scoreUsap: number; scoreOpponent: number } {
   return match.scoreUsap != null && match.scoreOpponent != null;
 }
+
+/**
+ * Une rencontre est un **couperet** — phase finale, barrage, finale — si elle
+ * n'a pas de journée et que son tour ne commence pas par « Poule ».
+ *
+ * C'est la définition qui sert déjà aux points de bonus, qu'un match couperet
+ * n'attribue pas : une poule de coupe d'Europe n'a pas de journée non plus,
+ * mais elle en donne. Elle sert aussi à séparer la phase finale de la phase
+ * régulière sur la page de saison — l'USAP a été championne de Pro D2 en
+ * 2020-2021 en gagnant une demi-finale et une finale, et ces deux rencontres
+ * n'ont pas à se perdre au milieu des trente journées.
+ */
+export function estCouperet(match: {
+  matchday: number | null;
+  round: string | null;
+}): boolean {
+  return match.matchday == null && !(match.round ?? "").startsWith("Poule");
+}

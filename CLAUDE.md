@@ -332,7 +332,9 @@ d'introduction des bonus dans les coupes d'Europe n'a pas été vérifiée.
 
 **Aucun bonus sur un match couperet** : phase finale européenne, barrage
 d'accession, finale. Dans le modèle, une rencontre est un couperet si elle n'a
-pas de `matchday` et que son `round` ne commence pas par « Poule ».
+pas de `matchday` et que son `round` ne commence pas par « Poule » —
+`estCouperet()` de `src/lib/matchs.ts` porte la règle, et sert aussi à
+détacher la phase finale de la phase régulière sur la page de saison.
 
 ### Contrôles à faire systématiquement
 
