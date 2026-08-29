@@ -94,6 +94,110 @@ CSS.
 - **Dates** : format ISO en base, affichage DD/MM/YYYY côté UI
 - **Scores** : toujours stocker score USAP en premier
 
+## Reprendre une saison — la marche à suivre
+
+C'est le travail courant du projet, et il est rodé : deux saisons complètes,
+2021-2022 et 2020-2021, l'ont été par cette chaîne. **Suivre l'ordre**, chaque
+étape supposant la précédente.
+
+### 0. Reconnaître le terrain
+
+```bash
+# Quelle division ? Combien de matchs déjà en base ?
+npx tsx -e 'import{PrismaClient}from"@prisma/client";const p=new PrismaClient();
+p.season.findFirst({where:{label:"AAAA-AAAA"},include:{_count:{select:{matches:true}}}})
+.then(s=>{console.log(s);return p.$disconnect()})'
+```
+
+Puis repérer la forme de la saison sur le site de la LNR — `top14.lnr.fr` ou
+`prod2.lnr.fr` selon la division : combien de journées, quelles phases
+finales, y a-t-il une campagne européenne. Les segments d'URL des phases
+finales sont `demi-finales`, `finale`, `barrages`, et le barrage d'accession a
+changé trois fois de nom (cf. `phasesBarrage`).
+
+### 1. Les rencontres
+
+Écrire un `seed-season-AAAA-AAAA.ts` sur le modèle du plus proche :
+`seed-season-2020-2021.ts` pour une saison de Pro D2 sans coupe,
+`seed-season-2021-2022.ts` pour une saison de Top 14 avec Challenge européen.
+Y placer :
+
+- la liste des phases et le nombre de journées ;
+- les clubs que la base ne connaît pas encore, **avec leurs noms relevés sur le
+  classement officiel** (`{top14|prod2}.lnr.fr/classement/AAAA-AAAA`), jamais
+  de mémoire ;
+- le **classement officiel de l'USAP** en garde-fou des agrégats : victoires,
+  nuls, défaites, points marqués et encaissés, total. Le script doit refuser
+  d'écrire s'il s'en écarte. C'est le contrôle qui valide la saison entière.
+
+```bash
+npx tsx scripts/seed-season-AAAA-AAAA.ts --dry   # attendu : 0 en échec
+npx tsx scripts/seed-season-AAAA-AAAA.ts         # attendu : ✔ conforme au classement
+```
+
+### 2. Compositions, feuilles, chronologies
+
+Pour chaque match, dans cet ordre, en traitant la saison par lots de quatre
+journées — un lot rate rarement, et le lot suivant profite des doublons
+soldés :
+
+```bash
+npx tsx scripts/seed-lineup.ts AAAA-MM-JJ --dry        # 46 lignes attendues
+npx tsx scripts/seed-lineup.ts AAAA-MM-JJ
+npx tsx scripts/seed-opponent-sheet.ts AAAA-AAAA --match=AAAA-MM-JJ --usap --dry
+npx tsx scripts/seed-opponent-sheet.ts AAAA-AAAA --match=AAAA-MM-JJ --usap
+npx tsx scripts/seed-chronologie.ts AAAA-MM-JJ --dry
+npx tsx scripts/seed-chronologie.ts AAAA-MM-JJ
+```
+
+Le script de feuille accepte la saison entière d'un coup une fois toutes les
+compositions écrites — `npx tsx scripts/seed-opponent-sheet.ts AAAA-AAAA
+--usap` —, ce qui est bien plus rapide que match par match. Pour une coupe
+d'Europe, c'est `seed-cup-sheet.ts --match=AAAA-MM-JJ` à la place.
+
+### 3. Les contrôles, et ils ne sont pas facultatifs
+
+```bash
+npx tsx scripts/fix-bonus-points.ts --dry    # 0 correction attendue
+```
+
+Et surtout, **la confrontation nom à nom de chaque composition écrite avec la
+feuille officielle**. C'est ce contrôle, et lui seul, qui a rattrapé les deux
+identités fausses de 2021-2022 : les sommes de minutes et de points
+retombaient parfaitement dans les deux cas, puisque c'est le bon dossard qui
+portait les bonnes actions. Comparer, pour chaque dossard, le nom de la base
+au nom de la feuille, et regarder de près tout écart où le **nom de famille**
+diffère.
+
+### Ce qui casse, et quoi en faire
+
+| Message | Cause | Geste |
+|---|---|---|
+| `N fiches candidates … à arbitrer` | doublon en base | inspecter les deux fiches, puis `merge-players.ts --keep= --drop= --dry` |
+| `[homonyme] … laissé de côté` | deux personnes, même patronyme | vérifier la fiche citée ; si ce sont bien deux hommes, laisser créer |
+| `Compositions non publiées par la LNR` | archive muette | essayer `prod2.lnr.fr`, qui archive mieux ; en dernier recours, composition à la main recoupée avec les changements (cf. `seed-lineup-barrage-2022.ts`) |
+| `N joueurs sur la feuille, 22 au moins` | la LNR oublie un remplaçant | accepté tel quel si les quinze titulaires sont là |
+| `réalisations incohérentes` | score courant fautif | lire les faits du match ; le total final fait foi |
+| `N point(s) inexpliqué(s)` | transformation non inscrite | le script la rattrape sur les deux camps ; s'il échoue encore, la feuille est fautive |
+| `… hors composition` sur un auteur | essai collectif, ou composition fausse | soupçonner la base avant la source |
+| `feuille LNR introuvable` | mauvais segment de phase | `phasesLnr()` ; vérifier le nom du segment sur le calendrier |
+| minutes ≠ 1 200 | carton rouge, ou retour non enregistré | un rouge abaisse le total de `80 − minute` ; sinon signaler, ne pas inventer |
+| points des joueurs < score | essai de pénalité ou essai collectif | légitime, ces essais n'ont pas d'auteur |
+
+### Quatre pièges qui coûtent du temps
+
+1. **`npx tsc --noEmit` ne vérifie aucun script** : `tsconfig.json` exclut
+   `scripts/`, et `tsx` retire les types sans les contrôler. La commande à
+   passer est dans « Commandes ».
+2. **Ne pas filtrer la sortie d'un lot au point de masquer un échec.** Une
+   journée de 2021-2022 est passée pour réussie parce que le filtre ne
+   retenait pas son message d'erreur ; elle avait écrit une demi-composition.
+3. **Lire une liste de changements en entier avant d'en conclure quoi que ce
+   soit.** Une correction a été posée sur la foi d'une liste tronquée, et elle
+   aggravait l'écart qu'elle prétendait réparer.
+4. **Le poste de référence d'une fiche sert de repli** pour toutes ses lignes
+   de remplaçant : un poste faux se propage silencieusement.
+
 ## Saisie d'un match (feuille de match)
 
 Règles à appliquer **sans qu'on ait à les redemander** à chaque ajout de match.
@@ -814,72 +918,29 @@ derniers.
 
 Par ordre de valeur.
 
-1. **Compléter 2021-2022** : ses 31 rencontres existent, il leur manque les
-   compositions, la chronologie et la clôture éditoriale — entraîneur,
-   président, bilan rédigé. La LNR publie les compositions de la saison, et le
-   flux de l'EPCR celles des matchs de Challenge.
+1. **Achever les deux saisons reprises.** 2021-2022 et 2020-2021 ont leurs
+   matchs, leurs compositions et leur chronologie ; il leur manque la clôture
+   éditoriale — entraîneur, président, bilan rédigé —, les affluences que la
+   LNR ne donne pas, et les mi-temps de 2020-2021. La marche à suivre pour
+   toute nouvelle saison est en tête de fichier, « Reprendre une saison ».
 
-   **La chaîne est en place et éprouvée sur la J1** (Brive-USAP 36-15, le
-   4 septembre 2021), en trois temps :
-
-   ```bash
-   npx tsx scripts/seed-lineup.ts AAAA-MM-JJ --dry
-   npx tsx scripts/seed-opponent-sheet.ts 2021-2022 --match=AAAA-MM-JJ --usap --dry
-   npx tsx scripts/seed-chronologie.ts AAAA-MM-JJ --dry
-   ```
-
-   Compositions, puis réalisations et temps de jeu des deux camps, puis ligne
-   de temps. Chacun a son `--dry`, et le second refuse d'écrire si les points
-   ne retombent pas sur le score.
-
-   **La chaîne connaît les deux sources.** `seed-lineup.ts` et
-   `seed-chronologie.ts` basculent sur l'EPCR quand la compétition est une
-   coupe d'Europe, sur la LNR sinon ; le script de feuille, lui, reste en deux
-   exemplaires — `seed-opponent-sheet.ts --usap` pour le championnat,
-   `seed-cup-sheet.ts` pour les coupes. La commande à enchaîner est rappelée en
-   fin de `seed-lineup.ts`, selon la compétition.
-
-   **La saison 2021-2022 est faite.** Ne manquent que sa clôture éditoriale —
-   entraîneur, président, bilan rédigé — et ses affluences, que la LNR ne
-   donne pas.
-
-   `phasesLnr(saison, matchday, estBarrage)` de `lnr.ts` porte la déduction de
-   phase, barrage compris — son segment d'URL a changé trois fois de nom,
-   `match-daccession` en 2021-2022, `access` en 2022-2023, `access-top-14`
-   depuis 2024-2025.
-
-   **Relire la composition écrite, systématiquement** : c'est ce contrôle, et
-   lui seul, qui a rattrapé les deux identités fausses des deux premières
-   journées. Confronter chaque dossard au nom de la feuille, et regarder de
-   près tout écart où le nom de famille ou le prénom diffère vraiment. Sur les
-   vingt-six journées de championnat, il ne reste qu'un écart, répété à chaque
-   feuille où il figure : « Matthieu Ugena » sur la feuille pour « Mathieu »
-   en base — variante d'écriture, laissée telle quelle comme les 49 autres de
-   la base.
-
-   **Un contrôle trop naïf crie au loup**, et il y a deux façons de se
-   tromper :
-   - **les minutes ne font 1 200 que si personne n'a été exclu.** Pau n'en
-     totalise que 1 147 le 2 octobre 2021, et c'est juste : Aminiasi Tuimaba a
-     pris un rouge à la 27ᵉ, l'équipe a fini à quatorze — 1 200 − (80 − 27) ;
-   - **la somme des points par joueur ne fait le score que sans essai de
-     pénalité.** L'UBB en marque un le 23 octobre 2021 : 32 points répartis
-     entre ses joueurs, 39 au tableau. Un essai de pénalité n'a pas de
-     marqueur, il vit dans `penaltyTriesOpponent`.
-
-   **Une seule anomalie réelle sur ces dix journées**, et elle vient de la
-   source : le 30 octobre 2021, La Rochelle totalise 1 206 minutes. Sa feuille
-   se contredit — Victor Vito sort **définitivement** à la 25ᵉ sur protocole
-   commotion, puis elle le fait sortir encore à la 35ᵉ et rentrer deux fois.
-   Aucune correction n'a été posée : on peut démontrer que la feuille est
-   fausse, pas ce qui s'est réellement passé, et `CHANGEMENTS_CORRIGES` ne
-   s'écrit qu'avec la démonstration sous les yeux. L'avertissement du script
-   suffit.
+   Trois anomalies connues de ces deux saisons, toutes assumées :
+   - **La Rochelle totalise 1 206 minutes le 30 octobre 2021.** Sa feuille se
+     contredit — Victor Vito sort *définitivement* à la 25ᵉ sur protocole
+     commotion, puis elle le fait sortir encore à la 35ᵉ et rentrer deux fois.
+     Aucune correction posée : on peut démontrer que la feuille est fausse,
+     pas ce qui s'est passé, et `CHANGEMENTS_CORRIGES` ne s'écrit qu'avec la
+     démonstration sous les yeux ;
+   - **la composition du barrage du 12 juin 2022 ne vient d'aucune source
+     lue par machine** et ses numéros restent incertains (cf. l'en-tête de
+     `seed-lineup-barrage-2022.ts`) ;
+   - **« Matthieu Ugena » sur les feuilles pour « Mathieu » en base**,
+     variante d'écriture laissée telle quelle comme les 49 autres.
 
    Deux choses que la chaîne ne fait pas : la **mi-temps**, que la LNR ne
    publie pas — elle se déduirait du dernier fait avant la 40ᵉ, mais c'est une
-   inférence, pas une donnée —, et les **notes de retour en jeu**, écrites à
-   la main comme les six autres de la base.
+   inférence —, et les **notes de retour en jeu**, écrites à la main.
+
 2. **Poursuivre la phase 4** en remontant : **2020-2021 est faite** — trente
    journées de Pro D2, une demi-finale et la finale, soit 32 matchs avec leurs
    compositions et leur chronologie, conformes au classement officiel (24V 1N
