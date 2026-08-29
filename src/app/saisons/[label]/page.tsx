@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { estCouperet } from "@/lib/matchs";
+import { estCouperet, estJoue } from "@/lib/matchs";
 import { notFound } from "next/navigation";
 import { prisma } from "@/lib/prisma";
 import { DIVISIONS, POSITIONS } from "@/lib/constants";
@@ -236,6 +236,26 @@ export default async function SaisonDetailPage({ params }: Props) {
     matchesByCompetition.set(cle, existing);
   }
 
+  /**
+   * Bilan d'un groupe de rencontres — celles qui ont été jouées.
+   *
+   * Les agrégats de `Season` ne portent que le championnat, pour coller au
+   * classement officiel : ils ne diraient rien d'une phase finale, ni d'une
+   * campagne européenne. Ceux-ci se recalculent par groupe, et l'en-tête garde
+   * son total officiel.
+   */
+  const bilanDuGroupe = (matches: typeof season.matches) => {
+    const joues = matches.filter(estJoue);
+    return {
+      joues: joues.length,
+      victoires: joues.filter((m) => m.scoreUsap > m.scoreOpponent).length,
+      nuls: joues.filter((m) => m.scoreUsap === m.scoreOpponent).length,
+      defaites: joues.filter((m) => m.scoreUsap < m.scoreOpponent).length,
+      pour: joues.reduce((total, m) => total + m.scoreUsap, 0),
+      contre: joues.reduce((total, m) => total + m.scoreOpponent, 0),
+    };
+  };
+
   return (
     <div className="mx-auto max-w-7xl px-4 py-10">
       {/* Navigation fil d'Ariane */}
@@ -337,7 +357,7 @@ export default async function SaisonDetailPage({ params }: Props) {
           </div>
         </div>
 
-        {/* Stats agrégées */}
+        {/* Stats agrégées — le championnat seul, comme le classement officiel */}
         {season.matchesPlayed != null && (
           <div className="mt-6 grid grid-cols-3 gap-4 border-t border-border pt-6 sm:grid-cols-6 md:grid-cols-9">
             <StatBox label="Joués" value={season.matchesPlayed} />
@@ -388,9 +408,22 @@ export default async function SaisonDetailPage({ params }: Props) {
           {Array.from(matchesByCompetition.entries()).map(
             ([compName, matches]) => (
               <div key={compName} className="mb-8">
-                <h3 className="mb-3 text-lg font-semibold text-usap-sang">
-                  {compName}
-                </h3>
+                <div className="mb-3 flex flex-wrap items-baseline gap-x-3 gap-y-1">
+                  <h3 className="text-lg font-semibold text-usap-sang">
+                    {compName}
+                  </h3>
+                  {(() => {
+                    const bilan = bilanDuGroupe(matches);
+                    if (bilan.joues === 0) return null;
+                    return (
+                      <span className="text-sm text-muted-foreground">
+                        {bilan.joues} joué{bilan.joues > 1 ? "s" : ""} —{" "}
+                        {bilan.victoires}V {bilan.nuls}N {bilan.defaites}D —{" "}
+                        {bilan.pour} pts pour, {bilan.contre} contre
+                      </span>
+                    );
+                  })()}
+                </div>
                 <div className="overflow-x-auto rounded-lg border border-border">
                   <table className="w-full text-sm">
                     <thead>

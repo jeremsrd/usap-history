@@ -587,11 +587,14 @@ par inclusion : trop large pour être lancé sans revue préalable.
 
 ## Logos des clubs
 
-Les 32 adversaires ont leur logo, servi par le site lui-même depuis
-`public/images/logos/{club}.png` — 3,5 Mo au total. Ils viennent des sources
+Les 40 adversaires ont leur logo, servi par le site lui-même depuis
+`public/images/logos/{club}.png` — 5,3 Mo au total. Ils viennent des sources
 officielles, que les scripts lisent déjà : `cdn.lnr.fr/club/{slug}/photo/logo.
 {empreinte}` pour les clubs français, le champ `imageUrl` du flux de l'EPCR
-pour les européens. `fetch-club-logos.ts` fait la moisson.
+pour les européens. `fetch-club-logos.ts` fait la moisson, sur les calendriers
+du Top 14 **et de la Pro D2** — c'est de ce dernier que viennent les écussons
+de Carcassonne, Rouen, Colomiers, Nevers, Béziers, Aurillac, Angoulême et
+Valence-Romans.
 
 Pourquoi les héberger plutôt que pointer vers ces CDN : leurs URL portent une
 empreinte qui change au gré des mises à jour, le lien direct peut être bloqué,
@@ -606,10 +609,11 @@ sombre. `--club=Clermont` force ce retéléchargement ; `--usap` fait de même
 pour `public/images/usap/logo.png`, l'écusson catalan que le site affiche
 partout ailleurs.
 
-Les originaux de la LNR sont de tailles très inégales : 2000×2000 pour
-Bordeaux, 151×151 pour Clermont et Perpignan. Le plus petit reste confortable
-— le plus grand affichage est de 48 pixels — mais il ne faut pas s'attendre à
-la même finesse partout.
+Les originaux de la LNR sont de tailles très inégales : **5420×6346 pour
+Carcassonne**, à lui seul 1,1 Mo, contre 151×151 pour Clermont et Perpignan.
+Le plus petit reste confortable — le plus grand affichage est de 48 pixels, et
+`next/image` sert 1,4 Ko pour Carcassonne — mais il ne faut pas s'attendre à
+la même finesse partout, et le poids du dépôt en souffre un peu.
 
 Les logos de club sont des marques déposées. Les afficher sur un site
 d'histoire non commercial est l'usage, mais c'est un choix qui appartient au

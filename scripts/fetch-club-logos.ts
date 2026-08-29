@@ -71,6 +71,11 @@ const PAGES_LNR = [
   "https://top14.lnr.fr/calendrier-et-resultats/2022-2023/access",
   "https://top14.lnr.fr/calendrier-et-resultats/2024-2025/access-top-14",
   "https://top14.lnr.fr/calendrier-et-resultats/2025-2026/access-top-14",
+  // La Pro D2 est sur un autre site, et c'est de là que viennent les écussons
+  // des clubs de deuxième division — Carcassonne, Rouen, Colomiers et les
+  // autres, croisés en 2020-2021. Même CDN, même forme d'URL.
+  "https://prod2.lnr.fr/calendrier-et-resultats/2020-2021/j1",
+  "https://prod2.lnr.fr/calendrier-et-resultats/2020-2021/j2",
 ];
 
 async function lire(url: string, entetes?: Record<string, string>): Promise<string> {
