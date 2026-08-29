@@ -568,3 +568,73 @@ export function pointsDuFait(type: LnrFait["type"], transforme: boolean): number
       return 0;
   }
 }
+
+// =============================================================================
+// EFFECTIF D'UN CLUB
+// =============================================================================
+
+export interface LnrEffectifJoueur {
+  /** Identifiant LNR, stable d'une saison à l'autre : 594 pour Urdapilleta. */
+  id: number;
+  /** Segment d'URL de sa fiche : `594-benjamin-urdapilleta`. */
+  slug: string;
+  /** Prénoms tels qu'écrits, seconds prénoms compris : « Sama Leonardo ». */
+  prenoms: string;
+  /** Nom de famille, en capitales sur la page : « MALOLO », « GOMES SA ». */
+  nom: string;
+  /** Le poste tel que la LNR le groupe : « 1ère ligne », « 3ème ligne »… */
+  poste: string;
+}
+
+/**
+ * L'effectif professionnel d'un club, depuis `/club/{club}/effectif-staff`.
+ *
+ * Contrairement aux feuilles de match, cette page n'embarque pas de JSON : les
+ * joueurs sont du HTML ordinaire, une ancre `player-block` par joueur, dont le
+ * lien porte l'identifiant LNR. Le staff est rendu à part et n'a pas de lien
+ * `/joueur/`, il ne remonte donc pas ici.
+ *
+ * Le nom est écrit « Prénom NOM », le nom de famille tout en capitales — c'est
+ * la seule source qui dise où couper, et elle règle les cas que les feuilles
+ * de match rendent ambigus (« Sama Leonardo | MALOLO »).
+ *
+ * Attention, le poste est **plus grossier que l'enum du projet** : « 1ère
+ * ligne » confond les deux piliers et le talonneur, « 3ème ligne » englobe le
+ * numéro 8. La fiche individuelle du joueur n'en dit pas plus. Il n'y a donc
+ * pas de quoi renseigner `Position` pour ces deux groupes.
+ */
+export async function lireEffectif(
+  club: string,
+): Promise<LnrEffectifJoueur[]> {
+  const html = await lirePage(`${RACINE}/club/${club}/effectif-staff`);
+  const blocs = html.split(
+    /<a href="https:\/\/top14\.lnr\.fr\/joueur\/(\d+)-([a-z0-9-]+)"[^>]*class="player-block/,
+  );
+
+  const effectif: LnrEffectifJoueur[] = [];
+  // Le découpage rend [avant, id, slug, corps, id, slug, corps, …].
+  for (let i = 1; i + 2 < blocs.length + 1; i += 3) {
+    const id = Number(blocs[i]);
+    const slug = blocs[i + 1];
+    const corps = blocs[i + 2] ?? "";
+    const nomComplet = corps.match(/player-block__name">([^<]+)</);
+    const poste = corps.match(/player-block__position">([^<]*)</);
+    if (!nomComplet) continue;
+
+    const mots = decoderEntites(nomComplet[1]).trim().split(/\s+/);
+    // Le nom de famille est la traîne en capitales ; tout ce qui précède est
+    // prénom. « GOMES SA » et « DE LA FUENTE » restent donc d'un seul tenant.
+    let coupe = mots.length - 1;
+    while (coupe > 0 && mots[coupe - 1] === mots[coupe - 1].toUpperCase()) {
+      coupe--;
+    }
+    effectif.push({
+      id,
+      slug,
+      prenoms: mots.slice(0, coupe).join(" "),
+      nom: mots.slice(coupe).join(" "),
+      poste: poste ? decoderEntites(poste[1]).trim() : "",
+    });
+  }
+  return effectif;
+}

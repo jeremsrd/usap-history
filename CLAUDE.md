@@ -117,8 +117,8 @@ confrontations avec l'USAP, et de gérer les joueurs passés par les deux camps
   `lastName equals` ne suffit pas — il rate « Guerois-Galisson » vs
   « Guerois Galisson », « Bécognée » vs « Becognee ». Construire un index en
   mémoire une fois, puis chercher dedans.
-- `players` contient donc majoritairement des adversaires : 1 248 sur 1 368,
-  quand 144 seulement ont porté le maillot catalan — 29 figurent des deux
+- `players` contient donc majoritairement des adversaires : 1 246 sur 1 370,
+  quand 141 seulement ont porté le maillot catalan — 28 figurent des deux
   côtés. C'est normal. Les pages de liste filtrent déjà sur
   `isOpponent: false`.
 - **Un import qui cherche sur le nom exact fabrique des doublons à chaque
@@ -382,6 +382,29 @@ pas (affluence).
     surnuméraire au banc.
 
   Ce que la LNR ne donne pas : l'**affluence**.
+
+  **L'effectif d'un club** se lit sur `top14.lnr.fr/club/{club}/effectif-staff`,
+  par `lireEffectif(club)`. Page en HTML ordinaire, une ancre `player-block` par
+  joueur, dont le lien porte l'identifiant LNR ; le staff n'a pas de lien
+  `/joueur/` et ne remonte donc pas. Le nom y est écrit « Prénom NOM », le nom
+  de famille tout en capitales : c'est la **seule source qui dise où couper**,
+  et elle règle les cas que les feuilles rendent ambigus — « Sama Leonardo |
+  MALOLO », « Cedate | GOMES SA », « Jacobus | VAN TONDER ».
+
+  Deux réserves. Le **poste y est plus grossier que l'enum du projet** :
+  « 1ère ligne » confond les deux piliers et le talonneur, « 3ème ligne »
+  englobe le numéro 8, et la fiche individuelle du joueur n'en dit pas plus. Et
+  la LNR **ampute les accents** — « Noe DELLA SCHIAVA », « Theo FORNER »,
+  « Jeronimo DE LA FUENTE » — : ne jamais réécrire une orthographe déjà en base
+  à partir d'elle.
+
+  **Ne pas se fier à `usap.fr` pour l'effectif.** Le 29 août 2026, sa page
+  « équipe pro » affichait encore celui de la saison écoulée — Allan, Petaia,
+  Ritchie et Brookes y figuraient toujours. La LNR, elle, était à jour : quatre
+  des joueurs qu'elle avait retirés de Perpignan apparaissaient déjà dans
+  l'effectif d'un autre club. Le site du club reste utile pour les **espoirs**,
+  que la LNR ne publie pas, et pour les **postes précis** (il distingue pilier
+  gauche, talonneur et pilier droit), sous réserve de sa fraîcheur.
 - **Chronologie détaillée, en dernier recours** : API ESPN
   `site.api.espn.com/apis/site/v2/sports/rugby/{league}/summary?event={gameId}`
   (Top 14 = 270559, Challenge = 272073). L'identifiant se retrouve par
@@ -535,6 +558,7 @@ doublons.
 | `fix-opponent-lineup.ts` | remet une composition en accord avec la feuille officielle — LNR pour le championnat, EPCR pour les coupes — (identités, dossards, titulaires, capitaine) ; `--usap` traite aussi le camp catalan |
 | `fetch-club-logos.ts` | rapatrie les logos officiels des clubs dans `public/images/logos/`, depuis les CDN de la LNR et de l'EPCR, et renseigne `Opponent.logoUrl` |
 | `fix-match-venues.ts` | met les stades en ordre : fusionne les doublons, crée les manquants, rattache chaque club à son terrain — déduit des déplacements déjà enregistrés — puis complète les matchs sans lieu |
+| `sync-effectif.ts` | met l'effectif professionnel en accord avec la LNR : crée les fiches manquantes, lève `isActive` sur l'effectif et l'abaisse sur les partants ; refuse d'écrire tant qu'un doublon ou un nom douteux subsiste |
 | `fix-null-penalty-tries.ts` | met à 0 les compteurs `penaltyTries` restés `null`, mais seulement là où les points retombent déjà sur le score |
 
 `fix-duplicate-players.ts` existe aussi mais apparie les prénoms par préfixe et
@@ -629,6 +653,17 @@ Seules les cinq premières ont un horaire — la LNR ne cale les coups d'envoi
 qu'au fil des désignations télévisées, et pose d'ici là une date de référence
 que le script rafraîchira à chaque relance.
 
+Son **effectif**, lui, est à jour au 29 août 2026 : 50 joueurs portent
+`isActive`, repris de la LNR par `sync-effectif.ts`. Six fiches ont été créées
+à cette occasion — Riccioni, Amituanai, McGrath, Reece, Kubunakaravi, Ennor —
+et neuf réactivées, dont plusieurs qui n'existaient en base que comme
+adversaires. Trente-trois joueurs de 2025-2026 ont été abaissés. Deux points
+restent ouverts : les postes de Riccioni et d'Amituanai, que la LNR range en
+« 1ère ligne » sans trancher entre pilier et talonneur, et l'absence de lignes
+`SeasonPlayer` pour 2026-2027 — le modèle est alimenté de 2022-2023 à
+2025-2026, mais il porte un dossard que la LNR ne publie pas avant les
+premières feuilles.
+
 **Les matchs de 2022-2023 à 2025-2026 ont leurs 46 joueurs et leur
 chronologie.** 2021-2022, première saison de la phase 4, n'a pour l'instant
 que ses rencontres : ni compositions, ni chronologie — la mi-temps et les
@@ -700,7 +735,7 @@ classement d'époque — le tableau de `fix-bonus-points.ts` ne le connaît pas.
   existe et s'affiche, mais la sanction ne peut pas figurer dans la chronologie.
 - Les fiches joueur affichent séparément « Matchs avec l'USAP » et « Matchs
   contre l'USAP ». Les statistiques ne comptent que les premiers. Toute nouvelle
-  requête sur les joueurs doit filtrer `isOpponent: false`, sinon les 1 248
+  requête sur les joueurs doit filtrer `isOpponent: false`, sinon les 1 246
   adversaires présents dans `players` faussent le résultat. Le tableau « contre
   l'USAP » n'affiche d'ailleurs ni minutes ni réalisations : le détail saisi
   côté adverse n'est visible que sur les pages de match.
@@ -762,12 +797,20 @@ classement d'époque — le tableau de `fix-bonus-points.ts` ne le connaît pas.
   où la chronologie renverra vers les fiches joueur — c'est le travail
   d'interface qui a de la valeur, pas la colonne. Les réalisations par joueur
   adverse, elles, sont complètes : elles vivent dans `MatchPlayer`.
-- **Cinq fiches ne sont rattachées à aucun match, et c'est normal** : Dan
+- **Onze fiches ne sont rattachées à aucun match, et c'est normal.** Cinq sont
+  des figures citées pour mémoire, avec date de naissance et biographie — Dan
   Carter, Joseph Desclaux, Aimé Giral, Percy Montgomery et Jean-François
-  Imbernon sont des figures citées pour mémoire, avec date de naissance et
-  biographie. Ne pas les prendre pour des débris d'import : `players` sans
-  `matchAppearances` n'est pas un critère suffisant, c'est l'absence de toute
-  donnée personnelle qui l'est (cf. `delete-orphan-players.ts`).
+  Imbernon. Les six autres sont les recrues de 2026-2027, créées par
+  `sync-effectif.ts` avant leur premier match. Ne pas les prendre pour des
+  débris d'import : `players` sans `matchAppearances` n'est pas un critère
+  suffisant, c'est l'absence de toute donnée personnelle qui l'est (cf.
+  `delete-orphan-players.ts`).
+- **`isActive` se lit « dans l'effectif professionnel », pas « au club ».**
+  `sync-effectif.ts` ne connaît que la page de la LNR, qui ignore les espoirs :
+  un joueur versé chez les jeunes est donc abaissé alors qu'il n'a pas quitté
+  l'USAP. Thomas Serezat est dans ce cas — abaissé le 29 août 2026, il figure
+  sur la page espoirs d'`usap.fr`. Simon Taty et Diego Mascarenc, eux,
+  apparaissent sur les deux listes et restent actifs.
 - Erreur d'hydratation React sur les pages de match, antérieure et non
   diagnostiquée (probablement `next-themes`).
 - Affluences éparses — 37 matchs sur 157, l'EPCR ayant fourni celles des
