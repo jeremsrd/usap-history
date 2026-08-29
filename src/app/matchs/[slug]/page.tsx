@@ -90,6 +90,25 @@ export default async function MatchDetailPage({ params }: Props) {
 
   if (!match) notFound();
 
+  // Le titre que ce match a décidé, s'il en a décidé un. Le rapprochement se
+  // fait sur l'année de fin de saison et la compétition : une finale et son
+  // trophée ne peuvent pas se confondre avec autre chose. « Demi-finale » est
+  // exclue — d'où l'ancrage de l'expression au début du libellé.
+  const anneeDuTitre = Number(match.season.label.slice(5));
+  const trophee = /^finale/i.test(match.round ?? "")
+    ? await prisma.trophy.findFirst({
+        where: {
+          year: anneeDuTitre,
+          competition: {
+            in: [
+              match.competition.name,
+              match.competition.shortName ?? match.competition.name,
+            ],
+          },
+        },
+      })
+    : null;
+
   const oppName = match.opponent.shortName || match.opponent.name;
   const usapPlayers = match.players.filter((p) => !p.isOpponent);
   const oppPlayers = match.players.filter((p) => p.isOpponent);
@@ -117,6 +136,23 @@ export default async function MatchDetailPage({ params }: Props) {
           {match.isHome ? `USAP - ${oppName}` : `${oppName} - USAP`}
         </span>
       </div>
+
+      {/* Le titre décidé par ce match */}
+      {trophee && (
+        <div className="mb-4 rounded-lg border border-usap-or/40 bg-usap-or/10 px-4 py-3">
+          <span className="font-bold uppercase tracking-wide text-usap-or">
+            {trophee.achievement === "CHAMPION"
+              ? `Champion — ${trophee.competition} ${trophee.year}`
+              : `Finaliste — ${trophee.competition} ${trophee.year}`}
+          </span>
+          <Link
+            href="/palmares"
+            className="ml-3 text-sm text-muted-foreground underline hover:text-usap-sang"
+          >
+            voir le palmarès
+          </Link>
+        </div>
+      )}
 
       {/* Score principal */}
       <div className="mb-10 rounded-lg border border-border bg-usap-carte p-6">

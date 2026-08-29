@@ -803,7 +803,11 @@ officiels mais n'a pas été confronté à un classement d'époque ; celui de
 
 - **Les 215 matchs ont leur stade.** Le lieu se déduit du camp — Aimé-Giral à
   domicile, `Opponent.venueId` à l'extérieur —, et ne se saisit donc jamais à
-  la main. Quatre clubs n'ont toujours pas de terrain rattaché : Connacht,
+  la main. **Sauf une finale**, jouée sur terrain neutre : la déduction y est
+  fausse, et la feuille de la LNR n'aide pas puisqu'elle désigne quand même un
+  recevant. La finale de Pro D2 2021, « Perpignan-Biarritz » sur la feuille,
+  s'est jouée au GGL Stadium de Montpellier — corrigée à la main, comme le
+  seront les suivantes. Quatre clubs n'ont toujours pas de terrain rattaché : Connacht,
   Cardiff, Dragons et Lions, que l'USAP n'a reçus qu'à Aimé-Giral. Sans
   déplacement là-bas, rien ne permet de le déduire.
 
