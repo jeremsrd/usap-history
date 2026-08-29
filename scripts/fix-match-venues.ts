@@ -56,11 +56,34 @@ const DOUBLONS = ["Stade du Hameau", "Matmut Stadium de Gerland"];
  * Aguiléra vient de Jérémy ; Kingsholm et Guy-Boniface sont de notoriété
  * publique — à corriger si l'un d'eux est faux, ils ne viennent pas d'une
  * source officielle.
+ *
+ * Les six suivants viennent de la LNR elle-même, page par page :
+ * `prod2.lnr.fr/club/{club}/informations` donne le nom du stade, sa capacité
+ * et son adresse. Noter que le Pré Fleuri de Nevers n'est pas à Nevers mais à
+ * Sermoise-sur-Loire, et que le Georges-Pompidou de Valence-Romans est à
+ * Valence : c'est l'adresse officielle qui fait foi, pas le nom du club.
+ *
+ * Les deux derniers ont quitté la Pro D2, leur page LNR a disparu avec eux.
+ * Albert-Domec est donné par Wikipédia, Robert-Diochon par Wikipédia **et par
+ * le site du club** — moins officiel que le reste de cette liste, et signalé
+ * comme tel. Réserve pour Rouen : ces deux sources décrivent son stade
+ * d'aujourd'hui, et rien n'a permis de vérifier qu'il y jouait déjà en
+ * 2020-2021.
  */
 const MANQUANTS = [
   { nom: "Parc des Sports Aguiléra", ville: "Biarritz", club: "Biarritz" },
   { nom: "Kingsholm Stadium", ville: "Gloucester", club: "Gloucester" },
   { nom: "Stade Guy-Boniface", ville: "Mont-de-Marsan", club: "Mont-de-Marsan" },
+  { nom: "Stade Chanzy", ville: "Angoulême", club: "Angoulême" },
+  // Raoul Barrière existe déjà en base ; il figure ici pour le **rattachement**,
+  // la liste servant aussi à cela. Le stade n'est pas recréé, il est retrouvé.
+  { nom: "Stade Raoul Barrière", ville: "Béziers", club: "Béziers" },
+  { nom: "Stade Jean Alric", ville: "Aurillac", club: "Aurillac" },
+  { nom: "Stade Michel Bendichou", ville: "Colomiers", club: "Colomiers" },
+  { nom: "Stade du Pré Fleuri", ville: "Sermoise-sur-Loire", club: "Nevers" },
+  { nom: "Stade Georges Pompidou", ville: "Valence", club: "Valence-Romans" },
+  { nom: "Stade Albert-Domec", ville: "Carcassonne", club: "Carcassonne" },
+  { nom: "Stade Robert-Diochon", ville: "Le Petit-Quevilly", club: "Rouen" },
 ];
 
 async function fusionnerDoublons() {

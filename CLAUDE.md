@@ -833,15 +833,17 @@ officiels mais n'a pas été confronté à un classement d'époque ; celui de
 
 **Ce qui manque dans les données**
 
-- **Huit matchs n'ont pas de stade**, tous les déplacements de 2020-2021 chez
-  les clubs créés avec cette saison — Carcassonne, Nevers, Valence-Romans,
-  Colomiers, Angoulême, Aurillac, Béziers, Rouen. Le lieu se déduit du camp
-  (Aimé-Giral à domicile, `Opponent.venueId` à l'extérieur) et ces huit clubs
-  n'ont pas de terrain rattaché. `fix-match-venues.ts` ne peut rien : il
-  déduit un terrain des déplacements déjà enregistrés, or ce sont justement
-  ceux-là qui manquent. Il faut créer les huit stades depuis une source.
-  Quatre clubs européens sont dans le même cas pour la raison inverse —
-  Connacht, Cardiff, Dragons, Lions, que l'USAP n'a reçus qu'à Aimé-Giral.
+- **Les 215 matchs ont leur stade.** Le lieu se déduit du camp — Aimé-Giral à
+  domicile, `Opponent.venueId` à l'extérieur —, et ne se saisit donc jamais à
+  la main. Quatre clubs n'ont toujours pas de terrain rattaché : Connacht,
+  Cardiff, Dragons et Lions, que l'USAP n'a reçus qu'à Aimé-Giral. Sans
+  déplacement là-bas, rien ne permet de le déduire.
+
+  Deux des stades de la liste de `fix-match-venues.ts` ne viennent pas d'une
+  source officielle : Albert-Domec à Carcassonne et Robert-Diochon à Rouen,
+  ces deux clubs ayant quitté la Pro D2 et leur page LNR avec. Pour Rouen,
+  Wikipédia et le site du club décrivent son stade **d'aujourd'hui**, et rien
+  n'a permis de vérifier qu'il y jouait déjà en 2020-2021.
 - **Affluences éparses** : 36 matchs sur 215, l'EPCR ayant fourni celles des
   coupes. Peu de photos et de biographies de joueurs.
 - **49 divergences d'écriture** subsistent entre la base et les feuilles
