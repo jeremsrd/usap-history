@@ -569,6 +569,7 @@ doublons.
 | `close-season-2025-2026.ts` | modèle de clôture de saison, avec garde-fou sur le classement officiel |
 | `seed-opponent-sheet.ts` | **le script du chantier adverse** : reprend une saison entière depuis la LNR — réalisations, cartons et temps de jeu reconstitués à partir des changements. Prend la saison en argument (`2023-2024`), `--dry` pour simuler, `--detail` pour le relevé des écarts avec la base, `--match=AAAA-MM-JJ` pour n'en reprendre qu'un, `--usap` pour traiter **aussi le camp catalan** — il passe alors deux fois, l'adverse puis l'USAP |
 | `seed-lineup.ts` | crée les **deux compositions** d'un match depuis la LNR quand il n'en a aucune — dossards, titulaires, capitaine, poste déduit du numéro. Premier temps de la reprise d'une rencontre ancienne ; `--dry`, `--force` pour réécrire |
+| `seed-season-2019-2020.ts` | crée les 23 matchs de la saison arrêtée par le Covid — aucune phase finale, la LNR n'en publie pas |
 | `seed-season-2020-2021.ts` | crée les 32 matchs de la saison du titre de Pro D2, phases finales comprises ; refuse d'écrire les agrégats s'ils s'écartent du classement officiel de la LNR |
 | `seed-lineup-barrage-2022.ts` | la composition du barrage du 12 juin 2022, seule de la saison qu'aucune source ne publie : listes fournies à la main, recoupées avec les changements de la feuille officielle |
 | `seed-chronologie.ts` | écrit la **ligne de temps** d'un match depuis la LNR : essais, transformations déduites du score courant, pénalités, drops et cartons, avec les noms tels que la base les écrit. Troisième temps ; `--dry` |
@@ -743,8 +744,8 @@ Ce qui ne se déduit pas de la base, en revanche :
 
 **Ce que les sources ne publient pas.** La LNR ne donne ni affluence, ni score
 à la mi-temps, ni compte-rendu : les saisons qui n'ont qu'elle pour source —
-2021-2022 et 2020-2021 — resteront vides sur ces trois colonnes, sauf à
-trouver ailleurs. L'EPCR, lui, donne les trois, d'où les mi-temps et les
+2021-2022, 2020-2021 et 2019-2020 — resteront vides sur ces trois colonnes,
+sauf à trouver ailleurs. L'EPCR, lui, donne les trois, d'où les mi-temps et les
 affluences des matchs de coupe d'Europe. Les vidéos viennent de la chaîne
 YouTube « TOP 14 - Officiel », qui ne remonte pas au-delà de 2022-2023.
 
@@ -793,12 +794,15 @@ Par ordre de valeur.
    publie pas — elle se déduirait du dernier fait avant la 40ᵉ, mais c'est une
    inférence —, et les **notes de retour en jeu**, écrites à la main.
 
-2. **Poursuivre la phase 4** en remontant : **2020-2021 est faite** — trente
-   journées de Pro D2, une demi-finale et la finale, soit 32 matchs avec leurs
-   compositions et leur chronologie, conformes au classement officiel (24V 1N
-   5D, 821-504, 107 points, premier). Reste 2019-2020, puis 2018-2019.
-   `seed-season-2020-2021.ts` donne le modèle pour une saison de deuxième
-   division, `seed-season-2021-2022.ts` pour une saison avec coupe d'Europe.
+2. **Poursuivre la phase 4** en remontant. **2020-2021 et 2019-2020 sont
+   faites**, toutes deux en Pro D2 et toutes deux conformes au classement
+   officiel de la LNR — 107 points et le titre pour la première, 76 points et
+   la deuxième place pour la seconde, arrêtée à la 23ᵉ journée par le Covid.
+   Reste 2018-2019, saison de Top 14.
+
+   Les modèles : `seed-season-2019-2020.ts` pour une saison de deuxième
+   division sans phase finale, `seed-season-2020-2021.ts` quand il y en a une,
+   `seed-season-2021-2022.ts` pour une saison avec coupe d'Europe.
 3. **Le fond** : affluences (37 matchs sur 157), photos et biographies (1
    joueur sur 144), et 113 saisons sans aucun match.
 

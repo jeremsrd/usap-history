@@ -32,8 +32,19 @@ const prisma = new PrismaClient();
 
 const DRY_RUN = process.argv.includes("--dry");
 
-/** Classements finaux officiels (Wikipédia), pour vérifier le recalcul. */
+/**
+ * Classements finaux officiels, pour vérifier le recalcul.
+ *
+ * Les trois premiers viennent de Wikipédia ; ceux de Pro D2 du classement de
+ * la LNR elle-même, `{top14|prod2}.lnr.fr/classement/{saison}`, qui donne
+ * victoires, nuls, défaites, points marqués, encaissés et bonus.
+ *
+ * 2019-2020 s'arrête à la 23ᵉ journée : le Covid a interrompu le championnat
+ * en mars 2020, et le classement de la LNR est celui de cet arrêt.
+ */
 const OFFICIEL: Record<string, { bo: number; bd: number; pts: number }> = {
+  "2019-2020": { bo: 8, bd: 4, pts: 76 },
+  "2020-2021": { bo: 7, bd: 2, pts: 107 },
   "2023-2024": { bo: 5, bd: 1, pts: 58 },
   "2024-2025": { bo: 2, bd: 2, pts: 44 },
   "2025-2026": { bo: 1, bd: 4, pts: 29 },
@@ -70,8 +81,18 @@ async function main() {
       isKnockout: isKnockout(m.matchday, m.round),
       scoreUsap: m.scoreUsap,
       scoreOpponent: m.scoreOpponent,
-      triesUsap: m.triesUsap,
-      triesOpponent: m.triesOpponent,
+      // **Un essai de pénalité est un essai** : il compte dans l'écart qui
+      // ouvre le bonus offensif, alors qu'il vit dans son propre compteur,
+      // faute d'auteur. L'oublier ajoutait un bonus à l'USAP contre Colomiers
+      // le 21 janvier 2021 — quatre essais contre un, mais Colomiers en avait
+      // marqué un de pénalité, et l'écart n'était que de deux. Le classement
+      // officiel de la LNR le confirme : 107 points, pas 108.
+      triesUsap:
+        m.triesUsap != null ? m.triesUsap + (m.penaltyTriesUsap ?? 0) : null,
+      triesOpponent:
+        m.triesOpponent != null
+          ? m.triesOpponent + (m.penaltyTriesOpponent ?? 0)
+          : null,
     });
 
     // Sans le détail des essais, on ne touche pas au bonus offensif déjà saisi
