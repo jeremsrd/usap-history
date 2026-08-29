@@ -601,6 +601,7 @@ doublons.
 | `close-season-2025-2026.ts` | modèle de clôture de saison, avec garde-fou sur le classement officiel |
 | `seed-opponent-sheet.ts` | **le script du chantier adverse** : reprend une saison entière depuis la LNR — réalisations, cartons et temps de jeu reconstitués à partir des changements. Prend la saison en argument (`2023-2024`), `--dry` pour simuler, `--detail` pour le relevé des écarts avec la base, `--match=AAAA-MM-JJ` pour n'en reprendre qu'un, `--usap` pour traiter **aussi le camp catalan** — il passe alors deux fois, l'adverse puis l'USAP |
 | `seed-lineup.ts` | crée les **deux compositions** d'un match depuis la LNR quand il n'en a aucune — dossards, titulaires, capitaine, poste déduit du numéro. Premier temps de la reprise d'une rencontre ancienne ; `--dry`, `--force` pour réécrire |
+| `seed-lineup-barrage-2022.ts` | la composition du barrage du 12 juin 2022, seule de la saison qu'aucune source ne publie : listes fournies à la main, recoupées avec les changements de la feuille officielle |
 | `seed-chronologie.ts` | écrit la **ligne de temps** d'un match depuis la LNR : essais, transformations déduites du score courant, pénalités, drops et cartons, avec les noms tels que la base les écrit. Troisième temps ; `--dry` |
 | `seed-calendrier-2026-2027.ts` | crée une saison et son calendrier de championnat **avant** qu'elle ne commence : date, heure, journée, adversaire, lieu, sans score ni résultat. Une relance met à jour les dates au fur et à mesure que la LNR les cale |
 | `seed-season-2021-2022.ts` | crée les rencontres d'une saison entière — date et heure, compétition, adversaire, lieu, score, réalisations, résultat, bonus, arbitre — puis les agrégats de saison. Premier jalon de la phase 4 |
@@ -718,14 +719,19 @@ premières feuilles.
 **Les matchs de 2022-2023 à 2025-2026 ont leurs 46 joueurs et leur
 chronologie.** 2021-2022, première saison de la phase 4, n'a que ses
 rencontres — sauf **tous ses matchs, repris le 29 août 2026** : les
-31 rencontres portent leur chronologie, et 30 d'entre elles leurs 46 joueurs.
-La seule exception est le **barrage d'accession du 12 juin 2022**, dont la
-LNR ne publie la composition ni sur son site Top 14 ni sur celui de Pro D2 —
-la page existe mais ne contient aucun joueur. ESPN ne couvre pas ce match et
-allrugby.com était injoignable. Sa chronologie, elle, est complète : les
-noms y figurent en clair, sans lien vers les fiches joueur, et les
-transformations restent anonymes faute de composition pour vérifier que le
-buteur annoncé appartient bien à l'équipe. La mi-temps et les comptes-rendus manquent
+31 rencontres portent leurs 46 joueurs et leur chronologie, 1 200 minutes par
+camp, et des points qui retombent sur le score.
+
+Une seule composition ne vient pas d'une source lue par machine, celle du
+**barrage d'accession du 12 juin 2022** : la LNR ne la publie ni sur son site
+Top 14 ni sur celui de Pro D2 — la page `/compositions` existe et ne contient
+aucun joueur —, ESPN ne couvre pas le match d'accession et allrugby.com était
+injoignable. Elle a été fournie à la main puis recoupée avec la feuille
+officielle, qui la corrobore largement (cf. l'en-tête de
+`seed-lineup-barrage-2022.ts`). **Ses numéros restent incertains** : ils ne
+viennent que de la source fournie. Le cas de Matteo Rodor le montre — il y
+porte le 20, alors que la feuille le fait entrer à la place d'Ecochard, le
+demi de mêlée, ce qu'un troisième ligne ne fait pas. La mi-temps et les comptes-rendus manquent
 pour toute la saison, la LNR ne les publiant pas.
 
 Annexe du match :
@@ -797,9 +803,9 @@ Par ordre de valeur.
    `seed-cup-sheet.ts` pour les coupes. La commande à enchaîner est rappelée en
    fin de `seed-lineup.ts`, selon la compétition.
 
-   **La saison 2021-2022 est faite.** Ne manquent que la composition du
-   barrage, introuvable (voir plus haut), et la clôture éditoriale de la
-   saison : entraîneur, président, bilan rédigé.
+   **La saison 2021-2022 est faite.** Ne manquent que sa clôture éditoriale —
+   entraîneur, président, bilan rédigé — et ses affluences, que la LNR ne
+   donne pas.
 
    `phasesLnr(saison, matchday, estBarrage)` de `lnr.ts` porte la déduction de
    phase, barrage compris — son segment d'URL a changé trois fois de nom,
