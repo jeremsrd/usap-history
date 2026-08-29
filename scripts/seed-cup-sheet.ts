@@ -254,7 +254,9 @@ async function main() {
         `${etiquette} : arbitre « ${arbitreBase} » en base, « ${feuille.arbitre} » à l'EPCR`,
       );
     }
-    if (feuille.affluence != null && match.attendance == null) {
+    // Une affluence à zéro se lit « aucun spectateur » alors qu'elle veut dire
+    // « le flux ne la donne pas » — Benetton-USAP du 9 avril 2022.
+    if (feuille.affluence && match.attendance == null) {
       annexe.push(`affluence ${feuille.affluence}`);
     }
     const miUsap = usapDomicile ? feuille.domicile.miTemps : feuille.exterieur.miTemps;
@@ -310,7 +312,7 @@ async function main() {
       where: { id: match.id },
       data: {
         ...(refereeId ? { refereeId } : {}),
-        ...(feuille.affluence != null && match.attendance == null
+        ...(feuille.affluence && match.attendance == null
           ? { attendance: feuille.affluence }
           : {}),
         ...(miUsap != null && miAdv != null

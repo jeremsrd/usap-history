@@ -38,6 +38,13 @@ import {
   type LnrJoueur,
 } from "./lib/lnr";
 import { normalize, proximite } from "./lib/noms";
+import {
+  USAP,
+  chercherMatchUsap,
+  lireEvenements,
+  lireMatch,
+  type EpcrTypeEvenement,
+} from "./lib/epcr";
 
 const prisma = new PrismaClient();
 
@@ -89,10 +96,12 @@ async function main() {
     },
     include: {
       opponent: { select: { name: true, shortName: true } },
+      competition: { select: { name: true } },
       season: { select: { label: true } },
       players: {
         select: {
           isOpponent: true,
+          shirtNumber: true,
           player: { select: { id: true, firstName: true, lastName: true } },
         },
       },
@@ -100,7 +109,6 @@ async function main() {
   });
   const adversaire = match.opponent.shortName ?? match.opponent.name;
 
-  if (match.matchday == null) throw new Error("Match sans journée : phase LNR inconnue.");
   if (match.scoreUsap == null || match.scoreOpponent == null) {
     throw new Error("Rencontre non jouée : pas de chronologie à écrire.");
   }
@@ -108,6 +116,109 @@ async function main() {
     throw new Error("Aucune composition en base : lancer seed-lineup.ts d'abord.");
   }
 
+  /** Points d'un fait, transformation comprise puisqu'elle est un fait à part. */
+  const POINTS_EPCR: Record<EpcrTypeEvenement, number> = {
+    essai: 5,
+    "essai-de-penalite": 7,
+    transformation: 2,
+    penalite: 3,
+    drop: 3,
+    jaune: 0,
+    rouge: 0,
+  };
+
+  /**
+   * Chronologie d'un match de coupe d'Europe, depuis le flux de l'EPCR.
+   *
+   * Plus simple que la feuille de la LNR : les transformations y sont des
+   * faits à part entière, il n'y a rien à déduire d'un score courant. Les
+   * joueurs sont désignés par leur identifiant Opta, qu'on rattache à la
+   * composition **par le dossard** — aucun rapprochement de noms, donc aucune
+   * des erreurs d'identité que le championnat nous a values.
+   *
+   * Le garde-fou reste le score final : si le type `Penalty` désignait des
+   * pénalités concédées plutôt que réussies, le total ne retomberait pas et
+   * rien ne serait écrit.
+   */
+  async function depuisEpcr(): Promise<{ evenements: Evenement[]; usap: number; adverse: number }> {
+    const resume = await chercherMatchUsap(match.season.label, DATE!);
+    if (!resume) throw new Error(`Match introuvable dans le flux de l'EPCR au ${DATE}`);
+    const feuilleEpcr = await lireMatch(resume.id);
+    const evts = await lireEvenements(resume.id);
+
+    // Identifiant Opta → dossard et camp, puis dossard → ligne de la base.
+    const dossards = new Map<number, { numero: number; isOpponent: boolean }>();
+    for (const [equipe, isOpponent] of [
+      [feuilleEpcr.domicile, feuilleEpcr.domicile.id !== USAP],
+      [feuilleEpcr.exterieur, feuilleEpcr.exterieur.id !== USAP],
+    ] as const) {
+      for (const j of equipe.joueurs) dossards.set(j.id, { numero: j.numero, isOpponent });
+    }
+
+    const evenements: Evenement[] = [];
+    let usap = 0;
+    let adverse = 0;
+    for (const e of evts) {
+      const isUsap = e.equipeId === USAP;
+      const club = isUsap ? "USAP" : adversaire;
+      const place = e.joueurId != null ? dossards.get(e.joueurId) : undefined;
+      const ligne =
+        place && place.isOpponent === !isUsap
+          ? match.players.find(
+              (l) => l.isOpponent === place.isOpponent && l.shirtNumber === place.numero,
+            )
+          : undefined;
+      const nom = ligne?.player
+        ? `${ligne.player.firstName} ${ligne.player.lastName}`
+        : null;
+
+      const points = POINTS_EPCR[e.type];
+      if (isUsap) usap += points;
+      else adverse += points;
+      const score = `${usap}-${adverse}`;
+
+      const libelle: Record<EpcrTypeEvenement, string> = {
+        essai: `Essai ${de(nom ?? "")} (${club}).`,
+        "essai-de-penalite": `Essai de pénalité (${club}).`,
+        transformation: `Transformation ${de(nom ?? "")} (${club}).`,
+        penalite: `Pénalité ${de(nom ?? "")} (${club}).`,
+        drop: `Drop ${de(nom ?? "")} (${club}).`,
+        jaune: `Carton jaune ${nom} (${club}).`,
+        rouge: `Carton rouge ${nom} (${club}).`,
+      };
+      const TYPES_BASE: Record<EpcrTypeEvenement, EventType> = {
+        essai: EventType.ESSAI,
+        "essai-de-penalite": EventType.ESSAI_PENALITE,
+        transformation: EventType.TRANSFORMATION,
+        penalite: EventType.PENALITE,
+        drop: EventType.DROP,
+        jaune: EventType.CARTON_JAUNE,
+        rouge: EventType.CARTON_ROUGE,
+      };
+      evenements.push({
+        minute: e.minute,
+        type: TYPES_BASE[e.type],
+        isUsap,
+        playerId: ligne?.player?.id ?? null,
+        description: points > 0 ? `${libelle[e.type]} ${score}.` : libelle[e.type],
+      });
+    }
+    return { evenements, usap, adverse };
+  }
+
+  /** « de Tristan Tedder », mais « d'Enzo Hervé ». */
+  const de = (nom: string) =>
+    /^[aeiouyàâéèêëîïôöûü]/i.test(nom) ? `d'${nom}` : `de ${nom}`;
+
+  const estCoupeEurope = /Champions|Challenge/i.test(match.competition.name);
+  if (estCoupeEurope) {
+    const { evenements, usap, adverse } = await depuisEpcr();
+    return terminer(match.id, evenements, usap, adverse, match.scoreUsap!, match.scoreOpponent!);
+  }
+
+  if (match.matchday == null) {
+    throw new Error("Match de championnat sans journée : phase LNR inconnue.");
+  }
   const url = await chercherFeuille(match.season.label, `j${match.matchday}`);
   if (!url) throw new Error(`Feuille LNR introuvable pour la J${match.matchday}`);
   const feuille = await lireFeuille(url);
@@ -144,10 +255,6 @@ async function main() {
     if (retenus.length !== 1) return null;
     return { id: retenus[0].player!.id, nom: nomDe(retenus[0]) };
   };
-
-  /** « de Tristan Tedder », mais « d'Enzo Hervé ». */
-  const de = (nom: string) =>
-    /^[aeiouyàâéèêëîïôöûü]/i.test(nom) ? `d'${nom}` : `de ${nom}`;
 
   const evenements: Evenement[] = [];
   // Score courant, [recevant, visiteur], comme la LNR l'écrit.
@@ -223,10 +330,35 @@ async function main() {
 
   const finalUsap = campUsap === "home" ? courant[0] : courant[1];
   const finalAdverse = campUsap === "home" ? courant[1] : courant[0];
-  if (finalUsap !== match.scoreUsap || finalAdverse !== match.scoreOpponent) {
+  return terminer(
+    match.id,
+    evenements,
+    finalUsap,
+    finalAdverse,
+    match.scoreUsap!,
+    match.scoreOpponent!,
+  );
+}
+
+/**
+ * Contrôle, relevé et écriture — communs aux deux sources.
+ *
+ * Le score reconstitué doit retomber sur le score officiel, sans quoi rien
+ * n'est écrit : c'est ce garde-fou qui rend exploitable le type `Penalty` de
+ * l'EPCR, dont on sait qu'il désigne parfois une pénalité concédée.
+ */
+async function terminer(
+  matchId: string,
+  evenements: Evenement[],
+  usap: number,
+  adverse: number,
+  scoreUsap: number,
+  scoreAdverse: number,
+): Promise<void> {
+  if (usap !== scoreUsap || adverse !== scoreAdverse) {
     throw new Error(
-      `Chronologie incomplète : ${finalUsap}-${finalAdverse} reconstitués ` +
-        `pour ${match.scoreUsap}-${match.scoreOpponent} au score`,
+      `Chronologie incomplète : ${usap}-${adverse} reconstitués ` +
+        `pour ${scoreUsap}-${scoreAdverse} au score`,
     );
   }
 
@@ -237,7 +369,7 @@ async function main() {
     );
   }
   console.log(
-    `\n=== ${evenements.length} événement(s), score reconstitué ${finalUsap}-${finalAdverse} ===`,
+    `\n=== ${evenements.length} événement(s), score reconstitué ${usap}-${adverse} ===`,
   );
 
   if (DRY_RUN) {
@@ -245,9 +377,9 @@ async function main() {
     return;
   }
 
-  await prisma.matchEvent.deleteMany({ where: { matchId: match.id } });
+  await prisma.matchEvent.deleteMany({ where: { matchId } });
   for (const e of evenements) {
-    await prisma.matchEvent.create({ data: { matchId: match.id, ...e } });
+    await prisma.matchEvent.create({ data: { matchId, ...e } });
   }
   console.log("Chronologie écrite.");
 }

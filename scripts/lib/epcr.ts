@@ -362,6 +362,63 @@ export async function lireMatch(id: number): Promise<EpcrMatch> {
   };
 }
 
+export type EpcrTypeEvenement =
+  | "essai"
+  | "essai-de-penalite"
+  | "transformation"
+  | "penalite"
+  | "drop"
+  | "jaune"
+  | "rouge";
+
+export interface EpcrEvenement {
+  minute: number;
+  type: EpcrTypeEvenement;
+  /** Identifiant Opta de l'équipe. */
+  equipeId: number;
+  /** Identifiant Opta du joueur ; absent sur un essai de pénalité. */
+  joueurId: number | null;
+}
+
+/** Du libellé Opta au type du projet. Les autres libellés sont ignorés. */
+const TYPES_EVENEMENT: Record<string, EpcrTypeEvenement> = {
+  Try: "essai",
+  "Penalty Try": "essai-de-penalite",
+  Conversion: "transformation",
+  Penalty: "penalite",
+  "Drop goal": "drop",
+  "Yellow card": "jaune",
+  "Red card": "rouge",
+};
+
+/**
+ * Chronologie d'un match, réduite aux faits qui comptent.
+ *
+ * Sont écartés les marqueurs de période, les changements — que `lireMatch`
+ * exploite déjà pour les minutes — et les tentatives manquées (« Missed
+ * conversion », « Missed penalty »), qui ne changent pas le score.
+ *
+ * **Réserve, et elle est sérieuse.** Le type `Penalty` désigne en principe une
+ * pénalité **concédée**, pas un coup de pied réussi : compter ces événements
+ * donnerait onze pénalités dans un match qui en compte quatre. Sur les quatre
+ * matchs de Challenge 2021-2022, ils coïncident pourtant exactement avec les
+ * pénalités réussies des `stats`. La règle est donc : s'en servir, mais
+ * **vérifier que le score reconstitué retombe sur le score officiel**, et
+ * refuser d'écrire sinon. `seed-chronologie.ts` s'en charge.
+ */
+export async function lireEvenements(id: number): Promise<EpcrEvenement[]> {
+  const d = await lire(`/v1/matches/${id}?provider=rugbyviz`);
+  return ((d.events ?? []) as any[])
+    .filter((e) => e.type in TYPES_EVENEMENT)
+    .map((e) => ({
+      minute: e.minute ?? 0,
+      type: TYPES_EVENEMENT[e.type],
+      equipeId: e.teamId,
+      joueurId: e.playerId ?? null,
+    }))
+    .sort((a, b) => a.minute - b.minute);
+}
+
 /**
  * Match de coupe d'Europe de l'USAP joué un jour donné.
  *

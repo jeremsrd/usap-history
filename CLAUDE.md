@@ -499,7 +499,19 @@ pas (affluence).
     essais de pénalité déduits ;
   - les **entrées et sorties**, minute par minute ;
   - l'**arbitre**, l'**affluence** et le **score à la mi-temps**, que la LNR ne
-    publie pas.
+    publie pas ;
+  - la **chronologie**, par `lireEvenements(id)` : essais, transformations,
+    pénalités, drops, essais de pénalité et cartons, chacun avec sa minute,
+    son équipe et son joueur. Les joueurs y sont désignés par leur identifiant
+    Opta, qu'on rattache à la composition **par le dossard** — aucun
+    rapprochement de noms, donc aucune des erreurs d'identité que le
+    championnat a values. Voir la réserve sur `Penalty` ci-dessous : la
+    reconstitution ne vaut que confrontée au score officiel, ce que
+    `seed-chronologie.ts` fait avant d'écrire.
+
+  Une **affluence à zéro** veut dire « le flux ne la donne pas », pas
+  « aucun spectateur » — Benetton-USAP du 9 avril 2022. `seed-cup-sheet.ts`
+  l'écarte désormais plutôt que d'écrire 0.
 
   Trois réserves :
   - le type d'événement `Penalty` désigne une pénalité **concédée**, pas un
@@ -705,10 +717,10 @@ premières feuilles.
 
 **Les matchs de 2022-2023 à 2025-2026 ont leurs 46 joueurs et leur
 chronologie.** 2021-2022, première saison de la phase 4, n'a que ses
-rencontres — sauf **tout son championnat, repris le 29 août 2026** : les
-26 journées de Top 14 portent chacune leurs 46 joueurs et leur chronologie.
-Restent les quatre matchs de Challenge européen et le barrage d'accession,
-que la chaîne actuelle ne sait pas traiter (cf. « Où reprendre »). La mi-temps et les comptes-rendus manquent
+rencontres — sauf **trente de ses trente et un matchs, repris le 29 août
+2026** : les 26 journées de Top 14 et les 4 matchs de Challenge européen
+portent chacun leurs 46 joueurs et leur chronologie. Seul le barrage
+d'accession du 12 juin 2022 reste à faire. La mi-temps et les comptes-rendus manquent
 pour toute la saison, la LNR ne les publiant pas.
 
 Annexe du match :
@@ -773,17 +785,17 @@ Par ordre de valeur.
    de temps. Chacun a son `--dry`, et le second refuse d'écrire si les points
    ne retombent pas sur le score.
 
-   **Restent cinq matchs, qu'elle ne sait pas traiter**, et pour deux raisons
-   distinctes :
-   - les **quatre matchs de Challenge européen** (11 décembre 2021, 15 et
-     22 janvier, 9 avril 2022) relèvent de l'EPCR, que la LNR ne couvre pas.
-     `seed-cup-sheet.ts` lit déjà réalisations et minutes depuis ce flux, mais
-     aucun script ne crée la composition : il manque l'équivalent EPCR de
-     `seed-lineup.ts` ;
-   - le **barrage d'accession du 12 juin 2022** contre Mont-de-Marsan n'a pas
-     de `matchday`, or `seed-lineup.ts` déduit la phase de ce champ. Son
-     segment d'URL est `match-daccession` pour cette saison-là — le nom a
-     changé trois fois depuis.
+   **La chaîne connaît les deux sources.** `seed-lineup.ts` et
+   `seed-chronologie.ts` basculent sur l'EPCR quand la compétition est une
+   coupe d'Europe, sur la LNR sinon ; le script de feuille, lui, reste en deux
+   exemplaires — `seed-opponent-sheet.ts --usap` pour le championnat,
+   `seed-cup-sheet.ts` pour les coupes. La commande à enchaîner est rappelée en
+   fin de `seed-lineup.ts`, selon la compétition.
+
+   **Reste un seul match** : le **barrage d'accession du 12 juin 2022** contre
+   Mont-de-Marsan, qui n'a pas de `matchday`, or `seed-lineup.ts` déduit la
+   phase de ce champ. Son segment d'URL est `match-daccession` pour cette
+   saison-là — le nom a changé trois fois depuis.
 
    **Relire la composition écrite, systématiquement** : c'est ce contrôle, et
    lui seul, qui a rattrapé les deux identités fausses des deux premières

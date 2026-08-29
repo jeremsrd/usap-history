@@ -1,5 +1,9 @@
 /**
- * Crée les deux compositions d'un match, depuis la feuille officielle de la LNR.
+ * Crée les deux compositions d'un match, depuis la source officielle.
+ *
+ * Deux sources, une seule logique : la LNR pour le championnat, l'EPCR pour
+ * les coupes d'Europe — toutes deux donnent vingt-trois joueurs par camp, avec
+ * dossard et brassard. La compétition du match décide.
  *
  * Le pendant amont de `seed-opponent-sheet.ts` : celui-ci suppose la
  * composition déjà en base et n'y écrit que les réalisations et les temps de
@@ -39,6 +43,7 @@
 
 import { PrismaClient, type Position } from "@prisma/client";
 import { chercherFeuille, lireCompositions, type LnrTitulaire } from "./lib/lnr";
+import { USAP, chercherMatchUsap, lireMatch } from "./lib/epcr";
 import { POSTE_PAR_NUMERO, trouverOuCreerJoueur } from "./lib/joueurs";
 
 const prisma = new PrismaClient();
@@ -149,7 +154,7 @@ async function main() {
     },
     include: {
       opponent: { select: { name: true, shortName: true } },
-      competition: { select: { shortName: true } },
+      competition: { select: { name: true, shortName: true } },
       season: { select: { label: true } },
       players: { select: { id: true } },
     },
@@ -170,20 +175,61 @@ async function main() {
     return;
   }
 
-  if (match.matchday == null) {
-    throw new Error("Match sans journée : phase LNR inconnue, à traiter à part.");
-  }
-  const url = await chercherFeuille(match.season.label, `j${match.matchday}`);
-  if (!url) throw new Error(`Feuille LNR introuvable pour la J${match.matchday}`);
-  console.log(`Feuille : ${url}`);
+  // Deux sources, selon la compétition : la LNR pour le championnat, l'EPCR
+  // pour les coupes d'Europe. Même logique de part et d'autre — vingt-trois
+  // joueurs par camp, avec dossard et brassard.
+  const estCoupeEurope = /Champions|Challenge/i.test(match.competition.name);
+  let compositions: { usap: LnrTitulaire[]; adversaire: LnrTitulaire[] };
 
-  const compositions = await lireCompositions(url);
-  const usapEstRecevant = /\/\d+-perpignan-/.test(url);
-  if (usapEstRecevant !== match.isHome) {
-    throw new Error(
-      `L'URL donne l'USAP ${usapEstRecevant ? "recevant" : "visiteur"}, ` +
-        `la base dit ${match.isHome ? "recevant" : "visiteur"}`,
-    );
+  if (estCoupeEurope) {
+    const resume = await chercherMatchUsap(match.season.label, DATE!);
+    if (!resume) throw new Error(`Match introuvable dans le flux de l'EPCR au ${DATE}`);
+    const feuille = await lireMatch(resume.id);
+    console.log(`Flux EPCR : match ${resume.id} — ${feuille.domicile.nom} contre ${feuille.exterieur.nom}`);
+
+    const usapEstRecevant = feuille.domicile.id === USAP;
+    if (usapEstRecevant !== match.isHome) {
+      throw new Error(
+        `L'EPCR donne l'USAP ${usapEstRecevant ? "recevant" : "visiteur"}, ` +
+          `la base dit ${match.isHome ? "recevant" : "visiteur"}`,
+      );
+    }
+    const versTitulaire = (j: {
+      firstName: string;
+      lastName: string;
+      numero: number;
+      isStarter: boolean;
+      isCaptain: boolean;
+    }): LnrTitulaire => ({
+      firstName: j.firstName,
+      lastName: j.lastName,
+      url: "",
+      numero: j.numero,
+      isStarter: j.isStarter,
+      isCaptain: j.isCaptain,
+    });
+    const catalans = usapEstRecevant ? feuille.domicile : feuille.exterieur;
+    const autres = usapEstRecevant ? feuille.exterieur : feuille.domicile;
+    compositions = {
+      usap: catalans.joueurs.map(versTitulaire),
+      adversaire: autres.joueurs.map(versTitulaire),
+    };
+  } else {
+    if (match.matchday == null) {
+      throw new Error("Match de championnat sans journée : phase LNR inconnue, à traiter à part.");
+    }
+    const url = await chercherFeuille(match.season.label, `j${match.matchday}`);
+    if (!url) throw new Error(`Feuille LNR introuvable pour la J${match.matchday}`);
+    console.log(`Feuille : ${url}`);
+
+    compositions = await lireCompositions(url);
+    const usapEstRecevant = /\/\d+-perpignan-/.test(url);
+    if (usapEstRecevant !== match.isHome) {
+      throw new Error(
+        `L'URL donne l'USAP ${usapEstRecevant ? "recevant" : "visiteur"}, ` +
+          `la base dit ${match.isHome ? "recevant" : "visiteur"}`,
+      );
+    }
   }
 
   verifier("USAP", compositions.usap);
@@ -209,7 +255,9 @@ async function main() {
   console.log(
     `\n=== ${lignes.length} lignes ${DRY_RUN ? "à écrire" : "écrites"} ===\n` +
       "Réalisations et temps de jeu : enchaîner avec\n" +
-      `  npx tsx scripts/seed-opponent-sheet.ts ${match.season.label} --match=${DATE} --usap`,
+      (estCoupeEurope
+        ? `  npx tsx scripts/seed-cup-sheet.ts --match=${DATE}`
+        : `  npx tsx scripts/seed-opponent-sheet.ts ${match.season.label} --match=${DATE} --usap`),
   );
   if (DRY_RUN) console.log("Simulation — relancer sans --dry pour appliquer.");
 }
