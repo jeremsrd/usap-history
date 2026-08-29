@@ -117,6 +117,14 @@ confrontations avec l'USAP, et de gérer les joueurs passés par les deux camps
   `lastName equals` ne suffit pas — il rate « Guerois-Galisson » vs
   « Guerois Galisson », « Bécognée » vs « Becognee ». Construire un index en
   mémoire une fois, puis chercher dedans.
+- **Le nom de famille seul ne suffit pas** à identifier quelqu'un sur 1 370
+  fiches. « Kane Douglas », deuxième ligne de La Rochelle et de l'UBB, s'est
+  retrouvé ailier de Brive le 4 septembre 2021 parce que la feuille annonçait
+  « Wesley DOUGLAS » : un patronyme commun, deux hommes. `scripts/lib/joueurs.ts`
+  n'accepte donc l'homonyme que si les prénoms sont **à une lettre l'un de
+  l'autre** — « Mathieu » et « Matthieu » Ugena sont bien le même joueur —, et
+  laisse créer une fiche sinon, après avoir prévenu. C'est délibéré : un
+  doublon se repère et se fusionne, une identité fausse ne se voit pas.
 - `players` contient donc majoritairement des adversaires : 1 246 sur 1 370,
   quand 141 seulement ont porté le maillot catalan — 28 figurent des deux
   côtés. C'est normal. Les pages de liste filtrent déjà sur
@@ -525,7 +533,9 @@ de son index les fiches qu'il aurait absorbées).
 
 Le code réutilisable va dans `scripts/lib/` : `lnr.ts` pour les feuilles de la
 LNR, `epcr.ts` pour le flux des coupes d'Europe, `noms.ts` pour le
-rapprochement des noms entre une source et la base, et `arbitres.ts` pour
+rapprochement des noms entre une source et la base, `joueurs.ts` pour
+retrouver ou créer une fiche à partir d'une feuille officielle, et
+`arbitres.ts` pour
 celui des arbitres — plus strict, puisqu'il exige le nom de famille : le corps
 arbitral français aligne assez d'Adrien pour qu'un rapprochement au prénom
 confonde Adrien Marbot et Adrien Descottes. Ce dernier porte une table de **noms d'usage** — deux patronymes sans
@@ -560,7 +570,9 @@ doublons.
 | `reassign-match-player.ts` | change le joueur porté par un dossard sur une feuille, quand la base a mis quelqu'un d'autre et que les deux noms se ressemblent trop pour que l'audit s'en aperçoive |
 | `delete-orphan-players.ts` | supprime les fiches vides de bout en bout — aucune feuille, aucun événement, aucune donnée personnelle ; les figures historiques sans match saisi sont ainsi protégées |
 | `close-season-2025-2026.ts` | modèle de clôture de saison, avec garde-fou sur le classement officiel |
-| `seed-opponent-sheet.ts` | **le script du chantier adverse** : reprend une saison entière depuis la LNR — réalisations, cartons et temps de jeu reconstitués à partir des changements. Prend la saison en argument (`2023-2024`), `--dry` pour simuler, `--detail` pour le relevé des écarts avec la base, `--match=AAAA-MM-JJ` pour n'en reprendre qu'un |
+| `seed-opponent-sheet.ts` | **le script du chantier adverse** : reprend une saison entière depuis la LNR — réalisations, cartons et temps de jeu reconstitués à partir des changements. Prend la saison en argument (`2023-2024`), `--dry` pour simuler, `--detail` pour le relevé des écarts avec la base, `--match=AAAA-MM-JJ` pour n'en reprendre qu'un, `--usap` pour traiter **aussi le camp catalan** — il passe alors deux fois, l'adverse puis l'USAP |
+| `seed-lineup.ts` | crée les **deux compositions** d'un match depuis la LNR quand il n'en a aucune — dossards, titulaires, capitaine, poste déduit du numéro. Premier temps de la reprise d'une rencontre ancienne ; `--dry`, `--force` pour réécrire |
+| `seed-chronologie.ts` | écrit la **ligne de temps** d'un match depuis la LNR : essais, transformations déduites du score courant, pénalités, drops et cartons, avec les noms tels que la base les écrit. Troisième temps ; `--dry` |
 | `seed-calendrier-2026-2027.ts` | crée une saison et son calendrier de championnat **avant** qu'elle ne commence : date, heure, journée, adversaire, lieu, sans score ni résultat. Une relance met à jour les dates au fur et à mesure que la LNR les cale |
 | `seed-season-2021-2022.ts` | crée les rencontres d'une saison entière — date et heure, compétition, adversaire, lieu, score, réalisations, résultat, bonus, arbitre — puis les agrégats de saison. Premier jalon de la phase 4 |
 | `seed-cup-sheet.ts` | **le pendant pour les coupes d'Europe**, depuis l'EPCR : réalisations, cartons et temps de jeu des **deux camps**, plus l'arbitre, l'affluence et la mi-temps. Sans argument il reprend les dix-huit matchs européens ; `--dry`, `--detail`, `--match=AAAA-MM-JJ` comme le précédent |
@@ -675,9 +687,11 @@ restent ouverts : les postes de Riccioni et d'Amituanai, que la LNR range en
 premières feuilles.
 
 **Les matchs de 2022-2023 à 2025-2026 ont leurs 46 joueurs et leur
-chronologie.** 2021-2022, première saison de la phase 4, n'a pour l'instant
-que ses rencontres : ni compositions, ni chronologie — la mi-temps et les
-comptes-rendus non plus, la LNR ne les publiant pas.
+chronologie.** 2021-2022, première saison de la phase 4, n'a que ses
+rencontres — sauf la **J1, reprise entièrement le 29 août 2026** : Brive-USAP
+36-15 porte ses 46 joueurs, ses 17 événements, et 1 200 minutes de chaque
+côté. Les 30 autres attendent. La mi-temps et les comptes-rendus manquent
+pour toute la saison, la LNR ne les publiant pas.
 
 Annexe du match :
 
@@ -727,6 +741,24 @@ Par ordre de valeur.
    compositions, la chronologie et la clôture éditoriale — entraîneur,
    président, bilan rédigé. La LNR publie les compositions de la saison, et le
    flux de l'EPCR celles des matchs de Challenge.
+
+   **La chaîne est en place et éprouvée sur la J1** (Brive-USAP 36-15, le
+   4 septembre 2021), en trois temps :
+
+   ```bash
+   npx tsx scripts/seed-lineup.ts AAAA-MM-JJ --dry
+   npx tsx scripts/seed-opponent-sheet.ts 2021-2022 --match=AAAA-MM-JJ --usap --dry
+   npx tsx scripts/seed-chronologie.ts AAAA-MM-JJ --dry
+   ```
+
+   Compositions, puis réalisations et temps de jeu des deux camps, puis ligne
+   de temps. Chacun a son `--dry`, et le second refuse d'écrire si les points
+   ne retombent pas sur le score. Restent 30 matchs.
+
+   Deux choses que la chaîne ne fait pas : la **mi-temps**, que la LNR ne
+   publie pas — elle se déduirait du dernier fait avant la 40ᵉ, mais c'est une
+   inférence, pas une donnée —, et les **notes de retour en jeu**, écrites à
+   la main comme les six autres de la base.
 2. **Poursuivre la phase 4** en remontant : 2020-2021 (Pro D2, titre et
    montée), puis 2019-2020. `seed-season-2021-2022.ts` donne le modèle — mais
    la LNR sépare le Top 14 de la Pro D2, et `lnr.ts` ne connaît que le premier.
@@ -838,10 +870,22 @@ classement d'époque — le tableau de `fix-bonus-points.ts` ne le connaît pas.
 
 ```bash
 npm run dev                          # serveur de développement (Turbopack)
-npx tsc --noEmit                     # vérification des types
+npx tsc --noEmit                     # vérification des types — src/ SEULEMENT
 npx tsx scripts/<script>.ts          # exécuter un script d'import
 npx tsx scripts/<script>.ts --dry    # simulation, pour les scripts de masse
+
+# Les scripts, que tsconfig.json exclut : à typer explicitement
+npx tsc --noEmit --strict --skipLibCheck --target es2022 --module esnext \
+  --moduleResolution bundler --esModuleInterop scripts/<script>.ts
 ```
+
+⚠️ `tsconfig.json` porte `"exclude": ["node_modules", "scripts"]` : un
+`npx tsc --noEmit` **ne vérifie aucun script**, et `tsx` ne fait que retirer
+les types sans les contrôler. Un script peut donc être exécuté cent fois sans
+qu'une erreur de typage se manifeste — deux `possibly null` dormaient ainsi
+dans `seed-opponent-sheet.ts`. D'où la seconde commande, à passer sur les
+scripts touchés. Deux erreurs préexistantes subsistent dans
+`fix-opponent-lineup.ts` (`Bilan` inféré `never`), sans effet à l'exécution.
 
 ⚠️ `DATABASE_URL` pointe sur la base Supabase **de production** : un script
 lancé écrit directement sur les données du site. Toujours passer par `--dry`

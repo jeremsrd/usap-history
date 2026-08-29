@@ -69,6 +69,7 @@ const prisma = new PrismaClient();
 
 const DRY_RUN = process.argv.includes("--dry");
 const DETAIL = process.argv.includes("--detail");
+const AVEC_USAP = process.argv.includes("--usap");
 const SAISON = process.argv.slice(2).find((a) => /^\d{4}-\d{4}$/.test(a));
 const SEUL = process.argv
   .find((a) => a.startsWith("--match="))
@@ -387,9 +388,10 @@ function ecarts(actuel: Bilan, retenu: Bilan): string[] {
   );
 }
 
-async function main() {
+async function main(cible: "adverse" | "usap") {
   console.log(
-    `=== Feuille adverse ${SAISON} depuis la LNR${DRY_RUN ? " (simulation)" : ""} ===\n`,
+    `=== Feuille ${cible === "usap" ? "catalane" : "adverse"} ${SAISON} depuis la LNR` +
+      `${DRY_RUN ? " (simulation)" : ""} ===\n`,
   );
 
   const saison = await prisma.season.findFirstOrThrow({ where: { label: SAISON } });
@@ -442,11 +444,28 @@ async function main() {
       );
       continue;
     }
-    const campAdverse: Camp = feuille.campUsap === "home" ? "away" : "home";
+    // Le camp traité, et les compteurs du match qui lui correspondent : tout
+    // le reste de la boucle est écrit une fois pour les deux.
+    const campTraite: Camp =
+      cible === "usap"
+        ? feuille.campUsap
+        : feuille.campUsap === "home"
+          ? "away"
+          : "home";
+    const score = cible === "usap" ? match.scoreUsap : match.scoreOpponent;
+    const essaisCompteur = cible === "usap" ? match.triesUsap : match.triesOpponent;
+    const penaltyTries =
+      cible === "usap" ? match.penaltyTriesUsap : match.penaltyTriesOpponent;
+
+    // `null` au score se lit « pas encore jouée », jamais « zéro ».
+    if (score == null) {
+      horsPerimetre.push(`${etiquette} (rencontre non jouée)`);
+      continue;
+    }
 
     const roster: Ligne[] = (
       await prisma.matchPlayer.findMany({
-        where: { matchId: match.id, isOpponent: true },
+        where: { matchId: match.id, isOpponent: cible === "adverse" },
         select: {
           id: true,
           isStarter: true,
@@ -505,9 +524,9 @@ async function main() {
     // Le score courant est la seule donnée sûre de la feuille : on additionne
     // les points de base au fil des faits, et tout reliquat de deux points est
     // une transformation — nommée ou non.
-    const cote: 0 | 1 = campAdverse === "home" ? 0 : 1;
+    const cote: 0 | 1 = campTraite === "home" ? 0 : 1;
     const avecScore = feuille.faits.some((f) => f.score);
-    const buteurs = repererButeurs(roster, feuille, campAdverse);
+    const buteurs = repererButeurs(roster, feuille, campTraite);
     const essaisAdverses: { minute: number; ligne: Ligne; transforme: boolean }[] = [];
     /** Points adverses reconstitués, essais de pénalité compris. */
     let courant = 0;
@@ -542,7 +561,7 @@ async function main() {
     };
 
     for (const fait of feuille.faits) {
-      if (fait.club === campAdverse) {
+      if (fait.club === campTraite) {
         if (fait.type === "essai-de-penalite") {
           essaisDePenalite++;
           courant += 7;
@@ -607,7 +626,7 @@ async function main() {
     // La feuille s'arrête parfois avant la dernière transformation : le score
     // du match, lui, la compte.
     if (avecScore) {
-      let manque = match.scoreOpponent - courant;
+      let manque = score - courant;
       while (manque >= 2 && essaisAdverses.some((e) => !e.transforme)) {
         transformer(null);
         courant += 2;
@@ -616,7 +635,7 @@ async function main() {
     } else {
       // Feuille sans score courant : faute de mieux, on s'en remet aux noms.
       for (const fait of feuille.faits.filter(
-        (f) => f.club === campAdverse && f.type === "essai" && f.transformePar,
+        (f) => f.club === campTraite && f.type === "essai" && f.transformePar,
       )) {
         transformer(fait.transformePar);
         courant += 2;
@@ -624,7 +643,7 @@ async function main() {
     }
 
     // ---- Temps de jeu ------------------------------------------------------
-    calculerTempsDeJeu(roster, feuille, campAdverse, bilans, ennuis);
+    calculerTempsDeJeu(roster, feuille, campTraite, bilans, ennuis);
 
     if (ennuis.length > 0) {
       echecs.push(`${etiquette} :\n      ${ennuis.join("\n      ")}`);
@@ -635,27 +654,27 @@ async function main() {
     const lignes = [...bilans.entries()];
     const points = lignes.reduce((s, [, b]) => s + b.points, 0);
     const essais = lignes.reduce((s, [, b]) => s + b.tries, 0);
-    const attendu = match.scoreOpponent - 7 * essaisDePenalite;
+    const attendu = score - 7 * essaisDePenalite;
 
     if (points !== attendu) {
       echecs.push(
         `${etiquette} : ${points} points reconstitués pour ${attendu} attendus ` +
-          `(${match.scoreOpponent} au score, ${essaisDePenalite} essai(s) de pénalité)`,
+          `(${score} au score, ${essaisDePenalite} essai(s) de pénalité)`,
       );
       continue;
     }
-    if (match.triesOpponent != null && essais !== match.triesOpponent) {
+    if (essaisCompteur != null && essais !== essaisCompteur) {
       echecs.push(
-        `${etiquette} : ${essais} essais reconstitués pour ${match.triesOpponent} au compteur`,
+        `${etiquette} : ${essais} essais reconstitués pour ${essaisCompteur} au compteur`,
       );
       continue;
     }
     // `penaltyTriesOpponent` est nullable et parfois nul : comparer sans le
     // traiter fait passer la ligne en silence.
-    if (essaisDePenalite !== (match.penaltyTriesOpponent ?? 0)) {
+    if (essaisDePenalite !== (penaltyTries ?? 0)) {
       divergences.push(
         `${etiquette} : ${essaisDePenalite} essai(s) de pénalité selon la LNR, ` +
-          `${match.penaltyTriesOpponent ?? "aucun compteur"} en base`,
+          `${penaltyTries ?? "aucun compteur"} en base`,
       );
     }
 
@@ -735,7 +754,7 @@ async function main() {
     }
 
     const verif = await prisma.matchPlayer.aggregate({
-      where: { matchId: match.id, isOpponent: true },
+      where: { matchId: match.id, isOpponent: cible === "adverse" },
       _sum: { totalPoints: true },
     });
     if ((verif._sum.totalPoints ?? 0) !== attendu) {
@@ -755,7 +774,12 @@ async function main() {
   if (DRY_RUN) console.log("\nSimulation — relancer sans --dry pour appliquer.");
 }
 
-main()
+// Le camp adverse d'abord, le camp catalan seulement sur demande : c'est lui
+// qui a le plus souvent des minutes déjà saisies par d'anciens scripts.
+(async () => {
+  await main("adverse");
+  if (AVEC_USAP) await main("usap");
+})()
   .catch((e) => {
     console.error("Erreur :", e);
     process.exit(1);

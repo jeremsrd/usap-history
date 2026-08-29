@@ -37,8 +37,8 @@
 import { PrismaClient, Position } from "@prisma/client";
 import { chercherFeuille, lireCompositions, type LnrTitulaire } from "./lib/lnr";
 import { USAP, chercherMatchUsap, lireMatch } from "./lib/epcr";
-import { generatePlayerSlug } from "../src/lib/slugs";
-import { meilleurCandidat, normalize, proximite } from "./lib/noms";
+import { POSTE_PAR_NUMERO, trouverOuCreerJoueur as trouverOuCreer } from "./lib/joueurs";
+import { meilleurCandidat, normalize } from "./lib/noms";
 
 const prisma = new PrismaClient();
 
@@ -50,89 +50,12 @@ const AVEC_USAP = ARGS.includes("--usap");
 const DATE = ARGS.find((a) => /^\d{4}-\d{2}-\d{2}$/.test(a));
 const SAISON = ARGS.find((a) => /^\d{4}-\d{4}$/.test(a));
 
-/** Poste tenu par un titulaire, déduit de son numéro de maillot. */
-const POSTE_PAR_NUMERO: Record<number, Position> = {
-  1: Position.PILIER_GAUCHE,
-  2: Position.TALONNEUR,
-  3: Position.PILIER_DROIT,
-  4: Position.DEUXIEME_LIGNE,
-  5: Position.DEUXIEME_LIGNE,
-  6: Position.TROISIEME_LIGNE_AILE,
-  7: Position.TROISIEME_LIGNE_AILE,
-  8: Position.NUMERO_HUIT,
-  9: Position.DEMI_DE_MELEE,
-  10: Position.DEMI_OUVERTURE,
-  11: Position.AILIER,
-  12: Position.CENTRE,
-  13: Position.CENTRE,
-  14: Position.AILIER,
-  15: Position.ARRIERE,
-};
 
-/**
- * Recherche d'un joueur dans toute la table, plus stricte que l'appariement
- * au sein d'une feuille. Sur 23 candidats, un nom de famille approchant suffit
- * à lever l'ambiguïté ; sur 1 380 fiches, il fabrique des rapprochements
- * absurdes — « Folau Fainga'a » et « Leicester Faingaanuku » partagent un
- * préfixe de sept lettres. On exige donc deux mots communs, ou un nom de
- * famille rigoureusement identique.
- */
-async function chercherJoueur(officiel: LnrTitulaire): Promise<string | null> {
-  const nomCherche = `${officiel.firstName} ${officiel.lastName}`;
-  const tous = await prisma.player.findMany({
-    select: { id: true, firstName: true, lastName: true },
-  });
-
-  const candidats = tous.filter((j) => {
-    const { communs } = proximite(`${j.firstName} ${j.lastName}`, nomCherche);
-    if (communs >= 2) return true;
-    return communs >= 1 && normalize(j.lastName) === normalize(officiel.lastName);
-  });
-  if (candidats.length === 1) return candidats[0].id;
-  if (candidats.length > 1) {
-    // Une fiche qui porte exactement ce nom tranche : les autres candidates ne
-    // s'en approchent que par un prénom voisin (Jérémie / Jérémy Maurouard).
-    const exactes = candidats.filter(
-      (j) =>
-        normalize(`${j.firstName} ${j.lastName}`) ===
-        normalize(`${officiel.firstName} ${officiel.lastName}`),
-    );
-    if (exactes.length === 1) return exactes[0].id;
-    throw new Error(
-      `${nomCherche} : ${candidats.length} fiches candidates ` +
-        `(${candidats.map((c) => `${c.firstName} ${c.lastName}`).join(", ")}) — à arbitrer`,
-    );
-  }
-  return null;
-}
-
+/** Le module partagé prend le client et les options ; ici ils sont fixes. */
 async function trouverOuCreerJoueur(officiel: LnrTitulaire): Promise<string> {
-  const existant = await chercherJoueur(officiel);
-  if (existant) return existant;
-
-  if (DRY_RUN) {
-    console.log(`    [joueur] à créer : ${officiel.firstName} ${officiel.lastName}`);
-    return "";
-  }
-
-  const cree = await prisma.player.create({
-    data: {
-      firstName: officiel.firstName,
-      lastName: officiel.lastName,
-      // isActive signifie « actuellement à l'USAP »
-      isActive: false,
-      slug: `temp-${normalize(officiel.lastName)}-${officiel.numero}`,
-    },
-  });
-  await prisma.player.update({
-    where: { id: cree.id },
-    data: {
-      slug: generatePlayerSlug(officiel.firstName, officiel.lastName, cree.id),
-    },
-  });
-  console.log(`    [joueur] créé : ${officiel.firstName} ${officiel.lastName}`);
-  return cree.id;
+  return trouverOuCreer(prisma, officiel, { dryRun: DRY_RUN });
 }
+
 
 type MatchAvecContexte = Awaited<ReturnType<typeof chargerMatchs>>[number];
 
