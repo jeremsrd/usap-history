@@ -57,7 +57,7 @@ const OPP_SQUAD = [
   { num: 2, name: "Pierre Colonna", position: Position.TALONNEUR, isStarter: true },
   { num: 3, name: "Henry Thomas", position: Position.PILIER_DROIT, isStarter: true },
   { num: 4, name: "Gauthier Maravat", position: Position.DEUXIEME_LIGNE, isStarter: true },
-  { num: 5, name: "Thomas Staniforth", position: Position.DEUXIEME_LIGNE, isStarter: true },
+  { num: 5, name: "Tom Staniforth", position: Position.DEUXIEME_LIGNE, isStarter: true },
   { num: 6, name: "Mathieu Babillot", position: Position.TROISIEME_LIGNE_AILE, isStarter: true },
   { num: 7, name: "Baptiste Delaporte", position: Position.TROISIEME_LIGNE_AILE, isStarter: true },
   { num: 8, name: "Abraham Papali'i", position: Position.NUMERO_HUIT, isStarter: true },

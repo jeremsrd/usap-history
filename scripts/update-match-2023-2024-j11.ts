@@ -59,7 +59,7 @@ const CO_SQUAD = [
   { num: 2, name: "Gaëtan Barlot", position: Position.TALONNEUR, isStarter: true },
   { num: 3, name: "Wilfrid Hounkpatin", position: Position.PILIER_DROIT, isStarter: true },
   { num: 4, name: "Florent Vanverberghe", position: Position.DEUXIEME_LIGNE, isStarter: true },
-  { num: 5, name: "Thomas Staniforth", position: Position.DEUXIEME_LIGNE, isStarter: true },
+  { num: 5, name: "Tom Staniforth", position: Position.DEUXIEME_LIGNE, isStarter: true },
   { num: 6, name: "Mathieu Babillot", position: Position.TROISIEME_LIGNE_AILE, isStarter: true },
   { num: 7, name: "Tyler Ardron", position: Position.TROISIEME_LIGNE_AILE, isStarter: true },
   { num: 8, name: "Abraham Papali'i", position: Position.NUMERO_HUIT, isStarter: true },

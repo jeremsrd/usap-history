@@ -582,6 +582,7 @@ doublons.
 | `fix-bonus-points.ts` | recalcule tous les bonus et les totaux de saison, refuse d'écrire si un classement officiel connu diverge |
 | `fix-broken-slugs.ts` | réécrit les slugs dont le suffixe ne permet plus de retrouver l'entité (fiche en 404) |
 | `normalize-opponent-players.ts` | rattache les anciennes lignes `opponentPlayerName` à un vrai `Player` |
+| `detect-duplicate-players.ts` | **cherche les fiches en double**, lecture seule : nom complet identique (CERTAIN), ou même patronyme + même club + même dossard ou poste, jamais sur la même feuille (FORT), ou même poste et clubs différents (`--tout`, À VOIR). Ne fusionne ni ne propose rien ; sa table `DISTINCTS` retient les paires déjà arbitrées comme étant deux hommes. **À relancer après tout import et après toute fusion** |
 | `merge-duplicate-players-2026.ts` | fusion de doublons, paires listées en dur et vérifiées à la main |
 | `merge-opponents.ts` | fusionne deux fiches de club (`--keep`, `--drop`, `--nom`) ; repointe matchs, anciens noms et clubs de carrière, et fait hériter la fiche conservée des champs qu'elle n'avait pas |
 | `merge-players.ts` | fusionne deux fiches désignées par leur identifiant (`--keep`, `--drop`, `--nom`) ; ne cherche rien de lui-même, refuse la fusion si les deux figurent sur un même match |
@@ -1017,6 +1018,26 @@ d'écrire les agrégats s'ils s'en écartent.
   machine** : elle a été fournie à la main puis recoupée avec les changements
   officiels. Ses numéros restent incertains (cf. l'en-tête de
   `seed-lineup-barrage-2022.ts`).
+
+**Une fusion réarme les scripts à usage unique.** Les 151 `update-*` et
+`add-*` de `scripts/` cherchent leur joueur par `findFirst` sur prénom **et**
+nom exacts, puis `player.create` si rien ne répond. Fusionner « Thomas
+Staniforth » dans « Tom Staniforth » rend donc le nom en dur introuvable, et
+une relance recréerait le doublon — c'est le sinistre déjà survenu, « Max
+Hicks » recréé à côté de « Maxwell Hicks ». Sept scripts étaient dans ce cas
+au soir du 30 août 2026, corrigés depuis : `update-match-2023-2024-j7`,
+`-j11`, `-j20`, `-j25`, `update-match-2022-2023-j7`, `-j11`, `-j26`.
+
+**Et rien ne l'aurait vu.** Un doublon ainsi recréé porte le nom que la
+feuille officielle écrit : `audit-opponent-lineups.ts` le lit conforme et se
+tait, `delete-orphan-players.ts` aussi, la fiche portant un vrai match. D'où
+`detect-duplicate-players.ts`, qui cherche les doublons pour eux-mêmes plutôt
+que d'attendre qu'un nom coince sur autre chose. Son premier passage a sorti
+**25 paires** que rien ne signalait — Alistair / Ali Crossdale, Will /
+William Skelton, Etuale Manusamoa / Manu Tuilagi, Conraad / Conrad van
+Vuuren… —, toutes en attente d'arbitrage feuille en main. Le lot À VOIR, lui,
+est bien du bruit assumé : Julien et Guillaume Marchand, Jack et Tom Willis,
+les frères Gray sont des hommes distincts.
 
 **Une règle qui vaut pour tout ce qui précède** : devant un nom qui ne
 s'apparie pas, **soupçonner la base avant la source** — et devant un prénom

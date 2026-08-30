@@ -56,7 +56,7 @@ const USAP_SQUAD = [
 const OPP_SQUAD = [
   { num: 1, name: "Ugo Boniface", position: Position.PILIER_GAUCHE, isStarter: true },
   { num: 2, name: "Maxime Lamothe", position: Position.TALONNEUR, isStarter: true },
-  { num: 3, name: "Carlu Johann Sadie", position: Position.PILIER_DROIT, isStarter: true },
+  { num: 3, name: "Carlu Sadie", position: Position.PILIER_DROIT, isStarter: true },
   { num: 4, name: "Guido Petti", position: Position.DEUXIEME_LIGNE, isStarter: true },
   { num: 5, name: "Cyril Cazeaux", position: Position.DEUXIEME_LIGNE, isStarter: true },
   { num: 6, name: "Bastien Vergnes-Taillefer", position: Position.TROISIEME_LIGNE_AILE, isStarter: true },

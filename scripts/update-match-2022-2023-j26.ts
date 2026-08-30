@@ -71,7 +71,7 @@ const OPP_SQUAD = [
   { num: 9, name: "Jérémy Fernandez", position: Position.DEMI_DE_MELEE, isStarter: true },
   { num: 10, name: "Benjamin Urdapilleta", position: Position.DEMI_OUVERTURE, isStarter: true },
   { num: 11, name: "Josaia Raisuqe", position: Position.AILIER, isStarter: true },
-  { num: 12, name: "Andrea Cocagi", position: Position.CENTRE, isStarter: true },
+  { num: 12, name: "Adrea Cocagi", position: Position.CENTRE, isStarter: true },
   { num: 13, name: "Adrien Séguret", position: Position.CENTRE, isStarter: true },
   { num: 14, name: "Geoffrey Palis", position: Position.AILIER, isStarter: true },
   { num: 15, name: "Julien Dumora", position: Position.ARRIERE, isStarter: true },

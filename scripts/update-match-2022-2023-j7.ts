@@ -73,7 +73,7 @@ const OPP_SQUAD = [
   { num: 12, name: "Irae Simone", position: Position.CENTRE, isStarter: true },
   { num: 13, name: "Damian Penaud", position: Position.CENTRE, isStarter: true },
   { num: 14, name: "Bautista Delguy", position: Position.AILIER, isStarter: true },
-  { num: 15, name: "Cheick Tiberghien", position: Position.ARRIERE, isStarter: true },
+  { num: 15, name: "Cheikh Tiberghien", position: Position.ARRIERE, isStarter: true },
   { num: 16, name: "Adrien Pélissié", position: Position.TALONNEUR, isStarter: false },
   { num: 17, name: "Giorgi Beria", position: Position.PILIER_GAUCHE, isStarter: false },
   { num: 18, name: "Tomas Lavanini", position: Position.PILIER_DROIT, isStarter: false },

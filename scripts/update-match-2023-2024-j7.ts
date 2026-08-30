@@ -53,7 +53,7 @@ const USAP_SQUAD = [
 // === COMPOSITION MONTPELLIER (adversaire) ===
 const MHR_SQUAD = [
   { num: 1, name: "Enzo Forletta", position: Position.PILIER_GAUCHE, isStarter: true },
-  { num: 2, name: "Silatolu Latu", position: Position.TALONNEUR, isStarter: true },
+  { num: 2, name: "Tolu Latu", position: Position.TALONNEUR, isStarter: true },
   { num: 3, name: "Henry Thomas", position: Position.PILIER_DROIT, isStarter: true },
   { num: 4, name: "Elliott Stooke", position: Position.DEUXIEME_LIGNE, isStarter: true },
   { num: 5, name: "Paul Willemse", position: Position.DEUXIEME_LIGNE, isStarter: true },
@@ -354,7 +354,7 @@ async function main() {
       description: "Carton jaune Elliott Stooke (MHR). MHR à 14." },
     // 40' - CJ Latu (MHR) + Essai de pénalité USAP + Conv Allan 16-10
     { minute: 40, type: "CARTON_JAUNE", isUsap: false,
-      description: "Carton jaune Silatolu Latu (MHR). Essai de pénalité accordé à l'USAP." },
+      description: "Carton jaune Tolu Latu (MHR). Essai de pénalité accordé à l'USAP." },
     { minute: 40, type: "ESSAI_PENALITE", isUsap: true,
       description: "Essai de pénalité (USAP). 14-10." },
     { minute: 40, type: "TRANSFORMATION", playerLastName: "Allan", isUsap: true,

@@ -80,7 +80,7 @@ const OPP_SQUAD = [
   { num: 16, name: "Maxime Lamothe", position: Position.TALONNEUR, isStarter: false },
   { num: 17, name: "Lekso Kaulashvili", position: Position.PILIER_GAUCHE, isStarter: false },
   { num: 18, name: "Alban Roussel", position: Position.DEUXIEME_LIGNE, isStarter: false },
-  { num: 19, name: "Thomas Willis", position: Position.TROISIEME_LIGNE_AILE, isStarter: false },
+  { num: 19, name: "Tom Willis", position: Position.TROISIEME_LIGNE_AILE, isStarter: false },
   { num: 20, name: "Yann Lesgourgues", position: Position.DEMI_DE_MELEE, isStarter: false },
   { num: 21, name: "Zack Holmes", position: Position.DEMI_OUVERTURE, isStarter: false },
   { num: 22, name: "Louis Bielle-Biarrey", position: Position.AILIER, isStarter: false },
