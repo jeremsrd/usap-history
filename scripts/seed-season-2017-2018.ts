@@ -38,15 +38,18 @@
  *   npx tsx scripts/seed-season-2017-2018.ts --dry
  *   npx tsx scripts/seed-season-2017-2018.ts
  *
- * TERRAIN NEUTRE : LA FINALE N'A PAS DE LIEU. Le lieu d'un match se déduit du
+ * TERRAIN NEUTRE : LA FINALE NE SE DÉDUIT PAS. Le lieu d'un match se déduit du
  * camp — Aimé-Giral à domicile, le stade de l'adversaire à l'extérieur —, et
- * cette déduction est fausse pour une finale, jouée sur terrain neutre. La
- * feuille de la LNR n'aide pas : elle désigne quand même un recevant,
- * « perpignan-grenoble », et ne nomme aucun stade. Le script laisse donc la
- * finale **sans lieu** plutôt que de lui poser Aimé-Giral : un `null` se lit
- * « on ne sait pas », un stade faux se lit comme un fait. À renseigner à la
- * main dès qu'une source le donne, comme l'a été la finale 2021 — GGL Stadium
- * de Montpellier, que la feuille annonçait « Perpignan-Biarritz ».
+ * cette déduction est fausse pour une finale. La feuille de la LNR n'aide
+ * pas : elle désigne quand même un recevant, « perpignan-grenoble », et ne
+ * nomme aucun stade. La finale du 6 mai 2018 s'est jouée au **stade
+ * Ernest-Wallon de Toulouse**.
+ *
+ * **Source : Jérémy, qui y était.** Aucune source lue par machine ne le
+ * donne, et le témoignage direct est ici la meilleure disponible. Il est
+ * inscrit dans la table `TERRAIN_NEUTRE`, et non posé à la main sur le
+ * match : une correction manuelle aurait été effacée à la première relance du
+ * script, qui recalcule le lieu de chaque rencontre.
  *
  * La demi-finale, elle, garde Aimé-Giral : en Pro D2 le mieux classé reçoit,
  * et l'USAP a fini première. Ce n'est pas une déduction hasardeuse.
@@ -78,10 +81,16 @@ const SAISON = "2017-2018";
 const JOURNEES = 30;
 
 /**
- * Tours joués sur terrain neutre, dont le lieu ne se déduit pas du camp. La
- * demi-finale n'en est pas : en Pro D2 le mieux classé reçoit.
+ * Tours joués sur terrain neutre, et le stade où ils l'ont été. Le lieu ne s'y
+ * déduit pas du camp, la feuille de la LNR désignant quand même un recevant.
+ * `null` vaut « terrain neutre, stade inconnu » — mieux qu'un lieu faux.
+ *
+ * La demi-finale n'y figure pas : en Pro D2 le mieux classé reçoit.
  */
-const TERRAIN_NEUTRE = new Set(["Finale"]);
+const TERRAIN_NEUTRE: Record<string, string | null> = {
+  // 6 mai 2018, Perpignan 38-13 Grenoble. Source : Jérémy, présent au stade.
+  Finale: "Stade Ernest-Wallon",
+};
 
 async function trouverAdversaire(nom: string): Promise<string> {
   const trouve = await prisma.opponent.findFirst({
@@ -393,8 +402,12 @@ async function main() {
     });
 
     // Terrain neutre : la déduction par le camp ne vaut pas pour une finale.
-    const venue = TERRAIN_NEUTRE.has(r.round ?? "")
-      ? null
+    const neutre = r.round != null && r.round in TERRAIN_NEUTRE;
+    const nomNeutre = neutre ? TERRAIN_NEUTRE[r.round!] : null;
+    const venue = neutre
+      ? nomNeutre
+        ? await prisma.venue.findFirst({ where: { name: nomNeutre }, select: { id: true } })
+        : null
       : r.isHome
         ? await prisma.venue.findFirst({ where: { name: "Stade Aimé-Giral" }, select: { id: true } })
         : await prisma.opponent
