@@ -75,6 +75,12 @@ const DOUBLONS = ["Stade du Hameau", "Matmut Stadium de Gerland"];
  * sa page de club ni ses feuilles de match ne portent de lieu. Même réserve
  * que pour Rouen, donc : c'est le terrain d'aujourd'hui, et rien de lisible
  * par machine ne dit qu'Agen y recevait déjà le 2 septembre 2018.
+ *
+ * Les trois derniers sont arrivés avec 2017-2018 et **viennent de Jérémy**.
+ * Dax, Massy et Narbonne ont quitté la Pro D2, et leurs pages LNR ne nomment
+ * plus leur stade — la même impasse que Carcassonne et Rouen. Même réserve
+ * qu'eux, donc : rien n'a permis de vérifier par machine qu'ils y recevaient
+ * déjà en 2017-2018.
  */
 const MANQUANTS = [
   { nom: "Parc des Sports Aguiléra", ville: "Biarritz", club: "Biarritz" },
@@ -91,6 +97,9 @@ const MANQUANTS = [
   { nom: "Stade Albert-Domec", ville: "Carcassonne", club: "Carcassonne" },
   { nom: "Stade Robert-Diochon", ville: "Le Petit-Quevilly", club: "Rouen" },
   { nom: "Stade Armandie", ville: "Agen", club: "Agen" },
+  { nom: "Stade Maurice-Boyau", ville: "Dax", club: "Dax" },
+  { nom: "Stade Jules-Ladoumègue", ville: "Massy", club: "Massy" },
+  { nom: "Parc des Sports et de l'Amitié", ville: "Narbonne", club: "Narbonne" },
 ];
 
 async function fusionnerDoublons() {

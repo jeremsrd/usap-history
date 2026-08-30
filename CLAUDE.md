@@ -596,7 +596,7 @@ doublons.
 | `seed-season-2017-2018.ts` | crée les 32 matchs de la saison du titre de Pro D2 et de la remontée — 30 journées, demi-finale et finale, pas de barrage. Porte une table `TERRAIN_NEUTRE` qui nomme le stade d'une finale, que la LNR ne donne pas |
 | `seed-season-2018-2019.ts` | crée les 26 matchs de la saison de la relégation, la seule de Top 14 reprise en remontant ; aucune phase finale, l'USAP finit dernière et descend sans access match |
 | `seed-season-2019-2020.ts` | crée les 23 matchs de la saison arrêtée par le Covid — aucune phase finale, la LNR n'en publie pas |
-| `seed-season-2020-2021.ts` | crée les 32 matchs de la saison du titre de Pro D2, phases finales comprises ; refuse d'écrire les agrégats s'ils s'écartent du classement officiel de la LNR |
+| `seed-season-2020-2021.ts` | crée les 32 matchs de la saison du titre de Pro D2, phases finales comprises ; refuse d'écrire les agrégats s'ils s'écartent du classement officiel de la LNR, et pose `champion` et `promoted` |
 | `seed-lineup-barrage-2022.ts` | la composition du barrage du 12 juin 2022, seule de la saison qu'aucune source ne publie : listes fournies à la main, recoupées avec les changements de la feuille officielle |
 | `seed-chronologie.ts` | écrit la **ligne de temps** d'un match depuis la LNR : essais, transformations déduites du score courant, pénalités, drops et cartons, avec les noms tels que la base les écrit. Troisième temps ; `--dry` |
 | `seed-calendrier-2026-2027.ts` | crée une saison et son calendrier de championnat **avant** qu'elle ne commence : date, heure, journée, adversaire, lieu, sans score ni résultat. Une relance met à jour les dates au fur et à mesure que la LNR les cale |
@@ -929,7 +929,7 @@ d'écrire les agrégats s'ils s'en écartent.
 
 **Ce qui manque dans les données**
 
-- **293 des 296 matchs ont leur stade.** Le lieu se déduit du camp —
+- **Les 296 matchs ont leur stade.** Le lieu se déduit du camp —
   Aimé-Giral à domicile, `Opponent.venueId` à l'extérieur —, et ne se saisit
   donc jamais à la main. **Sauf une finale**, jouée sur terrain neutre : la
   déduction y est fausse, et la feuille de la LNR n'aide pas puisqu'elle
@@ -946,15 +946,18 @@ d'écrire les agrégats s'ils s'en écartent.
   Sa demi-finale, elle, garde Aimé-Giral : en Pro D2 le mieux classé reçoit,
   et l'USAP a fini première.
 
-  Le stade de la finale 2018 vient de **Jérémy, présent au match** : aucune
-  source lue par machine ne le donne.
+  **Quatre lieux de 2017-2018 viennent de Jérémy**, et d'aucune source lue par
+  machine : le stade de la finale, où il était, et les terrains de Dax
+  (Maurice-Boyau), Massy (Jules-Ladoumègue) et Narbonne (Parc des Sports et de
+  l'Amitié) — trois clubs sortis de Pro D2, dont les pages LNR ne nomment plus
+  le stade. Même réserve que pour Carcassonne, Rouen et Agen : ce sont les
+  terrains d'aujourd'hui, et rien ne permet de vérifier par machine qu'ils y
+  recevaient déjà en 2017-2018.
 
-  Trois déplacements de 2017-2018 sont sans lieu, à Dax, Massy et
-  Narbonne : ces clubs ont quitté la Pro D2, leurs pages LNR ne nomment plus
-  leur stade — même impasse que Carcassonne et Rouen. Quatre clubs n'ont
-  toujours pas de terrain rattaché : Connacht, Cardiff, Dragons et Lions, que
-  l'USAP n'a reçus qu'à Aimé-Giral. Sans déplacement là-bas, rien ne permet de
-  le déduire.
+  Quatre clubs n'ont toujours pas de terrain rattaché : Connacht, Cardiff,
+  Dragons et Lions, que l'USAP n'a reçus qu'à Aimé-Giral. Sans déplacement
+  là-bas, rien ne permet de le déduire — mais aucun match n'en souffre, ces
+  quatre-là n'ayant jamais reçu l'USAP.
 
   Trois des stades de la liste de `fix-match-venues.ts` ne viennent pas d'une
   donnée officielle : Albert-Domec à Carcassonne et Robert-Diochon à Rouen,

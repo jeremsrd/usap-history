@@ -284,7 +284,11 @@ async function cloreLaSaison(seasonId: string, startYear: number) {
   if (!DRY_RUN) {
     await prisma.season.update({
       where: { id: seasonId },
-      data: { ...agregats, totalPoints: points },
+      // Championne de Pro D2 et promue : la finale valait la montée, il n'y
+      // avait pas de barrage d'accession cette saison-là. Ces deux drapeaux
+      // manquaient jusqu'au 30 août 2026 — la saison du titre était en base
+      // sans être dite championne.
+      data: { ...agregats, totalPoints: points, champion: true, promoted: true },
     });
   }
 }
