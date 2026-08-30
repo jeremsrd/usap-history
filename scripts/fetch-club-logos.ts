@@ -117,6 +117,10 @@ const PAGES_LNR = [
   // autres, croisés en 2020-2021. Même CDN, même forme d'URL.
   "https://prod2.lnr.fr/calendrier-et-resultats/2020-2021/j1",
   "https://prod2.lnr.fr/calendrier-et-resultats/2020-2021/j2",
+  // 2017-2018 pour Dax, Massy et Narbonne, sortis de Pro D2 depuis : leurs
+  // pages de club ont disparu, mais les calendriers archivés servent encore
+  // leurs écussons. Même raison que 2018-2019 pour Agen, plus haut.
+  "https://prod2.lnr.fr/calendrier-et-resultats/2017-2018/j1",
 ];
 
 async function lire(url: string, entetes?: Record<string, string>): Promise<string> {

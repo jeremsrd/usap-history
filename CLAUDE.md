@@ -615,14 +615,21 @@ par inclusion : trop large pour être lancé sans revue préalable.
 
 ## Logos des clubs
 
-Les 40 adversaires ont leur logo, servi par le site lui-même depuis
-`public/images/logos/{club}.png` — 2,9 Mo au total. Ils viennent des sources
+Les 44 adversaires ont leur logo, servi par le site lui-même depuis
+`public/images/logos/{club}.png` — 3,1 Mo au total. Ils viennent des sources
 officielles, que les scripts lisent déjà : `cdn.lnr.fr/club/{slug}/photo/logo.
 {empreinte}` pour les clubs français, le champ `imageUrl` du flux de l'EPCR
 pour les européens. `fetch-club-logos.ts` fait la moisson, sur les calendriers
 du Top 14 **et de la Pro D2** — c'est de ce dernier que viennent les écussons
 de Carcassonne, Rouen, Colomiers, Nevers, Béziers, Aurillac, Angoulême et
 Valence-Romans.
+
+**Un calendrier archivé sert encore les écussons d'un club disparu du
+championnat.** Dax, Massy et Narbonne ont quitté la Pro D2 et leurs pages de
+club avec, mais `prod2.lnr.fr/calendrier-et-resultats/2017-2018/j1` porte
+toujours leurs trois logos. C'est la même ruse que pour Agen, dont l'écusson
+vient du calendrier 2018-2019 : quand un club manque, chercher la saison où il
+jouait plutôt que sa page d'aujourd'hui.
 
 Pourquoi les héberger plutôt que pointer vers ces CDN : leurs URL portent une
 empreinte qui change au gré des mises à jour, le lien direct peut être bloqué,
