@@ -593,6 +593,7 @@ doublons.
 | `close-season-2025-2026.ts` | modèle de clôture de saison, avec garde-fou sur le classement officiel |
 | `seed-opponent-sheet.ts` | **le script du chantier adverse** : reprend une saison entière depuis la LNR — réalisations, cartons et temps de jeu reconstitués à partir des changements. Prend la saison en argument (`2023-2024`), `--dry` pour simuler, `--detail` pour le relevé des écarts avec la base, `--match=AAAA-MM-JJ` pour n'en reprendre qu'un, `--usap` pour traiter **aussi le camp catalan** — il passe alors deux fois, l'adverse puis l'USAP |
 | `seed-lineup.ts` | crée les **deux compositions** d'un match depuis la LNR quand il n'en a aucune — dossards, titulaires, capitaine, poste déduit du numéro. Premier temps de la reprise d'une rencontre ancienne ; `--dry`, `--force` pour réécrire |
+| `seed-season-2017-2018.ts` | crée les 32 matchs de la saison du titre de Pro D2 et de la remontée — 30 journées, demi-finale et finale, pas de barrage. Laisse la **finale sans lieu**, terrain neutre que la LNR ne nomme pas |
 | `seed-season-2018-2019.ts` | crée les 26 matchs de la saison de la relégation, la seule de Top 14 reprise en remontant ; aucune phase finale, l'USAP finit dernière et descend sans access match |
 | `seed-season-2019-2020.ts` | crée les 23 matchs de la saison arrêtée par le Covid — aucune phase finale, la LNR n'en publie pas |
 | `seed-season-2020-2021.ts` | crée les 32 matchs de la saison du titre de Pro D2, phases finales comprises ; refuse d'écrire les agrégats s'ils s'écartent du classement officiel de la LNR |
@@ -847,28 +848,35 @@ Par ordre de valeur.
    publie pas — elle se déduirait du dernier fait avant la 40ᵉ, mais c'est une
    inférence —, et les **notes de retour en jeu**, écrites à la main.
 
-2. **Poursuivre la phase 4** en remontant. **2020-2021, 2019-2020 et
-   2018-2019 sont faites**, toutes trois conformes au classement officiel de
-   la LNR — 107 points et le titre de Pro D2 pour la première, 76 points et la
-   deuxième place pour la deuxième, arrêtée à la 23ᵉ journée par le Covid,
+2. **Poursuivre la phase 4** en remontant. **2020-2021, 2019-2020, 2018-2019
+   et 2017-2018 sont faites**, toutes quatre conformes au classement officiel
+   de la LNR — 107 points et le titre de Pro D2 pour la première, 76 points et
+   la deuxième place pour la deuxième, arrêtée à la 23ᵉ journée par le Covid,
    12 points et la dernière place de Top 14 pour la troisième, reléguée
-   directement. Reste 2017-2018, saison de Pro D2 — celle du titre qui a
-   ramené l'USAP en Top 14.
+   directement, 97 points et le titre pour la quatrième.
+
+   **2017-2018 n'a que ses rencontres** : les 32 matchs, leurs scores, leurs
+   arbitres et les agrégats de saison. Compositions et chronologies restent à
+   écrire, et la LNR les publie toutes — les vingt-trois de chaque camp, les
+   faits et les changements sont là sur les 32 feuilles. Reste ensuite
+   2016-2017, encore une saison de Pro D2.
 
    Les modèles : `seed-season-2019-2020.ts` pour une saison de deuxième
    division sans phase finale, `seed-season-2018-2019.ts` pour une saison de
-   Top 14 sans phase finale, `seed-season-2020-2021.ts` quand il y en a une,
-   `seed-season-2021-2022.ts` pour une saison avec coupe d'Europe.
+   Top 14 sans phase finale, `seed-season-2020-2021.ts` et
+   `seed-season-2017-2018.ts` quand il y en a une — le second traite en plus
+   le terrain neutre d'une finale —, `seed-season-2021-2022.ts` pour une
+   saison avec coupe d'Europe.
 
    **Attention aux coupes d'Europe d'avant 2020-2021 : il n'y a pas de
    source.** Le flux de l'EPCR ne rend rien avant la saison 2020-2021, et son
    site n'offre plus que les saisons récentes. La campagne européenne de
    2018-2019 est donc restée hors base, et il en ira de même en remontant tant
    qu'aucune source officielle ne les rouvre.
-3. **Le fond** : affluences (36 matchs sur 264), photos et biographies (1
-   joueur sur 198), et les saisons sans aucun match.
+3. **Le fond** : affluences (36 matchs sur 296), photos et biographies (1
+   joueur sur 192), et les saisons sans aucun match.
 
-Sur les 120 saisons en base, 10 seulement portent des matchs : c'est le
+Sur les 120 saisons en base, 11 seulement portent des matchs : c'est le
 chantier de la phase 4, mené en remontant le temps saison par saison. Le bilan
 de 2021-2022 — 9V 0N 17D, 43 points, treizième — est calculé depuis les scores
 officiels mais n'a pas été confronté à un classement d'époque ; ceux de
@@ -921,15 +929,27 @@ d'écrire les agrégats s'ils s'en écartent.
 
 **Ce qui manque dans les données**
 
-- **Les 264 matchs ont leur stade.** Le lieu se déduit du camp — Aimé-Giral à
-  domicile, `Opponent.venueId` à l'extérieur —, et ne se saisit donc jamais à
-  la main. **Sauf une finale**, jouée sur terrain neutre : la déduction y est
-  fausse, et la feuille de la LNR n'aide pas puisqu'elle désigne quand même un
-  recevant. La finale de Pro D2 2021, « Perpignan-Biarritz » sur la feuille,
-  s'est jouée au GGL Stadium de Montpellier — corrigée à la main, comme le
-  seront les suivantes. Quatre clubs n'ont toujours pas de terrain rattaché : Connacht,
-  Cardiff, Dragons et Lions, que l'USAP n'a reçus qu'à Aimé-Giral. Sans
-  déplacement là-bas, rien ne permet de le déduire.
+- **292 des 296 matchs ont leur stade.** Le lieu se déduit du camp —
+  Aimé-Giral à domicile, `Opponent.venueId` à l'extérieur —, et ne se saisit
+  donc jamais à la main. **Sauf une finale**, jouée sur terrain neutre : la
+  déduction y est fausse, et la feuille de la LNR n'aide pas puisqu'elle
+  désigne quand même un recevant. La finale de Pro D2 2021,
+  « Perpignan-Biarritz » sur la feuille, s'est jouée au GGL Stadium de
+  Montpellier — corrigée à la main.
+
+  **Celle de 2018 est donc laissée sans lieu**, et c'est délibéré :
+  `seed-season-2017-2018.ts` refuse d'y déduire Aimé-Giral, un `null` se
+  lisant « on ne sait pas » quand un stade faux se lit comme un fait. Corriger
+  à la main n'aurait rien valu ici — une relance du script aurait réécrit la
+  déduction. Sa demi-finale, elle, garde Aimé-Giral : en Pro D2 le mieux
+  classé reçoit, et l'USAP a fini première.
+
+  Trois déplacements de 2017-2018 sont aussi sans lieu, à Dax, Massy et
+  Narbonne : ces clubs ont quitté la Pro D2, leurs pages LNR ne nomment plus
+  leur stade — même impasse que Carcassonne et Rouen. Quatre clubs n'ont
+  toujours pas de terrain rattaché : Connacht, Cardiff, Dragons et Lions, que
+  l'USAP n'a reçus qu'à Aimé-Giral. Sans déplacement là-bas, rien ne permet de
+  le déduire.
 
   Trois des stades de la liste de `fix-match-venues.ts` ne viennent pas d'une
   donnée officielle : Albert-Domec à Carcassonne et Robert-Diochon à Rouen,

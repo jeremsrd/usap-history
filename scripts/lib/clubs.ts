@@ -35,6 +35,10 @@ export const CLUBS_LNR: Record<string, string> = {
   nevers: "Nevers",
   rouen: "Rouen",
   "valence-romans": "Valence-Romans",
+  // Clubs de Pro D2 croisés en 2017-2018, et pas depuis.
+  dax: "Dax",
+  massy: "Massy",
+  narbonne: "Narbonne",
   pau: "Pau",
   // L'USAP elle-même, pour récupérer son écusson à la source.
   perpignan: "Perpignan",
