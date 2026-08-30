@@ -70,10 +70,38 @@ const TOUT = process.argv.includes("--tout");
  *             l'effectif 2025-2026. Leur confusion a déjà été démêlée par
  *             merge-duplicate-players-2026.ts, qui avait rattaché à Grégory
  *             quatre matchs de Mattéo.
+ *
+ * **Les seize suivantes viennent du lot À VOIR**, arbitrées le 30 août 2026 par
+ * le même test que les paires FORT : lire la feuille officielle de chaque
+ * fiche et voir quel prénom la source écrit. Les deux ont été confirmés à
+ * chaque fois, et ce sont deux prénoms différents — souvent deux frères. Une
+ * seule paire du lot était un vrai doublon, Elliott / Elliot Stooke, que les
+ * deux sources écrivent « Elliott » : fusionnée, elle ne figure pas ici.
+ *
+ * Le club sert de repère quand le patronyme ne suffit plus : Jonathan Gray est
+ * à l'UBB quand Richie est à Glasgow puis Toulouse, Jack Willis à Toulouse
+ * quand Tom est à l'UBB.
  */
 const DISTINCTS: [string, string][] = [
   ["Sacha Lotrian", "Mathys Lotrian"],
   ["Grégory Le Corvec", "Mattéo Le Corvec"],
+  // Lot À VOIR, arbitré le 30 août 2026 sur les feuilles officielles.
+  ["Jonathan Gray", "Richie Gray"],
+  ["Guillaume Marchand", "Julien Marchand"],
+  ["Jules Le Bail", "Clovis Le Bail"],
+  ["Pagakalasio Tafili", "Paulo Tafili"],
+  ["Nathanaël Hulleu", "Wilfried Hulleu"],
+  ["Jack Willis", "Tom Willis"],
+  ["Teddy Thomas", "Ben Thomas"],
+  ["Michael Ruru", "Jonathan Ruru"],
+  ["Timothé Mezou", "Corentin Mezou"],
+  ["Pierre Garcia", "Gonzalo Garcia"],
+  ["Keiran Williams", "James Williams"],
+  ["Gareth Thomas", "Yann Thomas"],
+  ["Aled Davies", "Luke Davies"],
+  ["Andrew Smith", "Ollie Smith"],
+  ["Chris Smith", "Fletcher Smith"],
+  ["Johannes Jonker", "Rynhardt Jonker"],
 ];
 
 const ARBITREES = new Set(

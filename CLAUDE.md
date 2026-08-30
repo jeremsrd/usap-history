@@ -266,7 +266,7 @@ confrontations avec l'USAP, et de gérer les joueurs passés par les deux camps
   Vuidravuwalu) ou prénom d'usage sans lettre commune avec l'état civil
   (« Paddy » pour Patrick, « Richie » pour Richard). L'abréviation ordinaire
   n'a pas besoin de la table, le préfixe suffit.
-- `players` contient donc majoritairement des adversaires : 2 024 fiches ont
+- `players` contient donc majoritairement des adversaires : 2 023 fiches ont
   joué **contre** l'USAP, 192 sous son maillot — 65 des deux côtés. C'est
   normal. Les pages de liste filtrent déjà sur `isOpponent: false`.
 - **Un import qui cherche sur le nom exact fabrique des doublons à chaque
@@ -584,7 +584,7 @@ doublons.
 | `normalize-opponent-players.ts` | rattache les anciennes lignes `opponentPlayerName` à un vrai `Player` |
 | `detect-duplicate-players.ts` | **cherche les fiches en double**, lecture seule : nom complet identique (CERTAIN), ou même patronyme + même club + même dossard ou poste, jamais sur la même feuille (FORT), ou même poste et clubs différents (`--tout`, À VOIR). Ne fusionne ni ne propose rien ; sa table `DISTINCTS` retient les paires déjà arbitrées comme étant deux hommes. **À relancer après tout import et après toute fusion** |
 | `merge-duplicate-players-2026.ts` | fusion de doublons, paires listées en dur et vérifiées à la main |
-| `merge-duplicate-players-2026-08.ts` | **l'attestation des 24 fusions du 30 août 2026** : le lot en dur, chaque ligne accompagnée du nom que la source officielle écrit. Déjà appliqué, donc sans effet ; il ne vaut que par ce qu'il consigne, et pour rejouer le lot sur une base repartie de zéro |
+| `merge-duplicate-players-2026-08.ts` | **l'attestation des 25 fusions du 30 août 2026** : le lot en dur, chaque ligne accompagnée du nom que la source officielle écrit. Déjà appliqué, donc sans effet ; il ne vaut que par ce qu'il consigne, et pour rejouer le lot sur une base repartie de zéro |
 | `merge-opponents.ts` | fusionne deux fiches de club (`--keep`, `--drop`, `--nom`) ; repointe matchs, anciens noms et clubs de carrière, et fait hériter la fiche conservée des champs qu'elle n'avait pas |
 | `merge-players.ts` | fusionne deux fiches désignées par leur identifiant (`--keep`, `--drop`, `--nom`) ; ne cherche rien de lui-même, refuse la fusion si les deux figurent sur un même match. Simple ligne de commande au-dessus de `lib/fusion.ts` |
 | `rename-player.ts` | renomme une fiche, slug compris — un slug refait à la main sans le CUID rend la fiche introuvable |
@@ -867,8 +867,8 @@ d'écrire les agrégats s'ils s'en écartent.
 
 **Ce à quoi il faut penser en écrivant une requête**
 
-- **`players` est aux neuf dixièmes des adversaires** : 1 970 fiches sur
-  2 162 n'ont jamais porté le maillot, 192 l'ont porté. Toute requête sur les joueurs doit
+- **`players` est aux neuf dixièmes des adversaires** : 1 969 fiches sur
+  2 161 n'ont jamais porté le maillot, 192 l'ont porté. Toute requête sur les joueurs doit
   filtrer `isOpponent: false`, sinon le résultat est faux. Les fiches
   affichent séparément « Matchs avec l'USAP » et « Matchs contre l'USAP », et
   les statistiques ne comptent que les premiers ; le tableau « contre » ne
@@ -1034,8 +1034,9 @@ feuille officielle écrit : `audit-opponent-lineups.ts` le lit conforme et se
 tait, `delete-orphan-players.ts` aussi, la fiche portant un vrai match. D'où
 `detect-duplicate-players.ts`, qui cherche les doublons pour eux-mêmes plutôt
 que d'attendre qu'un nom coince sur autre chose. Son premier passage a sorti
-**25 paires** que rien ne signalait, **toutes arbitrées et fusionnées le
-30 août 2026** — 24 fusions, la table passant de 2 186 fiches à 2 162, dont
+**42 paires** que rien ne signalait — 25 en CERTAIN et FORT, 17 en À VOIR —,
+**toutes arbitrées le 30 août 2026** : 25 fusions, la table passant de 2 186
+fiches à 2 161, dont
 six doublons d'un joueur de l'USAP lui-même : Alivereti Duguivalu, Siosiua
 Halanukonuka, Alistair Crossdale, Eddie Sawailau, Maafu Fia, Brad Shields.
 
@@ -1057,10 +1058,17 @@ souvent au même dossard. « Irae » a six feuilles à Clermont dont le même n�
 « Ioane » en a une. Rattaché à Irae, comme « Maxime » Barlot l'avait été à
 Gaëtan.
 
-Le lot À VOIR, lui, est bien du bruit assumé et reste ouvert : Julien et
-Guillaume Marchand, Jack et Tom Willis, les frères Gray sont des hommes
-distincts. Il est désactivé par défaut, et ses 17 paires n'ont pas été
-vérifiées une à une.
+**Le lot À VOIR est soldé lui aussi**, et il n'était pas que du bruit : sur
+ses 17 paires, seize étaient bien deux hommes — chaque prénom confirmé par sa
+propre feuille, souvent deux frères, Jonathan et Richie Gray, Jack et Tom
+Willis, Jules et Clovis Le Bail. Elles sont passées dans la table `DISTINCTS`
+du détecteur, qui ne les reproposera plus. **La dix-septième était un vrai
+doublon** que le niveau FORT ne pouvait pas voir, les clubs différant :
+Elliott / Elliot Stooke, une lettre d'écart, Bristol en 2022 puis Montpellier
+en 2023 — et les deux sources, EPCR et LNR, écrivent « Elliott ».
+
+`detect-duplicate-players.ts` rend désormais **CERTAIN 0, FORT 0, À VOIR 0**.
+C'est l'état attendu, et tout écart nouveau se verra.
 
 **Une règle qui vaut pour tout ce qui précède** : devant un nom qui ne
 s'apparie pas, **soupçonner la base avant la source** — et devant un prénom

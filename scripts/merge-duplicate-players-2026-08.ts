@@ -1,5 +1,5 @@
 /**
- * Les vingt-quatre fusions du 30 août 2026, avec leur démonstration.
+ * Les vingt-cinq fusions du 30 août 2026, avec leur démonstration.
  *
  * **Pourquoi ce fichier existe.** Ces fusions ont été passées une à une par
  * `merge-players.ts`, en ligne de commande. Rien n'en serait resté dans le
@@ -10,9 +10,12 @@
  * accompagnée du nom que la source officielle écrit.
  *
  * **D'où venaient ces paires.** De `detect-duplicate-players.ts`, dont c'était
- * le premier passage : 4 en CERTAIN, 21 en FORT, sur 2 186 fiches. Aucune
- * n'avait été trouvée par les contrôles existants — un doublon porte le nom de
- * la feuille officielle, et `audit-opponent-lineups.ts` le lit conforme.
+ * le premier passage : 4 en CERTAIN, 21 en FORT et 17 en À VOIR, sur 2 186
+ * fiches. Aucune n'avait été trouvée par les contrôles existants — un doublon
+ * porte le nom de la feuille officielle, et `audit-opponent-lineups.ts` le lit
+ * conforme. Le lot À VOIR n'a rendu qu'un seul doublon, Stooke, en queue de
+ * liste ; ses seize autres paires étaient bien deux hommes, et sont passées
+ * dans la table `DISTINCTS` du détecteur.
  *
  * **Le test qui a tranché**, et il est mécanique : lire la feuille officielle
  * de chaque match de la fiche la moins fournie, et compter combien d'hommes y
@@ -144,6 +147,12 @@ const LOT: (Fusion & { label: string; preuve: string })[] = [
     keepId: "cmt8dty0d005j41kzex71lwfo", dropId: "cmmulr1z7001f1umwop0zws0a",
     nom: { firstName: "Conrad", lastName: "van Vuuren" },
     preuve: "EPCR, Lions 2026-01-17 n°18 « Conrad van Vuuren »" },
+  // Venue du lot À VOIR, que le niveau FORT avait manquée : les clubs
+  // diffèrent, Bristol en 2022 puis Montpellier en 2023. Une lettre d'écart.
+  { label: "Elliott Stooke ← Elliot Stooke",
+    keepId: "cmt8dt5zx000g41kzqy5m9iqk", dropId: "cmt8fic1n002r878pz0t8j4tv",
+    nom: { firstName: "Elliott", lastName: "Stooke" },
+    preuve: "les DEUX sources écrivent « Elliott » : Montpellier 2023-03-25 n°18 (LNR) et Bristol 2022-12-09 n°19 (EPCR)" },
 ];
 
 async function main() {
