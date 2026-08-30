@@ -266,8 +266,8 @@ confrontations avec l'USAP, et de gérer les joueurs passés par les deux camps
   Vuidravuwalu) ou prénom d'usage sans lettre commune avec l'état civil
   (« Paddy » pour Patrick, « Richie » pour Richard). L'abréviation ordinaire
   n'a pas besoin de la table, le préfixe suffit.
-- `players` contient donc majoritairement des adversaires : 2 042 fiches ont
-  joué **contre** l'USAP, 198 sous son maillot — 65 des deux côtés. C'est
+- `players` contient donc majoritairement des adversaires : 2 024 fiches ont
+  joué **contre** l'USAP, 192 sous son maillot — 65 des deux côtés. C'est
   normal. Les pages de liste filtrent déjà sur `isOpponent: false`.
 - **Un import qui cherche sur le nom exact fabrique des doublons à chaque
   passage.** C'est arrivé pour de bon : un script relancé après une fusion a
@@ -866,8 +866,8 @@ d'écrire les agrégats s'ils s'en écartent.
 
 **Ce à quoi il faut penser en écrivant une requête**
 
-- **`players` est aux neuf dixièmes des adversaires** : 1 988 fiches sur
-  2 186 n'ont jamais porté le maillot, 198 l'ont porté. Toute requête sur les joueurs doit
+- **`players` est aux neuf dixièmes des adversaires** : 1 970 fiches sur
+  2 162 n'ont jamais porté le maillot, 192 l'ont porté. Toute requête sur les joueurs doit
   filtrer `isOpponent: false`, sinon le résultat est faux. Les fiches
   affichent séparément « Matchs avec l'USAP » et « Matchs contre l'USAP », et
   les statistiques ne comptent que les premiers ; le tableau « contre » ne
@@ -1033,11 +1033,33 @@ feuille officielle écrit : `audit-opponent-lineups.ts` le lit conforme et se
 tait, `delete-orphan-players.ts` aussi, la fiche portant un vrai match. D'où
 `detect-duplicate-players.ts`, qui cherche les doublons pour eux-mêmes plutôt
 que d'attendre qu'un nom coince sur autre chose. Son premier passage a sorti
-**25 paires** que rien ne signalait — Alistair / Ali Crossdale, Will /
-William Skelton, Etuale Manusamoa / Manu Tuilagi, Conraad / Conrad van
-Vuuren… —, toutes en attente d'arbitrage feuille en main. Le lot À VOIR, lui,
-est bien du bruit assumé : Julien et Guillaume Marchand, Jack et Tom Willis,
-les frères Gray sont des hommes distincts.
+**25 paires** que rien ne signalait, **toutes arbitrées et fusionnées le
+30 août 2026** — 24 fusions, la table passant de 2 186 fiches à 2 162, dont
+six doublons d'un joueur de l'USAP lui-même : Alivereti Duguivalu, Siosiua
+Halanukonuka, Alistair Crossdale, Eddie Sawailau, Maafu Fia, Brad Shields.
+
+**Le test qui a tranché, et il est mécanique** : lire la feuille officielle de
+chaque match de la fiche la moins fournie, et compter **combien d'hommes y
+portent ce patronyme**. Un seul à chaque fois, sur les vingt-trois paires
+lisibles : un homme, deux fiches. Le nom que la source écrit départage
+ensuite — « Siosiaia Ma'afu Fia » pour Maafu Fia, « Alexander James Moon »
+pour Alex Moon, « Etuale Manusamoa Tuilagi » pour Manu Tuilagi. La fiche la
+mieux fournie est conservée et porte le nom d'usage.
+
+**Le seul cas sans source : les trois Simone de Clermont.** « Irae Vincynt
+Simone » et « Irae Simone » se confirment par les feuilles. Mais « Ioane
+Simone » ne paraît que sur celle du 7 janvier 2023, l'une des neuf de
+2022-2023 que la LNR ne publie pas — donc une composition devinée. Tranché
+par la méthode du projet, pas par une source : un prénom inventé ne paraît que
+sur cette feuille-là, quand celui de la source a une carrière au même club et
+souvent au même dossard. « Irae » a six feuilles à Clermont dont le même n°12,
+« Ioane » en a une. Rattaché à Irae, comme « Maxime » Barlot l'avait été à
+Gaëtan.
+
+Le lot À VOIR, lui, est bien du bruit assumé et reste ouvert : Julien et
+Guillaume Marchand, Jack et Tom Willis, les frères Gray sont des hommes
+distincts. Il est désactivé par défaut, et ses 17 paires n'ont pas été
+vérifiées une à une.
 
 **Une règle qui vaut pour tout ce qui précède** : devant un nom qui ne
 s'apparie pas, **soupçonner la base avant la source** — et devant un prénom
