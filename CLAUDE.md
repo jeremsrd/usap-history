@@ -552,8 +552,8 @@ de son index les fiches qu'il aurait absorbées).
 Le code réutilisable va dans `scripts/lib/` : `lnr.ts` pour les feuilles de la
 LNR, `epcr.ts` pour le flux des coupes d'Europe, `noms.ts` pour le
 rapprochement des noms entre une source et la base, `joueurs.ts` pour
-retrouver ou créer une fiche à partir d'une feuille officielle, et
-`arbitres.ts` pour
+retrouver ou créer une fiche à partir d'une feuille officielle, `fusion.ts`
+pour l'absorption d'une fiche par une autre, et `arbitres.ts` pour
 celui des arbitres — plus strict, puisqu'il exige le nom de famille : le corps
 arbitral français aligne assez d'Adrien pour qu'un rapprochement au prénom
 confonde Adrien Marbot et Adrien Descottes. Ce dernier porte une table de **noms d'usage** — deux patronymes sans
@@ -584,8 +584,9 @@ doublons.
 | `normalize-opponent-players.ts` | rattache les anciennes lignes `opponentPlayerName` à un vrai `Player` |
 | `detect-duplicate-players.ts` | **cherche les fiches en double**, lecture seule : nom complet identique (CERTAIN), ou même patronyme + même club + même dossard ou poste, jamais sur la même feuille (FORT), ou même poste et clubs différents (`--tout`, À VOIR). Ne fusionne ni ne propose rien ; sa table `DISTINCTS` retient les paires déjà arbitrées comme étant deux hommes. **À relancer après tout import et après toute fusion** |
 | `merge-duplicate-players-2026.ts` | fusion de doublons, paires listées en dur et vérifiées à la main |
+| `merge-duplicate-players-2026-08.ts` | **l'attestation des 24 fusions du 30 août 2026** : le lot en dur, chaque ligne accompagnée du nom que la source officielle écrit. Déjà appliqué, donc sans effet ; il ne vaut que par ce qu'il consigne, et pour rejouer le lot sur une base repartie de zéro |
 | `merge-opponents.ts` | fusionne deux fiches de club (`--keep`, `--drop`, `--nom`) ; repointe matchs, anciens noms et clubs de carrière, et fait hériter la fiche conservée des champs qu'elle n'avait pas |
-| `merge-players.ts` | fusionne deux fiches désignées par leur identifiant (`--keep`, `--drop`, `--nom`) ; ne cherche rien de lui-même, refuse la fusion si les deux figurent sur un même match |
+| `merge-players.ts` | fusionne deux fiches désignées par leur identifiant (`--keep`, `--drop`, `--nom`) ; ne cherche rien de lui-même, refuse la fusion si les deux figurent sur un même match. Simple ligne de commande au-dessus de `lib/fusion.ts` |
 | `rename-player.ts` | renomme une fiche, slug compris — un slug refait à la main sans le CUID rend la fiche introuvable |
 | `reassign-match-player.ts` | change le joueur porté par un dossard sur une feuille, quand la base a mis quelqu'un d'autre et que les deux noms se ressemblent trop pour que l'audit s'en aperçoive — **le seul instrument** pour un prénom faux sous un patronyme juste, que `fix-opponent-lineup.ts --identites` ne voit pas ; il repointe aussi ce que la chronologie du match attribuait à l'ancien occupant |
 | `delete-orphan-players.ts` | supprime les fiches vides de bout en bout — aucune feuille, aucun événement, aucune donnée personnelle, et pas `isActive` ; les figures historiques et les recrues à venir sont ainsi protégées |
