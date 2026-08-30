@@ -159,6 +159,22 @@ export async function chercherJoueur(
       (j) => motsOrphelins(`${j.firstName} ${j.lastName}`, nomCherche).length === 0,
     );
     if (couvertes.length === 1) return couvertes[0].id;
+    // Aucune fiche couverte : le nom officiel ne contient le prénom d'aucune
+    // des candidates, donc aucune ne le désigne. C'est un troisième homme, pas
+    // une ambiguïté à trancher — « Jakobus Christo Janse Van Rensburg »,
+    // pilier de Grenoble en 2018-2019, tombait ainsi entre Röhan le centre et
+    // Nicolaas le troisième ligne, deux Sud-Africains qui ne sont ni lui ni
+    // l'un l'autre. On prévient et on rend `null` : l'appelant crée la fiche.
+    // Le rejet ne vaut que pour cette situation-là ; deux fiches également
+    // couvertes par le nom officiel restent une ambiguïté, et lèvent.
+    if (couvertes.length === 0) {
+      journal(
+        `    [inconnu] « ${nomCherche} » ne désigne aucune des fiches proches ` +
+          `(${candidats.map((c) => `${c.firstName} ${c.lastName}`).join(", ")}) — ` +
+          "fiche à créer",
+      );
+      return null;
+    }
     throw new Error(
       `${nomCherche} : ${candidats.length} fiches candidates ` +
         `(${candidats.map((c) => `${c.firstName} ${c.lastName}`).join(", ")}) — à arbitrer`,

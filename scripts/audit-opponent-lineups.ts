@@ -18,7 +18,9 @@
  *   ÉCRITURE    la base porte un mot que la feuille officielle ignore —
  *               « Bill » pour Brandon Nansen, « Théo » pour Thibaut Martel.
  *               Un nom simplement plus court (« Levani Botia » pour « Levani
- *               Botia Veivuke ») ne compte pas : c'est une variante d'écriture
+ *               Botia Veivuke ») ne compte pas : c'est une variante d'écriture.
+ *               Les variantes d'affichage déjà arbitrées, elles, sont tues —
+ *               voir `VARIANTES_DAFFICHAGE` plus bas
  *   TITULAIRE   titulaire d'un côté, remplaçant de l'autre
  *   CAPITAINE   capitaine non signalé en base
  *
@@ -33,6 +35,10 @@
  *   npx tsx scripts/audit-opponent-lineups.ts                  # toutes les saisons
  *   npx tsx scripts/audit-opponent-lineups.ts 2023-2024        # une seule
  *   npx tsx scripts/audit-opponent-lineups.ts --graves         # MANQUANT et EN TROP
+ *   npx tsx scripts/audit-opponent-lineups.ts --variantes      # + les variantes tues
+ *
+ * **Zéro anomalie est l'état attendu**, et c'est tout l'intérêt de la table de
+ * variantes : le total redevient un signal, tout écart nouveau se remarque.
  *
  * Ne couvre que ce que la LNR publie : Top 14 et barrages d'accession. Les
  * coupes d'Europe relèvent de l'EPCR.
@@ -40,13 +46,71 @@
 
 import { PrismaClient } from "@prisma/client";
 import { chercherFeuille, lireCompositions, type LnrTitulaire } from "./lib/lnr";
-import { meilleurCandidat, motsOrphelins } from "./lib/noms";
+import { meilleurCandidat, motsOrphelins, normalize } from "./lib/noms";
 
 const prisma = new PrismaClient();
 
 const ARGS = process.argv.slice(2);
 const SAISON_DEMANDEE = ARGS.find((a) => /^\d{4}-\d{4}$/.test(a));
 const GRAVES_SEULEMENT = ARGS.includes("--graves");
+const VARIANTES_VISIBLES = ARGS.includes("--variantes");
+
+/**
+ * Variantes d'affichage vérifiées à la main : la base porte le nom d'usage,
+ * la feuille officielle l'état civil, et ce sont bien deux écritures du même
+ * homme.
+ *
+ * **Pourquoi une table propre à l'audit**, et non deux lignes dans
+ * `NOMS_DUSAGE` de `lib/noms.ts` : cette table-là nourrit `memeMot`, dont
+ * dépendent `joueurs.ts` pour créer ou retrouver une fiche,
+ * `seed-opponent-sheet.ts` pour apparier une composition et `sync-effectif.ts`.
+ * Y déclarer « tom = thomas », « joe = joseph » ou « nick = nicholas », c'est
+ * rendre équivalents des prénoms parmi les plus répandus du rugby et rouvrir
+ * l'accident Kane Douglas / Wesley Douglas. Ici on ne rapproche pas deux
+ * **mots**, on reconnaît deux **noms complets** appariés : « Tom Staniforth »
+ * ne vaut que pour « Thomas Staniforth », et aucun autre Tom ne s'en trouve
+ * rapproché d'aucun autre Thomas. L'arbitrage d'identité n'est pas touché.
+ *
+ * **Pourquoi elle est nécessaire.** Sans elle le compteur d'ÉCRITURE n'est
+ * plus un signal : la fusion des dix doublons du 30 août 2026 l'a fait passer
+ * de 21 à 31, non parce que la base se dégradait, mais parce qu'un homme
+ * réuni sous son nom d'usage diverge désormais de la LNR sur chacune de ses
+ * feuilles. Un audit dont on apprend à ignorer le total ne garde plus rien —
+ * c'est ainsi que 22 faux hommes ont vécu en ÉCRITURE jusqu'au 30 août.
+ *
+ * **Ce qu'on affirme en y ajoutant une ligne** : que ces deux noms désignent
+ * la même personne, feuille officielle sous les yeux. Rien n'est deviné, et
+ * rien n'est caché : le total des variantes tues figure au récapitulatif, et
+ * `--variantes` les affiche une à une.
+ */
+const VARIANTES_DAFFICHAGE: [base: string, feuille: string][] = [
+  // Prénom d'usage en base, état civil sur la feuille.
+  ["Tom Staniforth", "Thomas Staniforth"],
+  ["Tom Willis", "Thomas Daniel Willis"],
+  ["Joe Powell", "Joseph Patrick Powell"],
+  ["Harry Plummer", "Harrison Plummer"],
+  ["Sammy Arnold", "Samuel Arnold"],
+  ["Billy Vunipola", "Viliami Vunipola"],
+  ["Cobus Reinach", "Jacobus Meyer Reinach"],
+  ["Nacho Brex", "Juan Ignacio Brex"],
+  ["Nick Champion de Crespigny", "Richard Nicholas Champion De Crespigny"],
+  // Le prénom d'usage reprend la fin du patronyme, que la feuille répète.
+  ["Tolu Latu", "Latu Silatolu Latu"],
+  // La LNR ampute l'apostrophe et coupe le nom ailleurs.
+  ["Marvin O'Connor", "Marvin O Connor"],
+  ["Ma'a Nonu", "Ma A Allan Nonu"],
+  // Orthographe : la feuille perd le « h ».
+  ["Sikhumbuzo Notshe", "Sikumbuzo Notshe"],
+];
+
+const VARIANTES = new Set(
+  VARIANTES_DAFFICHAGE.map(([base, feuille]) => `${normalize(base)}|${normalize(feuille)}`),
+);
+
+/** Ce couple de noms est-il une variante d'affichage déjà arbitrée ? */
+function varianteConnue(nom: string, officielNom: string): boolean {
+  return VARIANTES.has(`${normalize(nom)}|${normalize(officielNom)}`);
+}
 
 type Gravite =
   | "MANQUANT"
@@ -64,10 +128,16 @@ interface Anomalie {
   detail: string;
 }
 
+/** Anomalies retenues, et variantes d'affichage reconnues puis tues. */
+interface Bilan {
+  anomalies: Anomalie[];
+  variantes: string[];
+}
+
 async function auditerMatch(
   matchId: string,
   officielle: LnrTitulaire[],
-): Promise<Anomalie[]> {
+): Promise<Bilan> {
   const enBase = await prisma.matchPlayer.findMany({
     where: { matchId, isOpponent: true },
     select: {
@@ -79,6 +149,7 @@ async function auditerMatch(
   });
 
   const anomalies: Anomalie[] = [];
+  const variantes: string[] = [];
 
   /**
    * Les joueurs sont d'abord appariés sur leur identité, pas sur leur numéro.
@@ -126,11 +197,17 @@ async function auditerMatch(
     }
     const orphelins = motsOrphelins(nom, officielNom);
     if (orphelins.length > 0) {
-      anomalies.push({
-        gravite: "ÉCRITURE",
-        numero: officiel.numero,
-        detail: `base « ${nom} » — feuille « ${officielNom} »`,
-      });
+      // Une variante déjà arbitrée n'est pas une anomalie, mais elle reste
+      // comptée : une table qui grossit sans qu'on la voie ne vaut rien.
+      if (varianteConnue(nom, officielNom)) {
+        variantes.push(`n°${String(officiel.numero).padStart(2)} « ${nom} » / « ${officielNom} »`);
+      } else {
+        anomalies.push({
+          gravite: "ÉCRITURE",
+          numero: officiel.numero,
+          detail: `base « ${nom} » — feuille « ${officielNom} »`,
+        });
+      }
     }
     if (ligne.isStarter !== officiel.isStarter) {
       anomalies.push({
@@ -156,7 +233,7 @@ async function auditerMatch(
     });
   }
 
-  return anomalies.sort((a, b) => a.numero - b.numero);
+  return { anomalies: anomalies.sort((a, b) => a.numero - b.numero), variantes };
 }
 
 async function main() {
@@ -179,6 +256,7 @@ async function main() {
   const horsPerimetre: string[] = [];
   const illisibles: string[] = [];
   const parGravite = new Map<Gravite, number>();
+  const variantesTues: string[] = [];
 
   for (const match of matchs) {
     const jour = match.date.toISOString().slice(0, 10);
@@ -213,7 +291,7 @@ async function main() {
     }
 
     examines++;
-    const anomalies = await auditerMatch(match.id, officielle);
+    const { anomalies, variantes } = await auditerMatch(match.id, officielle);
     const retenues = GRAVES_SEULEMENT
       ? anomalies.filter((a) => GRAVES.includes(a.gravite))
       : anomalies;
@@ -222,6 +300,7 @@ async function main() {
     for (const a of anomalies) {
       parGravite.set(a.gravite, (parGravite.get(a.gravite) ?? 0) + 1);
     }
+    for (const v of variantes) variantesTues.push(`${etiquette} ${v}`);
     if (retenues.length === 0) continue;
 
     console.log(`${etiquette} — ${retenues.length} anomalie(s)`);
@@ -235,6 +314,13 @@ async function main() {
   );
   for (const [gravite, nombre] of [...parGravite].sort((a, b) => b[1] - a[1])) {
     console.log(`  ${gravite.padEnd(9)} ${nombre}`);
+  }
+  if (variantesTues.length > 0) {
+    console.log(
+      `  ${"variantes".padEnd(9)} ${variantesTues.length} d'affichage déjà arbitrée(s), tue(s)` +
+        `${VARIANTES_VISIBLES ? " :" : " — « --variantes » pour les voir"}`,
+    );
+    if (VARIANTES_VISIBLES) for (const v of variantesTues) console.log(`      ${v}`);
   }
   if (illisibles.length > 0) {
     console.log(`\n${illisibles.length} feuille(s) non lue(s) :`);

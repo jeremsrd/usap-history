@@ -17,6 +17,14 @@
  * poids. Une fiche qui porte ne serait-ce qu'une ligne de biographie est
  * laissée en place.
  *
+ * **Et `isActive` protège à lui seul.** Une recrue entre en base avant son
+ * premier match : elle n'a alors ni feuille, ni chronologie, ni rien de
+ * personnel, et rien ne la distinguait d'une coquille. Les six recrues de
+ * 2026-2027 figuraient ainsi parmi les fiches à supprimer, le 30 août 2026,
+ * alors que CLAUDE.md les donnait pour protégées — elles ne l'étaient pas.
+ * Une fiche déclarée dans l'effectif professionnel n'est pas un déchet
+ * d'import : elle est écartée d'office.
+ *
  * Usage :
  *   npx tsx scripts/delete-orphan-players.ts --dry
  *   npx tsx scripts/delete-orphan-players.ts
@@ -41,6 +49,9 @@ async function main() {
       usapStints: { none: {} },
       internationalCaps: { none: {} },
       awards: { none: {} },
+      // Une recrue entrée avant son premier match n'a rien d'autre que ce
+      // drapeau : il suffit à la mettre hors d'atteinte.
+      isActive: false,
       birthDate: null,
       biography: null,
       photoUrl: null,

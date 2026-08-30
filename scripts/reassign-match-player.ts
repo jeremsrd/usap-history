@@ -119,6 +119,26 @@ async function main() {
   }
   await prisma.matchPlayer.update({ where: { id: ligne.id }, data: { playerId } });
   console.log("  réattribué.");
+
+  // Ce que la chronologie du **même match** attribuait à l'ancien occupant
+  // revient au nouveau : c'est le dossard qui a agi, pas la fiche. Sans cela
+  // l'ancienne fiche reste rattachée au match qu'elle vient de quitter, et
+  // `delete-orphan-players.ts` la garde au motif qu'elle porte un événement —
+  // « Guillhem Marchand », sorti à la 45ᵉ pour Lyon le 21 mars 2026, a tenu
+  // ainsi après que son dossard fut rendu à Guillaume Marchand.
+  const ancien = ligne.player?.id;
+  if (ancien && ancien !== playerId) {
+    const auteur = await prisma.matchEvent.updateMany({
+      where: { matchId: match.id, playerId: ancien },
+      data: { playerId },
+    });
+    const associe = await prisma.matchEvent.updateMany({
+      where: { matchId: match.id, relatedPlayerId: ancien },
+      data: { relatedPlayerId: playerId },
+    });
+    const total = auteur.count + associe.count;
+    if (total > 0) console.log(`  ${total} événement(s) de chronologie repointé(s).`);
+  }
 }
 
 main()

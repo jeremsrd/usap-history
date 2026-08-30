@@ -14,6 +14,16 @@
  * Sources : top14.lnr.fr (compositions), itsrugby.fr (marqueurs),
  *   allrugby.com (arbitre Pierre Brousset), francebleu.fr (résumé)
  *
+ * CORRIGÉ LE 30 AOÛT 2026. Le banc d'Oyonnax portait six prénoms inventés —
+ * « Tom » Gélédan pour Benjamin, « Pierre » Bordenave pour Adrien, « Stéphane »
+ * Lebas pour Victor, « Sione » Mafi pour Sitiveni, « Amine » El Khattabi pour
+ * Ilan, « Beka » Mirtskhulava pour Irakli. Les quinze titulaires venaient bien
+ * de la LNR ; le banc, non, malgré ce que dit la ligne « Sources » ci-dessus.
+ * Six fiches de joueurs qui n'ont jamais existé en sont nées, et rien ne les a
+ * vues pendant deux ans : l'audit range l'écart en ÉCRITURE, et
+ * `fix-opponent-lineup.ts --identites` tient deux noms pour le même homme dès
+ * que le patronyme concorde. Les noms sont désormais ceux de la feuille.
+ *
  * Usage : npx tsx scripts/update-match-2023-2024-j19.ts
  */
 
@@ -68,14 +78,14 @@ const OPP_SQUAD = [
   { num: 13, name: "Chris Farrell", position: Position.CENTRE, isStarter: true },
   { num: 14, name: "Gavin Stark", position: Position.AILIER, isStarter: true },
   { num: 15, name: "Justin Bouraux", position: Position.ARRIERE, isStarter: true },
-  { num: 16, name: "Tom Gélédan", position: Position.TALONNEUR, isStarter: false },
-  { num: 17, name: "Pierre Bordenave", position: Position.PILIER_GAUCHE, isStarter: false },
-  { num: 18, name: "Stéphane Lebas", position: Position.DEUXIEME_LIGNE, isStarter: false },
-  { num: 19, name: "Sione Mafi", position: Position.TROISIEME_LIGNE_AILE, isStarter: false },
-  { num: 20, name: "Amine El Khattabi", position: Position.DEMI_DE_MELEE, isStarter: false },
+  { num: 16, name: "Benjamin Geledan", position: Position.TALONNEUR, isStarter: false },
+  { num: 17, name: "Adrien Bordenave", position: Position.PILIER_GAUCHE, isStarter: false },
+  { num: 18, name: "Victor Lebas", position: Position.DEUXIEME_LIGNE, isStarter: false },
+  { num: 19, name: "Sitiveni Mafi", position: Position.TROISIEME_LIGNE_AILE, isStarter: false },
+  { num: 20, name: "Ilan El Khattabi", position: Position.DEMI_DE_MELEE, isStarter: false },
   { num: 21, name: "Lucas Mensa", position: Position.CENTRE, isStarter: false },
   { num: 22, name: "Darren Sweetnam", position: Position.AILIER, isStarter: false },
-  { num: 23, name: "Beka Mirtskhulava", position: Position.PILIER_DROIT, isStarter: false },
+  { num: 23, name: "Irakli Mirtskhulava", position: Position.PILIER_DROIT, isStarter: false },
 ];
 
 // =============================================================================

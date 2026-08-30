@@ -44,14 +44,46 @@ export function mots(nom: string): string[] {
  * Noms d'usage : deux mots sans rien de commun qui désignent la même personne.
  *
  * Le seul cas qui ne relève ni de l'accent, ni de l'abréviation, ni de la
- * coupure — un joueur connu sous deux patronymes différents. La table est
- * **vérifiée à la main**, jamais devinée : y ajouter une paire, c'est affirmer
- * que ce sont deux noms d'un même homme.
+ * coupure — un patronyme de rechange, ou un prénom d'usage que rien ne relie
+ * à l'état civil. La table est **vérifiée à la main**, jamais devinée : y
+ * ajouter une paire, c'est affirmer que ce sont deux noms d'un même homme.
  *
  * Waisea Nayacalevu Vuidravuwalu : la LNR l'inscrit sous Vuidravuwalu, la base
  * le porte sous Nayacalevu, comme la presse française.
+ *
+ * Les deux paires de prénoms viennent de 2018-2019, où la base et la LNR se
+ * sont trouvées à nommer deux fois le même homme :
+ *   - « Paddy » / « Patrick » : l'ouvreur de l'USAP cette saison-là, que la
+ *     LNR inscrit « David Patrick JACKSON » et que la base porte, comme tout
+ *     le monde, sous Paddy Jackson ;
+ *   - « Richie » / « Richard » : le deuxième ligne écossais de Toulouse,
+ *     « Richard GRAY » sur la feuille du 25 mai 2019, Richie Gray en base
+ *     depuis ses deux feuilles avec Glasgow. La même paire a aussitôt révélé
+ *     un doublon voisin — Richie Arnold et Richard Tamanui Arnold, une seule
+ *     et même deuxième ligne de Toulouse, que la LNR inscrit toujours sous son
+ *     état civil ; fusionnés le 30 août 2026. Son jumeau Rory figure sur la
+ *     feuille du 5 février 2022 à côté de lui, et reste une fiche à part.
+ *
+ * N'y entrent que les paires dont dépend l'**arbitrage d'identité**. Une
+ * abréviation vraie se passe de la table, le préfixe suffisant : « Nafi »
+ * couvre « Nafitalai ». Mais attention à ne pas croire le préfixe plus large
+ * qu'il n'est — « Thomas » ne commence pas par « Tom », ni « Joseph » par
+ * « Joe », ni « Nicholas » par « Nick » : ces diminutifs-là ne sont **pas**
+ * couverts, et ce fichier a longtemps affirmé le contraire.
+ *
+ * Les y ajouter serait pourtant une faute : `memeMot` sert à `joueurs.ts`,
+ * `seed-opponent-sheet.ts` et `sync-effectif.ts`, et rendre équivalents des
+ * prénoms aussi répandus rouvrirait l'accident Kane Douglas / Wesley Douglas.
+ * Quand l'écart n'est qu'un **nom d'affichage** à reconnaître — ce que fait
+ * l'audit des compositions —, c'est `VARIANTES_DAFFICHAGE` de
+ * `audit-opponent-lineups.ts` qu'il faut compléter : elle apparie des noms
+ * complets deux à deux, sans toucher au rapprochement des mots.
  */
-const NOMS_DUSAGE: string[][] = [["nayacalevu", "vuidravuwalu"]];
+const NOMS_DUSAGE: string[][] = [
+  ["nayacalevu", "vuidravuwalu"],
+  ["paddy", "patrick"],
+  ["richie", "richard"],
+];
 
 /**
  * Un mot en vaut un autre s'il en est le début — « Nafi » pour « Nafitalai » —
@@ -68,20 +100,31 @@ export function motsOrphelins(nom: string, reference: string): string[] {
   return mots(nom).filter((mot) => !cibles.some((cible) => memeMot(mot, cible)));
 }
 
-/** Nombre de mots communs, et longueur du plus long d'entre eux. */
+/**
+ * Nombre de mots communs, et longueur du plus long d'entre eux.
+ *
+ * Un mot de `b` ne sert qu'une fois : sans cela, un nom court les attire tous.
+ * « Clement RIC », talonneur de Lyon, s'est ainsi retrouvé enregistré sous
+ * Ricky Riccitelli le 13 avril 2019 — « Ricky » et « Riccitelli » comptaient
+ * l'un et l'autre comme communs avec le seul « Ric », dont ils sont tous deux
+ * le prolongement, et les deux mots communs exigés étaient réunis par un seul
+ * mot de la feuille.
+ */
 export function proximite(
   a: string,
   b: string,
 ): { communs: number; plusLong: number } {
   const x = mots(a);
   const y = mots(b);
+  const pris = new Set<number>();
   let communs = 0;
   let plusLong = 0;
   for (const mot of x) {
-    const trouve = y.find((autre) => memeMot(mot, autre));
-    if (!trouve) continue;
+    const index = y.findIndex((autre, i) => !pris.has(i) && memeMot(mot, autre));
+    if (index === -1) continue;
+    pris.add(index);
     communs++;
-    plusLong = Math.max(plusLong, Math.min(mot.length, trouve.length));
+    plusLong = Math.max(plusLong, Math.min(mot.length, y[index].length));
   }
   return { communs, plusLong };
 }

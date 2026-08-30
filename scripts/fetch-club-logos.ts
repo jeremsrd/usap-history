@@ -103,7 +103,9 @@ const LOGO_USAP = join(process.cwd(), "public", "images", "usap", "logo.png");
 
 /** Pages de calendrier où la LNR expose les logos de tous les clubs engagés. */
 const PAGES_LNR = [
-  ...["2021-2022", "2022-2023", "2023-2024", "2024-2025", "2025-2026", "2026-2027"].map(
+  // 2018-2019 est là pour Agen, seul club de cette saison-là que les
+  // calendriers plus récents ne montrent plus.
+  ...["2018-2019", "2021-2022", "2022-2023", "2023-2024", "2024-2025", "2025-2026", "2026-2027"].map(
     (s) => `https://top14.lnr.fr/calendrier-et-resultats/${s}/j1`,
   ),
   "https://top14.lnr.fr/calendrier-et-resultats/2021-2022/match-daccession",

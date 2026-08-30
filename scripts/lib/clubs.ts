@@ -10,6 +10,7 @@
  * À compléter au fil des saisons reprises, avec les clubs que l'USAP croise.
  */
 export const CLUBS_LNR: Record<string, string> = {
+  agen: "Agen",
   bayonne: "Bayonne",
   biarritz: "Biarritz",
   "bordeaux-begles": "UBB",

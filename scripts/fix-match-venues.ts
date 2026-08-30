@@ -69,6 +69,12 @@ const DOUBLONS = ["Stade du Hameau", "Matmut Stadium de Gerland"];
  * comme tel. Réserve pour Rouen : ces deux sources décrivent son stade
  * d'aujourd'hui, et rien n'a permis de vérifier qu'il y jouait déjà en
  * 2020-2021.
+ *
+ * Armandie, arrivé avec 2018-2019, tient le milieu : la LNR le nomme bien
+ * comme le stade du SU Agen, mais dans un article, pas dans une donnée — ni
+ * sa page de club ni ses feuilles de match ne portent de lieu. Même réserve
+ * que pour Rouen, donc : c'est le terrain d'aujourd'hui, et rien de lisible
+ * par machine ne dit qu'Agen y recevait déjà le 2 septembre 2018.
  */
 const MANQUANTS = [
   { nom: "Parc des Sports Aguiléra", ville: "Biarritz", club: "Biarritz" },
@@ -84,6 +90,7 @@ const MANQUANTS = [
   { nom: "Stade Georges Pompidou", ville: "Valence", club: "Valence-Romans" },
   { nom: "Stade Albert-Domec", ville: "Carcassonne", club: "Carcassonne" },
   { nom: "Stade Robert-Diochon", ville: "Le Petit-Quevilly", club: "Rouen" },
+  { nom: "Stade Armandie", ville: "Agen", club: "Agen" },
 ];
 
 async function fusionnerDoublons() {

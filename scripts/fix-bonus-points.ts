@@ -41,8 +41,12 @@ const DRY_RUN = process.argv.includes("--dry");
  *
  * 2019-2020 s'arrête à la 23ᵉ journée : le Covid a interrompu le championnat
  * en mars 2020, et le classement de la LNR est celui de cet arrêt.
+ *
+ * 2018-2019 est la saison de la relégation : quatorzième et dernière, 12
+ * points, dont les quatre seuls bonus sont défensifs.
  */
 const OFFICIEL: Record<string, { bo: number; bd: number; pts: number }> = {
+  "2018-2019": { bo: 0, bd: 4, pts: 12 },
   "2019-2020": { bo: 8, bd: 4, pts: 76 },
   "2020-2021": { bo: 7, bd: 2, pts: 107 },
   "2023-2024": { bo: 5, bd: 1, pts: 58 },

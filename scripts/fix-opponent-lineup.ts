@@ -62,7 +62,15 @@ type MatchAvecContexte = Awaited<ReturnType<typeof chargerMatchs>>[number];
 async function chargerMatchs() {
   return prisma.match.findMany({
     where: DATE
-      ? { date: new Date(DATE) }
+      ? // Une rencontre porte l'heure du coup d'envoi : comparer sa date à
+        // minuit ne trouve rien, et le script annonçait « 0 match examiné »
+        // comme un succès. On prend la journée entière.
+        {
+          date: {
+            gte: new Date(`${DATE}T00:00:00Z`),
+            lt: new Date(`${DATE}T23:59:59Z`),
+          },
+        }
       : SAISON
         ? { season: { label: SAISON } }
         : {},

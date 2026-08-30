@@ -173,7 +173,8 @@ diffère.
 
 | Message | Cause | Geste |
 |---|---|---|
-| `N fiches candidates … à arbitrer` | doublon en base | inspecter les deux fiches, puis `merge-players.ts --keep= --drop= --dry` |
+| `N fiches candidates … à arbitrer` | doublon en base — deux fiches également couvertes par le nom officiel | inspecter les deux fiches, puis `merge-players.ts --keep= --drop= --dry` |
+| `[inconnu] … ne désigne aucune des fiches proches` | homonymes partiels, aucun n'est le bon | rien à faire : la fiche est créée, c'est un homme de plus |
 | `[homonyme] … laissé de côté` | deux personnes, même patronyme | vérifier la fiche citée ; si ce sont bien deux hommes, laisser créer |
 | `Compositions non publiées par la LNR` | archive muette | essayer `prod2.lnr.fr`, qui archive mieux ; en dernier recours, composition à la main recoupée avec les changements (cf. `seed-lineup-barrage-2022.ts`) |
 | `N joueurs sur la feuille, 22 au moins` | la LNR oublie un remplaçant | accepté tel quel si les quinze titulaires sont là |
@@ -221,9 +222,10 @@ confrontations avec l'USAP, et de gérer les joueurs passés par les deux camps
   `lastName equals` ne suffit pas — il rate « Guerois-Galisson » vs
   « Guerois Galisson », « Bécognée » vs « Becognee ». Construire un index en
   mémoire une fois, puis chercher dedans.
-- **Chercher sur toute la table demande deux garde-fous**, que
-  `scripts/lib/joueurs.ts` porte tous les deux. Ils ont chacun leur accident
-  fondateur, l'un et l'autre découverts en relisant une feuille reprise :
+- **Chercher sur toute la table demande trois garde-fous**, que
+  `scripts/lib/joueurs.ts` et `scripts/lib/noms.ts` portent tous les trois.
+  Ils ont chacun leur accident fondateur, tous découverts en relisant une
+  feuille reprise :
   - **le nom de famille seul ne suffit pas.** « Kane Douglas », deuxième ligne
     de La Rochelle et de l'UBB, s'est retrouvé ailier de Brive le 4 septembre
     2021 parce que la feuille annonçait « Wesley DOUGLAS » : un patronyme
@@ -234,22 +236,39 @@ confrontations avec l'USAP, et de gérer les joueurs passés par les deux camps
     de famille.** « Ratu Tevita KURIDRANI », centre de Biarritz, a été rattaché
     à Tevita Ratuva, deuxième ligne de Brive : « Ratu » est le début de
     « Ratuva », et le prénom faisait le second mot commun. Tout rapprochement
-    exige donc désormais un mot du **nom de famille**.
+    exige donc désormais un mot du **nom de famille** ;
+  - **deux mots communs doivent venir de deux mots distincts.** « Clement
+    RIC », talonneur de Lyon, a été enregistré sous Ricky Riccitelli le
+    13 avril 2019 : « Ricky » et « Riccitelli » sont l'un et l'autre le
+    prolongement de « Ric », si bien que les deux mots communs exigés étaient
+    réunis par **un seul** mot de la feuille. Un nom court attirait ainsi tous
+    les noms longs qui commencent comme lui. `proximite()` consomme désormais
+    chaque mot de la cible au plus une fois.
 
-  S'y ajoute une troisième précaution, née des noms sud-africains : **les
+  S'y ajoute une quatrième précaution, née des noms sud-africains : **les
   particules ne désignent personne.** `mots()` écarte déjà ce qui fait moins de
   trois lettres, mais « van » et « der » en font exactement trois — sans les
   écarter, « Van Der Mescht », « Van Der Westhuizen » et « Van Der Merwe » se
   valent tous, et trois hommes sans rapport deviennent candidats l'un pour
   l'autre. `joueurs.ts` porte la liste.
 
-  Dans les trois cas, à défaut de conclure, on crée une fiche après avoir
+  Dans tous les cas, à défaut de conclure, on crée une fiche après avoir
   prévenu. C'est délibéré : un doublon se repère et se fusionne, une identité
-  fausse ne se voit pas.
-- `players` contient donc majoritairement des adversaires : 1 246 sur 1 370,
-  quand 141 seulement ont porté le maillot catalan — 28 figurent des deux
-  côtés. C'est normal. Les pages de liste filtrent déjà sur
-  `isOpponent: false`.
+  fausse ne se voit pas. Cela vaut aussi quand **plusieurs** fiches se
+  ressemblent sans qu'aucune ne soit désignée par le nom officiel : on ne lève
+  plus, on prévient et on crée — « Jakobus Christo Janse Van Rensburg »,
+  pilier de Grenoble en 2018-2019, tombait entre Röhan le centre et Nicolaas
+  le troisième ligne, et n'est ni l'un ni l'autre. Deux fiches également
+  couvertes par le nom officiel restent, elles, une ambiguïté, et lèvent.
+
+  À l'inverse, deux écritures d'un même homme que rien ne rapproche relèvent
+  de la table `NOMS_DUSAGE` de `noms.ts` — patronyme de rechange (Nayacalevu /
+  Vuidravuwalu) ou prénom d'usage sans lettre commune avec l'état civil
+  (« Paddy » pour Patrick, « Richie » pour Richard). L'abréviation ordinaire
+  n'a pas besoin de la table, le préfixe suffit.
+- `players` contient donc majoritairement des adversaires : 2 042 fiches ont
+  joué **contre** l'USAP, 198 sous son maillot — 65 des deux côtés. C'est
+  normal. Les pages de liste filtrent déjà sur `isOpponent: false`.
 - **Un import qui cherche sur le nom exact fabrique des doublons à chaque
   passage.** C'est arrivé pour de bon : un script relancé après une fusion a
   recréé « Max Hicks » à côté de « Maxwell Hicks », « Matteo Le Corvec » à côté
@@ -486,6 +505,9 @@ la LNR ne donne pas : arbitre, affluence, mi-temps**. Les joueurs y portent un
 identifiant Opta, qu'on rattache à la composition **par le dossard** — aucun
 rapprochement de noms, donc aucune erreur d'identité possible.
 
+- **Le flux ne remonte pas avant 2020-2021.** Il ne rend rien sur 2019-2020 et
+  au-delà, et le site de l'EPCR n'offre plus que les saisons récentes : les
+  campagnes européennes antérieures n'ont, à ce jour, aucune source lisible.
 - **La clé d'API se lit dans `EPCR_API_KEY`**, à poser dans `.env` et **non**
   dans `.env.local`, que les scripts ne voient pas. Clé publique du front, sans
   rien de sensible ; elle est sortie du dépôt parce qu'un scanner de secrets la
@@ -564,11 +586,12 @@ doublons.
 | `merge-opponents.ts` | fusionne deux fiches de club (`--keep`, `--drop`, `--nom`) ; repointe matchs, anciens noms et clubs de carrière, et fait hériter la fiche conservée des champs qu'elle n'avait pas |
 | `merge-players.ts` | fusionne deux fiches désignées par leur identifiant (`--keep`, `--drop`, `--nom`) ; ne cherche rien de lui-même, refuse la fusion si les deux figurent sur un même match |
 | `rename-player.ts` | renomme une fiche, slug compris — un slug refait à la main sans le CUID rend la fiche introuvable |
-| `reassign-match-player.ts` | change le joueur porté par un dossard sur une feuille, quand la base a mis quelqu'un d'autre et que les deux noms se ressemblent trop pour que l'audit s'en aperçoive |
-| `delete-orphan-players.ts` | supprime les fiches vides de bout en bout — aucune feuille, aucun événement, aucune donnée personnelle ; les figures historiques sans match saisi sont ainsi protégées |
+| `reassign-match-player.ts` | change le joueur porté par un dossard sur une feuille, quand la base a mis quelqu'un d'autre et que les deux noms se ressemblent trop pour que l'audit s'en aperçoive — **le seul instrument** pour un prénom faux sous un patronyme juste, que `fix-opponent-lineup.ts --identites` ne voit pas ; il repointe aussi ce que la chronologie du match attribuait à l'ancien occupant |
+| `delete-orphan-players.ts` | supprime les fiches vides de bout en bout — aucune feuille, aucun événement, aucune donnée personnelle, et pas `isActive` ; les figures historiques et les recrues à venir sont ainsi protégées |
 | `close-season-2025-2026.ts` | modèle de clôture de saison, avec garde-fou sur le classement officiel |
 | `seed-opponent-sheet.ts` | **le script du chantier adverse** : reprend une saison entière depuis la LNR — réalisations, cartons et temps de jeu reconstitués à partir des changements. Prend la saison en argument (`2023-2024`), `--dry` pour simuler, `--detail` pour le relevé des écarts avec la base, `--match=AAAA-MM-JJ` pour n'en reprendre qu'un, `--usap` pour traiter **aussi le camp catalan** — il passe alors deux fois, l'adverse puis l'USAP |
 | `seed-lineup.ts` | crée les **deux compositions** d'un match depuis la LNR quand il n'en a aucune — dossards, titulaires, capitaine, poste déduit du numéro. Premier temps de la reprise d'une rencontre ancienne ; `--dry`, `--force` pour réécrire |
+| `seed-season-2018-2019.ts` | crée les 26 matchs de la saison de la relégation, la seule de Top 14 reprise en remontant ; aucune phase finale, l'USAP finit dernière et descend sans access match |
 | `seed-season-2019-2020.ts` | crée les 23 matchs de la saison arrêtée par le Covid — aucune phase finale, la LNR n'en publie pas |
 | `seed-season-2020-2021.ts` | crée les 32 matchs de la saison du titre de Pro D2, phases finales comprises ; refuse d'écrire les agrégats s'ils s'écartent du classement officiel de la LNR |
 | `seed-lineup-barrage-2022.ts` | la composition du barrage du 12 juin 2022, seule de la saison qu'aucune source ne publie : listes fournies à la main, recoupées avec les changements de la feuille officielle |
@@ -576,7 +599,7 @@ doublons.
 | `seed-calendrier-2026-2027.ts` | crée une saison et son calendrier de championnat **avant** qu'elle ne commence : date, heure, journée, adversaire, lieu, sans score ni résultat. Une relance met à jour les dates au fur et à mesure que la LNR les cale |
 | `seed-season-2021-2022.ts` | crée les rencontres d'une saison entière — date et heure, compétition, adversaire, lieu, score, réalisations, résultat, bonus, arbitre — puis les agrégats de saison. Premier jalon de la phase 4 |
 | `seed-cup-sheet.ts` | **le pendant pour les coupes d'Europe**, depuis l'EPCR : réalisations, cartons et temps de jeu des **deux camps**, plus l'arbitre, l'affluence et la mi-temps. Sans argument il reprend les dix-huit matchs européens ; `--dry`, `--detail`, `--match=AAAA-MM-JJ` comme le précédent |
-| `audit-opponent-lineups.ts` | confronte les compositions adverses aux feuilles officielles LNR ; lecture seule, à lancer sur une saison ou sur tout |
+| `audit-opponent-lineups.ts` | confronte les compositions adverses aux feuilles officielles LNR ; lecture seule, à lancer sur une saison ou sur tout. **Zéro anomalie est l'état attendu** ; les variantes d'affichage arbitrées sont tues par sa table `VARIANTES_DAFFICHAGE`, comptées au récapitulatif et listées par `--variantes` |
 | `fix-opponent-lineup.ts` | remet une composition en accord avec la feuille officielle — LNR pour le championnat, EPCR pour les coupes — (identités, dossards, titulaires, capitaine) ; `--usap` traite aussi le camp catalan |
 | `fetch-club-logos.ts` | rapatrie les logos officiels des clubs dans `public/images/logos/`, depuis les CDN de la LNR et de l'EPCR, et renseigne `Opponent.logoUrl` |
 | `fix-match-venues.ts` | met les stades en ordre : fusionne les doublons, crée les manquants, rattache chaque club à son terrain — déduit des déplacements déjà enregistrés — puis complète les matchs sans lieu |
@@ -744,7 +767,8 @@ Ce qui ne se déduit pas de la base, en revanche :
 
 **Ce que les sources ne publient pas.** La LNR ne donne ni affluence, ni score
 à la mi-temps, ni compte-rendu : les saisons qui n'ont qu'elle pour source —
-2021-2022, 2020-2021 et 2019-2020 — resteront vides sur ces trois colonnes,
+2021-2022, 2020-2021, 2019-2020 et 2018-2019 — resteront vides sur ces trois
+colonnes,
 sauf à trouver ailleurs. L'EPCR, lui, donne les trois, d'où les mi-temps et les
 affluences des matchs de coupe d'Europe. Les vidéos viennent de la chaîne
 YouTube « TOP 14 - Officiel », qui ne remonte pas au-delà de 2022-2023.
@@ -771,13 +795,14 @@ publie pas avant les premières feuilles.
 
 Par ordre de valeur.
 
-1. **Achever les deux saisons reprises.** 2021-2022 et 2020-2021 ont leurs
-   matchs, leurs compositions et leur chronologie ; il leur manque la clôture
-   éditoriale — entraîneur, président, bilan rédigé —, les affluences que la
-   LNR ne donne pas, et les mi-temps de 2020-2021. La marche à suivre pour
-   toute nouvelle saison est en tête de fichier, « Reprendre une saison ».
+1. **Achever les saisons reprises.** 2021-2022, 2020-2021, 2019-2020 et
+   2018-2019 ont leurs matchs, leurs compositions et leur chronologie ; il
+   leur manque la clôture éditoriale — entraîneur, président, bilan rédigé —,
+   les affluences que la LNR ne donne pas, et les mi-temps. La marche à suivre
+   pour toute nouvelle saison est en tête de fichier, « Reprendre une
+   saison ».
 
-   Trois anomalies connues de ces deux saisons, toutes assumées :
+   Quatre anomalies connues de ces saisons, toutes assumées :
    - **La Rochelle totalise 1 206 minutes le 30 octobre 2021.** Sa feuille se
      contredit — Victor Vito sort *définitivement* à la 25ᵉ sur protocole
      commotion, puis elle le fait sortir encore à la 35ᵉ et rentrer deux fois.
@@ -788,30 +813,44 @@ Par ordre de valeur.
      lue par machine** et ses numéros restent incertains (cf. l'en-tête de
      `seed-lineup-barrage-2022.ts`) ;
    - **« Matthieu Ugena » sur les feuilles pour « Mathieu » en base**,
-     variante d'écriture laissée telle quelle comme les 49 autres.
+     variante d'écriture laissée telle quelle comme les 42 autres ;
+   - **l'USAP totalise 1 183 minutes à Clermont le 4 mai 2019.** La feuille
+     sort Alivereti Duguivalu à la 17ᵉ sur protocole commotion et n'enregistre
+     jamais son retour, alors qu'elle fait « entrer » une seconde fois son
+     suppléant Lotima Faingaanuku à la 63ᵉ. Même raison qu'à La Rochelle : la
+     feuille est démontrablement fausse, la minute du retour ne l'est pas.
 
    Deux choses que la chaîne ne fait pas : la **mi-temps**, que la LNR ne
    publie pas — elle se déduirait du dernier fait avant la 40ᵉ, mais c'est une
    inférence —, et les **notes de retour en jeu**, écrites à la main.
 
-2. **Poursuivre la phase 4** en remontant. **2020-2021 et 2019-2020 sont
-   faites**, toutes deux en Pro D2 et toutes deux conformes au classement
-   officiel de la LNR — 107 points et le titre pour la première, 76 points et
-   la deuxième place pour la seconde, arrêtée à la 23ᵉ journée par le Covid.
-   Reste 2018-2019, saison de Top 14.
+2. **Poursuivre la phase 4** en remontant. **2020-2021, 2019-2020 et
+   2018-2019 sont faites**, toutes trois conformes au classement officiel de
+   la LNR — 107 points et le titre de Pro D2 pour la première, 76 points et la
+   deuxième place pour la deuxième, arrêtée à la 23ᵉ journée par le Covid,
+   12 points et la dernière place de Top 14 pour la troisième, reléguée
+   directement. Reste 2017-2018, saison de Pro D2 — celle du titre qui a
+   ramené l'USAP en Top 14.
 
    Les modèles : `seed-season-2019-2020.ts` pour une saison de deuxième
-   division sans phase finale, `seed-season-2020-2021.ts` quand il y en a une,
+   division sans phase finale, `seed-season-2018-2019.ts` pour une saison de
+   Top 14 sans phase finale, `seed-season-2020-2021.ts` quand il y en a une,
    `seed-season-2021-2022.ts` pour une saison avec coupe d'Europe.
-3. **Le fond** : affluences (37 matchs sur 157), photos et biographies (1
-   joueur sur 144), et 113 saisons sans aucun match.
 
-112 saisons sur 119 n'ont encore aucun match : c'est le chantier de la phase 4,
-menée en remontant le temps saison par saison. Deux sont faites. Le bilan de
-2021-2022 — 9V 0N 17D, 43 points, treizième — est calculé depuis les scores
-officiels mais n'a pas été confronté à un classement d'époque ; celui de
-2020-2021 l'a été, et le script refuse d'écrire ses agrégats s'ils s'en
-écartent.
+   **Attention aux coupes d'Europe d'avant 2020-2021 : il n'y a pas de
+   source.** Le flux de l'EPCR ne rend rien avant la saison 2020-2021, et son
+   site n'offre plus que les saisons récentes. La campagne européenne de
+   2018-2019 est donc restée hors base, et il en ira de même en remontant tant
+   qu'aucune source officielle ne les rouvre.
+3. **Le fond** : affluences (36 matchs sur 264), photos et biographies (1
+   joueur sur 198), et les saisons sans aucun match.
+
+Sur les 120 saisons en base, 10 seulement portent des matchs : c'est le
+chantier de la phase 4, mené en remontant le temps saison par saison. Le bilan
+de 2021-2022 — 9V 0N 17D, 43 points, treizième — est calculé depuis les scores
+officiels mais n'a pas été confronté à un classement d'époque ; ceux de
+2020-2021, 2019-2020 et 2018-2019 l'ont été, et leurs scripts refusent
+d'écrire les agrégats s'ils s'en écartent.
 
 ### Limites connues
 
@@ -826,8 +865,8 @@ officiels mais n'a pas été confronté à un classement d'époque ; celui de
 
 **Ce à quoi il faut penser en écrivant une requête**
 
-- **`players` est aux trois quarts des adversaires** : 1 738 sur 1 924 n'ont
-  jamais porté le maillot, 175 l'ont porté. Toute requête sur les joueurs doit
+- **`players` est aux neuf dixièmes des adversaires** : 1 988 fiches sur
+  2 186 n'ont jamais porté le maillot, 198 l'ont porté. Toute requête sur les joueurs doit
   filtrer `isOpponent: false`, sinon le résultat est faux. Les fiches
   affichent séparément « Matchs avec l'USAP » et « Matchs contre l'USAP », et
   les statistiques ne comptent que les premiers ; le tableau « contre » ne
@@ -838,24 +877,28 @@ officiels mais n'a pas été confronté à un classement d'époque ; celui de
   Aimé Giral, Percy Montgomery, Jean-François Imbernon —, et six recrues de
   2026-2027 créées avant leur premier match. `players` sans `matchAppearances`
   n'est donc pas un critère d'orphelin ; c'est l'absence de toute donnée
-  personnelle qui l'est (cf. `delete-orphan-players.ts`).
+  personnelle **et** de drapeau `isActive` qui l'est (cf.
+  `delete-orphan-players.ts`). Ce second garde-fou manquait jusqu'au 30 août
+  2026 : les cinq figures historiques étaient protégées par leur biographie,
+  les six recrues par rien du tout, et ce fichier les disait pourtant à
+  l'abri.
 - **`isActive` se lit « dans l'effectif professionnel »**, pas « au club ».
   `sync-effectif.ts` ne connaît que la page de la LNR, qui ignore les espoirs :
   Thomas Serezat a ainsi été abaissé le 29 août 2026 alors qu'il n'a pas quitté
   l'USAP.
-- **Une composition peut légitimement ne porter aucun capitaine** : sur 378,
-  358 en portent exactement un, 20 aucun — les feuilles que la LNR ne publie
+- **Une composition peut légitimement ne porter aucun capitaine** : sur 476,
+  456 en portent exactement un, 20 aucun — les feuilles que la LNR ne publie
   pas, et le match des Dragons du 7 décembre 2025 où l'EPCR en signale deux
   sans qu'on puisse les départager. Aucune n'en porte plusieurs. « Aucun » se
   lit « la source ne le dit pas », non « personne ne l'était ».
-- **`MatchEvent.playerId` n'est pas toujours renseigné** : 950 événements sur
-  3 406 ne le portent pas, les plus anciens surtout — la chaîne actuelle le
+- **`MatchEvent.playerId` n'est pas toujours renseigné** : 962 événements sur
+  4 173 ne le portent pas, les plus anciens surtout — la chaîne actuelle le
   remplit systématiquement. La page publique ne le lit pas, elle affiche
   `event.description`, où le nom figure en clair ; seul l'admin s'en sert.
 
 **Ce qui manque dans les données**
 
-- **Les 215 matchs ont leur stade.** Le lieu se déduit du camp — Aimé-Giral à
+- **Les 264 matchs ont leur stade.** Le lieu se déduit du camp — Aimé-Giral à
   domicile, `Opponent.venueId` à l'extérieur —, et ne se saisit donc jamais à
   la main. **Sauf une finale**, jouée sur terrain neutre : la déduction y est
   fausse, et la feuille de la LNR n'aide pas puisqu'elle désigne quand même un
@@ -865,19 +908,103 @@ officiels mais n'a pas été confronté à un classement d'époque ; celui de
   Cardiff, Dragons et Lions, que l'USAP n'a reçus qu'à Aimé-Giral. Sans
   déplacement là-bas, rien ne permet de le déduire.
 
-  Deux des stades de la liste de `fix-match-venues.ts` ne viennent pas d'une
-  source officielle : Albert-Domec à Carcassonne et Robert-Diochon à Rouen,
-  ces deux clubs ayant quitté la Pro D2 et leur page LNR avec. Pour Rouen,
-  Wikipédia et le site du club décrivent son stade **d'aujourd'hui**, et rien
-  n'a permis de vérifier qu'il y jouait déjà en 2020-2021.
-- **Affluences éparses** : 36 matchs sur 215, l'EPCR ayant fourni celles des
+  Trois des stades de la liste de `fix-match-venues.ts` ne viennent pas d'une
+  donnée officielle : Albert-Domec à Carcassonne et Robert-Diochon à Rouen,
+  ces deux clubs ayant quitté la Pro D2 et leur page LNR avec, et Armandie à
+  Agen, que la LNR nomme bien mais dans un article, ni sa page de club ni ses
+  feuilles de match ne portant de lieu. Même réserve pour Rouen et pour Agen :
+  ces sources décrivent le stade **d'aujourd'hui**, et rien n'a permis de
+  vérifier qu'ils y recevaient déjà, en 2020-2021 pour l'un, le 2 septembre
+  2018 pour l'autre.
+- **Affluences éparses** : 36 matchs sur 264, l'EPCR ayant fourni celles des
   coupes. Peu de photos et de biographies de joueurs.
-- **49 divergences d'écriture** subsistent entre la base et les feuilles
-  officielles, sur 26 matchs : des variantes de bonne foi, diminutifs
-  (« Billy » pour Viliami Vunipola) ou prénoms d'usage (« Paddy » pour David
-  Patrick Jackson). Les anomalies graves — joueurs manquants, dossards faux,
-  brassards, identités fautives — ont toutes été soldées depuis les feuilles
-  officielles.
+- **L'audit des compositions adverses ne signale plus rien** : 150 matchs
+  examinés, 150 conformes. Manquants, joueurs en trop, dossards faux,
+  brassards, écritures — toutes catégories soldées.
+
+  Restent **31 variantes d'affichage**, sur 13 paires de noms : la base porte
+  le nom d'usage, la feuille l'état civil — « Tom » pour Thomas Staniforth,
+  « Cobus » pour Jacobus Meyer Reinach, « Nacho » pour Juan Ignacio Brex —, ou
+  la LNR ampute une apostrophe (« Marvin O Connor »). Elles ne sont plus
+  comptées en anomalie mais **tues explicitement** : leur total figure au
+  récapitulatif, et `--variantes` les affiche une à une.
+
+  **Pourquoi ce détour plutôt que d'assumer un compteur qui monte.** La fusion
+  des dix doublons du 30 août 2026 avait fait passer les ÉCRITURE de 21 à 31,
+  sans qu'aucune donnée ne se dégrade : un homme réuni sous son nom d'usage
+  diverge désormais de la LNR sur *chacune* de ses feuilles, là où seule la
+  moins fournie de ses deux fiches était comptée avant. Le compteur mesurait
+  donc le contraire du travail accompli, et un audit dont on apprend à ignorer
+  le total ne garde plus rien — c'est exactement ainsi que 22 faux hommes ont
+  vécu en ÉCRITURE jusqu'au 30 août. La table rend au total sa valeur de
+  signal : il est à zéro, et tout écart nouveau se voit.
+
+  **Et pourquoi une table propre à l'audit**, quand `NOMS_DUSAGE` de
+  `lib/noms.ts` semblait faite pour ça : cette table-là nourrit `memeMot`, dont
+  dépendent `joueurs.ts`, `seed-opponent-sheet.ts` et `sync-effectif.ts` pour
+  arbitrer des **identités**. Y déclarer « tom = thomas », « joe = joseph » ou
+  « nick = nicholas », c'est rendre équivalents des prénoms parmi les plus
+  répandus du rugby et rouvrir l'accident Kane Douglas / Wesley Douglas.
+  `VARIANTES_DAFFICHAGE` n'apparie pas des mots mais des **noms complets deux
+  à deux** : « Tom Staniforth » ne vaut que pour « Thomas Staniforth », et
+  « Joe Powell » ne couvre même pas « Joseph Powell », seulement le « Joseph
+  Patrick Powell » de la feuille. L'arbitrage d'identité n'est pas touché.
+
+  Au passage, `lib/noms.ts` affirmait que « l'abréviation ordinaire n'a pas
+  besoin de la table : "Tom" couvre déjà "Thomas" par le préfixe ». C'est
+  **faux** — « thomas » ne commence pas par « tom », ni « joseph » par
+  « joe », ni « nicholas » par « nick » — et c'est cette phrase qui fondait
+  l'attente d'un compteur bas. Corrigée.
+
+  **Il a fallu y venir : « ÉCRITURE » ne voulait pas dire « bénin ».** Le
+  30 août 2026, 22 de ces écarts étaient en réalité **d'autres hommes** sous
+  le même patronyme, concentrés sur quatre compositions dont le banc avait été
+  deviné plutôt que lu : UBB le 18 octobre 2025 (9), Oyonnax le 23 mars 2024
+  (6), Racing 92 le 20 septembre 2025 (5), Lyon le 21 mars 2026 (2). Vingt-deux
+  fiches de joueurs qui n'ont jamais existé en étaient nées — « Maxime
+  Barlot », « Tevita Palu », « Loni Falatea »… Dossards rendus à la feuille
+  officielle, coquilles supprimées, et `update-match-2023-2024-j19.ts`
+  corrigé : il portait encore les six noms inventés d'Oyonnax, en annonçant la
+  LNR pour source.
+
+  **Comment on les départage**, puisque aucun contrôle ne le fait tout seul :
+  interroger l'histoire des deux fiches. Un prénom inventé ne paraît que sur
+  **cette feuille-là**, quand celui de la source a une carrière au même club
+  et souvent au même dossard — Gaëtan Barlot en portait sept, « Maxime » une.
+  Une vraie variante, elle, laisse deux fiches également fréquentées, ou une
+  seule.
+
+  **Pourquoi rien ne les voyait.** `fix-opponent-lineup.ts --identites` tient
+  deux noms pour la même personne dès qu'un patronyme concorde — il le faut,
+  sans quoi il prendrait tous les diminutifs des feuilles pour des erreurs —,
+  et l'audit range l'écart en ÉCRITURE, la catégorie la plus douce. Le seul
+  instrument est `reassign-match-player.ts`, ligne par ligne, une fois la
+  démonstration faite.
+
+  **Et un doublon peut en cacher un troisième homme.** « Carlu Johann Sadie »
+  portait quatre feuilles : trois fois le pilier droit de l'UBB, que la LNR
+  écrit ainsi en toutes lettres, et une fois le n°13 d'Agen du 2 septembre
+  2018 — que la même LNR nomme « Johann Sadie », le centre sud-africain, un
+  autre homme. Le patronyme et le prénom « Johann » avaient suffi à
+  `joueurs.ts` pour les confondre, et l'audit rangeait l'écart en ÉCRITURE
+  comme les autres. Fusionner sans regarder aurait donné au pilier un match
+  qu'il n'a jamais joué : la ligne d'Agen a d'abord été rendue à une fiche
+  « Johann Sadie », et les deux Carlu réunis seulement ensuite. **Avant toute
+  fusion, relire les feuilles des deux fiches** — un poste qui détonne, ici un
+  pilier aligné en centre, est le signal.
+
+  Les **dix doublons** que ces écarts ont révélés au passage — un même homme
+  sous deux fiches — sont **fusionnés depuis le 30 août 2026** : Tom / Thomas
+  Staniforth, Cobus / Jacobus Meyer Reinach, Billy / Viliami Vunipola, Harry /
+  Harrison Plummer, Joe / Joseph Powell, Tolu / Silatolu Latu, Tom / Thomas
+  Willis, Cheick / Cheikh Tiberghien, Andrea / Adrea Cocagi, Carlu / Carlu
+  Johann Sadie. Chacun relevait de `merge-players.ts` et non d'une
+  réattribution : les deux fiches portaient de vrais matchs. La fiche la mieux
+  fournie a été conservée et renommée du nom d'usage, jamais de l'orthographe
+  de la LNR. Un onzième est soldé : Richie Arnold et Richard Tamanui Arnold, la
+  même deuxième ligne de Toulouse sur cinq feuilles, fusionnés sous son nom
+  d'usage — son jumeau Rory, présent à ses côtés le 5 février 2022, reste
+  bien distinct.
 
 **Deux exceptions nommées**
 
