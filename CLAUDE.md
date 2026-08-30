@@ -266,8 +266,8 @@ confrontations avec l'USAP, et de gérer les joueurs passés par les deux camps
   Vuidravuwalu) ou prénom d'usage sans lettre commune avec l'état civil
   (« Paddy » pour Patrick, « Richie » pour Richard). L'abréviation ordinaire
   n'a pas besoin de la table, le préfixe suffit.
-- `players` contient donc majoritairement des adversaires : 2 023 fiches ont
-  joué **contre** l'USAP, 192 sous son maillot — 65 des deux côtés. C'est
+- `players` contient donc majoritairement des adversaires : 2 263 fiches ont
+  joué **contre** l'USAP, 211 sous son maillot — 71 des deux côtés. C'est
   normal. Les pages de liste filtrent déjà sur `isOpponent: false`.
 - **Un import qui cherche sur le nom exact fabrique des doublons à chaque
   passage.** C'est arrivé pour de bon : un script relancé après une fusion a
@@ -602,7 +602,7 @@ doublons.
 | `seed-calendrier-2026-2027.ts` | crée une saison et son calendrier de championnat **avant** qu'elle ne commence : date, heure, journée, adversaire, lieu, sans score ni résultat. Une relance met à jour les dates au fur et à mesure que la LNR les cale |
 | `seed-season-2021-2022.ts` | crée les rencontres d'une saison entière — date et heure, compétition, adversaire, lieu, score, réalisations, résultat, bonus, arbitre — puis les agrégats de saison. Premier jalon de la phase 4 |
 | `seed-cup-sheet.ts` | **le pendant pour les coupes d'Europe**, depuis l'EPCR : réalisations, cartons et temps de jeu des **deux camps**, plus l'arbitre, l'affluence et la mi-temps. Sans argument il reprend les dix-huit matchs européens ; `--dry`, `--detail`, `--match=AAAA-MM-JJ` comme le précédent |
-| `audit-opponent-lineups.ts` | confronte les compositions adverses aux feuilles officielles LNR ; lecture seule, à lancer sur une saison ou sur tout. **Zéro anomalie est l'état attendu** ; les variantes d'affichage arbitrées sont tues par sa table `VARIANTES_DAFFICHAGE`, comptées au récapitulatif et listées par `--variantes` |
+| `audit-opponent-lineups.ts` | confronte les compositions adverses aux feuilles officielles LNR — les deux divisions, phases finales comprises ; lecture seule, à lancer sur une saison ou sur tout. **Zéro anomalie est l'état attendu** ; les variantes d'affichage arbitrées sont tues par sa table `VARIANTES_DAFFICHAGE`, comptées au récapitulatif et listées par `--variantes` |
 | `fix-opponent-lineup.ts` | remet une composition en accord avec la feuille officielle — LNR pour le championnat, EPCR pour les coupes — (identités, dossards, titulaires, capitaine) ; `--usap` traite aussi le camp catalan |
 | `fetch-club-logos.ts` | rapatrie les logos officiels des clubs dans `public/images/logos/`, depuis les CDN de la LNR et de l'EPCR, et renseigne `Opponent.logoUrl` |
 | `fix-match-venues.ts` | met les stades en ordre : fusionne les doublons, crée les manquants, rattache chaque club à son terrain — déduit des déplacements déjà enregistrés — puis complète les matchs sans lieu |
@@ -778,8 +778,8 @@ Ce qui ne se déduit pas de la base, en revanche :
 
 **Ce que les sources ne publient pas.** La LNR ne donne ni affluence, ni score
 à la mi-temps, ni compte-rendu : les saisons qui n'ont qu'elle pour source —
-2021-2022, 2020-2021, 2019-2020 et 2018-2019 — resteront vides sur ces trois
-colonnes,
+2021-2022, 2020-2021, 2019-2020, 2018-2019 et 2017-2018 — resteront vides sur
+ces trois colonnes,
 sauf à trouver ailleurs. L'EPCR, lui, donne les trois, d'où les mi-temps et les
 affluences des matchs de coupe d'Europe. Les vidéos viennent de la chaîne
 YouTube « TOP 14 - Officiel », qui ne remonte pas au-delà de 2022-2023.
@@ -862,11 +862,11 @@ Par ordre de valeur.
    12 points et la dernière place de Top 14 pour la troisième, reléguée
    directement, 97 points et le titre pour la quatrième.
 
-   **2017-2018 n'a que ses rencontres** : les 32 matchs, leurs scores, leurs
-   arbitres et les agrégats de saison. Compositions et chronologies restent à
-   écrire, et la LNR les publie toutes — les vingt-trois de chaque camp, les
-   faits et les changements sont là sur les 32 feuilles. Reste ensuite
-   2016-2017, encore une saison de Pro D2.
+   **2017-2018 est complète** : 32 matchs, 1 472 lignes de composition, 524
+   événements de chronologie, et pas une anomalie. Les minutes retombent sur
+   1 200 des deux côtés sur les 32 rencontres, les points par joueur sur le
+   score, et l'audit nom à nom ne signale rien. Reste ensuite 2016-2017,
+   encore une saison de Pro D2.
 
    Les modèles : `seed-season-2019-2020.ts` pour une saison de deuxième
    division sans phase finale, `seed-season-2018-2019.ts` pour une saison de
@@ -881,7 +881,7 @@ Par ordre de valeur.
    2018-2019 est donc restée hors base, et il en ira de même en remontant tant
    qu'aucune source officielle ne les rouvre.
 3. **Le fond** : affluences (36 matchs sur 296), photos et biographies (1
-   joueur sur 192), et les saisons sans aucun match.
+   joueur sur 211), et les saisons sans aucun match.
 
 Sur les 120 saisons en base, 11 seulement portent des matchs : c'est le
 chantier de la phase 4, mené en remontant le temps saison par saison. Le bilan
@@ -903,8 +903,8 @@ d'écrire les agrégats s'ils s'en écartent.
 
 **Ce à quoi il faut penser en écrivant une requête**
 
-- **`players` est aux neuf dixièmes des adversaires** : 1 969 fiches sur
-  2 161 n'ont jamais porté le maillot, 192 l'ont porté. Toute requête sur les joueurs doit
+- **`players` est aux neuf dixièmes des adversaires** : 2 203 fiches sur
+  2 414 n'ont jamais porté le maillot, 211 l'ont porté. Toute requête sur les joueurs doit
   filtrer `isOpponent: false`, sinon le résultat est faux. Les fiches
   affichent séparément « Matchs avec l'USAP » et « Matchs contre l'USAP », et
   les statistiques ne comptent que les premiers ; le tableau « contre » ne
@@ -976,11 +976,27 @@ d'écrire les agrégats s'ils s'en écartent.
   2018 pour l'autre.
 - **Affluences éparses** : 36 matchs sur 264, l'EPCR ayant fourni celles des
   coupes. Peu de photos et de biographies de joueurs.
-- **L'audit des compositions adverses ne signale plus rien** : 150 matchs
-  examinés, 150 conformes. Manquants, joueurs en trop, dossards faux,
+- **L'audit des compositions adverses ne signale plus rien** : 238 matchs
+  examinés, 238 conformes.
+
+  **Il n'en voyait que 150 jusqu'au 30 août 2026, et il ne le disait pas.**
+  Deux angles morts, dans le script dont c'est le seul métier : il cherchait
+  toutes ses feuilles sur `top14.lnr.fr` sans jamais appeler
+  `utiliserDivision`, si bien que **les trois saisons de Pro D2 — 85 matchs —
+  n'avaient jamais été auditées**, et il annonçait poliment « feuille
+  introuvable » ; et il recalculait la phase au lieu d'appeler `phasesLnr()`,
+  ne connaissant que la journée et le barrage, d'où des demi-finales et des
+  finales rangées en « hors périmètre ». `fix-opponent-lineup.ts` portait
+  exactement les deux mêmes défauts, la logique de phase étant écrite trois
+  fois. Les deux appellent désormais `phasesLnr()`.
+
+  **Ce que l'ouverture a trouvé** : un seul vrai défaut sur 88 rencontres
+  jamais vues, le brassard de la finale 2009 — la base donnait Mario Ledesma
+  capitaine de Clermont, la feuille donne Aurélien Rougerie. Corrigé, avec six
+  dossards catalans permutés sur la même feuille. Manquants, joueurs en trop, dossards faux,
   brassards, écritures — toutes catégories soldées.
 
-  Restent **31 variantes d'affichage**, sur 13 paires de noms : la base porte
+  Restent **37 variantes d'affichage**, sur 16 paires de noms : la base porte
   le nom d'usage, la feuille l'état civil — « Tom » pour Thomas Staniforth,
   « Cobus » pour Jacobus Meyer Reinach, « Nacho » pour Juan Ignacio Brex —, ou
   la LNR ampute une apostrophe (« Marvin O Connor »). Elles ne sont plus

@@ -40,12 +40,27 @@
  * **Zéro anomalie est l'état attendu**, et c'est tout l'intérêt de la table de
  * variantes : le total redevient un signal, tout écart nouveau se remarque.
  *
- * Ne couvre que ce que la LNR publie : Top 14 et barrages d'accession. Les
- * coupes d'Europe relèvent de l'EPCR.
+ * Ne couvre que ce que la LNR publie — championnat et phases finales des deux
+ * divisions, barrages compris. Les coupes d'Europe relèvent de l'EPCR.
+ *
+ * DEUX ANGLES MORTS, CORRIGÉS LE 30 AOÛT 2026, et ils étaient graves pour un
+ * script dont c'est le seul métier. Il cherchait toutes ses feuilles sur
+ * `top14.lnr.fr`, sans jamais appeler `utiliserDivision` : **les trois saisons
+ * de Pro D2 en base — 2017-2018, 2019-2020, 2020-2021, soit 85 matchs —
+ * n'avaient donc jamais été auditées**, et le disaient poliment, « feuille
+ * introuvable ». Et il recalculait la phase au lieu d'appeler `phasesLnr()`,
+ * ne connaissant que la journée et le barrage : demi-finales et finales
+ * partaient en « hors périmètre », comme si elles relevaient de l'EPCR.
  */
 
 import { PrismaClient } from "@prisma/client";
-import { chercherFeuille, lireCompositions, type LnrTitulaire } from "./lib/lnr";
+import {
+  chercherFeuille,
+  lireCompositions,
+  phasesLnr,
+  utiliserDivision,
+  type LnrTitulaire,
+} from "./lib/lnr";
 import { meilleurCandidat, motsOrphelins, normalize } from "./lib/noms";
 
 const prisma = new PrismaClient();
@@ -101,6 +116,12 @@ const VARIANTES_DAFFICHAGE: [base: string, feuille: string][] = [
   ["Ma'a Nonu", "Ma A Allan Nonu"],
   // Orthographe : la feuille perd le « h ».
   ["Sikhumbuzo Notshe", "Sikumbuzo Notshe"],
+  // Apparues le 30 août 2026, quand l'audit a enfin vu les saisons de Pro D2.
+  // La LNR écrit le même talonneur « Cyriel » à Dax en 2017-2018 et « Cyril »
+  // à Vannes ensuite ; une seule fiche, un seul Blanchard par feuille.
+  ["Cyril Blanchard", "Cyriel Blanchard"],
+  ["Eddie Sawailau", "Edward Dratai Sawailau"],
+  ["Napolioni Nalaga", "Naipolioni Vonowale Nalaga"],
 ];
 
 const VARIANTES = new Set(
@@ -121,6 +142,14 @@ type Gravite =
   | "CAPITAINE";
 
 const GRAVES: Gravite[] = ["MANQUANT", "EN TROP"];
+
+/**
+ * Compétitions que la LNR ne couvre pas. À écarter **avant** d'interroger
+ * `phasesLnr()`, qui reconnaît « finale » dans « Huitième de finale » et
+ * enverrait donc les matchs de coupe d'Europe chercher une feuille de
+ * championnat inexistante — du bruit présenté comme un échec de lecture.
+ */
+const COUPES_EUROPE = new Set(["Challenge Européen", "H-Cup"]);
 
 interface Anomalie {
   gravite: Gravite;
@@ -245,7 +274,7 @@ async function main() {
     where: SAISON_DEMANDEE ? { season: { label: SAISON_DEMANDEE } } : {},
     orderBy: { date: "asc" },
     include: {
-      season: { select: { label: true, startYear: true } },
+      season: { select: { label: true, startYear: true, division: true } },
       opponent: { select: { name: true, shortName: true } },
       competition: { select: { shortName: true } },
     },
@@ -263,30 +292,45 @@ async function main() {
     const adversaire = match.opponent.shortName ?? match.opponent.name;
     const etiquette = `${match.season.label} ${jour} ${adversaire.padEnd(16)}`;
 
-    const phase =
-      match.matchday != null
-        ? `j${match.matchday}`
-        : match.competition.shortName === "Barrages"
-          ? // Le segment a changé de nom : « access » avant 2024-2025
-            match.season.startYear >= 2024
-            ? "access-top-14"
-            : "access"
-          : null;
-    if (!phase) {
+    if (COUPES_EUROPE.has(match.competition.shortName ?? "")) {
       horsPerimetre.push(`${etiquette} (${match.competition.shortName})`);
       continue;
     }
 
-    let officielle: LnrTitulaire[];
-    try {
-      const url = await chercherFeuille(match.season.label, phase);
-      if (!url) {
-        illisibles.push(`${etiquette} : feuille introuvable pour ${phase}`);
-        continue;
+    // La LNR sépare ses deux divisions sur deux sites : sans cette bascule,
+    // une saison de Pro D2 se cherche sur top14.lnr.fr et ne rend rien.
+    utiliserDivision(String(match.season.division) === "PRO_D2" ? "prod2" : "top14");
+
+    // `phasesLnr()` porte la règle complète — journée, demi-finale, finale,
+    // barrage et ses trois noms successifs. La refaire ici, c'est se
+    // condamner à en oublier un morceau.
+    const phases = phasesLnr(
+      match.season.label,
+      match.matchday,
+      `${match.competition.shortName} ${match.round ?? ""}`,
+    );
+    if (phases.length === 0) {
+      horsPerimetre.push(`${etiquette} (${match.competition.shortName})`);
+      continue;
+    }
+
+    let officielle: LnrTitulaire[] | null = null;
+    let dernierEchec = "";
+    for (const phase of phases) {
+      try {
+        const url = await chercherFeuille(match.season.label, phase);
+        if (!url) {
+          dernierEchec = `feuille introuvable pour ${phase}`;
+          continue;
+        }
+        officielle = (await lireCompositions(url)).adversaire;
+        break;
+      } catch (erreur) {
+        dernierEchec = (erreur as Error).message;
       }
-      officielle = (await lireCompositions(url)).adversaire;
-    } catch (erreur) {
-      illisibles.push(`${etiquette} : ${(erreur as Error).message}`);
+    }
+    if (!officielle) {
+      illisibles.push(`${etiquette} : ${dernierEchec}`);
       continue;
     }
 

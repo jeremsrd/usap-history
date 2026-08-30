@@ -35,7 +35,13 @@
  */
 
 import { PrismaClient, Position } from "@prisma/client";
-import { chercherFeuille, lireCompositions, type LnrTitulaire } from "./lib/lnr";
+import {
+  chercherFeuille,
+  lireCompositions,
+  phasesLnr,
+  utiliserDivision,
+  type LnrTitulaire,
+} from "./lib/lnr";
 import { USAP, chercherMatchUsap, lireMatch } from "./lib/epcr";
 import { POSTE_PAR_NUMERO, trouverOuCreerJoueur as trouverOuCreer } from "./lib/joueurs";
 import { meilleurCandidat, normalize } from "./lib/noms";
@@ -76,7 +82,7 @@ async function chargerMatchs() {
         : {},
     orderBy: { date: "asc" },
     include: {
-      season: { select: { label: true, startYear: true } },
+      season: { select: { label: true, startYear: true, division: true } },
       opponent: { select: { name: true, shortName: true } },
       competition: { select: { shortName: true } },
     },
@@ -131,18 +137,28 @@ async function composition(
     };
   }
 
-  const phase =
-    match.matchday != null
-      ? `j${match.matchday}`
-      : match.competition.shortName === "Barrages"
-        ? match.season.startYear >= 2024
-          ? "access-top-14"
-          : "access"
-        : null;
-  if (!phase) return null;
+  // Les deux divisions vivent sur deux sites : sans cette bascule, une saison
+  // de Pro D2 se cherche sur top14.lnr.fr et le script annonce « 0 match
+  // examiné » comme un succès.
+  utiliserDivision(String(match.season.division) === "PRO_D2" ? "prod2" : "top14");
 
-  const url = await chercherFeuille(match.season.label, phase);
-  if (!url) throw new Error(`Feuille LNR introuvable pour ${phase}`);
+  // `phasesLnr()` porte la règle complète — journée, demi-finale, finale,
+  // barrage et ses trois noms successifs. La refaire ici, c'était n'en
+  // connaître que la moitié : les phases finales rendaient `null`, et le
+  // script les passait en silence.
+  const phases = phasesLnr(
+    match.season.label,
+    match.matchday,
+    `${match.competition.shortName} ${match.round ?? ""}`,
+  );
+  if (phases.length === 0) return null;
+
+  let url: string | null = null;
+  for (const phase of phases) {
+    url = await chercherFeuille(match.season.label, phase);
+    if (url) break;
+  }
+  if (!url) throw new Error(`Feuille LNR introuvable pour ${phases.join(", ")}`);
   const compositions = await lireCompositions(url);
   return {
     source: url.split("/").pop() ?? url,

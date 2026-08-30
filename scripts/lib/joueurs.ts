@@ -95,6 +95,24 @@ export async function chercherJoueur(
     select: { id: true, firstName: true, lastName: true },
   });
 
+  // Le nom complet identique, une fois normalisé : le rapprochement le plus
+  // sûr qui soit, et il doit passer avant toute heuristique de mots.
+  //
+  // Sans lui, **un patronyme de moins de trois lettres rend un joueur
+  // introuvable**, et chaque import lui fabrique une fiche. `mots()` écarte ce
+  // qui fait moins de trois lettres — il le faut, « le », « de » et « van » ne
+  // désignent personne —, si bien que « Oz » ne pèse rien : le rapprochement
+  // exige un mot du nom de famille, et il n'en reste aucun. Ali Oz, troisième
+  // ligne de Grenoble puis du Racing 92, était ainsi en **quatre fiches** le
+  // 30 août 2026, trois nées de la seule reprise de 2017-2018.
+  //
+  // Plusieurs fiches également nommées restent une ambiguïté : on ne tranche
+  // pas ici, on laisse la suite l'arbitrer.
+  const exactes = tous.filter(
+    (j) => normalize(`${j.firstName} ${j.lastName}`) === normalize(nomCherche),
+  );
+  if (exactes.length === 1) return exactes[0].id;
+
   // Tout rapprochement passe par le **nom de famille** : deux mots communs ne
   // suffisent pas si aucun ne vient de là. « Ratu Tevita KURIDRANI », centre
   // de Biarritz, s'est ainsi retrouvé rattaché à Tevita Ratuva, deuxième ligne
