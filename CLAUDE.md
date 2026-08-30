@@ -607,6 +607,7 @@ doublons.
 | `fix-match-venues.ts` | met les stades en ordre : fusionne les doublons, crée les manquants, rattache chaque club à son terrain — déduit des déplacements déjà enregistrés — puis complète les matchs sans lieu |
 | `sync-effectif.ts` | met l'effectif professionnel en accord avec la LNR : crée les fiches manquantes, lève `isActive` sur l'effectif et l'abaisse sur les partants ; refuse d'écrire tant qu'un doublon ou un nom douteux subsiste |
 | `fix-null-penalty-tries.ts` | met à 0 les compteurs `penaltyTries` restés `null`, mais seulement là où les points retombent déjà sur le score |
+| `fix-barrages-access-match.ts` | les deux trous des barrages d'accession — arbitre du 12/06/2022, mi-temps du 03/06/2023 — et la transformation que la chronologie de ce dernier avait perdue |
 
 `fix-duplicate-players.ts` existe aussi mais apparie les prénoms par préfixe et
 par inclusion : trop large pour être lancé sans revue préalable.
@@ -774,6 +775,26 @@ colonnes,
 sauf à trouver ailleurs. L'EPCR, lui, donne les trois, d'où les mi-temps et les
 affluences des matchs de coupe d'Europe. Les vidéos viennent de la chaîne
 YouTube « TOP 14 - Officiel », qui ne remonte pas au-delà de 2022-2023.
+
+**Et « ailleurs », c'est parfois Jérémy.** Les deux derniers manques isolés des
+238 matchs joués — l'arbitre du barrage du 12 juin 2022 et la mi-temps de celui
+du 3 juin 2023 — ne venaient d'aucune source lue par machine : la LNR ne publie
+pas la feuille d'un access match. Ils ont été fournis à la main, et
+`fix-barrages-access-match.ts` les porte avec leur provenance. Arbitre et
+mi-temps sont désormais complets sur toutes les saisons reprises.
+
+**Un fait donné à la main peut en démasquer un autre.** « Grenoble menait 16-11
+à la pause » ne concordait pas avec la chronologie du 3 juin 2023, qui donnait
+14-11 à la 40ᵉ et finissait à 17-33 quand le match dit 19-33. Deux points, du
+même côté, à partir de la 36ᵉ : une transformation manquante. La preuve était
+déjà en base — la composition enregistre Romain Trouilloud à 11 points, soit
+1 transformation et 3 pénalités, et la somme des points de Grenoble retombe sur
+19. L'essai de Barthelemy à la 36ᵉ avait bien été transformé ; seule la
+chronologie l'ignorait. C'est le défaut LNR connu — la feuille saute parfois
+une transformation, et son score courant déraille avec elle — pris pour la
+première fois par recoupement plutôt que par hasard. **Un score de mi-temps
+donné de l'extérieur est donc aussi un contrôle** : il faut le confronter à la
+chronologie avant de l'écrire.
 
 **Ce qu'un `null` veut dire.** Sur `MatchPlayer.minutesPlayed`, « n'est pas
 entré en jeu », et non « on ne sait pas » — les remplaçants non utilisés sont
