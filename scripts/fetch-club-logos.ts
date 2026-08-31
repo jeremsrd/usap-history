@@ -118,11 +118,12 @@ const PLACEHOLDER_LNR = "ee0e36cd30739c08c65f23f2a7c01e351d45a33a324ba1cea66b39e
 /**
  * ÉCUSSONS QUE NI LA LNR NI L'EPCR NE SERVENT, ET OÙ LES PRENDRE.
  *
- * Deux clubs seulement, et la même raison : Albi et Bourgoin ont quitté la
- * Pro D2 en 2017, la LNR n'a plus de page pour eux et son CDN ne rend qu'un
- * bouclier gris (cf. `PLACEHOLDER_LNR`). Leur écusson vient donc du **site
- * officiel du club**, ce qui reste la source la plus autorisée qui soit pour
- * une marque de club — simplement pas celle que la chaîne interroge d'office.
+ * Trois clubs, et la même raison : Albi et Bourgoin ont quitté la Pro D2 en
+ * 2017, Tarbes en 2016, la LNR n'a plus de page pour eux et son CDN ne rend
+ * qu'un bouclier gris (cf. `PLACEHOLDER_LNR`). Leur écusson vient donc du
+ * **site officiel du club**, ce qui reste la source la plus autorisée qui
+ * soit pour une marque de club — simplement pas celle que la chaîne interroge
+ * d'office.
  *
  * - **Albi**, `sca-albi.fr` : l'écusson complet du Sporting Club Albigeois,
  *   300 par 300 avec transparence. Rien à redire.
@@ -135,6 +136,15 @@ const PLACEHOLDER_LNR = "ee0e36cd30739c08c65f23f2a7c01e351d45a33a324ba1cea66b39e
  *   **fond blanc incrusté** : c'est exactement le défaut de Clermont, déjà
  *   corrigé une fois — un rectangle blanc derrière l'écusson en thème sombre.
  *   Le dauphin transparent va aux deux thèmes, comme les 44 autres.
+ * - **Tarbes**, `stado-tpr.fr` : l'ours et les montagnes dans l'ovale rouge,
+ *   512 par 512 — **sans transparence**, et cette fois il n'y avait pas de
+ *   choix : le club comme la FFR ne publient leur écusson que sur fond blanc
+ *   opaque, et le blanc fait partie du dessin, l'ours étant blanc. On ne peut
+ *   donc pas le détourer. Entre l'écusson complet de la FFR
+ *   (`api-web.monclubhouse.ffr.fr/assets/2a343b6c-78c8-4d6e-8022-0c00f8814cd9`,
+ *   1200 par 1200, avec « TARBES PYRENEES RUGBY ») et ce rond du club, c'est
+ *   le rond qui a été retenu le 31 août 2026 : plus compact, donc un carré
+ *   blanc plus discret en thème sombre.
  *
  * Ces deux-là sont les écussons **d'aujourd'hui**, ce qui vaut aussi pour
  * tous les autres : la LNR ne sert que la version courante.
@@ -142,6 +152,7 @@ const PLACEHOLDER_LNR = "ee0e36cd30739c08c65f23f2a7c01e351d45a33a324ba1cea66b39e
 const SOURCES_HORS_LNR: Record<string, string> = {
   Albi: "https://www.sca-albi.fr/wp-content/uploads/2017/07/Logo-SCA-web.webp",
   Bourgoin: "https://csbj-rugby.fr/wp-content/uploads/2025/06/csbj-favicon-sombre.webp",
+  Tarbes: "https://stado-tpr.fr/wp-content/uploads/2026/06/logo-stado-asso-favicon.png",
 };
 
 const DOSSIER = join(process.cwd(), "public", "images", "logos");

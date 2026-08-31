@@ -89,6 +89,15 @@ const DOUBLONS = ["Stade du Hameau", "Matmut Stadium de Gerland"];
  * ni sa page de club — qui n'existe plus — ne portent de lieu. Même réserve :
  * ce sont leurs terrains d'aujourd'hui, et rien de lisible par machine ne dit
  * qu'ils y recevaient l'USAP le 5 mars et le 10 février 2017.
+ *
+ * Tarbes, arrivé avec 2015-2016, est dans la même impasse mais tient de
+ * Carcassonne et de Rouen plutôt que de ces deux-là : son stade n'est pas
+ * donné de mémoire mais par **Wikipédia**, et l'adresse que la FFR publie sur
+ * Mon Club House — avenue Pierre-de-Coubertin, 65000 Tarbes — est celle du
+ * Maurice-Trélut. Deux sources concordantes, donc, aucune officielle au sens
+ * du projet, et la même réserve : c'est le terrain d'aujourd'hui, et rien ne
+ * dit par machine qu'il y recevait déjà les 13 novembre 2015 et 22 janvier
+ * 2016.
  */
 const MANQUANTS = [
   { nom: "Parc des Sports Aguiléra", ville: "Biarritz", club: "Biarritz" },
@@ -110,6 +119,7 @@ const MANQUANTS = [
   { nom: "Parc des Sports et de l'Amitié", ville: "Narbonne", club: "Narbonne" },
   { nom: "Stadium municipal d'Albi", ville: "Albi", club: "Albi" },
   { nom: "Stade Pierre-Rajon", ville: "Bourgoin-Jallieu", club: "Bourgoin" },
+  { nom: "Stade Maurice-Trélut", ville: "Tarbes", club: "Tarbes" },
 ];
 
 async function fusionnerDoublons() {

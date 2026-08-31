@@ -307,6 +307,36 @@ function campUsapDepuisUrl(url: string): Camp {
 }
 
 /**
+ * Jour et heure d'une rencontre, à partir du coup d'envoi de la feuille.
+ *
+ * **Un coup d'envoi à 00:00 veut dire « heure inconnue »**, non « joué à
+ * minuit ». La LNR en laisse ici et là : le Perpignan-Dax de la première
+ * journée de 2015-2016 est annoncé « 2015-08-21T00:00:00+02:00 » quand les
+ * sept autres matchs de la même journée portent une heure réelle, de 19h00 à
+ * 20h45. C'est un trou dans sa donnée, pas un horaire.
+ *
+ * Et ce trou déplace le match d'un jour si on le prend au mot : minuit à
+ * +02:00, c'est 22 heures la veille en temps universel, si bien qu'un
+ * `toISOString()` rend le 20 août pour une rencontre du 21. On rend donc
+ * l'heure `null`, et on ancre la date à **midi en temps universel** du jour
+ * annoncé — aucun fuseau ne peut alors la faire changer de jour, quand minuit
+ * la ferait basculer dans tout l'ouest.
+ *
+ * Les autres coups d'envoi sont rendus tels quels : ce sont de vrais
+ * instants, et ils tombent tous en soirée ou en après-midi.
+ */
+export function momentDuMatch(coupDEnvoi: string): {
+  date: Date;
+  kickoffTime: string | null;
+} {
+  const heure = coupDEnvoi.slice(11, 16);
+  if (heure === "00:00") {
+    return { date: new Date(`${coupDEnvoi.slice(0, 10)}T12:00:00Z`), kickoffTime: null };
+  }
+  return { date: new Date(coupDEnvoi), kickoffTime: heure };
+}
+
+/**
  * L'ESSAI DE PÉNALITÉ COMPTE NEUF POINTS SUR LES FEUILLES D'AVANT 2017-2018,
  * ET SA TRANSFORMATION Y EST COMPTÉE DEUX FOIS.
  *

@@ -267,8 +267,8 @@ confrontations avec l'USAP, et de gérer les joueurs passés par les deux camps
   Vuidravuwalu) ou prénom d'usage sans lettre commune avec l'état civil
   (« Paddy » pour Patrick, « Richie » pour Richard). L'abréviation ordinaire
   n'a pas besoin de la table, le préfixe suffit.
-- `players` contient donc majoritairement des adversaires : 2 418 fiches ont
-  joué **contre** l'USAP, 226 sous son maillot — 83 des deux côtés. C'est
+- `players` contient donc majoritairement des adversaires : 2 560 fiches ont
+  joué **contre** l'USAP, 239 sous son maillot — 93 des deux côtés. C'est
   normal. Les pages de liste filtrent déjà sur `isOpponent: false`.
 - **Un import qui cherche sur le nom exact fabrique des doublons à chaque
   passage.** C'est arrivé pour de bon : un script relancé après une fusion a
@@ -473,7 +473,7 @@ Par `scripts/lib/lnr.ts` : `chercherFeuille` puis `lireFeuille`,
 | Donnée | Où |
 |---|---|
 | score final | `lireCalendrier` — **il fait foi**, la feuille saute parfois une transformation |
-| coup d'envoi à la minute | `lireFeuille().coupDEnvoi`, et nulle part ailleurs |
+| coup d'envoi à la minute | `lireFeuille().coupDEnvoi`, par `momentDuMatch()` — **00:00 veut dire « inconnu »** |
 | arbitre central | `lireCompositions().arbitre` |
 | score après chaque fait, cartons, essais de pénalité | `lireFeuille().faits` |
 | changements, avec définitif ou temporaire | `lireFeuille().changements` |
@@ -485,6 +485,11 @@ Ce qu'il faut savoir avant d'écrire du code :
   le score courant le dit. S'en servir pour *nommer* le buteur, jamais pour
   décider ;
 - **le score courant déraille aussi** ; le total final tranche ;
+- **un coup d'envoi à 00:00 veut dire « heure inconnue »**, non « joué à
+  minuit » : la LNR en laisse ici et là, et pris au mot il recule le match
+  d'un jour, minuit à +02:00 valant 22 heures la veille en temps universel.
+  `momentDuMatch()` rend alors l'heure `null` et ancre la date à midi UTC.
+  Un seul cas connu, le Perpignan-Dax du 21 août 2015 ;
 - et **avant 2017-2018 il crédite neuf points à un essai de pénalité**, la
   transformation y étant comptée deux fois. `lireFeuille` le corrige et porte
   la démonstration, fait par fait ; sans elle, sept matchs de 2016-2017
@@ -607,6 +612,7 @@ doublons.
 | `close-season-2025-2026.ts` | modèle de clôture de saison, avec garde-fou sur le classement officiel |
 | `seed-opponent-sheet.ts` | **le script du chantier adverse** : reprend une saison entière depuis la LNR — réalisations, cartons et temps de jeu reconstitués à partir des changements. Prend la saison en argument (`2023-2024`), `--dry` pour simuler, `--detail` pour le relevé des écarts avec la base, `--match=AAAA-MM-JJ` pour n'en reprendre qu'un, `--usap` pour traiter **aussi le camp catalan** — il passe alors deux fois, l'adverse puis l'USAP |
 | `seed-lineup.ts` | crée les **deux compositions** d'un match depuis la LNR quand il n'en a aucune — dossards, titulaires, capitaine, poste déduit du numéro. Premier temps de la reprise d'une rencontre ancienne ; `--dry`, `--force` pour réécrire |
+| `seed-season-2015-2016.ts` | crée les 30 matchs d'une saison de Pro D2 sans phase finale — septième ; **le modèle le plus récent**, seul à passer par `momentDuMatch()` |
 | `seed-season-2016-2017.ts` | crée les 30 matchs d'une saison de Pro D2 **sans phase finale pour l'USAP** — sixième, à une place des quatre qualifiés |
 | `seed-season-2017-2018.ts` | crée les 32 matchs de la saison du titre de Pro D2 et de la remontée — 30 journées, demi-finale et finale, pas de barrage. Porte une table `TERRAIN_NEUTRE` qui nomme le stade d'une finale, que la LNR ne donne pas |
 | `seed-season-2018-2019.ts` | crée les 26 matchs de la saison de la relégation, la seule de Top 14 reprise en remontant ; aucune phase finale, l'USAP finit dernière et descend sans access match |
@@ -630,8 +636,8 @@ par inclusion : trop large pour être lancé sans revue préalable.
 
 ## Logos des clubs
 
-Les 46 adversaires ont leur logo, servi par le site lui-même depuis
-`public/images/logos/{club}.{png|webp}` — 3,1 Mo au total. Ils viennent des sources
+Les 47 adversaires ont leur logo, servi par le site lui-même depuis
+`public/images/logos/{club}.{png|webp}` — 3,2 Mo au total. Ils viennent des sources
 officielles, que les scripts lisent déjà : `cdn.lnr.fr/club/{slug}/photo/logo.
 {empreinte}` pour les clubs français, le champ `imageUrl` du flux de l'EPCR
 pour les européens. `fetch-club-logos.ts` fait la moisson, sur les calendriers
@@ -646,13 +652,12 @@ toujours leurs trois logos. C'est la même ruse que pour Agen, dont l'écusson
 vient du calendrier 2018-2019 : quand un club manque, chercher la saison où il
 jouait plutôt que sa page d'aujourd'hui.
 
-**Mais la ruse a une limite, et deux clubs la montrent.** Albi et Bourgoin,
-croisés en 2016-2017, ont bien chacun une URL d'écusson sur le calendrier de
-cette saison-là — et le CDN ne rend au bout qu'un **bouclier gris** de 33 par
-45 pixels, le même pour les deux, quand les quatorze autres clubs de la page
-rendent leur vrai PNG. Il en va de même sur tous les calendriers archivés
-depuis 2012 : la LNR ne garde qu'une image par club, et pour ces deux-là c'est
-le bouclier. `fetch-club-logos.ts` le reconnaît à son empreinte
+**Mais la ruse a une limite, et trois clubs la montrent.** Albi, Bourgoin et
+Tarbes ont bien chacun une URL d'écusson sur le calendrier de leur saison — et
+le CDN ne rend au bout qu'un **bouclier gris** de 33 par 45 pixels, le même
+pour les trois, quand les autres clubs de la page rendent leur vrai PNG. Il en
+va de même sur tous les calendriers archivés depuis 2012 : la LNR ne garde
+qu'une image par club, et pour ces trois-là c'est le bouclier. `fetch-club-logos.ts` le reconnaît à son empreinte
 (`PLACEHOLDER_LNR`) et refuse de l'enregistrer — sans quoi il se serait écrit
 sous `albi.png` et `bourgoin.png`, en WebP malgré l'extension.
 
@@ -666,6 +671,14 @@ publie bien l'écusson complet sur Mon Club House, mais avec un **fond blanc
 incrusté** — le défaut de Clermont, déjà corrigé une fois, un rectangle blanc
 derrière l'écusson en thème sombre. Le dauphin transparent va aux deux
 thèmes.
+
+**Tarbes, lui, n'avait pas ce choix** : ni le club ni la FFR ne publient son
+écusson autrement que sur fond blanc opaque, et le blanc fait partie du
+dessin — l'ours est blanc —, on ne peut donc pas le détourer. Entre l'écusson
+complet de la FFR et le rond STADO du club, c'est le rond qui a été retenu :
+plus compact, donc un carré blanc plus discret en thème sombre. C'est le seul
+écusson de la base sans transparence depuis que celui de Clermont a été repris
+à la source.
 
 Pourquoi les héberger plutôt que pointer vers ces CDN : leurs URL portent une
 empreinte qui change au gré des mises à jour, le lien direct peut être bloqué,
@@ -814,8 +827,8 @@ Ce qui ne se déduit pas de la base, en revanche :
 
 **Ce que les sources ne publient pas.** La LNR ne donne ni affluence, ni score
 à la mi-temps, ni compte-rendu : les saisons qui n'ont qu'elle pour source —
-2021-2022, 2020-2021, 2019-2020, 2018-2019, 2017-2018 et 2016-2017 —
-resteront vides sur ces trois colonnes,
+2021-2022, 2020-2021, 2019-2020, 2018-2019, 2017-2018, 2016-2017 et
+2015-2016 — resteront vides sur ces trois colonnes,
 sauf à trouver ailleurs. L'EPCR, lui, donne les trois, d'où les mi-temps et les
 affluences des matchs de coupe d'Europe. Les vidéos viennent de la chaîne
 YouTube « TOP 14 - Officiel », qui ne remonte pas au-delà de 2022-2023.
@@ -863,13 +876,13 @@ publie pas avant les premières feuilles.
 Par ordre de valeur.
 
 1. **Achever les saisons reprises.** 2021-2022, 2020-2021, 2019-2020,
-   2018-2019, 2017-2018 et 2016-2017 ont leurs matchs, leurs compositions et
-   leur chronologie ; il leur manque la clôture éditoriale — entraîneur, président, bilan rédigé —,
+   2018-2019, 2017-2018, 2016-2017 et 2015-2016 ont leurs matchs, leurs
+   compositions et leur chronologie ; il leur manque la clôture éditoriale — entraîneur, président, bilan rédigé —,
    les affluences que la LNR ne donne pas, et les mi-temps. La marche à suivre
    pour toute nouvelle saison est en tête de fichier, « Reprendre une
    saison ».
 
-   Sept anomalies connues de ces saisons, toutes assumées :
+   Dix anomalies connues de ces saisons, toutes assumées :
    - **La Rochelle totalise 1 206 minutes le 30 octobre 2021.** Sa feuille se
      contredit — Victor Vito sort *définitivement* à la 25ᵉ sur protocole
      commotion, puis elle le fait sortir encore à la 35ᵉ et rentrer deux fois.
@@ -904,26 +917,38 @@ Par ordre de valeur.
      Valentine qui porte bien le 9, l'autre pour Manuel Edmonds, absent des
      vingt-trois que la même LNR publie sur ce match. Le second est ignoré —
      cf. `CARTONS_HORS_COMPOSITION` — et Béziers totalise donc 1 160 minutes,
-     non 1 120.
+     non 1 120 ;
+   - **l'USAP totalise 1 185 minutes à Narbonne le 6 décembre 2015.** Encore
+     une feuille qui se contredit : Enzo Forletta y entre deux fois sans
+     jamais sortir, le même changement — Mailau pour André — est inscrit à la
+     54ᵉ *et* à la 55ᵉ, et André sort une troisième fois à la 65ᵉ. Rien de
+     démontrable derrière, donc rien de corrigé ;
+   - **huit essais collectifs en 2015-2016**, et autant d'écarts de cinq
+     points entre la somme des joueurs et le score. C'est légitime : la LNR
+     n'attribue pas ces essais-là, seule leur transformation a un auteur. Ils
+     tombent les 28 août, 10 septembre, 13 novembre et 6 décembre 2015, deux
+     fois le 11 décembre et deux fois le 17 janvier 2016 ;
+   - **Provence n'a pas de capitaine le 13 mai 2016** : la LNR n'en publie
+     pas. « Aucun » se lit « la source ne le dit pas ».
 
    Deux choses que la chaîne ne fait pas : la **mi-temps**, que la LNR ne
    publie pas — elle se déduirait du dernier fait avant la 40ᵉ, mais c'est une
    inférence —, et les **notes de retour en jeu**, écrites à la main.
 
 2. **Poursuivre la phase 4** en remontant. **2020-2021, 2019-2020, 2018-2019,
-   2017-2018 et 2016-2017 sont faites**, toutes cinq conformes au classement
-   officiel de la LNR — 107 points et le titre de Pro D2 pour la première,
-   76 points et la deuxième place pour la deuxième, arrêtée à la 23ᵉ journée
-   par le Covid, 12 points et la dernière place de Top 14 pour la troisième,
-   reléguée directement, 97 points et le titre pour la quatrième, 79 points et
-   la sixième place pour la cinquième.
+   2017-2018, 2016-2017 et 2015-2016 sont faites**, toutes six conformes au
+   classement officiel de la LNR — 107 points et le titre de Pro D2 pour la
+   première, 76 points et la deuxième place pour la deuxième, arrêtée à la
+   23ᵉ journée par le Covid, 12 points et la dernière place de Top 14 pour la
+   troisième, reléguée directement, 97 points et le titre pour la quatrième,
+   79 points et la sixième place pour la cinquième, 73 points et la septième
+   pour la sixième.
 
-   **2016-2017 est complète** : 30 matchs, 1 380 lignes de composition, 445
-   événements de chronologie, l'arbitre partout, et l'audit nom à nom ne
-   signale rien. Les points par joueur retombent sur le score des deux côtés
-   sur les 30 rencontres, et les minutes sur 1 200 partout sauf aux trois
-   endroits recensés plus haut. Reste ensuite 2015-2016, encore une saison de
-   Pro D2 — l'USAP y est descendue de Top 14 en 2014.
+   **2015-2016 est complète** : 30 matchs, 1 380 lignes de composition, 444
+   événements de chronologie, l'arbitre et le stade partout, et l'audit nom à
+   nom ne signale rien. Reste ensuite **2014-2015**, la première saison de
+   Pro D2 après la relégation de 2014 — et la dernière de la série, puisque
+   au-delà l'USAP était en Top 14, où la LNR archive tout aussi bien.
 
    **Cette saison-là a coûté deux corrections de fond**, l'une et l'autre dans
    `lib/lnr.ts` : le score courant y crédite neuf points à un essai de
@@ -933,9 +958,10 @@ Par ordre de valeur.
    à faire foi. Les deux valent pour toutes les saisons antérieures, et les
    cinq déjà en base ont été repassées sans changer d'un point.
 
-   Les modèles : `seed-season-2016-2017.ts` et `seed-season-2019-2020.ts` pour
-   une saison de deuxième division sans phase finale — le premier est le plus
-   récent —, `seed-season-2018-2019.ts` pour une saison de Top 14 sans phase
+   Les modèles : `seed-season-2015-2016.ts`, `seed-season-2016-2017.ts` et
+   `seed-season-2019-2020.ts` pour une saison de deuxième division sans phase
+   finale — le premier est le plus récent, et le seul à passer par
+   `momentDuMatch()` —, `seed-season-2018-2019.ts` pour une saison de Top 14 sans phase
    finale, `seed-season-2020-2021.ts` et `seed-season-2017-2018.ts` quand il y
    en a une — le second traite en plus le terrain neutre d'une finale —,
    `seed-season-2021-2022.ts` pour une saison avec coupe d'Europe.
@@ -945,10 +971,10 @@ Par ordre de valeur.
    site n'offre plus que les saisons récentes. La campagne européenne de
    2018-2019 est donc restée hors base, et il en ira de même en remontant tant
    qu'aucune source officielle ne les rouvre.
-3. **Le fond** : affluences (36 matchs sur 300 joués), photos et biographies
-   (1 joueur sur 226), et les saisons sans aucun match.
+3. **Le fond** : affluences (36 matchs sur 330 joués), photos et biographies
+   (1 joueur sur 239), et les saisons sans aucun match.
 
-Sur les 120 saisons en base, 12 seulement portent des matchs : c'est le
+Sur les 120 saisons en base, 13 seulement portent des matchs : c'est le
 chantier de la phase 4, mené en remontant le temps saison par saison. Le bilan
 de 2021-2022 — 9V 0N 17D, 43 points, treizième — est calculé depuis les scores
 officiels mais n'a pas été confronté à un classement d'époque ; ceux de
@@ -968,8 +994,8 @@ d'écrire les agrégats s'ils s'en écartent.
 
 **Ce à quoi il faut penser en écrivant une requête**
 
-- **`players` est aux neuf dixièmes des adversaires** : 2 346 fiches sur
-  2 572 n'ont jamais porté le maillot, 226 l'ont porté. Toute requête sur les joueurs doit
+- **`players` est aux neuf dixièmes des adversaires** : 2 478 fiches sur
+  2 717 n'ont jamais porté le maillot, 239 l'ont porté. Toute requête sur les joueurs doit
   filtrer `isOpponent: false`, sinon le résultat est faux. Les fiches
   affichent séparément « Matchs avec l'USAP » et « Matchs contre l'USAP », et
   les statistiques ne comptent que les premiers ; le tableau « contre » ne
@@ -989,19 +1015,19 @@ d'écrire les agrégats s'ils s'en écartent.
   `sync-effectif.ts` ne connaît que la page de la LNR, qui ignore les espoirs :
   Thomas Serezat a ainsi été abaissé le 29 août 2026 alors qu'il n'a pas quitté
   l'USAP.
-- **Une composition peut légitimement ne porter aucun capitaine** : sur 600,
-  580 en portent exactement un, 20 aucun — les feuilles que la LNR ne publie
+- **Une composition peut légitimement ne porter aucun capitaine** : sur 660,
+  639 en portent exactement un, 21 aucun — les feuilles que la LNR ne publie
   pas, et le match des Dragons du 7 décembre 2025 où l'EPCR en signale deux
   sans qu'on puisse les départager. Aucune n'en porte plusieurs. « Aucun » se
   lit « la source ne le dit pas », non « personne ne l'était ».
-- **`MatchEvent.playerId` n'est pas toujours renseigné** : 983 événements sur
-  5 143 ne le portent pas, les plus anciens surtout — la chaîne actuelle le
+- **`MatchEvent.playerId` n'est pas toujours renseigné** : 994 événements sur
+  5 587 ne le portent pas, les plus anciens surtout — la chaîne actuelle le
   remplit systématiquement. La page publique ne le lit pas, elle affiche
   `event.description`, où le nom figure en clair ; seul l'admin s'en sert.
 
 **Ce qui manque dans les données**
 
-- **Les 326 matchs ont leur stade.** Le lieu se déduit du camp —
+- **Les 356 matchs ont leur stade.** Le lieu se déduit du camp —
   Aimé-Giral à domicile, `Opponent.venueId` à l'extérieur —, et ne se saisit
   donc jamais à la main. **Sauf une finale**, jouée sur terrain neutre : la
   déduction y est fausse, et la feuille de la LNR n'aide pas puisqu'elle
@@ -1027,6 +1053,12 @@ d'écrire les agrégats s'ils s'en écartent.
   sont les terrains d'aujourd'hui, et rien ne permet de vérifier par machine
   qu'ils y recevaient déjà en 2017-2018, ni en 2016-2017.
 
+  **Tarbes, arrivé avec 2015-2016, tient de Carcassonne plutôt que d'eux** :
+  son Maurice-Trélut n'est pas donné de mémoire mais par Wikipédia, et
+  l'adresse que la FFR publie sur Mon Club House — avenue Pierre-de-Coubertin,
+  65000 Tarbes — est bien celle de ce stade. Deux sources concordantes, aucune
+  officielle au sens du projet, et la même réserve sur l'époque.
+
   Quatre clubs n'ont toujours pas de terrain rattaché : Connacht, Cardiff,
   Dragons et Lions, que l'USAP n'a reçus qu'à Aimé-Giral. Sans déplacement
   là-bas, rien ne permet de le déduire — mais aucun match n'en souffre, ces
@@ -1040,10 +1072,10 @@ d'écrire les agrégats s'ils s'en écartent.
   ces sources décrivent le stade **d'aujourd'hui**, et rien n'a permis de
   vérifier qu'ils y recevaient déjà, en 2020-2021 pour l'un, le 2 septembre
   2018 pour l'autre.
-- **Affluences éparses** : 36 matchs sur 300 joués, l'EPCR ayant fourni celles
+- **Affluences éparses** : 36 matchs sur 330 joués, l'EPCR ayant fourni celles
   des coupes. Peu de photos et de biographies de joueurs.
-- **L'audit des compositions adverses ne signale plus rien** : 268 matchs
-  examinés, 268 conformes.
+- **L'audit des compositions adverses ne signale plus rien** : 298 matchs
+  examinés, 298 conformes.
 
   **Il n'en voyait que 150 jusqu'au 30 août 2026, et il ne le disait pas.**
   Deux angles morts, dans le script dont c'est le seul métier : il cherchait
@@ -1062,7 +1094,7 @@ d'écrire les agrégats s'ils s'en écartent.
   dossards catalans permutés sur la même feuille. Manquants, joueurs en trop, dossards faux,
   brassards, écritures — toutes catégories soldées.
 
-  Restent **38 variantes d'affichage**, sur 16 paires de noms : la base porte
+  Restent **39 variantes d'affichage**, sur 16 paires de noms : la base porte
   le nom d'usage, la feuille l'état civil — « Tom » pour Thomas Staniforth,
   « Cobus » pour Jacobus Meyer Reinach, « Nacho » pour Juan Ignacio Brex —, ou
   la LNR ampute une apostrophe (« Marvin O Connor »). Elles ne sont plus

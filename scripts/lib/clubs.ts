@@ -41,6 +41,9 @@ export const CLUBS_LNR: Record<string, string> = {
   // connaît plus que ce nom court : leurs pages de club ont disparu avec eux.
   albi: "Albi",
   bourgoin: "Bourgoin",
+  // Croisé en 2015-2016, et pas depuis. Même cas que les deux précédents : la
+  // LNR ne lui connaît plus que ce nom court.
+  tarbes: "Tarbes",
   massy: "Massy",
   narbonne: "Narbonne",
   pau: "Pau",

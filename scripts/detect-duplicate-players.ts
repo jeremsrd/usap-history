@@ -81,6 +81,16 @@ const TOUT = process.argv.includes("--tout");
  * Le club sert de repère quand le patronyme ne suffit plus : Jonathan Gray est
  * à l'UBB quand Richie est à Glasgow puis Toulouse, Jack Willis à Toulouse
  * quand Tom est à l'UBB.
+ *
+ * **La dernière est venue avec 2015-2016**, et le même club ne la départageait
+ * pas : les deux Marty ont porté le maillot catalan, et tous deux le n°21, ce
+ * qui suffit au niveau FORT. Ce sont pourtant deux hommes, et la LNR les nomme
+ * l'un et l'autre en toutes lettres : « David Marty » le 21 août et le 29
+ * novembre 2015, « Paul Marty » le 17 novembre et le 9 décembre 2016. Leurs
+ * carrières ne se recouvrent pas — David finit en mai 2016, Paul commence en
+ * novembre — et leurs postes non plus : David est le centre international,
+ * n°13 sur douze de ses quinze feuilles ; Paul est ouvreur et arrière, n°10
+ * puis n°15.
  */
 const DISTINCTS: [string, string][] = [
   ["Sacha Lotrian", "Mathys Lotrian"],
@@ -102,6 +112,8 @@ const DISTINCTS: [string, string][] = [
   ["Andrew Smith", "Ollie Smith"],
   ["Chris Smith", "Fletcher Smith"],
   ["Johannes Jonker", "Rynhardt Jonker"],
+  // Venue avec 2015-2016, arbitrée le 31 août 2026 sur les feuilles officielles.
+  ["David Marty", "Paul Marty"],
 ];
 
 const ARBITREES = new Set(
