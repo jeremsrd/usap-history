@@ -630,8 +630,8 @@ par inclusion : trop large pour être lancé sans revue préalable.
 
 ## Logos des clubs
 
-Les 44 adversaires ont leur logo, servi par le site lui-même depuis
-`public/images/logos/{club}.png` — 3,1 Mo au total. Ils viennent des sources
+Les 46 adversaires ont leur logo, servi par le site lui-même depuis
+`public/images/logos/{club}.{png|webp}` — 3,1 Mo au total. Ils viennent des sources
 officielles, que les scripts lisent déjà : `cdn.lnr.fr/club/{slug}/photo/logo.
 {empreinte}` pour les clubs français, le champ `imageUrl` du flux de l'EPCR
 pour les européens. `fetch-club-logos.ts` fait la moisson, sur les calendriers
@@ -650,11 +650,22 @@ jouait plutôt que sa page d'aujourd'hui.
 croisés en 2016-2017, ont bien chacun une URL d'écusson sur le calendrier de
 cette saison-là — et le CDN ne rend au bout qu'un **bouclier gris** de 33 par
 45 pixels, le même pour les deux, quand les quatorze autres clubs de la page
-rendent leur vrai PNG. Les deux seuls adversaires sans logo, donc, et c'est
-délibéré : mieux vaut pas d'écusson qu'un faux. `fetch-club-logos.ts` reconnaît
-ce bouclier à son empreinte (`PLACEHOLDER_LNR`) et refuse de l'enregistrer —
-sans quoi il se serait écrit sous `albi.png` et `bourgoin.png`, en WebP malgré
-l'extension.
+rendent leur vrai PNG. Il en va de même sur tous les calendriers archivés
+depuis 2012 : la LNR ne garde qu'une image par club, et pour ces deux-là c'est
+le bouclier. `fetch-club-logos.ts` le reconnaît à son empreinte
+(`PLACEHOLDER_LNR`) et refuse de l'enregistrer — sans quoi il se serait écrit
+sous `albi.png` et `bourgoin.png`, en WebP malgré l'extension.
+
+**Leur écusson vient donc du site officiel du club**, par la table
+`SOURCES_HORS_LNR`, qui passe avant la moisson : la LNR donne bien une URL
+pour eux, elle ne mène simplement à rien. C'est la source la plus autorisée
+qui soit pour une marque de club, simplement pas celle que la chaîne
+interroge d'office. Albi y a son écusson complet (300×300, transparent).
+Bourgoin n'a que **le dauphin seul**, sans son nom, et c'est un choix : la FFR
+publie bien l'écusson complet sur Mon Club House, mais avec un **fond blanc
+incrusté** — le défaut de Clermont, déjà corrigé une fois, un rectangle blanc
+derrière l'écusson en thème sombre. Le dauphin transparent va aux deux
+thèmes.
 
 Pourquoi les héberger plutôt que pointer vers ces CDN : leurs URL portent une
 empreinte qui change au gré des mises à jour, le lien direct peut être bloqué,

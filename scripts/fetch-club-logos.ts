@@ -115,6 +115,35 @@ async function reduire(contenu: Buffer): Promise<Buffer> {
  */
 const PLACEHOLDER_LNR = "ee0e36cd30739c08c65f23f2a7c01e351d45a33a324ba1cea66b39e9f2d63382";
 
+/**
+ * ÉCUSSONS QUE NI LA LNR NI L'EPCR NE SERVENT, ET OÙ LES PRENDRE.
+ *
+ * Deux clubs seulement, et la même raison : Albi et Bourgoin ont quitté la
+ * Pro D2 en 2017, la LNR n'a plus de page pour eux et son CDN ne rend qu'un
+ * bouclier gris (cf. `PLACEHOLDER_LNR`). Leur écusson vient donc du **site
+ * officiel du club**, ce qui reste la source la plus autorisée qui soit pour
+ * une marque de club — simplement pas celle que la chaîne interroge d'office.
+ *
+ * - **Albi**, `sca-albi.fr` : l'écusson complet du Sporting Club Albigeois,
+ *   300 par 300 avec transparence. Rien à redire.
+ * - **Bourgoin**, `csbj-rugby.fr` : le dauphin seul, 512 par 512 avec
+ *   transparence. C'est la marque actuelle du club, sans son nom — et c'est
+ *   un choix, arbitré le 31 août 2026. L'écusson **complet** existe bien, sur
+ *   Mon Club House de la FFR
+ *   (`api-web.monclubhouse.ffr.fr/assets/f6219689-dccc-418d-83b1-f3aef56b2c8d`,
+ *   dont le point d'accès accepte `?format=png&width=1200`), mais avec un
+ *   **fond blanc incrusté** : c'est exactement le défaut de Clermont, déjà
+ *   corrigé une fois — un rectangle blanc derrière l'écusson en thème sombre.
+ *   Le dauphin transparent va aux deux thèmes, comme les 44 autres.
+ *
+ * Ces deux-là sont les écussons **d'aujourd'hui**, ce qui vaut aussi pour
+ * tous les autres : la LNR ne sert que la version courante.
+ */
+const SOURCES_HORS_LNR: Record<string, string> = {
+  Albi: "https://www.sca-albi.fr/wp-content/uploads/2017/07/Logo-SCA-web.webp",
+  Bourgoin: "https://csbj-rugby.fr/wp-content/uploads/2025/06/csbj-favicon-sombre.webp",
+};
+
 const DOSSIER = join(process.cwd(), "public", "images", "logos");
 const CHEMIN_PUBLIC = "/images/logos";
 /** L'écusson catalan, hors du dossier des adversaires et référencé en dur. */
@@ -242,7 +271,11 @@ async function main() {
     const source =
       club.logoUrl?.startsWith("http") && !vise
         ? club.logoUrl
-        : (lnr.get(nomCourt) ?? epcr.get(nomCourt));
+        // La table arbitrée à la main passe avant la moisson : pour Albi et
+        // Bourgoin, la LNR donne bien une URL, elle ne mène simplement à rien
+        // (cf. `SOURCES_HORS_LNR`). Le garde-fou sur le bouclier gris reste
+        // en second rideau, pour un club que la LNR oublierait plus tard.
+        : (SOURCES_HORS_LNR[nomCourt] ?? lnr.get(nomCourt) ?? epcr.get(nomCourt));
     if (!source) {
       sans.push(nomCourt);
       continue;
