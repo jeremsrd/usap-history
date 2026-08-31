@@ -99,6 +99,20 @@ const TOUT = process.argv.includes("--tout");
  * séparent la dernière de l'un de la première de l'autre, et la LNR écrit
  * « Henry Tuilagi » en toutes lettres sur les feuilles de 2014-2015. Ce sont
  * le père et le fils.
+ *
+ * **Les deux dernières viennent de 2013-2014**, et tiennent du même motif :
+ * deux hommes du même patronyme passés par l'USAP, séparés par des années et
+ * rapprochés par un dossard partagé.
+ *
+ *   Perez     Jean-Pierre Pérez, troisième ligne aile, cinquante-cinq feuilles
+ *             de 2009 à 2018 ; Alexandre Perez, demi d'ouverture, neuf
+ *             feuilles de 2021 à 2023. Trois ans les séparent, et la LNR écrit
+ *             « Jean Pierre Perez » sur les feuilles de 2013-2014.
+ *   Fernandez Patricio Fernández, l'ouvreur argentin de 2020 à 2023, et Romain
+ *             Fernandez, une seule feuille — Toulon, le 22 novembre 2013, où
+ *             la LNR l'inscrit ainsi au n°22. Une fiche à feuille unique
+ *             mérite qu'on regarde à deux fois : ici c'est bien la source qui
+ *             écrit ce prénom, huit ans avant l'arrivée de Patricio.
  */
 const DISTINCTS: [string, string][] = [
   ["Sacha Lotrian", "Mathys Lotrian"],
@@ -124,6 +138,9 @@ const DISTINCTS: [string, string][] = [
   ["David Marty", "Paul Marty"],
   // Venue avec 2014-2015, arbitrée de même : le père et le fils.
   ["Henry Tuilagi", "Posolo Tuilagi"],
+  // Venues avec 2013-2014, arbitrées le 31 août 2026 sur les feuilles.
+  ["Jean-Pierre Pérez", "Alexandre Perez"],
+  ["Patricio Fernández", "Romain Fernandez"],
 ];
 
 const ARBITREES = new Set(
