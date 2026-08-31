@@ -156,9 +156,11 @@ function dureeDuMatch(feuille: LnrFeuille, estCouperet: boolean): number {
  */
 const CHANGEMENTS_CORRIGES: Record<
   string,
-  Array<{ minute: number; entrant: string; sortant: string }>
+  Array<{ minute: number; club: "home" | "away"; entrant: string; sortant: string }>
 > = {
-  "2026-02-22": [{ minute: 56, entrant: "Grégoire Arfeuil", sortant: "Quentin Valentino" }],
+  "2026-02-22": [
+    { minute: 56, club: "away", entrant: "Grégoire Arfeuil", sortant: "Quentin Valentino" },
+  ],
   // **Perpignan-Montpellier du 28 août 2010.** La feuille fait entrer Mamuka
   // Gorgodze à la 44ᵉ à la place de « Prenom_545 NOM_545 » — un gabarit, non
   // un nom. L'enregistrement montpelliérain de Gonçalo Uva est corrompu de
@@ -166,7 +168,15 @@ const CHANGEMENTS_CORRIGES: Record<
   // (cf. `TITULAIRES_MANQUANTS` de `lib/feuilles.ts`). Le déroulé d'ESPN pour
   // cette rencontre (`gameId=119006`) donne le remplacement en toutes
   // lettres : Gorgodze pour Uva à la 44ᵉ.
-  "2010-08-28": [{ minute: 44, entrant: "Mamuka Gorgodze", sortant: "Goncalo Uva" }],
+  "2010-08-28": [
+    { minute: 44, club: "away", entrant: "Mamuka Gorgodze", sortant: "Goncalo Uva" },
+  ],
+  // **Montpellier-Perpignan du 20 septembre 2008.** Même jeton, même homme,
+  // dans l'autre sens : « Prenom_545 NOM_545 » entre à la 69ᵉ à la place de
+  // Jacques Bascou, et 545 est Gonçalo Uva (cf. `lib/feuilles.ts`).
+  "2008-09-20": [
+    { minute: 69, club: "home", entrant: "Goncalo Uva", sortant: "Jacques Bascou" },
+  ],
 };
 
 /**
@@ -216,7 +226,11 @@ function corriger(feuille: LnrFeuille, jour: string): LnrFeuille {
   return {
     ...feuille,
     changements: feuille.changements.map((c) => {
-      const correction = corrections.find((x) => x.minute === c.minute);
+      // **Le club fait partie de l'appariement, et il le faut** : deux
+      // changements peuvent tomber à la même minute, un par camp. Sans lui, la
+      // correction du 20 septembre 2008 réécrivait aussi le changement
+      // catalan de la 69ᵉ, et le camp de l'USAP échouait à son tour.
+      const correction = corrections.find((x) => x.minute === c.minute && x.club === c.club);
       if (!correction) return c;
       return { ...c, entrant: nom(correction.entrant), sortant: nom(correction.sortant) };
     }),

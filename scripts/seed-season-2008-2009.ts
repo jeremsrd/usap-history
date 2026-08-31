@@ -1,43 +1,55 @@
 /**
- * Crée les trente-deux matchs de la saison 2020-2021, celle du titre de
- * Pro D2 et de la remontée.
+ * Crée les vingt-huit matchs de la saison 2008-2009, celle du titre.
  *
- * Trente journées, une demi-finale contre Oyonnax et la finale contre
- * Biarritz. L'USAP termine premier de la phase régulière avec 107 points —
- * 24 victoires, 1 nul, 5 défaites, 821 points marqués pour 504 encaissés —
- * puis remporte le titre. Le classement officiel de la LNR sert de garde-fou
- * aux agrégats, et l'arithmétique tombe juste : 24×4 + 1×2 + 9 points de
- * bonus font 107.
+ * Vingt-six journées, une demi-finale et une finale. L'USAP termine
+ * **première de la phase régulière avec 92 points** — 20 victoires, 1 nul,
+ * 5 défaites, 615 points marqués pour 374 encaissés, 10 points de bonus —,
+ * bat le Stade Français 25-21 en demi-finale et Clermont 22-13 en finale.
+ * C'est le titre de 2009, le premier depuis 1955.
  *
- * PREMIÈRE SAISON DE PRO D2 REPRISE. La LNR sépare ses deux divisions sur
- * deux sites de structure identique ; `utiliserDivision("prod2")` bascule
- * `lnr.ts` sur `prod2.lnr.fr`. Les phases finales y ont leurs propres
- * segments d'URL — `demi-finales` et `finale` —, que `phasesLnr()` déduit du
- * libellé de tour.
+ * **LA LNR NE PUBLIE AUCUN CLASSEMENT POUR CETTE SAISON**, et c'est la
+ * première fois. Sa page `classement/2008-2009` existe mais ne porte aucune
+ * ligne de club — vérifié. Le garde-fou des agrégats vient donc de
+ * **Wikipédia**, dont le classement de phase régulière a été confronté à la
+ * saison suivante : pour 2009-2010, il redonnait au point près les chiffres
+ * obtenus en retranchant les phases finales de la ligne officielle, pour
+ * l'USAP comme pour Toulon. C'est la meilleure source disponible ici, et elle
+ * n'est pas officielle : la réserve vaut d'être dite.
  *
- * Ce site archive mieux que celui du Top 14 : il publie les compositions de
- * 2020-2021, quand le site Top 14 ne le fait pas pour toutes ses archives.
+ * L'arithmétique tombe juste : 20×4 + 1×2 + 10 font 92.
  *
- * Source unique, la LNR : pas de campagne européenne cette saison-là, l'USAP
- * jouait en deuxième division.
+ * LA BASE N'EST PAS VIERGE, et c'est le premier cas. La finale du 6 juin 2009
+ * y figure depuis longtemps, importée bien avant cette série, avec sa
+ * mi-temps (6-10), son affluence (79 741), son compte-rendu et ses
+ * quarante-six lignes de composition. Le script la **retrouve** au lieu de la
+ * dupliquer — l'appariement se fait sur la saison, l'adversaire et le jour —
+ * et `preserverAnnexes` (cf. `lib/saison.ts`) empêche la relance d'effacer ce
+ * que la LNR ne donne pas.
  *
- * Ce que le script écrit : la rencontre elle-même — date et heure,
- * compétition, journée ou phase, adversaire, lieu, score, réalisations des
- * deux camps, résultat, bonus et arbitre —, plus les agrégats de la saison,
- * calculés sur les seules trente journées de championnat. **Pas les
- * compositions ni la chronologie** : elles viennent ensuite, avec
- * `seed-lineup.ts`, `seed-opponent-sheet.ts` et `seed-chronologie.ts`.
+ * Une valeur change tout de même : la finale était enregistrée avec
+ * `isHome: false`, quand la feuille de la LNR désigne Perpignan recevant. Le
+ * script pose donc `true`, comme pour les finales de 2010 et de 2018. Sur
+ * terrain neutre, ce drapeau est de toute façon conventionnel.
  *
- * Huit clubs manquaient à la base — Colomiers, Nevers, Carcassonne,
- * Aurillac, Béziers, Rouen, Valence-Romans et Soyaux-Angoulême. Leurs noms
- * viennent du classement officiel de la LNR, pas de mémoire.
+ * DEUX TERRAINS NEUTRES : la demi-finale au stade de Gerland de Lyon, la
+ * finale au Stade de France. `TERRAINS_PARTICULIERS` de `lib/stades.ts` porte
+ * les deux dates.
+ *
+ * PAS DE COUPE D'EUROPE EN BASE : le flux de l'EPCR ne rend rien avant
+ * 2020-2021.
+ *
+ * ATTENTION AU SCORE COURANT : jusqu'en 2016-2017 inclus, il crédite neuf
+ * points à un essai de pénalité. `lireFeuille` le corrige.
+ *
+ * Ce que le script écrit : la rencontre elle-même, plus les agrégats de la
+ * saison, calculés sur les seules vingt-six journées. **Pas les compositions
+ * ni la chronologie** : elles viennent ensuite.
  *
  * Usage :
- *   npx tsx scripts/seed-season-2020-2021.ts --dry
- *   npx tsx scripts/seed-season-2020-2021.ts
+ *   npx tsx scripts/seed-season-2008-2009.ts --dry
+ *   npx tsx scripts/seed-season-2008-2009.ts
  *
- * Idempotent : un match déjà créé est mis à jour, jamais dupliqué —
- * l'appariement se fait sur la saison, l'adversaire et le jour.
+ * Idempotent : un match déjà créé est mis à jour, jamais dupliqué.
  */
 
 import { PrismaClient, MatchResult, Prisma } from "@prisma/client";
@@ -45,15 +57,16 @@ import {
   lireCalendrier,
   lireFeuille,
   lireCompositions,
+  momentDuMatch,
   realisationsDepuisFaits as realisations,
-  utiliserDivision,
   type Realisations,
   type Camp,
 } from "./lib/lnr";
 import { trouverOuCreerArbitre } from "./lib/arbitres";
-import { CLUBS_LNR, CLUBS_EPCR } from "./lib/clubs";
+import { CLUBS_LNR } from "./lib/clubs";
 import { computeBonuses, matchPoints } from "../src/lib/scoring";
 import { generateMatchSlug, generateOpponentSlug } from "../src/lib/slugs";
+import { completerRealisations } from "./lib/feuilles";
 import { preserverAnnexes } from "./lib/saison";
 import { terrainDuMatch } from "./lib/stades";
 
@@ -61,8 +74,8 @@ const prisma = new PrismaClient();
 
 const DRY_RUN = process.argv.includes("--dry");
 
-const SAISON = "2020-2021";
-const JOURNEES = 30;
+const SAISON = "2008-2009";
+const JOURNEES = 26;
 
 async function trouverAdversaire(nom: string): Promise<string> {
   const trouve = await prisma.opponent.findFirst({
@@ -74,20 +87,16 @@ async function trouverAdversaire(nom: string): Promise<string> {
 }
 
 /**
- * Les huit clubs de Pro D2 que la base ne connaît pas encore. Les noms sont
- * ceux du classement officiel de la LNR, relevé sur `prod2.lnr.fr/classement`,
- * et non de mémoire.
+ * Aucun club à créer : les treize adversaires de Top 14 de 2008-2009 sont tous
+ * en base, arrivés avec les saisons plus récentes. Le tableau reste, vide,
+ * pour que la saison suivante n'ait qu'à le remplir.
  */
-const NOUVEAUX_ADVERSAIRES = [
-  { name: "Colomiers Rugby", shortName: "Colomiers", city: "Colomiers", pays: "FR" },
-  { name: "USON Nevers", shortName: "Nevers", city: "Nevers", pays: "FR" },
-  { name: "US Carcassonnaise", shortName: "Carcassonne", city: "Carcassonne", pays: "FR" },
-  { name: "Stade Aurillacois", shortName: "Aurillac", city: "Aurillac", pays: "FR" },
-  { name: "AS Béziers Hérault", shortName: "Béziers", city: "Béziers", pays: "FR" },
-  { name: "Rouen Normandie Rugby", shortName: "Rouen", city: "Rouen", pays: "FR" },
-  { name: "Valence Romans", shortName: "Valence-Romans", city: "Valence", pays: "FR" },
-  { name: "Soyaux-Angoulême XV", shortName: "Angoulême", city: "Angoulême", pays: "FR" },
-];
+const NOUVEAUX_ADVERSAIRES: Array<{
+  name: string;
+  shortName: string;
+  city: string;
+  pays: string;
+}> = [];
 
 async function assurerAdversaires() {
   for (const club of NOUVEAUX_ADVERSAIRES) {
@@ -133,8 +142,10 @@ interface Rencontre {
 }
 
 /**
- * Les vingt-six journées de Top 14 et le match d'accession, depuis la LNR.
- * La rencontre de barrage n'a pas de journée : elle porte une phase.
+ * Les vingt-six journées de Top 14, la demi-finale et la finale, depuis la LNR.
+ *
+ * Les deux phases finales n'ont pas de journée : elles portent un libellé de
+ * tour, d'où `estCouperet()` déduira qu'elles n'attribuent pas de bonus.
  */
 async function championnat(echecs: string[]): Promise<Rencontre[]> {
   const rencontres: Rencontre[] = [];
@@ -144,10 +155,7 @@ async function championnat(echecs: string[]): Promise<Rencontre[]> {
     "finale",
   ];
   /** Libellé de tour, pour les phases qui n'ont pas de journée. */
-  const TOURS: Record<string, string> = {
-    "demi-finales": "Demi-finale",
-    finale: "Finale",
-  };
+  const TOURS: Record<string, string> = { "demi-finales": "Demi-finale", finale: "Finale" };
   for (const phase of phases) {
     const n = phase.startsWith("j") ? Number(phase.slice(1)) : null;
     const carte = await lireCalendrier(SAISON, phase);
@@ -176,8 +184,19 @@ async function championnat(echecs: string[]): Promise<Rencontre[]> {
     const scoreUsap = isHome ? carte.scoreRecevant : carte.scoreVisiteur;
     const scoreOpponent = isHome ? carte.scoreVisiteur : carte.scoreRecevant;
 
-    const usap = realisations(feuille.faits, feuille.campUsap, scoreUsap);
-    const adverse = realisations(feuille.faits, campAdverse, scoreOpponent);
+    // La LNR omet parfois des points : `completerRealisations` ajoute ce
+    // qu'une autre source établit, et le contrôle ci-dessous le vérifie.
+    const jourFeuille = feuille.coupDEnvoi.slice(0, 10);
+    const usap = completerRealisations(
+      jourFeuille,
+      "usap",
+      realisations(feuille.faits, feuille.campUsap, scoreUsap),
+    );
+    const adverse = completerRealisations(
+      jourFeuille,
+      "adversaire",
+      realisations(feuille.faits, campAdverse, scoreOpponent),
+    );
     const ecart: string[] = [];
     if (usap.total !== scoreUsap) ecart.push(`USAP ${usap.total} pour ${scoreUsap}`);
     if (adverse.total !== scoreOpponent) ecart.push(`${nom} ${adverse.total} pour ${scoreOpponent}`);
@@ -194,10 +213,12 @@ async function championnat(echecs: string[]): Promise<Rencontre[]> {
       // elles, pas d'arbitre, ce qui n'empêche pas de créer la rencontre.
     }
 
+    // Un coup d'envoi à 00:00 veut dire « heure inconnue » (cf. `momentDuMatch`).
+    const moment = momentDuMatch(feuille.coupDEnvoi);
     rencontres.push({
-      date: new Date(feuille.coupDEnvoi),
-      kickoffTime: feuille.coupDEnvoi.slice(11, 16),
-      competitionShortName: "Pro D2",
+      date: moment.date,
+      kickoffTime: moment.kickoffTime,
+      competitionShortName: "Top 14",
       matchday: n,
       round: n != null ? null : (TOURS[phase] ?? null),
       isHome,
@@ -248,13 +269,11 @@ async function cloreLaSaison(seasonId: string, startYear: number) {
     pointsAgainst: jouees.reduce((s, m) => s + m.scoreOpponent, 0),
     bonusOffensif: jouees.filter((m) => m.bonusOffensif).length,
     bonusDefensif: jouees.filter((m) => m.bonusDefensif).length,
-    // Premier de la phase régulière, puis champion.
+    // Première de la phase régulière, et championne de France.
     finalRanking: 1,
   };
   const points = jouees.reduce(
-    (s, m) =>
-      s +
-      matchPoints(m.result, m.bonusOffensif, m.bonusDefensif, startYear),
+    (s, m) => s + matchPoints(m.result, m.bonusOffensif, m.bonusDefensif, startYear),
     0,
   );
 
@@ -266,7 +285,20 @@ async function cloreLaSaison(seasonId: string, startYear: number) {
   );
   // Le classement officiel de la LNR fait foi : on refuse d'écrire des
   // agrégats qui s'en écartent.
-  const OFFICIEL = { wins: 24, draws: 1, losses: 5, pointsFor: 821, pointsAgainst: 504, points: 107 };
+  // La page de classement ne sépare pas BO et BD : elle n'affiche qu'un total
+  // de 9. On contrôle donc la somme, seul chiffre que la source permet
+  // d'affirmer.
+  //
+  // La ligne est reprise telle quelle : contrairement aux six premiers, l'USAP
+  // n'a pas de phase finale à retrancher, et la page lui compte bien 26
+  // journées.
+  // Chiffres de la phase régulière selon **Wikipédia**, la LNR ne publiant
+  // aucun classement pour 2008-2009 (cf. l'en-tête). Source non officielle,
+  // mais éprouvée sur la saison suivante.
+  const OFFICIEL = {
+    wins: 20, draws: 1, losses: 5, pointsFor: 615, pointsAgainst: 374,
+    points: 92, bonus: 10,
+  };
   const ecarts = [
     agregats.wins !== OFFICIEL.wins ? `${agregats.wins}V pour ${OFFICIEL.wins}` : null,
     agregats.draws !== OFFICIEL.draws ? `${agregats.draws}N pour ${OFFICIEL.draws}` : null,
@@ -276,21 +308,20 @@ async function cloreLaSaison(seasonId: string, startYear: number) {
     agregats.pointsAgainst !== OFFICIEL.pointsAgainst
       ? `${agregats.pointsAgainst} encaissés pour ${OFFICIEL.pointsAgainst}` : null,
     points !== OFFICIEL.points ? `${points} points pour ${OFFICIEL.points}` : null,
+    agregats.bonusOffensif + agregats.bonusDefensif !== OFFICIEL.bonus
+      ? `${agregats.bonusOffensif + agregats.bonusDefensif} bonus pour ${OFFICIEL.bonus}` : null,
   ].filter(Boolean);
   if (ecarts.length > 0) {
-    console.log(`  ⚠ écart avec le classement officiel : ${ecarts.join(", ")} — agrégats non écrits`);
+    console.log(`  ⚠ écart avec le classement de référence : ${ecarts.join(", ")} — agrégats non écrits`);
     return;
   }
-  console.log("  ✔ conforme au classement officiel de la LNR");
+  console.log("  ✔ conforme au classement de la phase régulière (Wikipédia)");
 
   if (!DRY_RUN) {
     await prisma.season.update({
       where: { id: seasonId },
-      // Championne de Pro D2 et promue : la finale valait la montée, il n'y
-      // avait pas de barrage d'accession cette saison-là. Ces deux drapeaux
-      // manquaient jusqu'au 30 août 2026 — la saison du titre était en base
-      // sans être dite championne.
-      data: { ...agregats, totalPoints: points, champion: true, promoted: true },
+      // Championne de France 2009.
+      data: { ...agregats, totalPoints: points, champion: true, promoted: false, relegated: false },
     });
   }
 }
@@ -298,8 +329,9 @@ async function cloreLaSaison(seasonId: string, startYear: number) {
 async function main() {
   console.log(`=== Saison ${SAISON}${DRY_RUN ? " (simulation)" : ""} ===\n`);
 
-  // La LNR sépare ses deux divisions sur deux sites.
-  utiliserDivision("prod2");
+  // La LNR sépare ses deux divisions sur deux sites, et `top14` est la valeur
+  // par défaut du module : rien à basculer pour une saison de première
+  // division.
 
   const saison = await prisma.season.findFirstOrThrow({ where: { label: SAISON } });
   await assurerAdversaires();
@@ -321,7 +353,7 @@ async function main() {
       ? await trouverAdversaire(r.opponentNom).catch(() => "")
       : await trouverAdversaire(r.opponentNom);
 
-    // Un match couperet n'attribue pas de bonus.
+    // La demi-finale et la finale sont des couperets : pas de bonus.
     const isKnockout = r.matchday == null && !(r.round ?? "").startsWith("Poule");
     const bonus = computeBonuses({
       competitionShortName: r.competitionShortName,

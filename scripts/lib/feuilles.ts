@@ -56,8 +56,27 @@ export interface TitulaireManquant {
  * George Smith paraît deux fois, à Toulon : il y a bien disputé trente matchs
  * de Top 14 en 2010-2011, ce qu'une source indépendante confirme — la même qui
  * atteste son passage au Stade Français en 2012.
+ *
+ * **LE JETON « 545 » DÉSIGNE GONÇALO UVA**, et c'est la démonstration la plus
+ * solide de cette table. Quand la LNR a perdu la fiche d'un joueur, elle
+ * écrit un gabarit — « Prenom_545 NOM_545 » — où 545 est son identifiant
+ * interne. Ce jeton paraît deux fois dans les saisons reprises, à deux ans
+ * d'écart, et les deux fois une lecture indépendante d'ESPN y met le même
+ * homme : sortant de Montpellier le 28 août 2010, et n°18 montpelliérain le
+ * 20 septembre 2008. Sa fiche est donc corrompue de bout en bout chez la LNR,
+ * qui l'omet aussi de ses compositions — le banc du 20 septembre 2008 ne
+ * compte que sept joueurs, le n°18 manquant.
+ *
+ * **Ici la règle du dossard ne s'applique pas, et il faut le dire** : la
+ * composition qu'ESPN publie pour ce match ne concorde pas avec la LNR — elle
+ * met Macurdy au n°4 quand la LNR y met Bascou, et diverge sur deux places de
+ * banc. Ce n'est donc pas elle qui fonde l'identification, mais la constance
+ * du jeton d'un match à l'autre.
  */
 export const TITULAIRES_MANQUANTS: Record<string, TitulaireManquant[]> = {
+  // Banc montpelliérain à sept joueurs, le n°18 manquant — c'est le jeton
+  // « 545 », soit Gonçalo Uva (cf. plus haut). Il entre à la 69e.
+  "2008-09-20": [{ camp: "adversaire", numero: 18, prenom: "Goncalo", nom: "Uva" }],
   // gameId ESPN 119006 — Perpignan 6-16 Montpellier
   "2010-08-28": [{ camp: "adversaire", numero: 4, prenom: "Goncalo", nom: "Uva" }],
   // gameId ESPN 119062 — Racing Métro 18-18 Perpignan

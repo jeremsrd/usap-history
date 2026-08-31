@@ -67,6 +67,14 @@ export const TERRAINS_PARTICULIERS: Record<string, string | null> = {
   // officielle ne publie le lieu d'une rencontre.
   "2010-05-14": "Stade de la Mosson",
   "2010-05-29": "Stade de France",
+  // Demi-finale du 30 mai 2009, Perpignan 25-21 Stade Français, au stade de
+  // Gerland de Lyon ; finale du 6 juin 2009, Perpignan 22-13 Clermont, au
+  // Stade de France. Source : Wikipédia. Gerland est en base sous son nom
+  // d'aujourd'hui, « Matmut Stadium de Gerland » — c'est le même terrain,
+  // rebaptisé quand le LOU s'y est installé en 2017, comme Pierre-Antoine est
+  // devenu Pierre-Fabre à Castres.
+  "2009-05-30": "Matmut Stadium de Gerland",
+  "2009-06-06": "Stade de France",
 };
 
 /** Stade de l'USAP, seul terrain qu'elle ait connu sur la période couverte. */

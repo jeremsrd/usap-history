@@ -116,6 +116,11 @@ const TOUT = process.argv.includes("--tout");
  *             quatre à Bourgoin puis Rouen de 2016 à 2020. La LNR écrit
  *             « Mikael Campeggia » sur les premières, « Florent Campeggia »
  *             sur les secondes.
+ *   Raynaud   Julien, quatre feuilles à Montauban et Albi de 2009 à 2015, et
+ *             Marc, une seule — Montauban, le 29 novembre 2008, où la LNR
+ *             l'inscrit ainsi au n°8. Une fiche à feuille unique mérite qu'on
+ *             regarde à deux fois : ici c'est bien la source qui écrit ce
+ *             prénom.
  *   Senio     John, que la LNR met au n°20 de Clermont en finale 2009 puis au
  *             n°9 de Bourgoin dès septembre, et Kevin, n°9 de Clermont à
  *             partir de 2010. Le passage de John par Clermont les rapprochait.
@@ -157,6 +162,8 @@ const DISTINCTS: [string, string][] = [
   ["Florent Campeggia", "Mikael Campeggia"],
   // Venue avec 2009-2010, arbitrée sur les feuilles.
   ["John Senio", "Kevin Senio"],
+  // Venue avec 2008-2009, arbitrée sur les feuilles.
+  ["Julien Raynaud", "Marc Raynaud"],
 ];
 
 const ARBITREES = new Set(

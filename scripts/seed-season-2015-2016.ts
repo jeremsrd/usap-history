@@ -71,6 +71,7 @@ import { trouverOuCreerArbitre } from "./lib/arbitres";
 import { CLUBS_LNR } from "./lib/clubs";
 import { computeBonuses, matchPoints } from "../src/lib/scoring";
 import { generateMatchSlug, generateOpponentSlug } from "../src/lib/slugs";
+import { preserverAnnexes } from "./lib/saison";
 import { terrainDuMatch } from "./lib/stades";
 
 const prisma = new PrismaClient();
@@ -371,7 +372,13 @@ async function main() {
           lt: new Date(`${jour}T23:59:59Z`),
         },
       },
-      select: { id: true },
+      select: {
+        id: true,
+        halfTimeUsap: true,
+        halfTimeOpponent: true,
+        attendance: true,
+        videoUrl: true,
+      },
     });
 
     // Le terrain d'alors, pas celui d'aujourd'hui : `terrainDuMatch` lit
@@ -425,7 +432,12 @@ async function main() {
     };
 
     if (existant) {
-      await prisma.match.update({ where: { id: existant.id }, data: donnees });
+      // Une relance ne doit pas effacer ce que la LNR ne donne pas
+      // (cf. lib/saison.ts) : mi-temps, affluence et vidéo viennent d'ailleurs.
+      await prisma.match.update({
+        where: { id: existant.id },
+        data: preserverAnnexes(donnees, existant),
+      });
       majs++;
     } else {
       await prisma.match.create({ data: donnees });
