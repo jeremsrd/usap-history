@@ -76,11 +76,19 @@ const DOUBLONS = ["Stade du Hameau", "Matmut Stadium de Gerland"];
  * que pour Rouen, donc : c'est le terrain d'aujourd'hui, et rien de lisible
  * par machine ne dit qu'Agen y recevait déjà le 2 septembre 2018.
  *
- * Les trois derniers sont arrivés avec 2017-2018 et **viennent de Jérémy**.
- * Dax, Massy et Narbonne ont quitté la Pro D2, et leurs pages LNR ne nomment
- * plus leur stade — la même impasse que Carcassonne et Rouen. Même réserve
- * qu'eux, donc : rien n'a permis de vérifier par machine qu'ils y recevaient
- * déjà en 2017-2018.
+ * Dax, Massy et Narbonne sont arrivés avec 2017-2018 et **viennent de
+ * Jérémy**. Ils ont quitté la Pro D2, et leurs pages LNR ne nomment plus leur
+ * stade — la même impasse que Carcassonne et Rouen. Même réserve qu'eux,
+ * donc : rien n'a permis de vérifier par machine qu'ils y recevaient déjà en
+ * 2017-2018.
+ *
+ * Les deux derniers, arrivés avec 2016-2017, sont dans le même cas et
+ * viennent de la même source. Albi et Bourgoin ne sont plus en Pro D2 depuis
+ * plus longtemps encore, et la LNR est allée jusqu'à perdre leurs écussons
+ * (cf. `fetch-club-logos.ts`) : ni son calendrier, ni ses feuilles de match,
+ * ni sa page de club — qui n'existe plus — ne portent de lieu. Même réserve :
+ * ce sont leurs terrains d'aujourd'hui, et rien de lisible par machine ne dit
+ * qu'ils y recevaient l'USAP le 5 mars et le 10 février 2017.
  */
 const MANQUANTS = [
   { nom: "Parc des Sports Aguiléra", ville: "Biarritz", club: "Biarritz" },
@@ -100,6 +108,8 @@ const MANQUANTS = [
   { nom: "Stade Maurice-Boyau", ville: "Dax", club: "Dax" },
   { nom: "Stade Jules-Ladoumègue", ville: "Massy", club: "Massy" },
   { nom: "Parc des Sports et de l'Amitié", ville: "Narbonne", club: "Narbonne" },
+  { nom: "Stadium municipal d'Albi", ville: "Albi", club: "Albi" },
+  { nom: "Stade Pierre-Rajon", ville: "Bourgoin-Jallieu", club: "Bourgoin" },
 ];
 
 async function fusionnerDoublons() {

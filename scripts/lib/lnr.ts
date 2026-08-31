@@ -307,6 +307,108 @@ function campUsapDepuisUrl(url: string): Camp {
 }
 
 /**
+ * L'ESSAI DE PÉNALITÉ COMPTE NEUF POINTS SUR LES FEUILLES D'AVANT 2017-2018,
+ * ET SA TRANSFORMATION Y EST COMPTÉE DEUX FOIS.
+ *
+ * **Avant le changement de règle de 2017, l'essai de pénalité était un essai
+ * comme un autre : cinq points, à transformer.** Depuis, il est accordé
+ * d'office à sept, sans coup de pied. Les feuilles d'avant portent donc
+ * réellement une transformation — la LNR **en nomme le buteur** dans
+ * `conversionPlayer`, Enzo Selponi le 21 octobre 2016, Sébastien Descons le
+ * 25 novembre, Joseph Carlisles le 15 janvier 2017 —, et c'est là que le
+ * compte se casse : sa propre table de points valorise déjà l'essai de
+ * pénalité à sept. La transformation est ainsi ajoutée une seconde fois, et
+ * le score courant gagne neuf points au lieu de sept.
+ *
+ * Les huit essais de pénalité de 2016-2017, avec le score du camp avant et
+ * après :
+ *
+ * | Match | Fait | Score du camp | Saut |
+ * |---|---|---|---|
+ * | Bourgoin, 21 octobre 2016 | EP 31' | 12 → 21 | 9 |
+ * | Bourgoin, 21 octobre 2016 | EP 47' | 28 → 37 | 9 |
+ * | Agen, 17 novembre 2016 | EP 73' | 16 → 25 | 9 |
+ * | Narbonne, 25 novembre 2016 | EP 66' | 47 → 56 | 9 |
+ * | Biarritz, 1er décembre 2016 | EP 64' | 15 → 22 | **7** |
+ * | Albi, 16 décembre 2016 | EP 22' | 10 → 19 | 9 |
+ * | Aurillac, 15 janvier 2017 | EP 31' | 8 → 17 | 9 |
+ * | Colomiers, 20 janvier 2017 | EP 34' | 10 → 19 | 9 |
+ *
+ * **Les deux points ne tombent pas toujours au même endroit**, et c'est la
+ * seule difficulté. Sept fois sur huit ils sont portés par l'essai de
+ * pénalité lui-même, qui saute alors de neuf. À Biarritz il saute de sept, la
+ * feuille ne nommant aucun buteur sur ce fait-là — et les deux points
+ * arrivent au fait suivant, le carton de la 65ᵉ, où elle inscrit Lucu. On les
+ * retranche donc là où ils apparaissent, au premier fait dont le score dépasse
+ * de deux points ce que les faits du camp expliquent, plutôt qu'à une place
+ * décidée d'avance.
+ *
+ * Ce qui démontre le double compte n'est d'ailleurs pas le saut — un essai
+ * transformé entre-temps en ferait autant —, mais le **score final** : sans
+ * correction, le score courant de Bourgoin finit à 49-15 quand le résultat
+ * officiel est 45-15, celui de Narbonne à 68-13 pour 66-13, celui de Biarritz
+ * à 24-19 pour 22-19, celui d'Aurillac à 43-20 pour 41-20. L'écart vaut
+ * exactement deux points par essai de pénalité, sur les huit, et la correction
+ * fait retomber les sept feuilles sur leur score officiel.
+ *
+ * **La base, elle, garde l'essai de pénalité à sept points**, transformation
+ * comprise et non comptée — la convention de tout le reste du projet, dont
+ * dépend la règle d'audit `points = score − 7 × penaltyTries`. C'est légitime
+ * tant que la transformation a été réussie, ce qu'elle fut huit fois sur huit
+ * en 2016-2017. **Un essai de pénalité manqué vaudrait cinq points**, et
+ * l'arithmétique ne retomberait plus : `realisationsDepuisFaits` échouerait
+ * bruyamment sur ce match. C'est le comportement voulu, et c'est un cas à
+ * attendre en remontant plus haut.
+ *
+ * Pourquoi la borne à 2017-2018, et ce qu'elle vaut. Les saisons 2017-2018 à
+ * 2025-2026, déjà en base, ont toutes été reprises avec un score courant lu
+ * tel quel, et leurs essais de pénalité n'ont jamais fait diverger le total :
+ * sur ces feuilles-là, il vaut bien sept, sans transformation. La borne est
+ * donc attestée des deux côtés, et elle est celle de la règle.
+ *
+ * Réserve : rien n'est vérifié avant 2016-2017. Si une saison plus ancienne
+ * comptait autrement, cela se verrait aussitôt — les reconstitutions de points
+ * comparent toujours leur total au score officiel.
+ */
+function corrigerEssaisDePenalite(faits: LnrFait[], saison: string | null): void {
+  if (!saison || Number(saison.slice(0, 4)) >= 2017) return;
+
+  // Tant qu'un essai de pénalité reste en attente, le premier fait dont le
+  // score dépasse de deux points ce que les faits du camp expliquent porte sa
+  // transformation en double : c'est là qu'on la retranche, et de là qu'on
+  // décale la suite.
+  const decalage: [number, number] = [0, 0];
+  const dernierBrut: [number, number] = [0, 0];
+  const pointsDepuis: [number, number] = [0, 0];
+  const enAttente: [number, number] = [0, 0];
+
+  for (const fait of faits) {
+    const cote = fait.club === "home" ? 0 : 1;
+    pointsDepuis[cote] += pointsDuFait(fait.type, false);
+    if (fait.type === "essai-de-penalite") enAttente[cote]++;
+    if (!fait.score) continue;
+
+    const brut: [number, number] = [fait.score[0], fait.score[1]];
+    for (const k of [0, 1] as const) {
+      if (enAttente[k] > 0 && brut[k] - dernierBrut[k] - pointsDepuis[k] >= 2) {
+        decalage[k] += 2;
+        enAttente[k]--;
+      }
+    }
+    fait.score = [brut[0] - decalage[0], brut[1] - decalage[1]];
+    dernierBrut[0] = brut[0];
+    dernierBrut[1] = brut[1];
+    pointsDepuis[0] = 0;
+    pointsDepuis[1] = 0;
+  }
+}
+
+/** Saison d'une feuille, d'après son URL : `/feuille-de-match/2016-2017/j8/…`. */
+function saisonDepuisUrl(url: string): string | null {
+  return url.match(/\/feuille-de-match\/(\d{4}-\d{4})\//)?.[1] ?? null;
+}
+
+/**
  * Faits de match et changements d'une feuille LNR.
  *
  * @param url URL de la feuille, sans onglet — l'onglet `resumes-replays` est
@@ -354,6 +456,11 @@ export async function lireFeuille(url: string): Promise<LnrFeuille> {
     });
   }
 
+  // Le score courant des feuilles d'avant 2017-2018 gonfle l'essai de
+  // pénalité de deux points : on le ramène à ce qu'il vaut avant de le rendre.
+  const faitsTries = [...faits.values()].sort((a, b) => a.minute - b.minute);
+  corrigerEssaisDePenalite(faitsTries, saisonDepuisUrl(url));
+
   return {
     url,
     campUsap: campUsapDepuisUrl(url),
@@ -361,7 +468,7 @@ export async function lireFeuille(url: string): Promise<LnrFeuille> {
     // on s'ancre sur le composant du match, pas sur le premier venu.
     coupDEnvoi:
       html.match(/header-timeline[\s\S]{0,600}?"firstPeriodStartDate":"([^"]+)"/)?.[1] ?? null,
-    faits: [...faits.values()].sort((a, b) => a.minute - b.minute),
+    faits: faitsTries,
     changements: [...changements.values()].sort((a, b) => a.minute - b.minute),
   };
 }
@@ -660,19 +767,40 @@ export interface Realisations {
 /**
  * Réalisations d'un camp, déduites des faits de match.
  *
- * Les essais, pénalités et drops se comptent. Les transformations, non : la
- * feuille ne les inscrit pas comme des faits, et `conversionPlayer` ment (cf.
- * lib/lnr.ts). C'est le **score courant** qui les révèle — tout reliquat de
- * deux points sur un essai qui n'en a pas encore est une transformation. Le
- * total du match tranche en dernier ressort, la feuille s'arrêtant parfois
- * avant la dernière.
+ * Les essais, essais de pénalité, pénalités et drops se comptent sur les
+ * faits : la feuille les inscrit tous. Les transformations, non — elle ne les
+ * inscrit pas comme des faits, et `conversionPlayer` ment (cf. plus haut).
+ *
+ * ELLES SE DÉDUISENT DONC DU SCORE FINAL, ET DE LUI SEUL :
+ * `T = (score − 5×E − 7×EP − 3×P − 3×D) / 2`. Rien d'autre n'est nécessaire,
+ * cette fonction ne rendant que des **comptes** — attribuer une transformation
+ * à son buteur est le travail de `seed-chronologie.ts`, et c'est là que le
+ * score courant sert.
+ *
+ * **Le score courant ne sert pas ici, et c'est délibéré.** Il a d'abord été lu
+ * fait à fait, tout reliquat de deux points valant transformation. Cette
+ * lecture suit la feuille dans ses fautes : celle-ci saute parfois une
+ * transformation, et son score courant déraille alors avec elle — d'où le
+ * rattrapage sur le total final que faisait déjà l'ancienne version.
+ * L'arithmétique, elle, ne dépend que du score officiel, qui fait foi, et rend
+ * exactement le même résultat partout où l'ancienne lecture aboutissait : si
+ * le total reconstitué valait le score, c'est que le compte de transformations
+ * était déjà celui-ci.
+ *
+ * Quand le reliquat est impair, négatif, ou demande plus de transformations
+ * qu'il n'y a d'essais, on n'invente rien : le bilan est rendu avec le total
+ * des seuls faits, et l'appelant, qui compare `total` au score, échoue. C'est
+ * ainsi qu'un **essai de pénalité manqué** se signalerait sur une saison
+ * d'avant 2017-2018, où il fallait encore le transformer : il vaudrait cinq
+ * points quand ce calcul lui en compte sept, et le reliquat tomberait impair
+ * (cf. `corrigerEssaisDePenalite`). Aucun des huit de 2016-2017 n'est dans ce
+ * cas.
  */
 export function realisationsDepuisFaits(
   faits: LnrFait[],
   camp: Camp,
   score: number,
 ): Realisations {
-  const cote = camp === "home" ? 0 : 1;
   const bilan: Realisations = {
     essais: 0,
     transformations: 0,
@@ -681,46 +809,33 @@ export function realisationsDepuisFaits(
     essaisDePenalite: 0,
     total: 0,
   };
-  let aTransformer = 0;
 
   for (const fait of faits) {
-    if (fait.club === camp) {
-      switch (fait.type) {
-        case "essai":
-          bilan.essais++;
-          bilan.total += 5;
-          aTransformer++;
-          break;
-        case "essai-de-penalite":
-          bilan.essaisDePenalite++;
-          bilan.total += 7;
-          break;
-        case "penalite":
-          bilan.penalites++;
-          bilan.total += 3;
-          break;
-        case "drop":
-          bilan.drops++;
-          bilan.total += 3;
-          break;
-      }
-    }
-    if (!fait.score) continue;
-    let residu = fait.score[cote] - bilan.total;
-    while (residu >= 2 && aTransformer > 0) {
-      bilan.transformations++;
-      bilan.total += 2;
-      aTransformer--;
-      residu -= 2;
+    if (fait.club !== camp) continue;
+    switch (fait.type) {
+      case "essai":
+        bilan.essais++;
+        bilan.total += 5;
+        break;
+      case "essai-de-penalite":
+        bilan.essaisDePenalite++;
+        bilan.total += 7;
+        break;
+      case "penalite":
+        bilan.penalites++;
+        bilan.total += 3;
+        break;
+      case "drop":
+        bilan.drops++;
+        bilan.total += 3;
+        break;
     }
   }
 
-  let manque = score - bilan.total;
-  while (manque >= 2 && aTransformer > 0) {
-    bilan.transformations++;
-    bilan.total += 2;
-    aTransformer--;
-    manque -= 2;
+  const reliquat = score - bilan.total;
+  if (reliquat >= 0 && reliquat % 2 === 0 && reliquat / 2 <= bilan.essais) {
+    bilan.transformations = reliquat / 2;
+    bilan.total = score;
   }
   return bilan;
 }

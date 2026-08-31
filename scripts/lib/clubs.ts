@@ -37,6 +37,10 @@ export const CLUBS_LNR: Record<string, string> = {
   "valence-romans": "Valence-Romans",
   // Clubs de Pro D2 croisés en 2017-2018, et pas depuis.
   dax: "Dax",
+  // Clubs de Pro D2 croisés en 2016-2017, et pas depuis. La LNR ne leur
+  // connaît plus que ce nom court : leurs pages de club ont disparu avec eux.
+  albi: "Albi",
+  bourgoin: "Bourgoin",
   massy: "Massy",
   narbonne: "Narbonne",
   pau: "Pau",

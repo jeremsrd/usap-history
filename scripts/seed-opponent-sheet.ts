@@ -118,6 +118,40 @@ const CHANGEMENTS_CORRIGES: Record<
   "2026-02-22": [{ minute: 56, entrant: "Grégoire Arfeuil", sortant: "Quentin Valentino" }],
 };
 
+/**
+ * CARTONS QUE LA LNR DONNE À UN JOUEUR QU'ELLE N'ALIGNE PAS.
+ *
+ * Un carton porté par un homme absent des vingt-trois est irrattachable : on
+ * ne peut ni le poser sur une ligne, ni en déduire la minute où le joueur a
+ * quitté le terrain. Le tolérer, c'est écrire le reste de la feuille — les
+ * réalisations, les temps de jeu, les autres cartons — plutôt que de perdre
+ * un camp entier pour un fait qu'on ne saurait de toute façon pas placer.
+ *
+ * Chaque ligne s'écrit avec la démonstration sous les yeux, comme
+ * `CHANGEMENTS_CORRIGES`. La seule à ce jour :
+ *
+ * **Béziers, 16 octobre 2016.** La feuille inscrit deux cartons rouges à la
+ * 40ᵉ pour Béziers : Joshua Valentine, qui porte bien le 9, et Manuel Edmonds,
+ * qui ne figure sur aucune des deux listes de vingt-trois que la LNR publie
+ * elle-même sur ce match — la page `/compositions` n'affiche que cinquante-deux
+ * blocs de joueurs, vingt-trois par camp et six officiels, et il n'y est pas.
+ * Ses deux onglets se contredisent donc, et rien ne permet de trancher : on
+ * peut démontrer que la feuille est fausse, pas ce qui s'est passé sur le
+ * terrain. Le rouge de Valentine est enregistré, celui d'Edmonds ignoré, et
+ * le total de Béziers vaut en conséquence 1 160 minutes et non 1 120.
+ */
+const CARTONS_HORS_COMPOSITION: Record<string, Array<{ minute: number; nom: string }>> = {
+  "2016-10-16": [{ minute: 40, nom: "Manuel Edmonds" }],
+};
+
+/** Ce carton-là est-il un de ceux qu'on sait irrattachables ? */
+function cartonTolere(jour: string, minute: number, joueur: LnrJoueur): boolean {
+  const nom = normalize(`${joueur.firstName} ${joueur.lastName}`);
+  return (CARTONS_HORS_COMPOSITION[jour] ?? []).some(
+    (c) => c.minute === minute && normalize(c.nom) === nom,
+  );
+}
+
 /** Applique les corrections connues aux changements d'une feuille. */
 function corriger(feuille: LnrFeuille, jour: string): LnrFeuille {
   const corrections = CHANGEMENTS_CORRIGES[jour];
@@ -585,9 +619,16 @@ async function main(cible: "adverse" | "usap") {
         } else {
           const ligne = apparier(roster, fait.joueur);
           if (!ligne) {
-            ennuis.push(
-              `${fait.type} ${fait.minute}' : ${fait.joueur.firstName} ${fait.joueur.lastName} hors composition`,
-            );
+            const message =
+              `${fait.type} ${fait.minute}' : ${fait.joueur.firstName} ${fait.joueur.lastName} hors composition`;
+            if (
+              (fait.type === "jaune" || fait.type === "rouge") &&
+              cartonTolere(jour, fait.minute, fait.joueur)
+            ) {
+              inferences.push(`${message} — carton irrattachable, ignoré`);
+            } else {
+              ennuis.push(message);
+            }
           } else {
             const bilan = bilans.get(ligne.id)!;
             switch (fait.type) {

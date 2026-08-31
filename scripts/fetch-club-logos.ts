@@ -39,6 +39,7 @@
  */
 
 import { PrismaClient } from "@prisma/client";
+import { createHash } from "node:crypto";
 import { mkdir, writeFile, stat, rm } from "node:fs/promises";
 import sharp from "sharp";
 import { join } from "node:path";
@@ -96,6 +97,24 @@ async function reduire(contenu: Buffer): Promise<Buffer> {
   return reduit.length < contenu.length ? reduit : contenu;
 }
 
+/**
+ * LE BOUCLIER GRIS QUE LE CDN SERT À LA PLACE D'UN ÉCUSSON DISPARU.
+ *
+ * Empreinte SHA-256 d'un WebP de 418 octets, 33 par 45 pixels, un bouclier
+ * uni sans la moindre marque. Le CDN de la LNR le rend pour les clubs dont il
+ * n'a plus le vrai écusson — Albi et Bourgoin, croisés en 2016-2017 et sortis
+ * de Pro D2 depuis —, au bout d'une URL en tout point semblable aux autres :
+ * le calendrier archivé de 2016-2017 leur donne chacun une empreinte propre,
+ * et les deux mènent au même bouclier, quand les quatorze autres clubs de la
+ * même page rendent leur PNG.
+ *
+ * Sans ce garde-fou, l'écusson générique s'enregistrerait sous `albi.png` et
+ * `bourgoin.png` — en WebP malgré l'extension, le script écrivant les octets
+ * reçus tels quels —, et le site afficherait deux boucliers gris comme s'ils
+ * étaient les armes de ces clubs. Mieux vaut pas de logo qu'un faux.
+ */
+const PLACEHOLDER_LNR = "ee0e36cd30739c08c65f23f2a7c01e351d45a33a324ba1cea66b39e9f2d63382";
+
 const DOSSIER = join(process.cwd(), "public", "images", "logos");
 const CHEMIN_PUBLIC = "/images/logos";
 /** L'écusson catalan, hors du dossier des adversaires et référencé en dur. */
@@ -121,6 +140,14 @@ const PAGES_LNR = [
   // pages de club ont disparu, mais les calendriers archivés servent encore
   // leurs écussons. Même raison que 2018-2019 pour Agen, plus haut.
   "https://prod2.lnr.fr/calendrier-et-resultats/2017-2018/j1",
+  // 2016-2017 est là pour Albi et Bourgoin, mais **la ruse ne marche pas sur
+  // eux** : leur calendrier archivé porte bien une URL d'écusson chacun, et
+  // le CDN ne rend au bout qu'un bouclier gris de 33 par 45 pixels, le même
+  // pour les deux (cf. `PLACEHOLDER_LNR`). Les autres clubs de la même page
+  // rendent, eux, leur vrai PNG. La page reste ici pour le jour où la LNR les
+  // rétablirait — elle ne coûte qu'une requête, et le garde-fou empêche
+  // d'enregistrer le bouclier gris entre-temps.
+  "https://prod2.lnr.fr/calendrier-et-resultats/2016-2017/j1",
 ];
 
 async function lire(url: string, entetes?: Record<string, string>): Promise<string> {
@@ -245,7 +272,12 @@ async function main() {
       sans.push(`${nomCourt} (téléchargement ${reponse.status})`);
       continue;
     }
-    const contenu = await reduire(Buffer.from(await reponse.arrayBuffer()));
+    const recu = Buffer.from(await reponse.arrayBuffer());
+    if (createHash("sha256").update(recu).digest("hex") === PLACEHOLDER_LNR) {
+      sans.push(`${nomCourt} (bouclier gris — la LNR n'a plus son écusson)`);
+      continue;
+    }
+    const contenu = await reduire(recu);
     await writeFile(chemin, contenu);
     // Le nouveau fichier peut changer d'extension — le JPEG de Clermont cède
     // la place à un PNG : l'ancien ne doit pas rester derrière.
