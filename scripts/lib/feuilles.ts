@@ -80,3 +80,142 @@ export function estAjoutHorsFeuille(
     (m) => m.camp === camp && m.numero === numero,
   );
 }
+
+/** Réalisations qu'une feuille officielle omet, camp par camp. */
+export interface RealisationsCompletees {
+  camp: "usap" | "adversaire";
+  essais?: number;
+  transformations?: number;
+  penalites?: number;
+  drops?: number;
+  essaisDePenalite?: number;
+  /**
+   * Part de ces points qu'**aucun joueur ne porte**, faute d'auteur nommé.
+   *
+   * Les deux scripts n'en font pas le même usage. Celui de la saison compte
+   * les réalisations de l'équipe et ignore ce champ. Celui de la feuille
+   * répartit les points entre les joueurs, et doit savoir combien lui
+   * échappent : sans cela son contrôle — la somme des joueurs doit valoir le
+   * score — échouerait sur ce que la source n'a pas écrit.
+   */
+  pointsSansAuteur?: number;
+  /**
+   * Nombre d'**essais** omis qu'aucun joueur ne porte.
+   *
+   * Distinct de `pointsSansAuteur` parce que le script de feuille en fait deux
+   * usages : il retranche leurs points du total attendu, comme les autres,
+   * mais il les compte aussi dans les essais — son second contrôle confronte
+   * le nombre d'essais reconstitués au compteur du match. Les cinq points
+   * d'un essai sans auteur ne se déclarent donc **pas** dans
+   * `pointsSansAuteur`, sans quoi ils seraient retranchés deux fois.
+   */
+  essaisSansAuteur?: number;
+  /** D'où vient le complément. Obligatoire : rien ici n'est déductible seul. */
+  source: string;
+}
+
+/**
+ * LA LNR OUBLIE AUSSI DES POINTS, et pas seulement des joueurs.
+ *
+ * Ses faits de match ne suffisent alors plus à reconstituer le score, et le
+ * script de saison refuse d'écrire la rencontre — à raison : des compteurs
+ * d'essais faux fausseraient le bonus offensif, donc le total de la saison.
+ *
+ * Cette table ajoute ce qui manque, camp par camp. Comme les autres, elle ne
+ * s'écrit qu'avec la démonstration, et le garde-fou du script la vérifie
+ * aussitôt : le total reconstitué doit retomber sur le score officiel.
+ *
+ * **Perpignan 28-20 Bayonne, 15 août 2009.** Les faits donnent à Bayonne deux
+ * essais et une pénalité, soit 13 points pour 20. La feuille se corrige
+ * elle-même : son score courant donne Bayonne à 17 après l'essai de la 77ᵉ, et
+ * le score officiel est 20. Il manque **une pénalité**, non inscrite, et les
+ * deux transformations que le reliquat révèle — 2 essais, 2 transformations,
+ * 2 pénalités font bien 20.
+ *
+ * **Perpignan 25-9 Toulon, 5 novembre 2009.** Les faits donnent à l'USAP deux
+ * essais et deux pénalités, soit 16 points pour 25. Ici le score courant ne
+ * sauve rien : il passe de 3 à 5 entre la 14ᵉ et la 25ᵉ, deux points qu'aucune
+ * action n'explique, et la feuille est fautive de bout en bout. La fiche
+ * d'ESPN (`gameId=99380`) signale **un essai de pénalité à la 26ᵉ**.
+ *
+ * Il est compté ici comme un **troisième essai transformé**, et non par le
+ * champ `essaisDePenalite`, parce que c'est ce qu'il était en 2009 : jusqu'en
+ * 2017 l'essai de pénalité valait cinq points et se transformait (cf.
+ * `corrigerEssaisDePenalite` dans `lib/lnr.ts`). Trois essais, deux
+ * transformations et deux pénalités font bien 25, et la transformation reste
+ * au crédit du buteur que la feuille nomme — d'où cinq points sans auteur, et
+ * non sept.
+ *
+ * Ce complément change le bonus offensif : trois essais contre zéro, l'USAP le
+ * prend. C'est le **total de bonus de la saison** qui l'atteste — le garde-fou
+ * du script exige 12, et il ne les atteint qu'avec cet essai-là.
+ */
+export const REALISATIONS_COMPLETEES: Record<string, RealisationsCompletees[]> = {
+  "2009-08-15": [
+    {
+      camp: "adversaire",
+      transformations: 2,
+      penalites: 1,
+      // Les deux transformations sont au crédit du buteur que la feuille
+      // nomme ; seule la pénalité oubliée n'a pas d'auteur.
+      pointsSansAuteur: 3,
+      source:
+        "Score courant de la feuille LNR : Bayonne à 17 après l'essai de la 77e, " +
+        "20 au score officiel.",
+    },
+  ],
+  "2009-11-05": [
+    {
+      camp: "usap",
+      essais: 1,
+      transformations: 2,
+      // L'essai lui-même n'a pas d'auteur ; sa transformation, si.
+      essaisSansAuteur: 1,
+      source: "Fiche ESPN gameId=99380 : essai de pénalité à la 26e minute.",
+    },
+  ],
+};
+
+/** Ajoute à un bilan de réalisations ce que la feuille officielle a omis. */
+export function completerRealisations<
+  T extends {
+    essais: number;
+    transformations: number;
+    penalites: number;
+    drops: number;
+    essaisDePenalite: number;
+    total: number;
+  },
+>(jour: string, camp: "usap" | "adversaire", bilan: T): T {
+  const ajouts = (REALISATIONS_COMPLETEES[jour] ?? []).filter((a) => a.camp === camp);
+  if (ajouts.length === 0) return bilan;
+  const complete = { ...bilan };
+  for (const a of ajouts) {
+    complete.essais += a.essais ?? 0;
+    complete.transformations += a.transformations ?? 0;
+    complete.penalites += a.penalites ?? 0;
+    complete.drops += a.drops ?? 0;
+    complete.essaisDePenalite += a.essaisDePenalite ?? 0;
+    complete.total +=
+      5 * (a.essais ?? 0) +
+      2 * (a.transformations ?? 0) +
+      3 * (a.penalites ?? 0) +
+      3 * (a.drops ?? 0) +
+      7 * (a.essaisDePenalite ?? 0);
+  }
+  return complete;
+}
+
+/** Points d'un match qu'aucun joueur ne porte, la source ne les ayant pas écrits. */
+export function pointsOmisSansAuteur(jour: string, camp: "usap" | "adversaire"): number {
+  return (REALISATIONS_COMPLETEES[jour] ?? [])
+    .filter((a) => a.camp === camp)
+    .reduce((s, a) => s + (a.pointsSansAuteur ?? 0), 0);
+}
+
+/** Essais omis qu'aucun joueur ne porte — comptés comme des essais collectifs. */
+export function essaisOmisSansAuteur(jour: string, camp: "usap" | "adversaire"): number {
+  return (REALISATIONS_COMPLETEES[jour] ?? [])
+    .filter((a) => a.camp === camp)
+    .reduce((s, a) => s + (a.essaisSansAuteur ?? 0), 0);
+}

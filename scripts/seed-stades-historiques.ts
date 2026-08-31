@@ -79,6 +79,17 @@ const STADES_A_CREER = [
       "Chaban-Delmas ; dernier match officiel le 9 mai 2015 contre Oyonnax.",
   },
   {
+    // Sans ligne d'historique non plus : c'est un terrain neutre, celui de la
+    // demi-finale du 14 mai 2010, et non le stade d'un club. Il est créé ici
+    // pour que `TERRAINS_PARTICULIERS` ait où pointer.
+    nom: "Stade de la Mosson",
+    ville: "Montpellier",
+    pays: "FR",
+    notes:
+      "Terrain neutre de la demi-finale du Top 14 du 14 mai 2010, " +
+      "Perpignan 21-13 Toulouse, devant 32 204 spectateurs.",
+  },
+  {
     nom: "Matmut Stadium",
     ville: "Vénissieux",
     pays: "FR",

@@ -57,6 +57,7 @@
 
 import { PrismaClient } from "@prisma/client";
 import { estCouperet } from "../src/lib/matchs";
+import { essaisOmisSansAuteur, pointsOmisSansAuteur } from "./lib/feuilles";
 import { memeMot, mots, normalize, proximite } from "./lib/noms";
 import {
   chercherFeuille,
@@ -601,7 +602,9 @@ async function main(cible: "adverse" | "usap") {
     const inferences: string[] = [];
     let essaisDePenalite = 0;
     /** Essais que la feuille n'attribue à personne, hors essais de pénalité. */
-    let essaisCollectifs = 0;
+    // Un essai que la feuille omet entièrement compte comme un essai
+    // collectif : cinq points pour l'équipe, aucun auteur (cf. lib/feuilles.ts).
+    let essaisCollectifs = essaisOmisSansAuteur(jour, cible === "usap" ? "usap" : "adversaire");
     /**
      * Points que la feuille ne rattache à personne, hors essais.
      *
@@ -616,7 +619,10 @@ async function main(cible: "adverse" | "usap") {
      * — c'est le plus souvent la composition qui est fausse. Ici la source ne
      * désigne personne, et il n'y a rien à trouver.
      */
-    let pointsSansAuteur = 0;
+    // La feuille omet parfois des points de bout en bout — pas seulement leur
+    // auteur. `lib/feuilles.ts` porte ce que d'autres sources établissent, et
+    // la part qu'aucun joueur ne peut porter.
+    let pointsSansAuteur = pointsOmisSansAuteur(jour, cible === "usap" ? "usap" : "adversaire");
 
     // Une composition qui n'aligne pas quinze titulaires ne permet pas de
     // reconstituer les temps de jeu : chaque titulaire de trop ajoute jusqu'à

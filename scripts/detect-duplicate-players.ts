@@ -116,6 +116,9 @@ const TOUT = process.argv.includes("--tout");
  *             quatre à Bourgoin puis Rouen de 2016 à 2020. La LNR écrit
  *             « Mikael Campeggia » sur les premières, « Florent Campeggia »
  *             sur les secondes.
+ *   Senio     John, que la LNR met au n°20 de Clermont en finale 2009 puis au
+ *             n°9 de Bourgoin dès septembre, et Kevin, n°9 de Clermont à
+ *             partir de 2010. Le passage de John par Clermont les rapprochait.
  *   Fernandez Patricio Fernández, l'ouvreur argentin de 2020 à 2023, et Romain
  *             Fernandez, une seule feuille — Toulon, le 22 novembre 2013, où
  *             la LNR l'inscrit ainsi au n°22. Une fiche à feuille unique
@@ -152,6 +155,8 @@ const DISTINCTS: [string, string][] = [
   // Venues avec 2010-2011, arbitrées le 31 août 2026 sur les feuilles.
   ["Sebastien Bezy", "Nicolas Bezy"],
   ["Florent Campeggia", "Mikael Campeggia"],
+  // Venue avec 2009-2010, arbitrée sur les feuilles.
+  ["John Senio", "Kevin Senio"],
 ];
 
 const ARBITREES = new Set(

@@ -55,6 +55,18 @@ export const TERRAINS_PARTICULIERS: Record<string, string | null> = {
   //   24 août 2012, 26-22 : Chaban-Delmas ;
   //   29 mars 2014, 23-5  : Chaban-Delmas.
   "2012-05-12": "Stade André-Moga",
+  // **Les phases finales du Top 14 se jouent sur terrain neutre**, et la
+  // feuille de la LNR désigne pourtant un recevant — « perpignan-toulouse »,
+  // « perpignan-clermont ». La déduction par le camp y est donc fausse, comme
+  // pour la finale de Pro D2 2018.
+  //
+  // Demi-finale du 14 mai 2010, Perpignan 21-13 Toulouse, au stade de la
+  // Mosson de Montpellier devant 32 204 spectateurs ; finale du 29 mai 2010,
+  // Perpignan 6-19 Clermont, au Stade de France devant 79 262. Source :
+  // Wikipédia, qui donne le stade et l'affluence de chacune — aucune source
+  // officielle ne publie le lieu d'une rencontre.
+  "2010-05-14": "Stade de la Mosson",
+  "2010-05-29": "Stade de France",
 };
 
 /** Stade de l'USAP, seul terrain qu'elle ait connu sur la période couverte. */
