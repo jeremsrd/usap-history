@@ -158,6 +158,14 @@ const CHANGEMENTS_CORRIGES: Record<
   Array<{ minute: number; entrant: string; sortant: string }>
 > = {
   "2026-02-22": [{ minute: 56, entrant: "Grégoire Arfeuil", sortant: "Quentin Valentino" }],
+  // **Perpignan-Montpellier du 28 août 2010.** La feuille fait entrer Mamuka
+  // Gorgodze à la 44ᵉ à la place de « Prenom_545 NOM_545 » — un gabarit, non
+  // un nom. L'enregistrement montpelliérain de Gonçalo Uva est corrompu de
+  // bout en bout : la LNR l'omet aussi de sa composition, où le n°4 manque
+  // (cf. `TITULAIRES_MANQUANTS` de `lib/feuilles.ts`). Le déroulé d'ESPN pour
+  // cette rencontre (`gameId=119006`) donne le remplacement en toutes
+  // lettres : Gorgodze pour Uva à la 44ᵉ.
+  "2010-08-28": [{ minute: 44, entrant: "Mamuka Gorgodze", sortant: "Goncalo Uva" }],
 };
 
 /**

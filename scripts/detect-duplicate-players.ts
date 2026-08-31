@@ -108,6 +108,14 @@ const TOUT = process.argv.includes("--tout");
  *             de 2009 à 2018 ; Alexandre Perez, demi d'ouverture, neuf
  *             feuilles de 2021 à 2023. Trois ans les séparent, et la LNR écrit
  *             « Jean Pierre Perez » sur les feuilles de 2013-2014.
+ *   Bezy      Sébastien, le demi de mêlée de Toulouse puis Clermont, et
+ *             Nicolas, son frère, passé par Toulouse, le Stade Français,
+ *             Grenoble et Provence. Le même club et le même n°20 les
+ *             rapprochaient ; leurs feuilles les nomment séparément.
+ *   Campeggia Mikael, deux feuilles à Bourgoin en 2010 et 2011, et Florent,
+ *             quatre à Bourgoin puis Rouen de 2016 à 2020. La LNR écrit
+ *             « Mikael Campeggia » sur les premières, « Florent Campeggia »
+ *             sur les secondes.
  *   Fernandez Patricio Fernández, l'ouvreur argentin de 2020 à 2023, et Romain
  *             Fernandez, une seule feuille — Toulon, le 22 novembre 2013, où
  *             la LNR l'inscrit ainsi au n°22. Une fiche à feuille unique
@@ -141,6 +149,9 @@ const DISTINCTS: [string, string][] = [
   // Venues avec 2013-2014, arbitrées le 31 août 2026 sur les feuilles.
   ["Jean-Pierre Pérez", "Alexandre Perez"],
   ["Patricio Fernández", "Romain Fernandez"],
+  // Venues avec 2010-2011, arbitrées le 31 août 2026 sur les feuilles.
+  ["Sebastien Bezy", "Nicolas Bezy"],
+  ["Florent Campeggia", "Mikael Campeggia"],
 ];
 
 const ARBITREES = new Set(
