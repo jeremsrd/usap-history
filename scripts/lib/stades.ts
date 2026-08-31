@@ -42,6 +42,19 @@ export const TERRAINS_PARTICULIERS: Record<string, string | null> = {
   // Finale de Pro D2 2018, Perpignan-Grenoble. Source : Jérémy, présent au
   // stade. La feuille de la LNR désigne un recevant et ne nomme aucun lieu.
   "2018-05-06": "Stade Ernest-Wallon",
+  // **L'UBB a eu deux terrains à la fois**, et non l'un après l'autre : il a
+  // reçu au stade André-Moga de Bègles et à Chaban-Delmas la même saison,
+  // jusqu'à son installation définitive à Chaban en 2015. Ce n'est donc pas
+  // un déménagement — rien à mettre dans `OpponentVenue` — mais un fait par
+  // match, et il faut le vérifier match par match.
+  //
+  // Les trois réceptions de l'USAP d'avant 2015, d'après les fiches d'ESPN,
+  // dont le score concorde chaque fois avec celui de la LNR :
+  //   12 mai 2012, 37-29 : André-Moga — le seul qui s'écarte du terrain
+  //                        d'aujourd'hui, d'où sa présence ici ;
+  //   24 août 2012, 26-22 : Chaban-Delmas ;
+  //   29 mars 2014, 23-5  : Chaban-Delmas.
+  "2012-05-12": "Stade André-Moga",
 };
 
 /** Stade de l'USAP, seul terrain qu'elle ait connu sur la période couverte. */

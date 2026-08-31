@@ -52,6 +52,8 @@ import {
 import { USAP, chercherMatchUsap, lireMatch } from "./lib/epcr";
 import { POSTE_PAR_NUMERO, trouverOuCreerJoueur } from "./lib/joueurs";
 
+import { TITULAIRES_MANQUANTS } from "./lib/feuilles";
+
 const prisma = new PrismaClient();
 
 const ARGS = process.argv.slice(2);
@@ -66,6 +68,34 @@ if (!DATE) {
       "Options : --dry (simulation), --force (réécrit une feuille existante)",
   );
   process.exit(1);
+}
+
+/**
+ * Ajoute à une composition les titulaires que la feuille officielle n'a pas
+ * publiés. La table et sa démonstration sont dans `lib/feuilles.ts`, partagée
+ * avec l'audit — qui, sans elle, signalerait « en trop » un joueur ajouté ici.
+ */
+function completer(
+  jour: string,
+  camp: "usap" | "adversaire",
+  joueurs: LnrTitulaire[],
+): LnrTitulaire[] {
+  const manquants = (TITULAIRES_MANQUANTS[jour] ?? []).filter((m) => m.camp === camp);
+  if (manquants.length === 0) return joueurs;
+  const ajouts = manquants
+    .filter((m) => !joueurs.some((j) => j.numero === m.numero))
+    .map((m) => {
+      console.log(`  [complété] n°${m.numero} ${m.prenom} ${m.nom} — absent de la feuille officielle`);
+      return {
+        firstName: m.prenom,
+        lastName: m.nom,
+        url: "",
+        numero: m.numero,
+        isStarter: m.numero <= 15,
+        isCaptain: false,
+      };
+    });
+  return [...joueurs, ...ajouts].sort((a, b) => a.numero - b.numero);
 }
 
 /** Contrôles de forme sur une composition, avant toute écriture. */
@@ -264,6 +294,10 @@ async function main() {
     }
   }
 
+  compositions = {
+    usap: completer(DATE!, "usap", compositions.usap),
+    adversaire: completer(DATE!, "adversaire", compositions.adversaire),
+  };
   verifier("USAP", compositions.usap);
   verifier(adversaire, compositions.adversaire);
 

@@ -54,6 +54,7 @@
  */
 
 import { PrismaClient } from "@prisma/client";
+import { estAjoutHorsFeuille } from "./lib/feuilles";
 import {
   chercherFeuille,
   lireCompositions,
@@ -166,6 +167,7 @@ interface Bilan {
 async function auditerMatch(
   matchId: string,
   officielle: LnrTitulaire[],
+  jour: string,
 ): Promise<Bilan> {
   const enBase = await prisma.matchPlayer.findMany({
     where: { matchId, isOpponent: true },
@@ -255,6 +257,16 @@ async function auditerMatch(
   }
 
   for (const ligne of restants) {
+    // Un joueur que la feuille officielle omet et qu'on a rendu à son dossard
+    // depuis une autre source n'est pas « en trop » : il est absent parce que
+    // la LNR l'a oublié. `lib/feuilles.ts` porte la table et sa démonstration.
+    if (estAjoutHorsFeuille(jour, "adversaire", ligne.shirtNumber ?? 0)) {
+      variantes.push(
+        `n°${ligne.shirtNumber} ${ligne.player?.firstName} ${ligne.player?.lastName} — ` +
+          "ajouté depuis une autre source, la LNR ne le publie pas",
+      );
+      continue;
+    }
     anomalies.push({
       gravite: "EN TROP",
       numero: ligne.shirtNumber ?? 0,
@@ -335,7 +347,7 @@ async function main() {
     }
 
     examines++;
-    const { anomalies, variantes } = await auditerMatch(match.id, officielle);
+    const { anomalies, variantes } = await auditerMatch(match.id, officielle, jour);
     const retenues = GRAVES_SEULEMENT
       ? anomalies.filter((a) => GRAVES.includes(a.gravite))
       : anomalies;

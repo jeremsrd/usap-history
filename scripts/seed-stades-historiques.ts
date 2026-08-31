@@ -22,11 +22,14 @@
  *
  * Le détail figure sur chaque ligne du tableau `HISTORIQUE`.
  *
- * CE QUI N'EST PAS ICI. Une délocalisation ponctuelle ne relève pas de cette
- * table mais du match : l'UBB a reçu l'USAP à **Chaban-Delmas** en août 2012
- * et en mars 2014 alors que son terrain d'alors était André-Moga, et la base
- * est donc déjà juste pour ces deux rencontres. C'est pourquoi Bordeaux ne
- * figure pas ci-dessous, bien qu'ayant déménagé en 2015.
+ * CE QUI N'EST PAS ICI, ET POURQUOI BORDEAUX N'Y EST PAS. L'UBB a eu **deux
+ * terrains à la fois** jusqu'en 2015, et non l'un après l'autre : il recevait
+ * au stade André-Moga de Bègles et à Chaban-Delmas la même saison, au gré de
+ * l'affiche. Ce n'est donc pas un déménagement, et aucune période ne le
+ * décrit — c'est un fait par match, à vérifier un par un. Ses trois réceptions
+ * de l'USAP d'avant 2015 sont dans `TERRAINS_PARTICULIERS` quand elles
+ * s'écartent du terrain d'aujourd'hui. Le stade Moga est créé ici pour
+ * qu'elles aient où pointer.
  *
  * Deux clubs ont **changé de nom de stade sans déménager**, et n'ont rien à
  * faire ici non plus : Montpellier (Yves-du-Manoir, puis Altrad Stadium, puis
@@ -63,6 +66,17 @@ const STADES_A_CREER = [
     notes:
       "Domicile provisoire du Stade Français de 2010-2011 à 2012-2013, " +
       "pendant la reconstruction de Jean-Bouin, rouvert le 30 août 2013.",
+  },
+  {
+    // Sans ligne d'historique : l'UBB a joué à Moga **et** à Chaban-Delmas la
+    // même saison, ce n'est pas un déménagement. Le match concerné est dans
+    // `TERRAINS_PARTICULIERS` (cf. lib/stades.ts).
+    nom: "Stade André-Moga",
+    ville: "Bègles",
+    pays: "FR",
+    notes:
+      "Terrain de l'Union Bordeaux-Bègles jusqu'en 2015, en alternance avec " +
+      "Chaban-Delmas ; dernier match officiel le 9 mai 2015 contre Oyonnax.",
   },
   {
     nom: "Matmut Stadium",
