@@ -4,8 +4,10 @@
  *
  * Le lieu d'une rencontre ne se saisit pas match par match : il se déduit du
  * camp. À domicile c'est Aimé-Giral, à l'extérieur c'est le terrain du club
- * qui reçoit — que porte déjà `Opponent.venueId`. Encore faut-il que ce champ
- * soit renseigné, et qu'un même stade ne figure pas deux fois en base.
+ * qui recevait **à cette saison-là** — `terrainDuMatch` de `lib/stades.ts`
+ * porte la règle, et lit l'historique des stades avant de retomber sur
+ * `Opponent.venueId`. Encore faut-il que ce champ soit renseigné, et qu'un
+ * même stade ne figure pas deux fois en base.
  *
  * Quatre temps, dans cet ordre :
  *   1. **fusion des doublons**, listés à la main : « Stade du Hameau » et
@@ -36,6 +38,7 @@
 
 import { PrismaClient } from "@prisma/client";
 import { generateVenueSlug, slugify } from "../src/lib/slugs";
+import { terrainDuMatch } from "./lib/stades";
 
 const prisma = new PrismaClient();
 
@@ -240,7 +243,6 @@ async function rattacherClubs() {
 
 async function completerMatchs() {
   console.log("\n--- matchs sans lieu");
-  const aimeGiral = await prisma.venue.findFirstOrThrow({ where: { name: AIME_GIRAL } });
   const matchs = await prisma.match.findMany({
     where: { venueId: null },
     orderBy: { date: "asc" },
@@ -250,17 +252,23 @@ async function completerMatchs() {
   let completes = 0;
   for (const m of matchs) {
     const nomCourt = m.opponent.shortName ?? m.opponent.name;
-    const terrain = m.isHome
-      ? { id: aimeGiral.id, nom: aimeGiral.name }
-      : terrains.get(m.opponent.id);
-    const etiquette = `${m.season.label} ${m.date.toISOString().slice(0, 10)} ${m.isHome ? "H" : "A"} ${nomCourt}`;
-    if (!terrain) {
+    const jour = m.date.toISOString().slice(0, 10);
+    const etiquette = `${m.season.label} ${jour} ${m.isHome ? "H" : "A"} ${nomCourt}`;
+    // Le terrain d'alors, pas celui d'aujourd'hui.
+    const venueId = await terrainDuMatch(prisma, {
+      opponentId: m.opponent.id,
+      isHome: m.isHome,
+      startYear: m.season.startYear,
+      jour,
+    });
+    if (!venueId) {
       console.log(`  ${etiquette} : ${nomCourt} n'a pas de terrain, laissé vide`);
       continue;
     }
-    console.log(`  ${etiquette} → ${terrain.nom}`);
-    if (!DRY_RUN && terrain.id) {
-      await prisma.match.update({ where: { id: m.id }, data: { venueId: terrain.id } });
+    const stade = await prisma.venue.findUnique({ where: { id: venueId }, select: { name: true } });
+    console.log(`  ${etiquette} → ${stade?.name ?? venueId}`);
+    if (!DRY_RUN) {
+      await prisma.match.update({ where: { id: m.id }, data: { venueId } });
     }
     completes++;
   }

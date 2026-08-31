@@ -74,6 +74,7 @@ import { trouverOuCreerArbitre } from "./lib/arbitres";
 import { CLUBS_LNR } from "./lib/clubs";
 import { computeBonuses, matchPoints } from "../src/lib/scoring";
 import { generateMatchSlug, generateOpponentSlug } from "../src/lib/slugs";
+import { terrainDuMatch } from "./lib/stades";
 
 const prisma = new PrismaClient();
 
@@ -384,11 +385,14 @@ async function main() {
       select: { id: true },
     });
 
-    const venue = r.isHome
-      ? await prisma.venue.findFirst({ where: { name: "Stade Aimé-Giral" }, select: { id: true } })
-      : await prisma.opponent
-          .findUnique({ where: { id: opponentId }, select: { venueId: true } })
-          .then((o) => (o?.venueId ? { id: o.venueId } : null));
+    // Le terrain d'alors, pas celui d'aujourd'hui : `terrainDuMatch` lit
+    // l'historique des stades et les lieux particuliers (cf. lib/stades.ts).
+    const venueId = await terrainDuMatch(prisma, {
+      opponentId,
+      isHome: r.isHome,
+      startYear: saison.startYear,
+      jour,
+    });
 
     const donnees: Prisma.MatchUncheckedCreateInput = {
       slug: generateMatchSlug({
@@ -408,7 +412,7 @@ async function main() {
       matchday: r.matchday,
       round: r.round,
       isHome: r.isHome,
-      venueId: venue?.id ?? null,
+      venueId,
       opponentId,
       scoreUsap: r.scoreUsap,
       scoreOpponent: r.scoreOpponent,

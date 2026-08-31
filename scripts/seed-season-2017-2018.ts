@@ -47,9 +47,9 @@
  *
  * **Source : Jérémy, qui y était.** Aucune source lue par machine ne le
  * donne, et le témoignage direct est ici la meilleure disponible. Il est
- * inscrit dans la table `TERRAIN_NEUTRE`, et non posé à la main sur le
- * match : une correction manuelle aurait été effacée à la première relance du
- * script, qui recalcule le lieu de chaque rencontre.
+ * inscrit dans `TERRAINS_PARTICULIERS` de `lib/stades.ts`, et non posé à la
+ * main sur le match : une correction manuelle aurait été effacée à la
+ * première relance du script, qui recalcule le lieu de chaque rencontre.
  *
  * La demi-finale, elle, garde Aimé-Giral : en Pro D2 le mieux classé reçoit,
  * et l'USAP a fini première. Ce n'est pas une déduction hasardeuse.
@@ -72,6 +72,7 @@ import { trouverOuCreerArbitre } from "./lib/arbitres";
 import { CLUBS_LNR, CLUBS_EPCR } from "./lib/clubs";
 import { computeBonuses, matchPoints } from "../src/lib/scoring";
 import { generateMatchSlug, generateOpponentSlug } from "../src/lib/slugs";
+import { terrainDuMatch } from "./lib/stades";
 
 const prisma = new PrismaClient();
 
@@ -81,16 +82,14 @@ const SAISON = "2017-2018";
 const JOURNEES = 30;
 
 /**
- * Tours joués sur terrain neutre, et le stade où ils l'ont été. Le lieu ne s'y
- * déduit pas du camp, la feuille de la LNR désignant quand même un recevant.
- * `null` vaut « terrain neutre, stade inconnu » — mieux qu'un lieu faux.
+ * Le terrain neutre de la finale ne se déduit pas, et il ne vit plus ici :
+ * `TERRAINS_PARTICULIERS` de `lib/stades.ts` le porte, avec sa source, pour
+ * que la règle ne soit écrite qu'à un seul endroit — la finale du 6 mai 2018
+ * s'est jouée au stade Ernest-Wallon de Toulouse.
  *
- * La demi-finale n'y figure pas : en Pro D2 le mieux classé reçoit.
+ * La demi-finale, elle, garde Aimé-Giral : en Pro D2 le mieux classé reçoit,
+ * et l'USAP a fini première. Ce n'est pas une déduction hasardeuse.
  */
-const TERRAIN_NEUTRE: Record<string, string | null> = {
-  // 6 mai 2018, Perpignan 38-13 Grenoble. Source : Jérémy, présent au stade.
-  Finale: "Stade Ernest-Wallon",
-};
 
 async function trouverAdversaire(nom: string): Promise<string> {
   const trouve = await prisma.opponent.findFirst({
@@ -401,18 +400,14 @@ async function main() {
       select: { id: true },
     });
 
-    // Terrain neutre : la déduction par le camp ne vaut pas pour une finale.
-    const neutre = r.round != null && r.round in TERRAIN_NEUTRE;
-    const nomNeutre = neutre ? TERRAIN_NEUTRE[r.round!] : null;
-    const venue = neutre
-      ? nomNeutre
-        ? await prisma.venue.findFirst({ where: { name: nomNeutre }, select: { id: true } })
-        : null
-      : r.isHome
-        ? await prisma.venue.findFirst({ where: { name: "Stade Aimé-Giral" }, select: { id: true } })
-        : await prisma.opponent
-            .findUnique({ where: { id: opponentId }, select: { venueId: true } })
-            .then((o) => (o?.venueId ? { id: o.venueId } : null));
+    // Terrain neutre et terrain d'alors : `terrainDuMatch` porte les deux
+    // règles, la finale du 6 mai 2018 figurant dans `TERRAINS_PARTICULIERS`.
+    const venueId = await terrainDuMatch(prisma, {
+      opponentId,
+      isHome: r.isHome,
+      startYear: saison.startYear,
+      jour,
+    });
 
     const donnees: Prisma.MatchUncheckedCreateInput = {
       slug: generateMatchSlug({
@@ -432,7 +427,7 @@ async function main() {
       matchday: r.matchday,
       round: r.round,
       isHome: r.isHome,
-      venueId: venue?.id ?? null,
+      venueId,
       opponentId,
       scoreUsap: r.scoreUsap,
       scoreOpponent: r.scoreOpponent,

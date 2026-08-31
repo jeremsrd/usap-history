@@ -594,8 +594,9 @@ Le code réutilisable va dans `scripts/lib/` : `lnr.ts` pour les feuilles de la
 LNR, `epcr.ts` pour le flux des coupes d'Europe, `noms.ts` pour le
 rapprochement des noms entre une source et la base, `joueurs.ts` pour
 retrouver ou créer une fiche à partir d'une feuille officielle, `fusion.ts`
-pour l'absorption d'une fiche par une autre, et `arbitres.ts` pour
-celui des arbitres — plus strict, puisqu'il exige le nom de famille : le corps
+pour l'absorption d'une fiche par une autre, `stades.ts` pour le terrain d'une
+rencontre — historique des stades et lieux particuliers compris —, et
+`arbitres.ts` pour celui des arbitres — plus strict, puisqu'il exige le nom de famille : le corps
 arbitral français aligne assez d'Adrien pour qu'un rapprochement au prénom
 confonde Adrien Marbot et Adrien Descottes. Ce dernier porte une table de **noms d'usage** — deux patronymes sans
 rien de commun qui désignent la même personne, comme Waisea Nayacalevu, que la
@@ -651,7 +652,8 @@ doublons.
 | `audit-opponent-lineups.ts` | confronte les compositions adverses aux feuilles officielles LNR — les deux divisions, phases finales comprises ; lecture seule, à lancer sur une saison ou sur tout. **Zéro anomalie est l'état attendu** ; les variantes d'affichage arbitrées sont tues par sa table `VARIANTES_DAFFICHAGE`, comptées au récapitulatif et listées par `--variantes` |
 | `fix-opponent-lineup.ts` | remet une composition en accord avec la feuille officielle — LNR pour le championnat, EPCR pour les coupes — (identités, dossards, titulaires, capitaine) ; `--usap` traite aussi le camp catalan |
 | `fetch-club-logos.ts` | rapatrie les logos officiels des clubs dans `public/images/logos/`, depuis les CDN de la LNR et de l'EPCR, et renseigne `Opponent.logoUrl` |
-| `fix-match-venues.ts` | met les stades en ordre : fusionne les doublons, crée les manquants, rattache chaque club à son terrain — déduit des déplacements déjà enregistrés — puis complète les matchs sans lieu |
+| `fix-match-venues.ts` | met les stades en ordre : fusionne les doublons, crée les manquants, rattache chaque club à son terrain — déduit des déplacements déjà enregistrés — puis complète les matchs sans lieu, par `terrainDuMatch()` |
+| `seed-stades-historiques.ts` | écrit les terrains d'**avant** : les trois clubs qui ont déménagé pendant la période couverte, chacun avec sa source. À relancer après `fix-match-venues.ts` si un stade manquait |
 | `sync-effectif.ts` | met l'effectif professionnel en accord avec la LNR : crée les fiches manquantes, lève `isActive` sur l'effectif et l'abaisse sur les partants ; refuse d'écrire tant qu'un doublon ou un nom douteux subsiste |
 | `fix-null-penalty-tries.ts` | met à 0 les compteurs `penaltyTries` restés `null`, mais seulement là où les points retombent déjà sur le score |
 | `fix-barrages-access-match.ts` | les deux trous des barrages d'accession — arbitre du 12/06/2022, mi-temps du 03/06/2023 — et la transformation que la chronologie de ce dernier avait perdue |
@@ -1105,15 +1107,35 @@ d'écrire les agrégats s'ils s'en écartent.
 
 **Ce qui manque dans les données**
 
-- **Les 439 matchs ont leur stade — mais le stade d'aujourd'hui.**
-  `Opponent.venueId` ne porte qu'**un** terrain par club et ignore le temps,
-  si bien que la déduction vieillit mal en remontant : le Racing 92 est en
-  base au Paris La Défense Arena, **ouvert en 2017**, et jouait à Colombes en
-  2012-2013 ; le Stade Français est à Jean-Bouin, alors en reconstruction, et
-  recevait à Charléty. Ce n'est plus l'incertitude admise pour Carcassonne ou
-  Agen — « c'est le terrain d'aujourd'hui, rien ne dit qu'il y recevait
-  déjà » —, c'est une erreur démontrable. Un historique de terrains est
-  décidé, pas encore fait. Le lieu se déduit du camp —
+- **Les 439 matchs ont leur stade, et c'est celui d'alors.**
+  `Opponent.venueId` ne porte qu'**un** terrain par club et ignore le temps :
+  la déduction vieillissait mal en remontant, et donnait le Racing 92 au Paris
+  La Défense Arena — **ouvert en 2017** — pour des matchs de 2013. La table
+  `OpponentVenue` dit désormais où un club recevait **avant**, et
+  `terrainDuMatch()` de `scripts/lib/stades.ts` est le seul endroit où la
+  règle est écrite : les dix scripts de saison et `fix-match-venues.ts`
+  l'appellent tous.
+
+  Trois clubs seulement ont déménagé sur la période couverte, pour quatre
+  matchs : le Racing 92 (Colombes jusqu'en 2016-2017), le Stade Français
+  (Charléty jusqu'en 2012-2013, Jean-Bouin étant en reconstruction) et Lyon
+  (Vénissieux jusqu'en 2016-2017). `seed-stades-historiques.ts` les écrit,
+  chacun avec sa source.
+
+  **Une délocalisation ponctuelle ne relève pas de cette table** mais du
+  match : l'UBB a reçu l'USAP à Chaban-Delmas en août 2012 et en mars 2014
+  alors que son terrain d'alors était André-Moga, et la base était donc déjà
+  juste. Les cas de ce genre — dont la finale de Pro D2 2018 sur terrain
+  neutre — sont dans `TERRAINS_PARTICULIERS`, qui prime sur tout le reste.
+
+  Deux clubs ont **changé de nom de stade sans déménager**, et n'ont rien à y
+  faire : Montpellier (Yves-du-Manoir → Altrad Stadium → GGL Stadium) et
+  Castres (Pierre-Antoine → Pierre-Fabre).
+
+  Aucune de ces dates ne vient d'une source officielle : ni la LNR ni l'EPCR
+  ne donnent le stade d'une rencontre, et le calendrier de la LNR ne porte
+  aucun champ de lieu — vérifié. C'est de la presse et de Wikipédia, au même
+  titre que l'Albert-Domec de Carcassonne. Le lieu se déduit du camp —
   Aimé-Giral à domicile, `Opponent.venueId` à l'extérieur —, et ne se saisit
   donc jamais à la main. **Sauf une finale**, jouée sur terrain neutre : la
   déduction y est fausse, et la feuille de la LNR n'aide pas puisqu'elle
@@ -1356,6 +1378,32 @@ scripts touchés. Deux erreurs préexistantes subsistent dans
 ⚠️ `DATABASE_URL` pointe sur la base Supabase **de production** : un script
 lancé écrit directement sur les données du site. Toujours passer par `--dry`
 d'abord quand le script modifie de l'existant.
+
+⚠️ **`prisma migrate dev` VEUT RÉINITIALISER CETTE BASE. Ne pas le lancer.**
+Le dossier `prisma/migrations/` ne décrit pas l'état réel : des colonnes y
+manquent — les `slug` de plusieurs tables, des index de `season_coaches` —,
+posées en leur temps sans migration. Prisma lit donc une dérive, conclut que
+la base doit être reconstruite et propose d'effacer toutes les données. Il
+s'arrête avant d'agir, mais il ne faut pas s'en remettre à cela.
+
+**La bonne façon d'ajouter une table** est d'écrire le SQL, de le déposer dans
+`prisma/migrations/<horodatage>_<nom>/migration.sql` pour la trace, puis de
+l'appliquer seul :
+
+```bash
+# le SQL, sans rien appliquer
+npx prisma migrate diff --from-schema-datasource prisma/schema.prisma \
+  --to-schema-datamodel prisma/schema.prisma --script
+# l'appliquer, et lui seul
+npx prisma db execute --file prisma/migrations/<...>/migration.sql \
+  --schema prisma/schema.prisma
+# le client, en local
+npx prisma generate
+```
+
+C'est ainsi qu'`opponent_venues` a été créée le 31 août 2026. **Relire le SQL
+avant de l'exécuter** : `migrate diff` rend tout l'écart entre le schéma et la
+base, dérive comprise, et pas seulement ce qu'on croit ajouter.
 
 ## Notes pour Claude Code
 
