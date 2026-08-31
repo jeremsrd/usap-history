@@ -267,8 +267,8 @@ confrontations avec l'USAP, et de gérer les joueurs passés par les deux camps
   Vuidravuwalu) ou prénom d'usage sans lettre commune avec l'état civil
   (« Paddy » pour Patrick, « Richie » pour Richard). L'abréviation ordinaire
   n'a pas besoin de la table, le préfixe suffit.
-- `players` contient donc majoritairement des adversaires : 2 859 fiches ont
-  joué **contre** l'USAP, 264 sous son maillot — 116 des deux côtés. C'est
+- `players` contient donc majoritairement des adversaires : 2 937 fiches ont
+  joué **contre** l'USAP, 276 sous son maillot — 127 des deux côtés. C'est
   normal. Les pages de liste filtrent déjà sur `isOpponent: false`.
 - **Un import qui cherche sur le nom exact fabrique des doublons à chaque
   passage.** C'est arrivé pour de bon : un script relancé après une fusion a
@@ -379,6 +379,12 @@ détacher la phase finale de la phase régulière sur la page de saison.
   compteurs sont **nullables et parfois `null`** (9 matchs à ce jour) : une
   garde écrite `points <> score - 7 * penaltyTries` ne compare alors rien du
   tout et laisse passer la ligne en silence. Traiter le `null` explicitement.
+- **La LNR écrit « n.a. » quand elle ne sait pas qui a marqué**, et pas
+  seulement sur un essai de pénalité : le Bayonne-Perpignan du 9 février 2013
+  ne nomme aucun de ses trois marqueurs bayonnais. Ces points comptent pour
+  l'équipe et pour personne — la somme des joueurs tombe alors sous le score,
+  légitimement. À ne pas confondre avec un nom que la composition ignore, qui
+  fait toujours échouer le match.
 - Déduire les réalisations de la chronologie plutôt que de les ressaisir, et
   signaler tout marqueur absent de la composition.
 - **Un nom de la source qui ne s'apparie à aucune ligne de la composition doit
@@ -628,7 +634,8 @@ doublons.
 | `close-season-2025-2026.ts` | modèle de clôture de saison, avec garde-fou sur le classement officiel |
 | `seed-opponent-sheet.ts` | **le script du chantier adverse** : reprend une saison entière depuis la LNR — réalisations, cartons et temps de jeu reconstitués à partir des changements. Prend la saison en argument (`2023-2024`), `--dry` pour simuler, `--detail` pour le relevé des écarts avec la base, `--match=AAAA-MM-JJ` pour n'en reprendre qu'un, `--usap` pour traiter **aussi le camp catalan** — il passe alors deux fois, l'adverse puis l'USAP |
 | `seed-lineup.ts` | crée les **deux compositions** d'un match depuis la LNR quand il n'en a aucune — dossards, titulaires, capitaine, poste déduit du numéro. Premier temps de la reprise d'une rencontre ancienne ; `--dry`, `--force` pour réécrire |
-| `seed-season-2013-2014.ts` | crée les 26 matchs de la saison de la relégation de 2014 — **première saison de Top 14 reprise en remontant**, et le modèle le plus récent pour la première division |
+| `seed-season-2012-2013.ts` | crée les 26 matchs d'une saison de Top 14 sans phase finale — septième ; **le modèle le plus récent** |
+| `seed-season-2013-2014.ts` | crée les 26 matchs de la saison de la relégation de 2014 — première saison de Top 14 reprise en remontant |
 | `seed-season-2014-2015.ts` | crée les 31 matchs d'une saison de Pro D2 **avec demi-finale** — troisième. Porte la démonstration du classement LNR qui additionne les phases finales |
 | `seed-season-2015-2016.ts` | crée les 30 matchs d'une saison de Pro D2 sans phase finale — septième ; premier à passer par `momentDuMatch()` |
 | `seed-season-2016-2017.ts` | crée les 30 matchs d'une saison de Pro D2 **sans phase finale pour l'USAP** — sixième, à une place des quatre qualifiés |
@@ -846,7 +853,7 @@ Ce qui ne se déduit pas de la base, en revanche :
 **Ce que les sources ne publient pas.** La LNR ne donne ni affluence, ni score
 à la mi-temps, ni compte-rendu : les saisons qui n'ont qu'elle pour source —
 2021-2022, 2020-2021, 2019-2020, 2018-2019, 2017-2018, 2016-2017, 2015-2016,
-2014-2015 et 2013-2014 — resteront vides sur ces trois colonnes,
+2014-2015, 2013-2014 et 2012-2013 — resteront vides sur ces trois colonnes,
 sauf à trouver ailleurs. L'EPCR, lui, donne les trois, d'où les mi-temps et les
 affluences des matchs de coupe d'Europe. Les vidéos viennent de la chaîne
 YouTube « TOP 14 - Officiel », qui ne remonte pas au-delà de 2022-2023.
@@ -900,7 +907,7 @@ Par ordre de valeur.
    pour toute nouvelle saison est en tête de fichier, « Reprendre une
    saison ».
 
-   Quinze anomalies connues de ces saisons, toutes assumées :
+   Dix-huit anomalies connues de ces saisons, toutes assumées :
    - **La Rochelle totalise 1 206 minutes le 30 octobre 2021.** Sa feuille se
      contredit — Victor Vito sort *définitivement* à la 25ᵉ sur protocole
      commotion, puis elle le fait sortir encore à la 35ᵉ et rentrer deux fois.
@@ -968,31 +975,49 @@ Par ordre de valeur.
    - **deux compositions à 22 joueurs en 2013-2014** — Grenoble le
      4 septembre, l'USAP le 22 novembre : la LNR y oublie un remplaçant. Les
      quinze titulaires sont là dans les deux cas, ce qui est le critère
-     d'acceptation.
+     d'acceptation ;
+   - **cinq essais collectifs en 2012-2013**, et autant d'écarts de cinq
+     points — les 24 août, 8 et 15 septembre, 30 novembre 2012 et 4 mai 2013 ;
+   - **aucun des treize points de Bayonne n'a d'auteur le 9 février 2013.**
+     La feuille marque « n.a. » sur ses deux pénalités et sur son essai, dont
+     la transformation n'a pas davantage de buteur. Les points comptent pour
+     l'équipe et pour personne — cf. `pointsSansAuteur` dans
+     `seed-opponent-sheet.ts` ;
+   - **le Perpignan-Toulouse du 15 septembre 2012 n'a pas de chronologie**, et
+     c'est le seul match joué de la base dans ce cas. La feuille reconstitue
+     32-20 pour un 34-20 officiel : elle saute une transformation, et son score
+     courant ne passe jamais par 34. Les deux points sont réels — la
+     composition porte bien trois transformations pour cinq essais — mais leur
+     **minute est introuvable**. Les poser quelque part, ce serait choisir une
+     minute que rien n'atteste et fausser tous les scores affichés après elle.
+     Une chronologie doit dire *quand* ; les scripts de feuille, eux, ne
+     comptent que des totaux, et rattrapent.
 
    Deux choses que la chaîne ne fait pas : la **mi-temps**, que la LNR ne
    publie pas — elle se déduirait du dernier fait avant la 40ᵉ, mais c'est une
    inférence —, et les **notes de retour en jeu**, écrites à la main.
 
-2. **Poursuivre la phase 4** en remontant. **De 2013-2014 à 2020-2021, huit
+2. **Poursuivre la phase 4** en remontant. **De 2012-2013 à 2020-2021, neuf
    saisons sont faites**, toutes conformes au classement officiel de la LNR :
    107 points et le titre de Pro D2 en 2020-2021, 76 points et la deuxième
    place en 2019-2020, arrêtée à la 23ᵉ journée par le Covid, 12 points et la
    dernière place de Top 14 en 2018-2019, reléguée directement, 97 points et
    le titre en 2017-2018, 79 points et la sixième place en 2016-2017,
    73 points et la septième en 2015-2016, 82 points et la troisième en
-   2014-2015, 51 points et la treizième en 2013-2014, reléguée.
+   2014-2015, 51 points et la treizième en 2013-2014, reléguée, 61 points et
+   la septième en 2012-2013.
 
-   **2013-2014 est complète** : 26 matchs, 1 194 lignes de composition, 379
+   **2012-2013 est faite** : 26 matchs, 1 196 lignes de composition, 388
    événements de chronologie, l'arbitre et le stade partout, et l'audit nom à
-   nom ne signale rien.
+   nom ne signale rien. **Vingt-cinq chronologies sur vingt-six**, le match du
+   15 septembre restant sans, pour la raison dite plus haut.
 
-   **C'est la première saison de Top 14 reprise en remontant**, et le
-   changement de site n'a rien cassé : `top14.lnr.fr` est la valeur par défaut
-   du module, ses archives de 2013-2014 sont complètes — vingt-trois par camp,
-   arbitre, faits et changements sur les vingt-six feuilles — et rien n'a eu à
-   être adapté. Tout ce qui précède se joue en première division, donc sur ce
-   même site.
+   Deux relâchements ont été nécessaires, l'un et l'autre bornés : le score
+   courant d'avant 2017-2018 sur l'essai de pénalité, déjà en place, et
+   l'acceptation des **points que la source n'attribue à personne**. Un nom que
+   la composition ignore fait toujours échouer le match — c'est le garde-fou
+   qui a rattrapé les identités fausses ; seul le cas « la source ne désigne
+   personne » est admis.
 
    **Les deux bornes du barème de bonus sont désormais attestées de part et
    d'autre.** 2014-2015 est la première saison du bonus défensif à cinq points
@@ -1009,8 +1034,8 @@ Par ordre de valeur.
    à faire foi. Les deux valent pour toutes les saisons antérieures, et les
    cinq déjà en base ont été repassées sans changer d'un point.
 
-   Les modèles : `seed-season-2013-2014.ts` pour une saison de **Top 14** —
-   c'est le plus récent —, `seed-season-2014-2015.ts` pour une saison de
+   Les modèles : `seed-season-2012-2013.ts` et `seed-season-2013-2014.ts`
+   pour une saison de **Top 14** — le premier est le plus récent —, `seed-season-2014-2015.ts` pour une saison de
    deuxième division **avec une phase finale**, celui qui porte le piège du
    classement additionné, `seed-season-2015-2016.ts`,
    `seed-season-2016-2017.ts` et `seed-season-2019-2020.ts` quand il n'y en a
@@ -1024,10 +1049,10 @@ Par ordre de valeur.
    site n'offre plus que les saisons récentes. La campagne européenne de
    2018-2019 est donc restée hors base, et il en ira de même en remontant tant
    qu'aucune source officielle ne les rouvre.
-3. **Le fond** : affluences (36 matchs sur 387 joués), photos et biographies
-   (1 joueur sur 264), et les saisons sans aucun match.
+3. **Le fond** : affluences (36 matchs sur 413 joués), photos et biographies
+   (1 joueur sur 276), et les saisons sans aucun match.
 
-Sur les 120 saisons en base, 15 seulement portent des matchs : c'est le
+Sur les 120 saisons en base, 16 seulement portent des matchs : c'est le
 chantier de la phase 4, mené en remontant le temps saison par saison. Le bilan
 de 2021-2022 — 9V 0N 17D, 43 points, treizième — est calculé depuis les scores
 officiels mais n'a pas été confronté à un classement d'époque ; ceux de
@@ -1047,8 +1072,8 @@ d'écrire les agrégats s'ils s'en écartent.
 
 **Ce à quoi il faut penser en écrivant une requête**
 
-- **`players` est aux neuf dixièmes des adversaires** : 2 754 fiches sur
-  3 018 n'ont jamais porté le maillot, 264 l'ont porté. Toute requête sur les joueurs doit
+- **`players` est aux neuf dixièmes des adversaires** : 2 821 fiches sur
+  3 097 n'ont jamais porté le maillot, 276 l'ont porté. Toute requête sur les joueurs doit
   filtrer `isOpponent: false`, sinon le résultat est faux. Les fiches
   affichent séparément « Matchs avec l'USAP » et « Matchs contre l'USAP », et
   les statistiques ne comptent que les premiers ; le tableau « contre » ne
@@ -1068,19 +1093,27 @@ d'écrire les agrégats s'ils s'en écartent.
   `sync-effectif.ts` ne connaît que la page de la LNR, qui ignore les espoirs :
   Thomas Serezat a ainsi été abaissé le 29 août 2026 alors qu'il n'a pas quitté
   l'USAP.
-- **Une composition peut légitimement ne porter aucun capitaine** : sur 774,
-  753 en portent exactement un, 21 aucun — les feuilles que la LNR ne publie
+- **Une composition peut légitimement ne porter aucun capitaine** : sur 826,
+  805 en portent exactement un, 21 aucun — les feuilles que la LNR ne publie
   pas, et le match des Dragons du 7 décembre 2025 où l'EPCR en signale deux
   sans qu'on puisse les départager. Aucune n'en porte plusieurs. « Aucun » se
   lit « la source ne le dit pas », non « personne ne l'était ».
-- **`MatchEvent.playerId` n'est pas toujours renseigné** : 1 005 événements sur
-  6 463 ne le portent pas, les plus anciens surtout — la chaîne actuelle le
+- **`MatchEvent.playerId` n'est pas toujours renseigné** : 1 013 événements sur
+  6 851 ne le portent pas, les plus anciens surtout — la chaîne actuelle le
   remplit systématiquement. La page publique ne le lit pas, elle affiche
   `event.description`, où le nom figure en clair ; seul l'admin s'en sert.
 
 **Ce qui manque dans les données**
 
-- **Les 413 matchs ont leur stade.** Le lieu se déduit du camp —
+- **Les 439 matchs ont leur stade — mais le stade d'aujourd'hui.**
+  `Opponent.venueId` ne porte qu'**un** terrain par club et ignore le temps,
+  si bien que la déduction vieillit mal en remontant : le Racing 92 est en
+  base au Paris La Défense Arena, **ouvert en 2017**, et jouait à Colombes en
+  2012-2013 ; le Stade Français est à Jean-Bouin, alors en reconstruction, et
+  recevait à Charléty. Ce n'est plus l'incertitude admise pour Carcassonne ou
+  Agen — « c'est le terrain d'aujourd'hui, rien ne dit qu'il y recevait
+  déjà » —, c'est une erreur démontrable. Un historique de terrains est
+  décidé, pas encore fait. Le lieu se déduit du camp —
   Aimé-Giral à domicile, `Opponent.venueId` à l'extérieur —, et ne se saisit
   donc jamais à la main. **Sauf une finale**, jouée sur terrain neutre : la
   déduction y est fausse, et la feuille de la LNR n'aide pas puisqu'elle
@@ -1125,10 +1158,10 @@ d'écrire les agrégats s'ils s'en écartent.
   ces sources décrivent le stade **d'aujourd'hui**, et rien n'a permis de
   vérifier qu'ils y recevaient déjà, en 2020-2021 pour l'un, le 2 septembre
   2018 pour l'autre.
-- **Affluences éparses** : 36 matchs sur 387 joués, l'EPCR ayant fourni celles
+- **Affluences éparses** : 36 matchs sur 413 joués, l'EPCR ayant fourni celles
   des coupes. Peu de photos et de biographies de joueurs.
-- **L'audit des compositions adverses ne signale plus rien** : 355 matchs
-  examinés, 355 conformes.
+- **L'audit des compositions adverses ne signale plus rien** : 381 matchs
+  examinés, 381 conformes.
 
   **Il n'en voyait que 150 jusqu'au 30 août 2026, et il ne le disait pas.**
   Deux angles morts, dans le script dont c'est le seul métier : il cherchait
@@ -1147,7 +1180,7 @@ d'écrire les agrégats s'ils s'en écartent.
   dossards catalans permutés sur la même feuille. Manquants, joueurs en trop, dossards faux,
   brassards, écritures — toutes catégories soldées.
 
-  Restent **43 variantes d'affichage**, sur 16 paires de noms : la base porte
+  Restent **46 variantes d'affichage**, sur 16 paires de noms : la base porte
   le nom d'usage, la feuille l'état civil — « Tom » pour Thomas Staniforth,
   « Cobus » pour Jacobus Meyer Reinach, « Nacho » pour Juan Ignacio Brex —, ou
   la LNR ampute une apostrophe (« Marvin O Connor »). Elles ne sont plus

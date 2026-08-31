@@ -594,6 +594,21 @@ async function main(cible: "adverse" | "usap") {
     let essaisDePenalite = 0;
     /** Essais que la feuille n'attribue à personne, hors essais de pénalité. */
     let essaisCollectifs = 0;
+    /**
+     * Points que la feuille ne rattache à personne, hors essais.
+     *
+     * **La LNR écrit « n.a. » quand elle ne sait pas qui a marqué**, et cela
+     * ne vaut pas que pour les essais de pénalité : le Bayonne-Perpignan du
+     * 9 février 2013 ne nomme **aucun** de ses trois marqueurs bayonnais —
+     * pénalités des 6ᵉ et 28ᵉ, essai collectif de la 36ᵉ et sa transformation.
+     * Les treize points de Bayonne comptent pour l'équipe, et pour personne.
+     *
+     * On ne confond pas ce cas avec un nom qui ne s'apparie pas : là, la
+     * source désigne quelqu'un que la composition ignore, et le match échoue
+     * — c'est le plus souvent la composition qui est fausse. Ici la source ne
+     * désigne personne, et il n'y a rien à trouver.
+     */
+    let pointsSansAuteur = 0;
 
     // Une composition qui n'aligne pas quinze titulaires ne permet pas de
     // reconstituer les temps de jeu : chaque titulaire de trop ajoute jusqu'à
@@ -631,7 +646,13 @@ async function main(cible: "adverse" | "usap") {
       const nomme = propose ? apparier(roster, propose) : null;
       const buteur = nomme ?? buteurLePlusProche(buteurs, essai.minute);
       if (!buteur) {
-        ennuis.push(`transformation de l'essai de ${essai.minute}' : buteur introuvable`);
+        // Aucun buteur nommé de tout le match : la feuille ne dit pas qui a
+        // transformé, et rien ne permet de le déduire. Les deux points restent
+        // à l'équipe, comme l'essai qu'ils transforment.
+        pointsSansAuteur += 2;
+        inferences.push(
+          `transformation de l'essai de ${essai.minute}' : aucun buteur nommé, points laissés à l'équipe`,
+        );
         return;
       }
       const bilan = bilans.get(buteur.id)!;
@@ -657,6 +678,11 @@ async function main(cible: "adverse" | "usap") {
           essaisCollectifs++;
           courant += 5;
           essaisAdverses.push({ minute: fait.minute, ligne: null, transforme: false });
+        } else if (!fait.joueur && (fait.type === "penalite" || fait.type === "drop")) {
+          // « n.a. » sur une pénalité ou un drop : les points sont à l'équipe.
+          pointsSansAuteur += 3;
+          courant += 3;
+          inferences.push(`${fait.type} ${fait.minute}' : aucun auteur nommé, points laissés à l'équipe`);
         } else if (!fait.joueur) {
           ennuis.push(`fait ${fait.minute}' ${fait.type} sans auteur`);
         } else {
@@ -756,9 +782,11 @@ async function main(cible: "adverse" | "usap") {
     const lignes = [...bilans.entries()];
     const points = lignes.reduce((s, [, b]) => s + b.points, 0);
     const essais = lignes.reduce((s, [, b]) => s + b.tries, 0);
-    // Ni les essais de pénalité ni les essais collectifs n'ont d'auteur :
-    // leurs points ne figurent sur aucune ligne de joueur.
-    const attendu = score - 7 * essaisDePenalite - 5 * essaisCollectifs;
+    // Ni les essais de pénalité, ni les essais collectifs, ni les points que
+    // la feuille marque « n.a. » n'ont d'auteur : ils ne figurent sur aucune
+    // ligne de joueur.
+    const attendu =
+      score - 7 * essaisDePenalite - 5 * essaisCollectifs - pointsSansAuteur;
 
     if (points !== attendu) {
       echecs.push(
