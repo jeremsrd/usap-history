@@ -91,6 +91,14 @@ const TOUT = process.argv.includes("--tout");
  * novembre — et leurs postes non plus : David est le centre international,
  * n°13 sur douze de ses quinze feuilles ; Paul est ouvreur et arrière, n°10
  * puis n°15.
+ *
+ * **Et la suivante avec 2014-2015**, où le même club et le même n°5 ne
+ * départageaient pas davantage : Henry Tuilagi, deuxième ligne et numéro 8 de
+ * l'USAP sur les douze feuilles de 2014-2015, et Posolo, deuxième ligne de
+ * l'effectif actuel, soixante-quatre feuilles depuis 2022-2023. Huit ans
+ * séparent la dernière de l'un de la première de l'autre, et la LNR écrit
+ * « Henry Tuilagi » en toutes lettres sur les feuilles de 2014-2015. Ce sont
+ * le père et le fils.
  */
 const DISTINCTS: [string, string][] = [
   ["Sacha Lotrian", "Mathys Lotrian"],
@@ -114,6 +122,8 @@ const DISTINCTS: [string, string][] = [
   ["Johannes Jonker", "Rynhardt Jonker"],
   // Venue avec 2015-2016, arbitrée le 31 août 2026 sur les feuilles officielles.
   ["David Marty", "Paul Marty"],
+  // Venue avec 2014-2015, arbitrée de même : le père et le fils.
+  ["Henry Tuilagi", "Posolo Tuilagi"],
 ];
 
 const ARBITREES = new Set(

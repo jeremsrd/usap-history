@@ -56,6 +56,7 @@
  */
 
 import { PrismaClient } from "@prisma/client";
+import { estCouperet } from "../src/lib/matchs";
 import { memeMot, mots, normalize, proximite } from "./lib/noms";
 import {
   chercherFeuille,
@@ -87,6 +88,47 @@ if (!SAISON) {
 }
 
 const DUREE = 80;
+/** Durée d'un match allé au bout de ses prolongations : 80 + 2 × 10. */
+const DUREE_PROLONGATIONS = 100;
+
+/**
+ * UNE PHASE FINALE PEUT ALLER EN PROLONGATIONS, ET LE MATCH DURE ALORS
+ * CENT MINUTES.
+ *
+ * Le modèle compte tout match pour quatre-vingts minutes plates, ce qui est
+ * vrai de toute rencontre de championnat — un match nul de phase régulière
+ * reste nul. Mais un couperet doit se départager, et la demi-finale du
+ * 17 mai 2015 contre Agen l'a fait : la feuille y inscrit des pénalités aux
+ * 82ᵉ, 88ᵉ, 94ᵉ et 99ᵉ minutes, le score passant de 26-26 à la fin du temps
+ * réglementaire à 32-32 au coup de sifflet final. Deux périodes de dix
+ * minutes, et Agen s'est qualifié sur les essais marqués, quatre à deux.
+ *
+ * Sans cette durée, les deux camps totalisaient 1 200 et 1 203 minutes au lieu
+ * de 1 500 : chaque titulaire resté sur le terrain se voyait amputé de ses
+ * vingt minutes de prolongation, et le remplaçant entré à la 83ᵉ recevait zéro
+ * minute au lieu de dix-sept.
+ *
+ * **La règle est verrouillée sur le couperet**, et c'est ce qui la rend sûre :
+ * une rencontre de championnat ne peut pas se prolonger, si bien qu'un fait
+ * tardif n'y est jamais qu'un arrêt de jeu — la LNR additionne les minutes
+ * additionnelles à la minute du fait, et une pénalité à la 83ᵉ d'une journée
+ * ordinaire est une pénalité de la 80ᵉ+3. Le seuil de 90 minutes laisse donc
+ * passer tout temps additionnel plausible, et ne retient que ce qu'aucun arrêt
+ * de jeu n'explique.
+ *
+ * Réserve : un couperet prolongé dont la feuille n'inscrirait aucun fait ni
+ * changement après la 90ᵉ passerait inaperçu. Le total de minutes le dirait —
+ * il tomberait 300 minutes trop bas, ce qui ne se rate pas.
+ */
+function dureeDuMatch(feuille: LnrFeuille, estCouperet: boolean): number {
+  if (!estCouperet) return DUREE;
+  const derniere = Math.max(
+    0,
+    ...feuille.faits.map((f) => f.minute),
+    ...feuille.changements.map((c) => c.minute),
+  );
+  return derniere > 90 ? DUREE_PROLONGATIONS : DUREE;
+}
 
 /**
  * Changements que la feuille officielle rapporte de travers, corrigés à la
@@ -341,6 +383,7 @@ function calculerTempsDeJeu(
   campAdverse: Camp,
   bilans: Map<string, Bilan>,
   echecs: string[],
+  duree: number,
 ) {
   const surLeTerrain = new Map<string, number | null>();
   const total = new Map<string, number>();
@@ -385,7 +428,7 @@ function calculerTempsDeJeu(
   for (const ligne of roster) {
     // Un carton rouge met fin au match du joueur
     const rouge = bilans.get(ligne.id)!.rouge;
-    fermer(ligne.id, rouge ?? DUREE, rouge != null);
+    fermer(ligne.id, rouge ?? duree, rouge != null);
     const joue = total.get(ligne.id) ?? 0;
     const bilan = bilans.get(ligne.id)!;
     // Remplaçant jamais entré : minutes inconnues plutôt que zéro
@@ -699,7 +742,10 @@ async function main(cible: "adverse" | "usap") {
     }
 
     // ---- Temps de jeu ------------------------------------------------------
-    calculerTempsDeJeu(roster, feuille, campTraite, bilans, ennuis);
+    // Un couperet peut être allé en prolongations : le match dure alors cent
+    // minutes et non quatre-vingts (cf. `dureeDuMatch`).
+    const duree = dureeDuMatch(feuille, estCouperet(match));
+    calculerTempsDeJeu(roster, feuille, campTraite, bilans, ennuis, duree);
 
     if (ennuis.length > 0) {
       echecs.push(`${etiquette} :\n      ${ennuis.join("\n      ")}`);
@@ -740,10 +786,10 @@ async function main(cible: "adverse" | "usap") {
 
     const minutes = lignes.reduce((s, [, b]) => s + (b.minutes ?? 0), 0);
     const perduesRouge = lignes.reduce(
-      (s, [, b]) => s + (b.rouge != null ? DUREE - b.rouge : 0),
+      (s, [, b]) => s + (b.rouge != null ? duree - b.rouge : 0),
       0,
     );
-    const minutesAttendues = 15 * DUREE - perduesRouge;
+    const minutesAttendues = 15 * duree - perduesRouge;
     const alerte = minutes !== minutesAttendues ? ` ⚠ ${minutes}/${minutesAttendues} minutes` : "";
 
     // ---- Écart avec la base --------------------------------------------------

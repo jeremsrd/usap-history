@@ -12,9 +12,26 @@ import type { PrismaClient } from "@prisma/client";
 import { normalize } from "./noms";
 import { generateRefereeSlug } from "../../src/lib/slugs";
 
+/**
+ * LA LNR GLISSE LE SIGLE DE LA FÉDÉRATION D'UN ARBITRE ÉTRANGER DANS SON NOM.
+ *
+ * Elle écrit « Federico (Uar) Anselmi » pour l'Argentin qui a dirigé le
+ * Colomiers-Perpignan du 18 janvier 2015 — l'UAR étant l'Unión Argentina de
+ * Rugby. Le sigle est au milieu du nom, si bien qu'un découpage au dernier mot
+ * en ferait un prénom : « Federico (Uar) », « Anselmi ». On le retire donc
+ * avant de couper, et la fiche porte « Federico Anselmi ».
+ *
+ * Ce n'est pas cosmétique : le prénom sert au rapprochement des homonymes, et
+ * une parenthèse dans le prénom empêcherait de reconnaître le même arbitre
+ * sur une feuille qui l'écrirait sans sigle.
+ */
+function sansSigleFederation(nom: string): string {
+  return nom.replace(/\s*\([^)]*\)\s*/g, " ").replace(/\s+/g, " ").trim();
+}
+
 /** « Adrien Marbot » → prénom et nom, le dernier mot faisant le patronyme. */
 export function separerNom(complet: string): { firstName: string; lastName: string } {
-  const mots = complet.trim().split(/\s+/);
+  const mots = sansSigleFederation(complet).split(/\s+/);
   return {
     firstName: mots.slice(0, -1).join(" "),
     lastName: mots[mots.length - 1] ?? complet,
@@ -40,12 +57,15 @@ export async function trouverOuCreerArbitre(
 ): Promise<string | null> {
   const { firstName, lastName } = separerNom(nom);
   if (!lastName) return null;
+  // Le nom sert aussi à la comparaison plus bas : on y retire le sigle, sans
+  // quoi « Federico (Uar) Anselmi » ne s'apparierait jamais à sa propre fiche.
+  const nomPropre = sansSigleFederation(nom);
 
   const tous = await prisma.referee.findMany({
     select: { id: true, firstName: true, lastName: true },
   });
   const exactes = tous.filter(
-    (a) => normalize(`${a.firstName} ${a.lastName}`) === normalize(nom),
+    (a) => normalize(`${a.firstName} ${a.lastName}`) === normalize(nomPropre),
   );
   if (exactes.length === 1) return exactes[0].id;
 
