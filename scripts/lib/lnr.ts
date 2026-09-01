@@ -173,10 +173,58 @@ async function lirePage(url: string): Promise<string> {
  *               Le segment a changé de nom au fil des saisons : « access » en
  *               2022-2023, « access-top-14 » depuis 2024-2025.
  */
+/**
+ * FEUILLES QUE LE CALENDRIER ARCHIVÉ NE LIE PAS.
+ *
+ * Certaines pages de journée sont amputées : celle de la J11 de 2007-2008 ne
+ * publie que 2 rencontres sur 7, celle de la J24 en publie 5 sur 7, et dans
+ * les deux cas la rencontre de l'USAP manque. `chercherFeuille` et
+ * `lireCalendrier` lisent la page de la journée : ils ne peuvent rien y
+ * trouver.
+ *
+ * **Les feuilles existent pourtant.** Les identifiants de la LNR sont
+ * séquentiels : ceux de la J11 vont de 3878 à 3884 sur la page et ceux de la
+ * J12 commencent à 3889, si bien qu'un balayage de l'intervalle rend
+ * `3883-perpignan-auch`. Même méthode pour la J24, entre 3975 et 3979 :
+ * `3970-auch-perpignan` répond.
+ *
+ * Leurs dates disent pourquoi elles manquent — 23 février et 30 mai 2008,
+ * hors de leur journée : ce sont deux matchs reportés, que la page d'origine
+ * n'a jamais listés.
+ *
+ * **La table est ici, et non dans un script de saison**, parce que toute la
+ * chaîne en dépend : le script de saison, mais aussi `seed-lineup.ts`,
+ * `seed-opponent-sheet.ts` et `seed-chronologie.ts`, qui cherchent chacun
+ * leur feuille par le calendrier. La poser ailleurs, c'était la réécrire
+ * quatre fois — ou, plus vraisemblablement, l'oublier trois.
+ *
+ * Les scores sont donnés parce que `lireCalendrier` les rend d'ordinaire, et
+ * qu'ils font foi sur le score final. Ils ne sont pas crus sur parole : le
+ * script de saison les confronte aux faits de la feuille officielle.
+ */
+const FEUILLES_HORS_CALENDRIER: Record<string, LnrRencontre> = {
+  "2007-2008/j11": {
+    url: "https://top14.lnr.fr/feuille-de-match/2007-2008/j11/3883-perpignan-auch",
+    recevant: "perpignan",
+    visiteur: "auch",
+    scoreRecevant: 28,
+    scoreVisiteur: 23,
+  },
+  "2007-2008/j24": {
+    url: "https://top14.lnr.fr/feuille-de-match/2007-2008/j24/3970-auch-perpignan",
+    recevant: "auch",
+    visiteur: "perpignan",
+    scoreRecevant: 13,
+    scoreVisiteur: 25,
+  },
+};
+
 export async function chercherFeuille(
   saison: string,
   phase: string,
 ): Promise<string | null> {
+  const hors = FEUILLES_HORS_CALENDRIER[`${saison}/${phase}`];
+  if (hors) return hors.url;
   const html = await lirePage(`${RACINE}/calendrier-et-resultats/${saison}/${phase}`);
   const liens = html.match(
     new RegExp(`feuille-de-match/${saison}/${phase}/[^"'?\\s]*perpignan[^"'?\\s]*`, "g"),
@@ -205,6 +253,8 @@ export async function lireCalendrier(
   saison: string,
   phase: string,
 ): Promise<LnrRencontre | null> {
+  const hors = FEUILLES_HORS_CALENDRIER[`${saison}/${phase}`];
+  if (hors) return hors;
   const html = (await lirePage(`${RACINE}/calendrier-et-resultats/${saison}/${phase}`))
     .replace(/\s+/g, " ");
   const carte = html.match(

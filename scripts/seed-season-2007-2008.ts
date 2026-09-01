@@ -33,8 +33,10 @@
  *
  * Les feuilles existent pourtant : les identifiants de la LNR étant
  * séquentiels, elles se retrouvent par balayage entre ceux des rencontres
- * publiées de part et d'autre. D'où `FEUILLES_HORS_CALENDRIER`, qui les donne
- * en dur. Leurs dates expliquent l'omission — 23 février et 30 mai 2008 —,
+ * publiées de part et d'autre. D'où `FEUILLES_HORS_CALENDRIER` de
+ * `lib/lnr.ts`, qui les donne en dur — la table y est partagée par toute la
+ * chaîne, `seed-lineup.ts` et les suivants cherchant eux aussi leur feuille
+ * par le calendrier. Leurs dates expliquent l'omission — 23 février et 30 mai 2008 —,
  * ces deux matchs ayant été reportés et rejoués hors de leur journée.
  *
  * **Les scores donnés dans cette table ne sont pas crus sur parole** : le
@@ -88,7 +90,6 @@ import {
   realisationsDepuisFaits as realisations,
   type Realisations,
   type Camp,
-  type LnrRencontre,
 } from "./lib/lnr";
 import { trouverOuCreerArbitre } from "./lib/arbitres";
 import { CLUBS_LNR } from "./lib/clubs";
@@ -130,46 +131,6 @@ const NOUVEAUX_ADVERSAIRES: Array<{
   city: string;
   pays: string;
 }> = [{ name: "FC Auch Gers", shortName: "Auch", city: "Auch", pays: "FR" }];
-
-/**
- * RENCONTRES QUE LE CALENDRIER ARCHIVÉ NE PUBLIE PAS.
- *
- * La page de J11 ne porte que 2 des 7 rencontres de la journée, celle de J24
- * en porte 5 sur 7 — et les deux manquantes de l'USAP sont ses deux
- * rencontres contre Auch. `lireCalendrier` cherche le lien du match catalan
- * sur la page de la journée : il n'y est pas, et rend `null`.
- *
- * **Les feuilles existent pourtant.** Les identifiants de la LNR sont
- * séquentiels : ceux de J11 vont de 3878 à 3884 sur la page, ceux de J12
- * commencent à 3889 ; un balayage de l'intervalle rend `3883-perpignan-auch`.
- * Même méthode pour J24, dont les identifiants publiés couvrent 3971-3975 et
- * dont J25 commence à 3979 : `3970-auch-perpignan` répond.
- *
- * Leurs dates disent pourquoi elles manquent : **23 février et 30 mai 2008**,
- * hors de leur journée. Ce sont deux matchs reportés, et la page de la journée
- * ne les a jamais listés.
- *
- * **Les scores ci-dessous ne sont pas crus sur parole.** Ils viennent de
- * Wikipédia, mais le contrôle des réalisations les confronte aux faits de la
- * feuille officielle : si les points ne se reconstituent pas, la rencontre est
- * rejetée. C'est le même garde-fou que pour les vingt-cinq autres.
- */
-const FEUILLES_HORS_CALENDRIER: Record<string, LnrRencontre> = {
-  j11: {
-    url: "https://top14.lnr.fr/feuille-de-match/2007-2008/j11/3883-perpignan-auch",
-    recevant: "perpignan",
-    visiteur: "auch",
-    scoreRecevant: 28,
-    scoreVisiteur: 23,
-  },
-  j24: {
-    url: "https://top14.lnr.fr/feuille-de-match/2007-2008/j24/3970-auch-perpignan",
-    recevant: "auch",
-    visiteur: "perpignan",
-    scoreRecevant: 13,
-    scoreVisiteur: 25,
-  },
-};
 
 /**
  * FEUILLES DONT LA LNR NE PUBLIE AUCUN FAIT DE MATCH.
@@ -275,8 +236,9 @@ async function championnat(echecs: string[]): Promise<Rencontre[]> {
   for (const phase of phases) {
     const n = phase.startsWith("j") ? Number(phase.slice(1)) : null;
     // Deux journées sont amputées sur le calendrier archivé, et la rencontre
-    // de l'USAP y manque : `FEUILLES_HORS_CALENDRIER` prend le relais.
-    const carte = (await lireCalendrier(SAISON, phase)) ?? FEUILLES_HORS_CALENDRIER[phase];
+    // de l'USAP y manque : `lireCalendrier` prend le relais sur sa propre
+    // table, partagée par toute la chaîne (cf. `lib/lnr.ts`).
+    const carte = await lireCalendrier(SAISON, phase);
     if (!carte) {
       echecs.push(`${phase} : aucun match de l'USAP au calendrier`);
       continue;

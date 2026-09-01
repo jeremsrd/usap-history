@@ -592,6 +592,15 @@ Ce qu'il faut savoir avant d'écrire du code :
   sans cet arrêt, le prochain cas passerait en silence dans une saison qu'on
   n'aurait pas balayée. Vérifié sans régression : aucune des 3 489 fiches de
   la base ne porte un tel patronyme ;
+- **certaines pages de journée sont amputées**, et la rencontre de l'USAP peut
+  y manquer : celle de la J11 de 2007-2008 ne publie que 2 rencontres sur 7,
+  celle de la J24 en publie 5 sur 7. Les feuilles existent pourtant, et se
+  retrouvent par balayage des identifiants — ils sont séquentiels — entre ceux
+  des rencontres publiées de part et d'autre. `FEUILLES_HORS_CALENDRIER` de
+  `lib/lnr.ts` les donne en dur, et **`chercherFeuille` comme `lireCalendrier`
+  la consultent** : toute la chaîne cherche sa feuille par le calendrier, une
+  table posée dans un seul script aurait fait buter les trois autres l'un
+  après l'autre ;
 - et **`phasesLnr()` ne répond que pour les compétitions que la LNR couvre** —
   Top 14, Pro D2, barrage —, sur une **liste blanche**. Elle rendait
   auparavant `["finale"]` pour un « Huitième de finale » de Challenge
