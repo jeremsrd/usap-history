@@ -57,6 +57,45 @@ const COUPES_EUROPE = ["Challenge Européen", "H-Cup"];
 
 const DUREE = 80;
 
+/**
+ * Minutes dont une équipe est privée par un carton rouge, en coupe d'Europe.
+ *
+ * **CE N'EST PAS `80 − minute du carton`.** Cette règle-là, celle du
+ * championnat et de CLAUDE.md, suppose un rouge définitif où l'équipe finit à
+ * quatorze. La coupe d'Europe applique le **carton rouge de 20 minutes** : le
+ * joueur sanctionné sort bien pour de bon, mais son poste est repourvu au
+ * bout de la période de sanction. L'équipe ne finit pas à quatorze, elle y
+ * joue vingt minutes.
+ *
+ * Le Dragons-Perpignan du 7 décembre 2025 le démontre, et c'est le seul cas
+ * de la base : Duncan Paia'aua est exclu à la 14ᵉ, Job Poulet entre à la
+ * 35ᵉ, et la feuille totalise 1 179 minutes. La règle du championnat en
+ * attendait 1 134 — quarante-cinq de moins que la réalité, et l'écart a été
+ * pris pour une anomalie de la base pendant tout un audit. Celle-ci en attend
+ * 1 180.
+ *
+ * **La minute qui reste n'est pas rattrapée, et c'est délibéré.** Les minutes
+ * d'Opta ne se recoupent pas au ras de la minute : il compte lui-même 1 179,
+ * et sa feuille laisse une sortie de la 63ᵉ sans entrée en regard.
+ * Reconstituer la privation en appariant les entrées aux sorties suivrait
+ * donc la source dans ses arrondis au lieu de la contrôler. Vingt minutes est
+ * la règle ; l'écart résiduel se signale et se regarde, ce que fait déjà
+ * l'alerte.
+ */
+const PRIVATION_ROUGE = 20;
+
+/**
+ * Minutes qu'une équipe doit totaliser : quinze joueurs sur toute la partie,
+ * moins le temps passé à quatorze. Un rouge tardif prive moins de vingt
+ * minutes, la rencontre s'achevant avant la fin de la sanction.
+ */
+function minutesAttendues(joueurs: EpcrJoueur[], duree: number): number {
+  const privation = joueurs
+    .filter((j) => j.rouge != null)
+    .reduce((s, j) => s + Math.min(duree - j.rouge!, PRIVATION_ROUGE), 0);
+  return 15 * duree - privation;
+}
+
 interface Ligne {
   id: string;
   nom: string;
@@ -226,11 +265,21 @@ async function main() {
       // calcule autrement : il retire les dix minutes d'un carton jaune et
       // arrête au coup de sifflet un joueur temporairement sorti. Un écart ne
       // condamne pas la feuille, il demande un coup d'œil.
+      //
+      // L'attendu tient compte des cartons rouges, et de la période de
+      // sanction de vingt minutes — cf. `minutesAttendues`. Comparer à
+      // 15 × 80 en dur donnait quarante-cinq minutes d'écart apparent sur le
+      // seul match de la base à carton rouge européen.
       const minutes = cote.equipe.joueurs.reduce((s, j) => s + (j.minutes ?? 0), 0);
       const opta = cote.equipe.joueurs.reduce((s, j) => s + (j.minutesOpta ?? 0), 0);
-      if (minutes !== 15 * DUREE) {
+      const attenduMinutes = minutesAttendues(cote.equipe.joueurs, DUREE);
+      if (minutes !== attenduMinutes) {
+        const rouges = cote.equipe.joueurs.filter((j) => j.rouge != null);
+        const mention = rouges.length
+          ? ` — ${rouges.length} carton(s) rouge(s) à la ${rouges.map((j) => `${j.rouge}ᵉ`).join(", ")}`
+          : "";
         alertes.push(
-          `${camp} : ${minutes} minutes reconstituées pour ${15 * DUREE} attendues ` +
+          `${camp} : ${minutes} minutes reconstituées pour ${attenduMinutes} attendues${mention} ` +
             `(Opta en compte ${opta})`,
         );
       }

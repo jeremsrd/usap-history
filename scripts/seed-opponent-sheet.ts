@@ -205,6 +205,66 @@ const CARTONS_HORS_COMPOSITION: Record<string, Array<{ minute: number; nom: stri
   "2016-10-16": [{ minute: 40, nom: "Manuel Edmonds" }],
 };
 
+/**
+ * TEMPS DE JEU QUE LA LNR NE PERMET PAS DE RECONSTITUER, PARCE QU'ELLE
+ * N'INSCRIT PAS LE CARTON QUI L'EXPLIQUE.
+ *
+ * Le script déduit les minutes des seuls changements. Quand un joueur quitte
+ * le terrain sur un carton que la feuille ne mentionne pas, il le croit donc
+ * en jeu jusqu'au coup de sifflet, et l'écrit ainsi — sans qu'aucun contrôle
+ * s'en aperçoive, la somme de l'équipe retombant alors sur 1 200.
+ *
+ * **Barrage Provence-Perpignan du 14 juin 2026.** Sama Malolo, talonneur n°2,
+ * prend un **carton orange à la 33ᵉ** et ne revient pas. La LNR n'enregistre
+ * ni le carton ni sa sortie, et lui donne 80 minutes ; c'est ce que la reprise
+ * du 1er septembre 2026 avait écrit, en effaçant les 33 minutes que la base
+ * portait.
+ *
+ * Ce qu'elle enregistre, en revanche, trahit le carton : à la 34ᵉ, « Ignacio
+ * RUIZ ← Jefferson-Lee JOSEPH », soit **un talonneur qui remplace un ailier**.
+ * Ce n'est pas une substitution ordinaire, c'est la loi sur la première
+ * ligne : un spécialiste entre, et un autre joueur sort pour que l'équipe
+ * reste à quatorze. La LNR n'a retenu que ce second mouvement, et l'a présenté
+ * comme un remplacement normal.
+ *
+ * D'où les deux lignes ci-dessous. Malolo s'arrête à la 33ᵉ. Joseph sort à la
+ * 34ᵉ et **revient à la 53ᵉ**, quand s'achèvent les vingt minutes de
+ * sanction : 34 + 27 = 61 minutes. `subIn` et `subOut` gardent la première
+ * sortie et le retour, comme pour toute sortie temporaire.
+ *
+ * **L'arithmétique atteste l'ensemble** : l'USAP joue à quatorze de la 33ᵉ à
+ * la 53ᵉ, soit vingt minutes, et son total vaut donc 1 200 − 20 = 1 180. Les
+ * deux corrections y mènent au point près, là où la seule correction de
+ * Malolo laisserait 1 153. Le retour de Joseph n'est écrit par aucune source ;
+ * il est confirmé par Jérémy, et c'est la seule minute de ce bloc qui ne se
+ * démontre pas.
+ *
+ * `PRIVATIONS_SUR_CARTON`, juste au-dessus, corrige l'**attendu** auquel ces
+ * lignes sont confrontées : sans elle le contrôle réclamerait 1 200 et
+ * signalerait la correction comme un défaut à chaque passage. Une table
+ * corrige les lignes, l'autre la règle à laquelle on les mesure.
+ */
+const PRIVATIONS_SUR_CARTON: Record<string, Array<{ club: Camp; minutes: number }>> = {
+  // Le carton orange de Sama Malolo à la 33ᵉ, cf. `TEMPS_DE_JEU_CORRIGES`.
+  "2026-06-14": [{ club: "away", minutes: 20 }],
+};
+
+const TEMPS_DE_JEU_CORRIGES: Record<
+  string,
+  Array<{
+    club: Camp;
+    dossard: number;
+    minutes: number;
+    subIn: number | null;
+    subOut: number | null;
+  }>
+> = {
+  "2026-06-14": [
+    { club: "away", dossard: 2, minutes: 33, subIn: null, subOut: 33 },
+    { club: "away", dossard: 14, minutes: 61, subIn: 53, subOut: 34 },
+  ],
+};
+
 /** Ce carton-là est-il un de ceux qu'on sait irrattachables ? */
 function cartonTolere(jour: string, minute: number, joueur: LnrJoueur): boolean {
   const nom = normalize(`${joueur.firstName} ${joueur.lastName}`);
@@ -407,6 +467,7 @@ function calculerTempsDeJeu(
   bilans: Map<string, Bilan>,
   echecs: string[],
   duree: number,
+  jour: string,
 ) {
   const surLeTerrain = new Map<string, number | null>();
   const total = new Map<string, number>();
@@ -456,6 +517,21 @@ function calculerTempsDeJeu(
     const bilan = bilans.get(ligne.id)!;
     // Remplaçant jamais entré : minutes inconnues plutôt que zéro
     bilan.minutes = !ligne.isStarter && bilan.subIn == null ? null : joue;
+  }
+
+  // Les sorties sur carton que la feuille passe sous silence, et qu'aucun
+  // changement ne permet donc de déduire — cf. `TEMPS_DE_JEU_CORRIGES`.
+  for (const c of TEMPS_DE_JEU_CORRIGES[jour] ?? []) {
+    if (c.club !== campAdverse) continue;
+    const ligne = roster.find((l) => l.shirtNumber === c.dossard);
+    if (!ligne) {
+      echecs.push(`temps de jeu corrigé : aucun n°${c.dossard} dans la composition`);
+      continue;
+    }
+    const bilan = bilans.get(ligne.id)!;
+    bilan.minutes = c.minutes;
+    bilan.subIn = c.subIn;
+    bilan.subOut = c.subOut;
   }
 }
 
@@ -799,7 +875,7 @@ async function main(cible: "adverse" | "usap") {
     // Un couperet peut être allé en prolongations : le match dure alors cent
     // minutes et non quatre-vingts (cf. `dureeDuMatch`).
     const duree = dureeDuMatch(feuille, estCouperet(match));
-    calculerTempsDeJeu(roster, feuille, campTraite, bilans, ennuis, duree);
+    calculerTempsDeJeu(roster, feuille, campTraite, bilans, ennuis, duree, jour);
 
     if (ennuis.length > 0) {
       echecs.push(`${etiquette} :\n      ${ennuis.join("\n      ")}`);
@@ -845,7 +921,15 @@ async function main(cible: "adverse" | "usap") {
       (s, [, b]) => s + (b.rouge != null ? duree - b.rouge : 0),
       0,
     );
-    const minutesAttendues = 15 * duree - perduesRouge;
+    // Un carton que la LNR n'inscrit pas prive quand même l'équipe : le
+    // carton orange du championnat, comme le rouge de 20 minutes en coupe
+    // d'Europe, la laisse à quatorze pendant vingt minutes avant que le poste
+    // ne soit repourvu. Sans ce terme, la correction du 14 juin 2026 serait
+    // signalée en anomalie à chaque relance.
+    const perduesCarton = (PRIVATIONS_SUR_CARTON[jour] ?? [])
+      .filter((x) => x.club === campTraite)
+      .reduce((s2, x) => s2 + x.minutes, 0);
+    const minutesAttendues = 15 * duree - perduesRouge - perduesCarton;
     const alerte = minutes !== minutesAttendues ? ` ⚠ ${minutes}/${minutesAttendues} minutes` : "";
 
     // ---- Écart avec la base --------------------------------------------------

@@ -183,7 +183,7 @@ diffère.
 | `… hors composition` sur un auteur | essai collectif, ou composition fausse | soupçonner la base avant la source |
 | `… hors composition` sur un **carton** | la LNR sanctionne un homme qu'elle n'aligne pas | irrattachable : après démonstration, l'inscrire dans `CARTONS_HORS_COMPOSITION` de `seed-opponent-sheet.ts`, qui l'ignore et écrit le reste |
 | `feuille LNR introuvable` | mauvais segment de phase | `phasesLnr()` ; vérifier le nom du segment sur le calendrier |
-| minutes ≠ 1 200 | carton rouge, ou retour non enregistré | un rouge abaisse le total de `80 − minute` ; sinon signaler, ne pas inventer |
+| minutes ≠ 1 200 | carton rouge, ou retour non enregistré | en championnat, un rouge abaisse le total de `80 − minute` ; **en coupe d'Europe, de 20 minutes au plus** (cf. ci-dessus) ; sinon signaler, ne pas inventer |
 | points des joueurs < score | essai de pénalité ou essai collectif | légitime, ces essais n'ont pas d'auteur |
 
 ### Quatre pièges qui coûtent du temps
@@ -293,8 +293,31 @@ Ne jamais remplir seulement le côté USAP :
     entrée et la première sortie, et `notes` explique le retour. La somme des
     minutes d'une équipe doit alors toujours retomber sur 1 200 (15 × 80).
   - **Un carton jaune ne se déduit pas** des minutes jouées ; un carton rouge,
-    si : le match du joueur s'arrête à la minute du carton. Une équipe qui
-    finit à quatorze totalise donc `1200 − (80 − minute du rouge)`.
+    si : le match du joueur s'arrête à la minute du carton. En **championnat**,
+    où le rouge est définitif, l'équipe finit à quatorze et totalise donc
+    `1200 − (80 − minute du rouge)`.
+  - **Mais en coupe d'Europe, le rouge ne coûte que vingt minutes.** Le
+    **carton rouge de 20 minutes** y sort le joueur pour de bon et repourvoit
+    son poste au terme de la sanction : l'équipe ne finit pas à quatorze, elle
+    y joue vingt minutes. **C'est le carton orange du championnat de France**,
+    sous un autre nom — le joueur ne revient pas, son poste si, et le
+    suppléant a le droit d'entrer vingt minutes après le carton. Le total attendu est `1200 − min(80 − minute, 20)`,
+    et `minutesAttendues()` de `seed-cup-sheet.ts` porte la règle et sa
+    démonstration.
+
+    **L'oubli de cette distinction a coûté un faux positif tenace.** Le
+    Dragons-Perpignan du 7 décembre 2025 — Duncan Paia'aua exclu à la 14ᵉ, Job
+    Poulet entrant à la 35ᵉ — totalise 1 179 minutes. La règle du championnat
+    en attendait 1 134, et l'écart de quarante-cinq minutes a figuré dans les
+    anomalies de la base jusqu'à ce qu'on aille lire la feuille : il n'y avait
+    rien à corriger, la base disait déjà exactement ce que dit l'EPCR, qui
+    compte lui-même 1 179. **Devant un écart de minutes sur un match européen,
+    vérifier la règle avant de soupçonner la donnée.**
+
+    Une minute d'écart subsiste sur ce match, et elle n'est pas rattrapée :
+    les minutes d'Opta ne se recoupent pas au ras de la minute — sa feuille
+    laisse une sortie de la 63ᵉ sans entrée en regard. `seed-cup-sheet.ts` la
+    signale et ne la corrige pas.
   - **Un couperet peut aller en prolongations**, et le match dure alors
     **100 minutes**. La somme des minutes d'une équipe vaut 1 500 et non
     1 200 : c'est le cas de la demi-finale du 17 mai 2015 contre Agen, seule
@@ -681,6 +704,7 @@ doublons.
 | `sync-effectif.ts` | met l'effectif professionnel en accord avec la LNR : crée les fiches manquantes, lève `isActive` sur l'effectif et l'abaisse sur les partants ; refuse d'écrire tant qu'un doublon ou un nom douteux subsiste |
 | `fix-null-penalty-tries.ts` | met à 0 les compteurs `penaltyTries` restés `null`, mais seulement là où les points retombent déjà sur le score |
 | `fix-barrages-access-match.ts` | les deux trous des barrages d'accession — arbitre du 12/06/2022, mi-temps du 03/06/2023 — et la transformation que la chronologie de ce dernier avait perdue |
+| `fix-carton-rouge-dragons-2025.ts` | la minute du carton rouge de Paia'aua, 35ᵉ pour 14ᵉ, dans la chronologie du 7 décembre 2025 ; porte les trois preuves concordantes |
 
 `fix-duplicate-players.ts` existe aussi mais apparie les prénoms par préfixe et
 par inclusion : trop large pour être lancé sans revue préalable.
@@ -1090,12 +1114,10 @@ Par ordre de valeur.
    buteur** le 14 juin 2026, rendue par la feuille à McIntyre plutôt qu'à
    Allan.
 
-   Sept anomalies subsistent sur les quatre saisons, chacune pour une raison
+   Six anomalies subsistent sur les quatre saisons, chacune pour une raison
    distincte, et aucune n'est corrigeable sans inventer :
    - **2026-02-22 Pau, 1 248 minutes** — l'exception déjà nommée plus bas :
      la feuille se contredit sur les deux camps, le script refuse d'écrire ;
-   - **2025-12-07 Dragons, 1 179 pour 1 134** — match de Challenge européen,
-     hors périmètre de ce script ; il relève de `seed-cup-sheet.ts` ;
    - **2026-06-06 Bayonne, 5 points de joueur pour 7 au score** — la LNR ne
      nomme aucun buteur pour la transformation de la 49ᵉ. La base l'attribuait
      à Tristan Tedder ; la reprise a retiré cette attribution et laissé les
@@ -1110,6 +1132,42 @@ Par ordre de valeur.
    - **2022-11-26 UBB, 1 220 minutes** — la feuille reconstitue trois essais
      quand le compteur du match en porte deux. Le script échoue et n'écrit
      rien, ce qui est le comportement voulu.
+
+   **Une septième a été retirée de cette liste** : le Dragons-Perpignan du
+   7 décembre 2025, à 1 179 minutes, n'en était pas une. Son écart venait de
+   la règle du carton rouge appliquée à une compétition qui ne la suit pas —
+   cf. le rouge de 20 minutes, plus haut. `seed-cup-sheet.ts` ne trouve rien
+   à y modifier : la base dit déjà exactement ce que dit l'EPCR.
+
+   Sa chronologie portait en outre **une contradiction interne, désormais
+   tranchée** : elle plaçait le carton rouge de Paia'aua à la 35ᵉ, quand la
+   composition, l'EPCR et l'arithmétique des minutes le placent à la 14ᵉ — la
+   35ᵉ étant la minute d'entrée de son suppléant. `fix-carton-rouge-dragons-2025.ts`
+   l'a corrigée, et `seed-chronologie.ts` ne peut pas la réécrire, `phasesLnr()`
+   ne répondant pas pour une rencontre de coupe d'Europe.
+
+   **Et le carton orange a fait tomber une anomalie que personne ne voyait.**
+   Au barrage du 14 juin 2026, Sama Malolo prend un orange à la 33ᵉ et ne
+   revient pas ; la LNR n'inscrit ni le carton ni sa sortie, et lui donne
+   80 minutes — que la reprise du 1er septembre avait écrites en effaçant les
+   33 minutes de la base. Rien ne pouvait le signaler : avec 80 minutes, le
+   total de l'équipe retombait sur 1 200. Ce que la feuille enregistre trahit
+   pourtant le carton — « Ignacio RUIZ ← Jefferson-Lee JOSEPH » à la 34ᵉ, soit
+   un **talonneur qui remplace un ailier**, ce qui n'est pas une substitution
+   mais la loi sur la première ligne. Malolo s'arrête à la 33ᵉ, Joseph sort à
+   la 34ᵉ pour maintenir l'équipe à quatorze et revient à la 53ᵉ, au terme de
+   la sanction : le total vaut 1 180, au point près. Les deux tables
+   `TEMPS_DE_JEU_CORRIGES` et `PRIVATIONS_SUR_CARTON` de
+   `seed-opponent-sheet.ts` portent la correction et sa démonstration — la
+   première corrige les lignes, la seconde l'attendu auquel on les mesure,
+   faute de quoi la relance suivante signalerait la correction comme un
+   défaut.
+
+   **Un total qui retombe n'est donc pas une preuve.** Il ne l'est que si la
+   règle à laquelle on le compare est la bonne, et une sanction que la source
+   passe sous silence la fausse dans les deux sens : ici elle a masqué
+   47 minutes fictives, ailleurs — au Dragons-Perpignan — elle a fait passer
+   des données justes pour une anomalie de 45 minutes.
 
    Deux autres matchs ont échoué sans laisser d'anomalie de minutes :
    **2025-09-13 Toulouse** (un changement de la 51ᵉ non apparié, et une
