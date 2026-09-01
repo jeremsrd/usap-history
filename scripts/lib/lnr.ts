@@ -559,7 +559,66 @@ export interface LnrCompositions {
  * Sépare « Giorgi AKHALADZE » en prénom et nom : la LNR met le nom de famille
  * en capitales, ce qui reste vrai des noms composés (« Dany PRISO MOUANGUE »).
  */
+/**
+ * NOMS QUE LA LNR ÉCRIT À L'ENVERS, ET QU'AUCUNE RÈGLE NE PEUT REDRESSER.
+ *
+ * `separerNom` s'appuie sur la seule convention que la LNR respecte — le nom
+ * de famille en capitales — et elle la respecte ici aussi : elle écrit
+ * « Aramburu Federico MARTIN ». Simplement, **son enregistrement est faux** :
+ * le trois-quarts argentin de l'USAP est Federico Martín **Aramburu**, et
+ * « Martín » est son second prénom. La source met donc les capitales sur le
+ * mauvais mot, et le découpage suit.
+ *
+ * Rien ne permet de le deviner : « Martin » est un patronyme parfaitement
+ * ordinaire, et la base en porte huit. Laisser faire créait une fiche
+ * « Aramburu Federico | Martin » — **une identité fausse**, le pire cas selon
+ * la règle du projet : un doublon se repère et se fusionne, une identité
+ * fausse ne se voit pas, et elle aurait été réutilisée à chaque feuille où la
+ * LNR répète l'inversion.
+ *
+ * La table se corrige donc **au découpage**, pour tous les appelants d'un
+ * coup, et non dans un script de saison. Elle est vérifiée à la main : y
+ * ajouter une ligne, c'est affirmer que la source se trompe sur un nom, ce
+ * qui ne se fait pas sur une impression.
+ *
+ * Identité confirmée par Jérémy, qui situe aussi son départ en 2008 — seule
+ * la saison 2007-2008 est donc concernée.
+ */
+const NOMS_MAL_DECOUPES: Record<string, { firstName: string; lastName: string }> = {
+  "aramburu federico martin": { firstName: "Federico Martín", lastName: "Aramburu" },
+};
+
+/** Clé de comparaison : minuscules, sans accents, espaces normalisés. */
+function cleDeNom(complet: string): string {
+  return complet
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .toLowerCase()
+    .trim()
+    .replace(/\s+/g, " ");
+}
+
+/**
+ * Redresse un nom que la LNR donne à l'envers, quel que soit le chemin par
+ * lequel il arrive.
+ *
+ * **Il y en a deux, et c'est le piège.** Les remplaçants viennent des listes
+ * du bas, en un seul morceau, et passent par `separerNom`. Les titulaires,
+ * eux, viennent du schéma du terrain, où la LNR fournit `player-pitch__first-name`
+ * et `player-pitch__last-name` **déjà séparés** — `separerNom` ne les voit
+ * jamais. Corriger le seul découpage laissait donc Aramburu juste quand il
+ * était sur le banc et faux quand il était titulaire, sur la même saison.
+ */
+function redresserNom(nom: { firstName: string; lastName: string }): {
+  firstName: string;
+  lastName: string;
+} {
+  return NOMS_MAL_DECOUPES[cleDeNom(`${nom.firstName} ${nom.lastName}`)] ?? nom;
+}
+
 function separerNom(complet: string): { firstName: string; lastName: string } {
+  const redresse = NOMS_MAL_DECOUPES[cleDeNom(complet)];
+  if (redresse) return redresse;
   const mots = complet.trim().split(/\s+/);
   let debut = mots.length;
   while (debut > 0) {
@@ -667,8 +726,12 @@ export async function lireCompositions(url: string): Promise<LnrCompositions> {
     const titulaires = parClub.get(club)!.filter((j) => j.isStarter).length;
     parClub.get(club)!.push({
       numero,
-      firstName: capitaliser(firstName ?? ""),
-      lastName: capitaliser(lastName),
+      // Le schéma du terrain donne les deux champs déjà séparés : ils
+      // échappent à `separerNom`, d'où le redressement explicite ici.
+      ...redresserNom({
+        firstName: capitaliser(firstName ?? ""),
+        lastName: capitaliser(lastName),
+      }),
       url: href,
       isCaptain: classes.includes("player-pitch--captain"),
       isStarter: titulaires < 15,

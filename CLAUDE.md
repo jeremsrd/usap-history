@@ -568,6 +568,21 @@ Ce qu'il faut savoir avant d'écrire du code :
 - un changement peut porter **deux noms faux à la fois** ; la table
   `CHANGEMENTS_CORRIGES` de `seed-opponent-sheet.ts` est faite pour ça, et ne
   s'écrit qu'avec la démonstration sous les yeux ;
+- **elle écrit parfois un nom à l'envers**, capitales comprises : « Aramburu
+  Federico MARTIN » pour Federico Martín **Aramburu**, dont « Martín » n'est
+  que le second prénom. La convention des capitales est respectée, c'est
+  l'enregistrement qui est faux, et rien ne permet de le deviner — « Martin »
+  est un patronyme ordinaire, la base en porte huit. `NOMS_MAL_DECOUPES` de
+  `lib/lnr.ts` redresse ces cas au découpage, et la table se vérifie à la
+  main : y ajouter une ligne, c'est affirmer que la source se trompe.
+
+  **Et il faut la brancher sur les deux chemins d'extraction.** Les
+  remplaçants viennent des listes du bas, en un seul morceau, et passent par
+  `separerNom` ; les titulaires viennent du schéma du terrain, où la LNR donne
+  `player-pitch__first-name` et `player-pitch__last-name` **déjà séparés** —
+  `separerNom` ne les voit jamais. Ne corriger que le découpage laissait
+  Aramburu juste sur le banc le 3 novembre 2007 et faux comme titulaire le
+  24, dans la même saison. `redresserNom()` couvre les deux ;
 - et **`phasesLnr()` ne répond que pour les compétitions que la LNR couvre** —
   Top 14, Pro D2, barrage —, sur une **liste blanche**. Elle rendait
   auparavant `["finale"]` pour un « Huitième de finale » de Challenge
