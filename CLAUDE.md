@@ -1381,8 +1381,16 @@ d'écrire les agrégats s'ils s'en écartent.
   des coupes. **Sept matchs joués n'ont pas d'arbitre** — deux en 2010-2011,
   cinq en 2008-2009 —, la LNR n'en publiant pas les officiels ; c'est une
   lacune qui s'aggrave en remontant. Peu de photos et de biographies de joueurs.
-- **L'audit des compositions adverses ne signale plus rien** : 489 matchs
-  examinés, 489 conformes.
+- **L'audit des compositions adverses ne signale plus rien** : 488 matchs
+  examinés, 488 conformes, au 1er septembre 2026.
+
+  **Le nombre examiné bouge, celui des anomalies non.** Sur les 546
+  rencontres en base, l'audit écarte les 22 de coupe d'Europe, les 26 de
+  2026-2027 que la LNR n'a pas encore garnies, les 9 journées de 2022-2023
+  dont elle ne publie pas les compositions et l'access match de 2021-2022 :
+  restent 488. Le premier chiffre suit donc la base et se périme tout seul —
+  il valait 489 fin août 2026 —, le second est le seul à porter un signal. Il
+  est à zéro, et tout écart nouveau se voit.
 
   **Il n'en voyait que 150 jusqu'au 30 août 2026, et il ne le disait pas.**
   Deux angles morts, dans le script dont c'est le seul métier : il cherchait
@@ -1401,12 +1409,13 @@ d'écrire les agrégats s'ils s'en écartent.
   dossards catalans permutés sur la même feuille. Manquants, joueurs en trop, dossards faux,
   brassards, écritures — toutes catégories soldées.
 
-  Restent **60 variantes d'affichage**, sur 16 paires de noms : la base porte
-  le nom d'usage, la feuille l'état civil — « Tom » pour Thomas Staniforth,
-  « Cobus » pour Jacobus Meyer Reinach, « Nacho » pour Juan Ignacio Brex —, ou
-  la LNR ampute une apostrophe (« Marvin O Connor »). Elles ne sont plus
-  comptées en anomalie mais **tues explicitement** : leur total figure au
-  récapitulatif, et `--variantes` les affiche une à une.
+  Restent **59 variantes d'affichage** : la base porte le nom d'usage, la
+  feuille l'état civil — « Tom » pour Thomas Staniforth, « Cobus » pour
+  Jacobus Meyer Reinach, « Nacho » pour Juan Ignacio Brex —, ou la LNR ampute
+  une apostrophe (« Marvin O Connor »). Elles ne sont plus comptées en
+  anomalie mais **tues explicitement** : leur total figure au récapitulatif,
+  et `--variantes` les affiche une à une, avec les paires de noms qu'elles
+  mettent en regard — leur nombre ne se recopie pas ici, il se lit là.
 
   **Pourquoi ce détour plutôt que d'assumer un compteur qui monte.** La fusion
   des dix doublons du 30 août 2026 avait fait passer les ÉCRITURE de 21 à 31,
