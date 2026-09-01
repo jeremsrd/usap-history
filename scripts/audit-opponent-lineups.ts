@@ -53,7 +53,7 @@
  * partaient en « hors périmètre », comme si elles relevaient de l'EPCR.
  */
 
-import { PrismaClient } from "@prisma/client";
+import { Prisma, PrismaClient } from "@prisma/client";
 import { estAjoutHorsFeuille } from "./lib/feuilles";
 import {
   chercherFeuille,
@@ -157,20 +157,87 @@ interface Bilan {
   variantes: string[];
 }
 
+/**
+ * Codes Prisma qui disent « la connexion a lâché », non « la requête est
+ * fausse ». Rejouer les seconds masquerait un bug ; rejouer les premiers est
+ * la seule façon de survivre à une moisson longue.
+ */
+const CONNEXION_PERDUE = new Set(["P1001", "P1002", "P1008", "P1017", "P2024"]);
+
+/**
+ * Cette erreur dit-elle « la connexion a lâché » ? Rend le code à afficher, ou
+ * `null` s'il faut la laisser remonter.
+ *
+ * **Deux familles, et la seconde a coûté une exécution.** Les erreurs de
+ * requête portent un `code` — `P1017` quand le serveur ferme la connexion,
+ * `P2024` quand le pool expire. Mais quand le serveur est carrément
+ * injoignable, Prisma lève une `PrismaClientInitializationError`, qui **ne
+ * porte pas de `code`** : son `errorCode` vaut `undefined`. Le test sur le
+ * seul `code` la laissait donc passer, et l'audit du 1er septembre 2026 est
+ * mort dessus après avoir pourtant réussi sa première reprise sur `P2024`.
+ * On la reconnaît au type, seul moyen sûr.
+ */
+function connexionPerdue(erreur: unknown): string | null {
+  if (erreur instanceof Prisma.PrismaClientInitializationError) {
+    return erreur.errorCode ?? "serveur injoignable";
+  }
+  const code = (erreur as { code?: unknown }).code;
+  return typeof code === "string" && CONNEXION_PERDUE.has(code) ? code : null;
+}
+
+/**
+ * Rejoue une requête que le serveur a fait échouer en fermant la connexion.
+ *
+ * **L'audit tient une connexion Prisma pendant toute sa moisson** : il
+ * télécharge 488 feuilles une à une, et entre deux requêtes la connexion reste
+ * inutilisée assez longtemps pour que Supabase la coupe. Elle rend alors
+ * `P1017`, et le script mourait au milieu — c'est arrivé le 1er septembre
+ * 2026, après une vingtaine de minutes de travail perdu, et sans qu'aucune
+ * ligne de résultat ait été écrite.
+ *
+ * Prisma rouvre de lui-même à la requête suivante : il suffit donc de rejouer
+ * celle qui a échoué, après avoir laissé au serveur le temps de reprendre.
+ * Trois tentatives, l'attente doublant à chaque fois.
+ *
+ * **La reprise s'annonce.** Une connexion qui lâche à répétition dit quelque
+ * chose de la base ou du réseau, et un script qui s'en remet en silence le
+ * cacherait.
+ */
+async function avecReconnexion<T>(quoi: string, requete: () => Promise<T>): Promise<T> {
+  const TENTATIVES = 3;
+  for (let essai = 1; ; essai++) {
+    try {
+      return await requete();
+    } catch (erreur) {
+      const code = connexionPerdue(erreur);
+      if (code === null || essai >= TENTATIVES) throw erreur;
+      const attente = 1000 * 2 ** (essai - 1);
+      console.log(
+        `  ↻ connexion perdue (${code}) sur ${quoi} — reprise ${essai}/${TENTATIVES - 1} ` +
+          `dans ${attente / 1000}s`,
+      );
+      await prisma.$disconnect().catch(() => undefined);
+      await new Promise((resoudre) => setTimeout(resoudre, attente));
+    }
+  }
+}
+
 async function auditerMatch(
   matchId: string,
   officielle: LnrTitulaire[],
   jour: string,
 ): Promise<Bilan> {
-  const enBase = await prisma.matchPlayer.findMany({
-    where: { matchId, isOpponent: true },
-    select: {
-      shirtNumber: true,
-      isStarter: true,
-      isCaptain: true,
-      player: { select: { firstName: true, lastName: true } },
-    },
-  });
+  const enBase = await avecReconnexion(`la composition du ${jour}`, () =>
+    prisma.matchPlayer.findMany({
+      where: { matchId, isOpponent: true },
+      select: {
+        shirtNumber: true,
+        isStarter: true,
+        isCaptain: true,
+        player: { select: { firstName: true, lastName: true } },
+      },
+    }),
+  );
 
   const anomalies: Anomalie[] = [];
   const variantes: string[] = [];
@@ -283,15 +350,17 @@ async function main() {
   // rangeait en « feuille non lue » : vingt-six avertissements par exécution,
   // qui n'annonçaient rien et noyaient les vrais. Le compte des écartées est
   // rendu au récapitulatif, une omission tue valant mieux dite.
-  const matchs = await prisma.match.findMany({
-    where: { ...MATCH_JOUE, ...saison },
-    orderBy: { date: "asc" },
-    include: {
-      season: { select: { label: true, startYear: true, division: true } },
-      opponent: { select: { name: true, shortName: true } },
-      competition: { select: { shortName: true } },
-    },
-  });
+  const matchs = await avecReconnexion("la liste des matchs", () =>
+    prisma.match.findMany({
+      where: { ...MATCH_JOUE, ...saison },
+      orderBy: { date: "asc" },
+      include: {
+        season: { select: { label: true, startYear: true, division: true } },
+        opponent: { select: { name: true, shortName: true } },
+        competition: { select: { shortName: true } },
+      },
+    }),
+  );
 
   let examines = 0;
   let sains = 0;
@@ -383,7 +452,11 @@ async function main() {
   if (horsPerimetre.length > 0) {
     console.log(`\n${horsPerimetre.length} match(s) hors périmètre LNR (coupes d'Europe).`);
   }
-  const aVenir = await prisma.match.count({ where: { ...MATCH_A_VENIR, ...saison } });
+  // Ce compte-là est le plus exposé de tous : il tombe après la moisson
+  // entière, quand la connexion est restée inutilisée le plus longtemps.
+  const aVenir = await avecReconnexion("le compte des rencontres à venir", () =>
+    prisma.match.count({ where: { ...MATCH_A_VENIR, ...saison } }),
+  );
   if (aVenir > 0) {
     console.log(`${aVenir} rencontre(s) à venir, sans composition à auditer.`);
   }

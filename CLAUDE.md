@@ -1653,6 +1653,20 @@ scripts touchés. Deux erreurs préexistantes subsistent dans
 lancé écrit directement sur les données du site. Toujours passer par `--dry`
 d'abord quand le script modifie de l'existant.
 
+⚠️ **La base est distante, et elle coupe les connexions oisives.** Un script
+qui tient une connexion Prisma pendant une longue moisson HTTP la voit tomber
+en cours de route : Prisma rend alors `P1017`, « Server has closed the
+connection », et tout le travail est perdu. C'est arrivé à
+`audit-opponent-lineups.ts` le 1er septembre 2026, après vingt minutes et
+sans qu'une seule ligne de résultat ait été écrite — il télécharge 488
+feuilles entre ses requêtes.
+
+Il porte depuis `avecReconnexion()`, qui rejoue la requête après une attente
+croissante et **annonce la reprise** par une ligne `↻` — une connexion qui
+lâche à répétition dit quelque chose du réseau, un script qui s'en remet en
+silence le cacherait. Tout script long qui interroge la base entre deux
+appels réseau est exposé de la même façon ; le remède est là, à recopier.
+
 ⚠️ **`prisma migrate dev` VEUT RÉINITIALISER CETTE BASE. Ne pas le lancer.**
 Le dossier `prisma/migrations/` ne décrit pas l'état réel : des colonnes y
 manquent — les `slug` de plusieurs tables, des index de `season_coaches` —,
