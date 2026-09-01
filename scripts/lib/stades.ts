@@ -39,6 +39,13 @@ import type { PrismaClient } from "@prisma/client";
  * ni la LNR ni l'EPCR ne donnent le stade d'une rencontre.
  */
 export const TERRAINS_PARTICULIERS: Record<string, string | null> = {
+  // Demi-finale du Top 14 2008, Clermont-Perpignan du 21 juin 2008. Jouée au
+  // **stade Vélodrome de Marseille**, terrain neutre, quand la feuille de la
+  // LNR désigne Clermont recevant — la déduction habituelle donnerait donc le
+  // Marcel-Michelin. Source : Wikipédia, qui nomme le stade dans son tableau
+  // des demi-finales, avec la date, le score et l'arbitre qui concordent tous
+  // trois avec la feuille officielle.
+  "2008-06-21": "Stade Vélodrome",
   // Finale de Pro D2 2018, Perpignan-Grenoble. Source : Jérémy, présent au
   // stade. La feuille de la LNR désigne un recevant et ne nomme aucun lieu.
   "2018-05-06": "Stade Ernest-Wallon",

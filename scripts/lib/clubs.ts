@@ -41,6 +41,10 @@ export const CLUBS_LNR: Record<string, string> = {
   // connaît plus que ce nom court : leurs pages de club ont disparu avec eux.
   albi: "Albi",
   bourgoin: "Bourgoin",
+  // Croisé en 2007-2008 seulement : le FC Auch Gers, monté cette saison-là et
+  // redescendu aussitôt, a disparu du Top 14 et de la LNR avec lui. Même cas
+  // qu'Albi et Bourgoin — il ne lui reste que ce nom court.
+  auch: "Auch",
   // Croisé en 2015-2016, et pas depuis. Même cas que les deux précédents : la
   // LNR ne lui connaît plus que ce nom court.
   tarbes: "Tarbes",

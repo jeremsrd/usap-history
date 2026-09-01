@@ -689,6 +689,7 @@ doublons.
 | `close-season-2025-2026.ts` | modèle de clôture de saison, avec garde-fou sur le classement officiel |
 | `seed-opponent-sheet.ts` | **le script du chantier adverse** : reprend une saison entière depuis la LNR — réalisations, cartons et temps de jeu reconstitués à partir des changements. Prend la saison en argument (`2023-2024`), `--dry` pour simuler, `--detail` pour le relevé des écarts avec la base, `--match=AAAA-MM-JJ` pour n'en reprendre qu'un, `--usap` pour traiter **aussi le camp catalan** — il passe alors deux fois, l'adverse puis l'USAP |
 | `seed-lineup.ts` | crée les **deux compositions** d'un match depuis la LNR quand il n'en a aucune — dossards, titulaires, capitaine, poste déduit du numéro. Premier temps de la reprise d'une rencontre ancienne ; `--dry`, `--force` pour réécrire |
+| `seed-season-2007-2008.ts` | crée les 27 matchs d'une saison de Top 14 **avec demi-finale** — quatrième, éliminée au Vélodrome. **Le modèle le plus récent.** Porte trois particularités : `FEUILLES_HORS_CALENDRIER` pour deux journées amputées, `FEUILLES_SANS_FAITS` pour une feuille muette, et un garde-fou Wikipédia qui sépare BO et BD |
 | `seed-season-2008-2009.ts` | crée les 28 matchs de la saison du titre 2009 — **le modèle le plus récent**, et le seul dont le garde-fou vienne de Wikipédia, la LNR ne publiant aucun classement pour cette saison |
 | `seed-season-2009-2010.ts` | crée les 28 matchs de la saison de la finale perdue de 2010 : Top 14 **avec phase finale**, classement à corriger des barrages, terrains neutres, et réalisations complétées |
 | `seed-season-2010-2011.ts` | crée les 26 matchs d'une saison de Top 14 sans phase finale — neuvième |
@@ -944,7 +945,12 @@ chronologie avant de l'écrire.
 entré en jeu », et non « on ne sait pas » — les remplaçants non utilisés sont
 les seuls concernés. Sur `Match.scoreUsap` et `result`, « pas encore joué »,
 jamais « zéro » : toute requête qui compte ou classe doit filtrer sur
-`MATCH_JOUE` (`src/lib/matchs.ts`).
+`MATCH_JOUE` (`src/lib/matchs.ts`). Sur les **compteurs de réalisations** —
+`triesUsap` et les siens —, « la source ne le dit pas », et c'est le cas de
+cinq matchs : les quatre de Challenge européen de 2022-2023, dont la source a
+disparu, et l'Albi-Perpignan du 3 novembre 2007, dont la feuille LNR ne porte
+aucun fait. `fix-bonus-points` les reconnaît et laisse leur bonus offensif en
+l'état.
 
 **2026-2027 n'est qu'un calendrier** : ses 26 journées ont leur date, leur
 adversaire et leur terrain, sans score. Seules les premières ont un horaire —
@@ -1189,8 +1195,10 @@ Par ordre de valeur.
    saisons restent conformes à leur classement officiel — 43 points en
    2022-2023, 58 en 2023-2024, 44 en 2024-2025, 29 en 2025-2026.
 
-2. **Poursuivre la phase 4** en remontant. **De 2008-2009 à 2020-2021, treize
-   saisons sont faites**, toutes conformes à leur classement de référence :
+2. **Poursuivre la phase 4** en remontant. **De 2007-2008 à 2020-2021,
+   quatorze saisons sont faites**, toutes conformes à leur classement de
+   référence : 79 points et la quatrième place en 2007-2008, éliminée en
+   demi-finale par Clermont au Vélodrome, puis
    107 points et le titre de Pro D2 en 2020-2021, 76 points et la deuxième
    place en 2019-2020, arrêtée à la 23ᵉ journée par le Covid, 12 points et la
    dernière place de Top 14 en 2018-2019, reléguée directement, 97 points et
@@ -1677,6 +1685,15 @@ croissante et **annonce la reprise** par une ligne `↻` — une connexion qui
 lâche à répétition dit quelque chose du réseau, un script qui s'en remet en
 silence le cacherait. Tout script long qui interroge la base entre deux
 appels réseau est exposé de la même façon ; le remède est là, à recopier.
+
+⚠️ **LA LNR PLAFONNE LE DÉBIT, et `lirePage` attend entre ses tentatives.**
+Elle réessayait trois fois **sans aucune attente** — trois requêtes de plus
+dans le même instant, ajoutées à celles qui venaient de déclencher la
+limitation, et les trois tentatives épuisées en quelques millisecondes. Une
+reprise de 2007-2008 est morte ainsi à la dix-huitième journée, emportant les
+dix-sept précédentes. Elle attend désormais 2, 4 puis 8 secondes et annonce
+la reprise par une ligne `↻`. Un statut HTTP refusé y compte comme une panne :
+c'est sous cette forme que le plafonnement se manifeste.
 
 ⚠️ **L'AUDIT COMPLET SE LANCE SAISON PAR SAISON, JAMAIS D'UN BLOC.**
 

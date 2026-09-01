@@ -118,16 +118,51 @@ export interface LnrFeuille {
 // RÉCUPÉRATION
 // =============================================================================
 
+/**
+ * Lit une page de la LNR, en réessayant **avec une attente croissante**.
+ *
+ * LA LNR PLAFONNE LE DÉBIT. Un script qui enchaîne les requêtes — une reprise
+ * de saison en fait une trentaine, l'audit complet cinq cents — se fait couper
+ * au bout d'un moment, et la coupure disparaît dès qu'on cesse d'insister :
+ * le 1er septembre 2026, trois audits complets d'affilée ont rendu 175, 54
+ * puis 268 matchs examinés quand le réseau était sain avant et après chacun.
+ *
+ * **La version précédente réessayait trois fois sans attendre**, ce qui était
+ * le contraire du remède : trois requêtes de plus dans le même instant,
+ * ajoutées à celles qui venaient de déclencher la limitation, et les trois
+ * tentatives épuisées en quelques millisecondes. Une reprise de 2007-2008 est
+ * morte ainsi à la dix-huitième journée, emportant les dix-sept précédentes.
+ *
+ * On attend donc 2, puis 4, puis 8 secondes, et **on annonce la reprise** :
+ * une source qui lâche à répétition dit quelque chose, un script qui s'en
+ * remet en silence le cacherait. C'est la règle déjà appliquée à
+ * `avecReconnexion()` de `audit-opponent-lineups.ts`, pour la base.
+ *
+ * Un statut HTTP refusé est traité comme une panne — c'est sous cette forme
+ * que le plafonnement se manifeste —, et il est rapporté dans le message
+ * final, l'ancienne version le passant sous silence.
+ */
 async function lirePage(url: string): Promise<string> {
-  for (let essai = 1; essai <= 3; essai++) {
+  const TENTATIVES = 4;
+  let dernier = "cause inconnue";
+  for (let essai = 1; essai <= TENTATIVES; essai++) {
     try {
       const reponse = await fetch(url, { signal: AbortSignal.timeout(25_000) });
       if (reponse.ok) return await reponse.text();
-    } catch {
-      // on retente
+      dernier = `HTTP ${reponse.status}`;
+    } catch (erreur) {
+      const nom = (erreur as Error).name;
+      dernier = nom === "TimeoutError" ? "délai dépassé" : (erreur as Error).message;
+    }
+    if (essai < TENTATIVES) {
+      const attente = 2000 * 2 ** (essai - 1);
+      console.log(
+        `  ↻ LNR ${dernier} — reprise ${essai}/${TENTATIVES - 1} dans ${attente / 1000}s`,
+      );
+      await new Promise((resoudre) => setTimeout(resoudre, attente));
     }
   }
-  throw new Error(`LNR injoignable : ${url}`);
+  throw new Error(`LNR injoignable (${dernier}) : ${url}`);
 }
 
 /**
