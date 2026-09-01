@@ -791,12 +791,13 @@ toujours leurs trois logos. C'est la même ruse que pour Agen, dont l'écusson
 vient du calendrier 2018-2019 : quand un club manque, chercher la saison où il
 jouait plutôt que sa page d'aujourd'hui.
 
-**Mais la ruse a une limite, et trois clubs la montrent.** Albi, Bourgoin et
-Tarbes ont bien chacun une URL d'écusson sur le calendrier de leur saison — et
-le CDN ne rend au bout qu'un **bouclier gris** de 33 par 45 pixels, le même
-pour les trois, quand les autres clubs de la page rendent leur vrai PNG. Il en
-va de même sur tous les calendriers archivés depuis 2012 : la LNR ne garde
-qu'une image par club, et pour ces trois-là c'est le bouclier. `fetch-club-logos.ts` le reconnaît à son empreinte
+**Mais la ruse a une limite, et quatre clubs la montrent.** Albi, Bourgoin,
+Tarbes et Auch ont bien chacun une URL d'écusson sur le calendrier de leur
+saison — et le CDN ne rend au bout qu'un **bouclier gris** de 33 par 45
+pixels, le même pour les quatre, quand les autres clubs de la page rendent
+leur vrai PNG. Il en va de même sur tous les calendriers archivés depuis 2012,
+et sur ceux de la Pro D2 : la LNR ne garde qu'une image par club, et pour
+ces quatre-là c'est le bouclier. `fetch-club-logos.ts` le reconnaît à son empreinte
 (`PLACEHOLDER_LNR`) et refuse de l'enregistrer — sans quoi il se serait écrit
 sous `albi.png` et `bourgoin.png`, en WebP malgré l'extension.
 
@@ -815,9 +816,26 @@ thèmes.
 écusson autrement que sur fond blanc opaque, et le blanc fait partie du
 dessin — l'ours est blanc —, on ne peut donc pas le détourer. Entre l'écusson
 complet de la FFR et le rond STADO du club, c'est le rond qui a été retenu :
-plus compact, donc un carré blanc plus discret en thème sombre. C'est le seul
-écusson de la base sans transparence depuis que celui de Clermont a été repris
-à la source.
+plus compact, donc un carré blanc plus discret en thème sombre.
+
+**Auch est le quatrième, et le seul dont le club n'existe plus.** C'est ce qui
+le distingue des trois autres, qui vivent toujours et publient leur marque :
+le **FC Auch Gers a été liquidé en 2017**, et son site `fcag-rugby.com` est
+aujourd'hui un domaine parqué et mis en vente. Le RC Auch Rugby lui a succédé
+et a bien un écusson en ligne, mais c'est un **autre club**, fondé en 2017 —
+l'afficher sur une rencontre de 2007-2008 serait le même anachronisme que
+celui qu'`OpponentVenue` évite sur les stades.
+
+Son écusson vient donc de **Wikipédia**, seule entrée de la table qui ne
+vienne pas du club lui-même, et avec trois réserves : **80 par 80 pixels**
+quand le plus grand affichage du site en fait 48 ; **JPEG, donc sans
+transparence**, le blason étant blanc cerné de rouge et le blanc faisant
+partie du dessin comme pour Tarbes ; et une licence « **marque déposée** »,
+l'exception d'usage propre à Wikipédia plutôt qu'une publication du club.
+Arbitré par Jérémy le 1er septembre 2026.
+
+Tarbes et Auch sont donc les deux seuls écussons de la base sans
+transparence, depuis que celui de Clermont a été repris à la source.
 
 Pourquoi les héberger plutôt que pointer vers ces CDN : leurs URL portent une
 empreinte qui change au gré des mises à jour, le lien direct peut être bloqué,

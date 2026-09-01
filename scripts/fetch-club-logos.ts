@@ -148,9 +148,33 @@ const PLACEHOLDER_LNR = "ee0e36cd30739c08c65f23f2a7c01e351d45a33a324ba1cea66b39e
  *
  * Ces deux-là sont les écussons **d'aujourd'hui**, ce qui vaut aussi pour
  * tous les autres : la LNR ne sert que la version courante.
+ *
+ * **AUCH EST LE QUATRIÈME, ET LE SEUL DONT LE CLUB N'EXISTE PLUS.** C'est ce
+ * qui le distingue des trois précédents : Albi, Bourgoin et Tarbes vivent
+ * toujours et publient leur marque, quand le **FC Auch Gers a été liquidé en
+ * 2017**. Son site, `fcag-rugby.com`, est un domaine parqué et mis en vente.
+ * Le RC Auch Rugby lui a succédé et a bien un écusson en ligne, mais c'est un
+ * **autre club**, fondé en 2017 : l'afficher sur une rencontre de 2007-2008
+ * serait le même anachronisme que celui qu'`OpponentVenue` évite sur les
+ * stades.
+ *
+ * L'écusson vient donc de **Wikipédia**, et c'est la seule entrée de cette
+ * table qui ne vienne pas du club lui-même. Trois réserves, toutes assumées
+ * et arbitrées par Jérémy :
+ *
+ * - **80 par 80 pixels**, quand le plus grand affichage du site en fait 48.
+ *   C'est juste, mais ça passe ;
+ * - **JPEG, donc sans transparence.** Le blason est blanc cerné de rouge :
+ *   comme pour Tarbes, le blanc fait partie du dessin et on ne peut pas le
+ *   détourer. Il portera donc un carré blanc en thème sombre ;
+ * - **licence « marque déposée »**, l'exception d'usage propre à Wikipédia,
+ *   et non une publication du club. C'est une nuance de plus que pour les
+ *   trois autres, et elle relève du propriétaire du site — cf. la note sur
+ *   les marques dans CLAUDE.md.
  */
 const SOURCES_HORS_LNR: Record<string, string> = {
   Albi: "https://www.sca-albi.fr/wp-content/uploads/2017/07/Logo-SCA-web.webp",
+  Auch: "https://upload.wikimedia.org/wikipedia/fr/0/06/FCAuch.jpg",
   Bourgoin: "https://csbj-rugby.fr/wp-content/uploads/2025/06/csbj-favicon-sombre.webp",
   Tarbes: "https://stado-tpr.fr/wp-content/uploads/2026/06/logo-stado-asso-favicon.png",
 };
