@@ -1142,8 +1142,8 @@ Par ordre de valeur.
    - **aucun des neuf points de Bayonne n'a d'auteur le 31 mars 2012** : trois
      pénalités que la feuille marque « n.a. ». Même cas que Bayonne le
      9 février 2013 ;
-   - **le Perpignan-Toulouse du 15 septembre 2012 n'a pas de chronologie**, et
-     c'est le seul match joué de la base dans ce cas. La feuille reconstitue
+   - **le Perpignan-Toulouse du 15 septembre 2012 n'a pas de chronologie.** La
+     feuille reconstitue
      32-20 pour un 34-20 officiel : elle saute une transformation, et son score
      courant ne passe jamais par 34. Les deux points sont réels — la
      composition porte bien trois transformations pour cinq essais — mais leur
@@ -1151,6 +1151,17 @@ Par ordre de valeur.
      minute que rien n'atteste et fausser tous les scores affichés après elle.
      Une chronologie doit dire *quand* ; les scripts de feuille, eux, ne
      comptent que des totaux, et rattrapent.
+
+     **Le Perpignan-Bayonne du 19 avril 2008 est le même cas, en plus
+     retors.** La feuille reconstitue 36-13 pour un 38-13 officiel, et son
+     score courant est pourtant cohérent de bout en bout — chaque incrément
+     est juste, c'est le total qui est court de deux points. Elle enregistre
+     **deux essais non transformés**, Durand à la 35ᵉ et Candelon à la 70ᵉ, et
+     rien ne dit lequel des deux portait la transformation manquante. Là où
+     2012 laissait une minute inconnue, 2008 laisse un choix entre deux, ce
+     qui ne vaut pas mieux. `seed-opponent-sheet` rattrape les deux points sur
+     la ligne de Percy Montgomery, seul buteur des trois transformations
+     inscrites — un total se rattrape, une minute ne s'invente pas.
 
    Deux choses que la chaîne ne fait pas : la **mi-temps**, que la LNR ne
    publie pas — elle se déduirait du dernier fait avant la 40ᵉ, mais c'est une
