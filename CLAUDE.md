@@ -582,7 +582,16 @@ Ce qu'il faut savoir avant d'écrire du code :
   `player-pitch__first-name` et `player-pitch__last-name` **déjà séparés** —
   `separerNom` ne les voit jamais. Ne corriger que le découpage laissait
   Aramburu juste sur le banc le 3 novembre 2007 et faux comme titulaire le
-  24, dans la même saison. `redresserNom()` couvre les deux ;
+  24, dans la même saison. `redresserNom()` couvre les deux.
+
+  **Le cas le plus fréquent est la particule prise pour un patronyme** :
+  « Der Merwe Ryno | VAN » et « Rensburg Charl | VAN » sur la feuille du
+  5 janvier 2008, là où la même page écrit correctement « Johan | VAN ZYL ».
+  Un patronyme réduit à `van`, `de`, `der`, `le`… **fait désormais échouer la
+  lecture** : le message dit quoi vérifier et où l'inscrire. C'est délibéré —
+  sans cet arrêt, le prochain cas passerait en silence dans une saison qu'on
+  n'aurait pas balayée. Vérifié sans régression : aucune des 3 489 fiches de
+  la base ne porte un tel patronyme ;
 - et **`phasesLnr()` ne répond que pour les compétitions que la LNR couvre** —
   Top 14, Pro D2, barrage —, sur une **liste blanche**. Elle rendait
   auparavant `["finale"]` pour un « Huitième de finale » de Challenge

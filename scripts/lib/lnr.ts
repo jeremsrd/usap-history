@@ -586,7 +586,23 @@ export interface LnrCompositions {
  */
 const NOMS_MAL_DECOUPES: Record<string, { firstName: string; lastName: string }> = {
   "aramburu federico martin": { firstName: "Federico Martín", lastName: "Aramburu" },
+  // **Deux Brivistes de 2007-2008, sur la même feuille du 5 janvier 2008.** La
+  // LNR met « VAN » en capitales et le prend pour le patronyme entier, laissant
+  // le reste du nom en prénom : « Der Merwe Ryno | VAN », « Rensburg Charl |
+  // VAN ». Ses propres URL le confirment — `5917-der-merwe-ryno-van` et
+  // `5919-rensburg-charl-van`. Et elle sait pourtant faire : « Johan | VAN
+  // ZYL » est correct sur cette même page, avec le slug qui va avec.
+  "der merwe ryno van": { firstName: "Ryno", lastName: "Van Der Merwe" },
+  "rensburg charl van": { firstName: "Charl", lastName: "Van Rensburg" },
 };
+
+/**
+ * Particules qui ne désignent personne. Un patronyme réduit à l'une d'elles
+ * n'est pas un nom : c'est la marque d'un enregistrement inversé.
+ */
+const PARTICULES = new Set([
+  "van", "von", "de", "der", "den", "du", "des", "le", "la", "di", "da", "dos", "el", "al",
+]);
 
 /** Clé de comparaison : minuscules, sans accents, espaces normalisés. */
 function cleDeNom(complet: string): string {
@@ -613,12 +629,24 @@ function redresserNom(nom: { firstName: string; lastName: string }): {
   firstName: string;
   lastName: string;
 } {
-  return NOMS_MAL_DECOUPES[cleDeNom(`${nom.firstName} ${nom.lastName}`)] ?? nom;
+  const redresse = NOMS_MAL_DECOUPES[cleDeNom(`${nom.firstName} ${nom.lastName}`)];
+  if (redresse) return redresse;
+  // **On échoue plutôt que d'écrire une identité fausse.** Un patronyme réduit
+  // à une particule signale une inversion que rien d'autre ne trahirait : la
+  // fiche serait créée sans un mot, sous un nom qui n'est celui de personne, et
+  // réutilisée à chaque feuille où la source répète l'erreur. Le cas se
+  // constate, se vérifie à la main, puis s'inscrit dans `NOMS_MAL_DECOUPES`.
+  if (PARTICULES.has(cleDeNom(nom.lastName))) {
+    throw new Error(
+      `nom inversé par la source : « ${nom.firstName} | ${nom.lastName} » — ` +
+        "« " + nom.lastName + " » est une particule, pas un patronyme. " +
+        "Vérifier l'identité, puis l'inscrire dans NOMS_MAL_DECOUPES de lib/lnr.ts",
+    );
+  }
+  return nom;
 }
 
 function separerNom(complet: string): { firstName: string; lastName: string } {
-  const redresse = NOMS_MAL_DECOUPES[cleDeNom(complet)];
-  if (redresse) return redresse;
   const mots = complet.trim().split(/\s+/);
   let debut = mots.length;
   while (debut > 0) {
@@ -629,15 +657,15 @@ function separerNom(complet: string): { firstName: string; lastName: string } {
   }
   if (debut === 0 || debut === mots.length) {
     // Pas de capitales détectables : dernier mot pour nom, le reste pour prénom
-    return {
+    return redresserNom({
       firstName: mots.slice(0, -1).join(" "),
       lastName: mots[mots.length - 1] ?? complet,
-    };
+    });
   }
-  return {
+  return redresserNom({
     firstName: mots.slice(0, debut).join(" "),
     lastName: mots.slice(debut).join(" "),
-  };
+  });
 }
 
 /**
