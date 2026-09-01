@@ -592,6 +592,25 @@ Ce qu'il faut savoir avant d'écrire du code :
   sans cet arrêt, le prochain cas passerait en silence dans une saison qu'on
   n'aurait pas balayée. Vérifié sans régression : aucune des 3 489 fiches de
   la base ne porte un tel patronyme ;
+- **elle émet un gabarit `Prenom_N NOM_N` quand un joueur manque à sa propre
+  base**, et l'enregistrement est alors corrompu de bout en bout : absent de
+  la composition, sans fiche (`url: null`), et irrattrapable. Le cas de
+  Gonçalo Uva (jeton 545) s'est résolu par ESPN ; **deux autres ne se
+  résolvent pas** — le n°7 de Brive du 26 avril 2008 (jeton 303) et le n°8
+  d'Auch du 30 mai 2008 (jeton 126).
+
+  Tout a été tenté : `/joueur/303` et ses variantes rendent 404 sur les deux
+  sites — la LNR exige le slug exact, et le refuse même à une fiche valide —,
+  les fiches joueur vivent sur `prod2.lnr.fr` sans que cela aide, ESPN ne
+  couvre pas la saison, et Wikipédia n'a pas ces effectifs. Les deux jetons
+  reparaissent d'ailleurs sur d'autres feuilles de leurs clubs, J12 et J25 :
+  ces deux hommes sont absents de la base de la LNR partout.
+
+  **Ces deux rencontres restent donc sans composition**, et c'est le projet
+  qui a déjà tranché : une feuille à 22 dont la LNR oublie un remplaçant est
+  acceptée, une composition qui n'aligne pas quinze titulaires fait échouer le
+  match. Leurs scores, bonus et agrégats sont écrits et justes ; seules les
+  compositions manquent ;
 - **certaines pages de journée sont amputées**, et la rencontre de l'USAP peut
   y manquer : celle de la J11 de 2007-2008 ne publie que 2 rencontres sur 7,
   celle de la J24 en publie 5 sur 7. Les feuilles existent pourtant, et se
