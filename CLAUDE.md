@@ -1667,6 +1667,38 @@ lâche à répétition dit quelque chose du réseau, un script qui s'en remet en
 silence le cacherait. Tout script long qui interroge la base entre deux
 appels réseau est exposé de la même façon ; le remède est là, à recopier.
 
+⚠️ **L'AUDIT COMPLET SE LANCE SAISON PAR SAISON, JAMAIS D'UN BLOC.**
+
+```bash
+for S in 2026-2027 2025-2026 2024-2025 2023-2024 2022-2023 2021-2022 \
+         2020-2021 2019-2020 2018-2019 2017-2018 2016-2017 2015-2016 \
+         2014-2015 2013-2014 2012-2013 2011-2012 2010-2011 2009-2010 2008-2009; do
+  npx tsx scripts/audit-opponent-lineups.ts "$S"
+done
+```
+
+`npx tsx scripts/audit-opponent-lineups.ts` sans argument parcourt les 488
+rencontres en une fois, et **la LNR le plafonne** : le 1er septembre 2026,
+trois tentatives d'affilée ont rendu 175, 54 puis 268 matchs examinés, pour
+323, 444 et 44 feuilles « injoignables ». Le réseau était sain avant et après
+chaque exécution — ce n'est pas une panne, c'est une limitation de débit.
+Dix-neuf processus courts passent sous le seuil là où un seul long ne passe
+plus, et la même journée l'a vérifié deux fois.
+
+La boucle a deux autres mérites : une coupure ne coûte qu'une saison au lieu
+de tout, et elle **donne le détail par saison**, que l'exécution globale ne
+donne pas. Le total attendu est de **488 examinés, 488 conformes, 0
+anomalie** ; les 26 rencontres de 2026-2027 sont écartées comme à venir, et
+22 matchs de coupe d'Europe sortent du périmètre LNR.
+
+Trois choses à regarder sur chaque saison, dans cet ordre : `0 avec au moins
+une anomalie`, qui est le seul chiffre à porter un signal ; **aucune ligne
+`LNR injoignable`**, sans quoi la saison n'a pas été vue en entier quel que
+soit le total affiché ; et **aucune ligne `↻`**, qui annoncerait que la base
+a lâché et que la suite peut échouer. Si une saison échoue, laisser passer un
+moment avant de la relancer : c'est l'enchaînement rapide qui fait tomber les
+deux services, pas la charge d'une saison isolée.
+
 ⚠️ **`prisma migrate dev` VEUT RÉINITIALISER CETTE BASE. Ne pas le lancer.**
 Le dossier `prisma/migrations/` ne décrit pas l'état réel : des colonnes y
 manquent — les `slug` de plusieurs tables, des index de `season_coaches` —,
