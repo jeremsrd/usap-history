@@ -203,6 +203,37 @@ async function lirePage(url: string): Promise<string> {
  * script de saison les confronte aux faits de la feuille officielle.
  */
 const FEUILLES_HORS_CALENDRIER: Record<string, LnrRencontre> = {
+  // **2006-2007 en compte trois**, et le motif y est encore plus net qu'en
+  // 2007-2008 : chaque journée aligne 7 rencontres, les pages n'en publient
+  // que 6, et l'identifiant manquant est **exactement le trou entre deux
+  // journées** — 3415 entre J5 et J6, 3450 entre J10 et J11, 3541 entre J23
+  // et J24. Les clubs absents de la page désignent l'adversaire : Bourgoin
+  // une fois, Agen deux.
+  //
+  // Les scores viennent du score courant final de chaque feuille, et ils sont
+  // confirmés par le classement : avec eux, la colonne des points encaissés
+  // de la saison retombe sur les 398 annoncés, au point près.
+  "2006-2007/j6": {
+    url: "https://top14.lnr.fr/feuille-de-match/2006-2007/j6/3415-bourgoin-perpignan",
+    recevant: "bourgoin",
+    visiteur: "perpignan",
+    scoreRecevant: 22,
+    scoreVisiteur: 3,
+  },
+  "2006-2007/j11": {
+    url: "https://top14.lnr.fr/feuille-de-match/2006-2007/j11/3450-agen-perpignan",
+    recevant: "agen",
+    visiteur: "perpignan",
+    scoreRecevant: 6,
+    scoreVisiteur: 13,
+  },
+  "2006-2007/j24": {
+    url: "https://top14.lnr.fr/feuille-de-match/2006-2007/j24/3541-perpignan-agen",
+    recevant: "perpignan",
+    visiteur: "agen",
+    scoreRecevant: 31,
+    scoreVisiteur: 18,
+  },
   "2007-2008/j11": {
     url: "https://top14.lnr.fr/feuille-de-match/2007-2008/j11/3883-perpignan-auch",
     recevant: "perpignan",

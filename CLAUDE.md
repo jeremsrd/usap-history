@@ -326,8 +326,9 @@ Ne jamais remplir seulement le côté USAP :
     sont à 23, et les 25 compositions lisibles de 2007-2008 sont **toutes à
     22, sur les deux camps**. Écrire 23 en dur revenait à annoncer « la LNR en
     oublie un » cinquante-quatre fois sur une saison de 2007-2008, et à y
-    perdre le seul vrai oubli. **La borne basse n'est pas attestée** : on ne
-    sait pas jusqu'où l'on remonte à 22, ni ce qui valait avant — à établir en
+    perdre le seul vrai oubli. **2006-2007 est aussi à 22**, vérifié sur ses
+    vingt-six feuilles : la borne basse recule d'un an sans être atteinte. On ne
+    sait toujours pas jusqu'où l'on remonte, ni ce qui valait avant — à établir en
     reprenant 2006-2007, en comptant.
   - **Un couperet peut aller en prolongations**, et le match dure alors
     **100 minutes**. La somme des minutes d'une équipe vaut 1 500 et non
@@ -539,6 +540,17 @@ Ce qu'il faut savoir avant d'écrire du code :
   le score courant le dit. S'en servir pour *nommer* le buteur, jamais pour
   décider ;
 - **le score courant déraille aussi** ; le total final tranche ;
+- et **le score du calendrier lui-même peut être faux**, ce qui est plus grave
+  puisqu'il fait foi partout ailleurs. Elle donne 40-6 au Perpignan-Narbonne du
+  30 août 2006, sur son calendrier **comme dans ses faits**, quand le vrai
+  score est 45-6. La démonstration est arithmétique et sans appel : avec les
+  scores de la LNR, la colonne des **points encaissés** de la saison retombe
+  au point près sur les 398 du classement, quand celle des **points marqués**
+  vaut 488 pour 493 — et J3 est la seule rencontre où les deux sources
+  divergent, de exactement cinq points. Un essai non transformé, absent du
+  calendrier et des faits. `SCORES_CORRIGES` de `seed-season-2006-2007.ts`
+  porte le cas ; c'est le seul du projet où une autre source l'emporte **contre**
+  le score officiel, et il est démontré, pas supposé ;
 - **le classement d'une saison ancienne peut additionner les phases finales**,
   et il ne le dit pas : celui de 2014-2015 donne 31 journées à Perpignan et à
   Albi, 32 à Mont-de-Marsan et à Agen — les quatre demi-finalistes —, quand son
@@ -741,6 +753,7 @@ doublons.
 | `close-season-2025-2026.ts` | modèle de clôture de saison, avec garde-fou sur le classement officiel |
 | `seed-opponent-sheet.ts` | **le script du chantier adverse** : reprend une saison entière depuis la LNR — réalisations, cartons et temps de jeu reconstitués à partir des changements. Prend la saison en argument (`2023-2024`), `--dry` pour simuler, `--detail` pour le relevé des écarts avec la base, `--match=AAAA-MM-JJ` pour n'en reprendre qu'un, `--usap` pour traiter **aussi le camp catalan** — il passe alors deux fois, l'adverse puis l'USAP |
 | `seed-lineup.ts` | crée les **deux compositions** d'un match depuis la LNR quand il n'en a aucune — dossards, titulaires, capitaine, poste déduit du numéro. Premier temps de la reprise d'une rencontre ancienne ; `--dry`, `--force` pour réécrire |
+| `seed-season-2006-2007.ts` | crée les 26 matchs d'une saison de Top 14 sans phase finale — cinquième. **Ses agrégats ne sont pas écrits** : un bonus offensif sur cinq reste indécidable (cf. « Où reprendre »). Porte `SCORES_CORRIGES`, seule table du projet qui contredise un score officiel |
 | `seed-season-2007-2008.ts` | crée les 27 matchs d'une saison de Top 14 **avec demi-finale** — quatrième, éliminée au Vélodrome. **Le modèle le plus récent.** Porte trois particularités : `FEUILLES_HORS_CALENDRIER` pour deux journées amputées, `FEUILLES_SANS_FAITS` pour une feuille muette, et un garde-fou Wikipédia qui sépare BO et BD |
 | `seed-season-2008-2009.ts` | crée les 28 matchs de la saison du titre 2009 — **le modèle le plus récent**, et le seul dont le garde-fou vienne de Wikipédia, la LNR ne publiant aucun classement pour cette saison |
 | `seed-season-2009-2010.ts` | crée les 28 matchs de la saison de la finale perdue de 2010 : Top 14 **avec phase finale**, classement à corriger des barrages, terrains neutres, et réalisations complétées |
@@ -1276,7 +1289,25 @@ Par ordre de valeur.
    saisons restent conformes à leur classement officiel — 43 points en
    2022-2023, 58 en 2023-2024, 44 en 2024-2025, 29 en 2025-2026.
 
-2. **Poursuivre la phase 4** en remontant. **De 2007-2008 à 2020-2021,
+2. **Poursuivre la phase 4** en remontant.
+
+   **2006-2007 EST LA PREMIÈRE SAISON DONT LES AGRÉGATS NE SONT PAS ÉCRITS.**
+   Ses 26 matchs le sont — scores, résultats, arbitres, bonus —, et tout
+   concorde avec le classement de référence sauf un chiffre : les feuilles
+   lisibles donnent **4 bonus offensifs pour les 5 annoncés**. Le cinquième est
+   dans l'une des trois rencontres dont la feuille LNR ne porte qu'un carton
+   jaune pour tout fait — Perpignan-Castres 20-16, Perpignan-Brive 24-13,
+   Brive-Perpignan 22-22 —, les deux autres matchs muets étant écartés par
+   l'arithmétique : 7 et 11 points ne font pas quatre essais. Les trois
+   candidats le peuvent tous, et **aucune source ne tranche** : Wikipédia ne
+   porte aucun marqueur de bonus pour cette saison. Le garde-fou refuse donc
+   d'écrire, ce qui est son rôle.
+
+   Le reste est pourtant validé au point près, et c'est ce qui rend l'écart
+   crédible : 493 points marqués, 398 encaissés, 16 V 1 N 9 D, 4 bonus
+   défensifs — tout retombe. La saison attend un chiffre, pas une reprise.
+
+   **De 2007-2008 à 2020-2021,
    quatorze saisons sont faites**, toutes conformes à leur classement de
    référence : 79 points et la quatrième place en 2007-2008, éliminée en
    demi-finale par Clermont au Vélodrome, puis
