@@ -63,6 +63,7 @@ import {
   type LnrTitulaire,
 } from "./lib/lnr";
 import { meilleurCandidat, motsOrphelins, normalize } from "./lib/noms";
+import { MATCH_A_VENIR, MATCH_JOUE } from "../src/lib/matchs";
 
 const prisma = new PrismaClient();
 
@@ -274,8 +275,16 @@ async function main() {
     `=== Compositions adverses confrontées aux feuilles LNR${SAISON_DEMANDEE ? ` — ${SAISON_DEMANDEE}` : ""} ===\n`,
   );
 
+  const saison = SAISON_DEMANDEE ? { season: { label: SAISON_DEMANDEE } } : {};
+
+  // **Une rencontre à venir n'a rien à auditer**, la LNR ne publiant ses
+  // compositions que la veille. Sans ce filtre, l'audit allait chercher les
+  // vingt-six feuilles vides du calendrier 2026-2027 à chaque passage et les
+  // rangeait en « feuille non lue » : vingt-six avertissements par exécution,
+  // qui n'annonçaient rien et noyaient les vrais. Le compte des écartées est
+  // rendu au récapitulatif, une omission tue valant mieux dite.
   const matchs = await prisma.match.findMany({
-    where: SAISON_DEMANDEE ? { season: { label: SAISON_DEMANDEE } } : {},
+    where: { ...MATCH_JOUE, ...saison },
     orderBy: { date: "asc" },
     include: {
       season: { select: { label: true, startYear: true, division: true } },
@@ -373,6 +382,10 @@ async function main() {
   }
   if (horsPerimetre.length > 0) {
     console.log(`\n${horsPerimetre.length} match(s) hors périmètre LNR (coupes d'Europe).`);
+  }
+  const aVenir = await prisma.match.count({ where: { ...MATCH_A_VENIR, ...saison } });
+  if (aVenir > 0) {
+    console.log(`${aVenir} rencontre(s) à venir, sans composition à auditer.`);
   }
 }
 

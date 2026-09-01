@@ -1443,12 +1443,20 @@ d'écrire les agrégats s'ils s'en écartent.
   examinés, 488 conformes, au 1er septembre 2026.
 
   **Le nombre examiné bouge, celui des anomalies non.** Sur les 546
-  rencontres en base, l'audit écarte les 22 de coupe d'Europe, les 26 de
-  2026-2027 que la LNR n'a pas encore garnies, les 9 journées de 2022-2023
-  dont elle ne publie pas les compositions et l'access match de 2021-2022 :
-  restent 488. Le premier chiffre suit donc la base et se périme tout seul —
-  il valait 489 fin août 2026 —, le second est le seul à porter un signal. Il
-  est à zéro, et tout écart nouveau se voit.
+  rencontres en base, l'audit écarte d'abord les **26 rencontres à venir** de
+  2026-2027 — il filtre sur `MATCH_JOUE` —, puis les 22 de coupe d'Europe,
+  les 9 journées de 2022-2023 dont la LNR ne publie pas les compositions et
+  l'access match de 2021-2022 : restent 488. Le premier chiffre suit donc la
+  base et se périme tout seul — il valait 489 fin août 2026 —, le second est
+  le seul à porter un signal. Il est à zéro, et tout écart nouveau se voit.
+
+  **Le filtre sur les rencontres à venir date du 1er septembre 2026**, et il
+  a supprimé un bruit qui masquait le signal : sans lui, l'audit allait
+  chercher à chaque passage les vingt-six feuilles vides du calendrier
+  2026-2027 et les rangeait en « feuille non lue ». Vingt-six avertissements
+  par exécution, qui n'annonçaient rien. Leur compte est désormais rendu au
+  récapitulatif — « N rencontre(s) à venir, sans composition à auditer » —,
+  une omission dite valant mieux qu'une omission tue.
 
   **Il n'en voyait que 150 jusqu'au 30 août 2026, et il ne le disait pas.**
   Deux angles morts, dans le script dont c'est le seul métier : il cherchait
