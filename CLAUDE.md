@@ -142,7 +142,7 @@ journées — un lot rate rarement, et le lot suivant profite des doublons
 soldés :
 
 ```bash
-npx tsx scripts/seed-lineup.ts AAAA-MM-JJ --dry        # 46 lignes attendues
+npx tsx scripts/seed-lineup.ts AAAA-MM-JJ --dry        # 46 lignes — 44 avant 2008-2009
 npx tsx scripts/seed-lineup.ts AAAA-MM-JJ
 npx tsx scripts/seed-opponent-sheet.ts AAAA-AAAA --match=AAAA-MM-JJ --usap --dry
 npx tsx scripts/seed-opponent-sheet.ts AAAA-AAAA --match=AAAA-MM-JJ --usap
@@ -177,7 +177,7 @@ diffère.
 | `[inconnu] … ne désigne aucune des fiches proches` | homonymes partiels, aucun n'est le bon | rien à faire : la fiche est créée, c'est un homme de plus |
 | `[homonyme] … laissé de côté` | deux personnes, même patronyme | vérifier la fiche citée ; si ce sont bien deux hommes, laisser créer |
 | `Compositions non publiées par la LNR` | archive muette | essayer `prod2.lnr.fr`, qui archive mieux ; en dernier recours, composition à la main recoupée avec les changements (cf. `seed-lineup-barrage-2022.ts`) |
-| `N joueurs sur la feuille, 22 au moins` | la LNR oublie un remplaçant | accepté tel quel si les quinze titulaires sont là |
+| `N joueurs sur la feuille, N au moins` | la LNR oublie un remplaçant | accepté tel quel si les quinze titulaires sont là. **L'effectif attendu dépend de l'époque** — cf. `effectifDeFeuille()` |
 | `réalisations incohérentes` | score courant fautif | lire les faits du match ; le total final fait foi |
 | `N point(s) inexpliqué(s)` | transformation non inscrite | le script la rattrape sur les deux camps ; s'il échoue encore, la feuille est fautive |
 | `… hors composition` sur un auteur | essai collectif, ou composition fausse | soupçonner la base avant la source |
@@ -318,6 +318,17 @@ Ne jamais remplir seulement le côté USAP :
     les minutes d'Opta ne se recoupent pas au ras de la minute — sa feuille
     laisse une sortie de la 63ᵉ sans entrée en regard. `seed-cup-sheet.ts` la
     signale et ne la corrige pas.
+  - **Le banc n'a pas toujours compté huit remplaçants.** Une feuille porte
+    **22 joueurs jusqu'en 2007-2008** et **23 depuis 2008-2009** :
+    `effectifDeFeuille(saison)` de `scripts/lib/feuilles.ts` porte la règle,
+    et `seed-lineup.ts` l'appelle. La base le démontre d'elle-même — 2008-2009
+    compte 54 équipes-matchs à 23 pour 2 à 22, toutes les saisons postérieures
+    sont à 23, et les 25 compositions lisibles de 2007-2008 sont **toutes à
+    22, sur les deux camps**. Écrire 23 en dur revenait à annoncer « la LNR en
+    oublie un » cinquante-quatre fois sur une saison de 2007-2008, et à y
+    perdre le seul vrai oubli. **La borne basse n'est pas attestée** : on ne
+    sait pas jusqu'où l'on remonte à 22, ni ce qui valait avant — à établir en
+    reprenant 2006-2007, en comptant.
   - **Un couperet peut aller en prolongations**, et le match dure alors
     **100 minutes**. La somme des minutes d'une équipe vaut 1 500 et non
     1 200 : c'est le cas de la demi-finale du 17 mai 2015 contre Agen, seule

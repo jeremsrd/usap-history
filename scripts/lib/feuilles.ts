@@ -238,3 +238,33 @@ export function essaisOmisSansAuteur(jour: string, camp: "usap" | "adversaire"):
     .filter((a) => a.camp === camp)
     .reduce((s, a) => s + (a.essaisSansAuteur ?? 0), 0);
 }
+
+/**
+ * NOMBRE DE JOUEURS QU'UNE FEUILLE DE MATCH DOIT PORTER.
+ *
+ * **Vingt-deux jusqu'en 2007-2008, vingt-trois depuis 2008-2009** : le banc
+ * est passé de sept remplaçants à huit entre ces deux saisons.
+ *
+ * LA BASE LE DÉMONTRE D'ELLE-MÊME, sans qu'il faille croire un règlement sur
+ * parole. Sur les compositions déjà écrites, 2008-2009 compte 54
+ * équipes-matchs à 23 pour 2 à 22 — les deux oublis connus de la LNR —, et
+ * toutes les saisons postérieures sont à 23 sans exception. Les 25
+ * compositions lisibles de 2007-2008 sont, elles, **toutes à 22, sur les deux
+ * camps**, six journées réparties d'août à juin. Le basculement tombe donc
+ * entre les deux saisons, et nulle part ailleurs.
+ *
+ * **Sans cette règle, le contrôle se retournait contre lui-même.**
+ * `seed-lineup.ts` tient 23 pour la norme et annonce « la LNR en oublie un »
+ * en deçà : sur 2007-2008 il l'aurait annoncé **cinquante-quatre fois**, une
+ * par composition, et le seul vrai oubli de la saison — les 21 Auchois du
+ * 30 mai 2008 — s'y serait perdu. C'est le défaut qu'on a corrigé ailleurs
+ * sur l'audit : un avertissement qui se déclenche toujours n'avertit plus.
+ *
+ * **La borne haute est attestée des deux côtés, la borne basse ne l'est
+ * pas** : rien ici ne dit jusqu'où l'on remonte à 22, ni ce qui valait avant.
+ * À établir en reprenant 2006-2007, de la même façon — en comptant, pas en
+ * supposant.
+ */
+export function effectifDeFeuille(saison: string): number {
+  return Number(saison.slice(0, 4)) >= 2008 ? 23 : 22;
+}

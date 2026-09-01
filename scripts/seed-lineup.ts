@@ -51,6 +51,7 @@ import {
 } from "./lib/lnr";
 import { USAP, chercherMatchUsap, lireMatch } from "./lib/epcr";
 import { POSTE_PAR_NUMERO, trouverOuCreerJoueur } from "./lib/joueurs";
+import { effectifDeFeuille } from "./lib/feuilles";
 
 import { TITULAIRES_MANQUANTS } from "./lib/feuilles";
 
@@ -98,19 +99,29 @@ function completer(
   return [...joueurs, ...ajouts].sort((a, b) => a.numero - b.numero);
 }
 
-/** Contrôles de forme sur une composition, avant toute écriture. */
-function verifier(camp: string, joueurs: LnrTitulaire[]): void {
-  // Vingt-trois est la règle, mais la LNR en oublie parfois un au banc : le
-  // 23 oyonnaxien manque à sa feuille du 18 décembre 2020, les vingt-deux
-  // autres étant là. Un remplaçant absent ne coûte qu'une ligne — et s'il
-  // était entré en jeu, le script de feuille buterait sur son nom.
-  if (joueurs.length > 23) {
-    throw new Error(`${camp} : ${joueurs.length} joueurs sur la feuille, 23 au plus`);
+/**
+ * Contrôles de forme sur une composition, avant toute écriture.
+ *
+ * `effectif` est le nombre de joueurs attendu, et **il dépend de l'époque** :
+ * vingt-deux jusqu'en 2007-2008, vingt-trois depuis — cf.
+ * `effectifDeFeuille()`. L'écrire en dur, c'était annoncer un oubli de la LNR
+ * sur chaque feuille des saisons anciennes.
+ */
+function verifier(camp: string, joueurs: LnrTitulaire[], effectif: number): void {
+  // L'effectif de l'époque est la règle, mais la LNR en oublie parfois un au
+  // banc : le 23 oyonnaxien manque à sa feuille du 18 décembre 2020, les
+  // vingt-deux autres étant là ; le 22 auchois manque à celle du 30 mai 2008.
+  // Un remplaçant absent ne coûte qu'une ligne — et s'il était entré en jeu,
+  // le script de feuille buterait sur son nom.
+  if (joueurs.length > effectif) {
+    throw new Error(`${camp} : ${joueurs.length} joueurs sur la feuille, ${effectif} au plus`);
   }
-  if (joueurs.length < 22) {
-    throw new Error(`${camp} : ${joueurs.length} joueurs sur la feuille, 22 au moins`);
+  if (joueurs.length < effectif - 1) {
+    throw new Error(
+      `${camp} : ${joueurs.length} joueurs sur la feuille, ${effectif - 1} au moins`,
+    );
   }
-  if (joueurs.length < 23) {
+  if (joueurs.length < effectif) {
     console.log(`  ⚠ ${camp} : ${joueurs.length} joueurs sur la feuille, la LNR en oublie un`);
   }
   const titulaires = joueurs.filter((j) => j.isStarter);
@@ -298,8 +309,9 @@ async function main() {
     usap: completer(DATE!, "usap", compositions.usap),
     adversaire: completer(DATE!, "adversaire", compositions.adversaire),
   };
-  verifier("USAP", compositions.usap);
-  verifier(adversaire, compositions.adversaire);
+  const effectif = effectifDeFeuille(match.season.label);
+  verifier("USAP", compositions.usap, effectif);
+  verifier(adversaire, compositions.adversaire, effectif);
 
   // Les deux camps d'abord, l'écriture ensuite.
   const lignes = [
