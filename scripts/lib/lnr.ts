@@ -763,20 +763,51 @@ export function phasesBarrage(saison: string): string[] {
 }
 
 /**
+ * Compétitions dont la LNR publie les feuilles de match : ses deux
+ * championnats et leur barrage d'accession. Rien d'autre.
+ *
+ * **C'est une liste blanche, et c'en est une par nécessité.** La liste noire
+ * des coupes d'Europe que portait `audit-opponent-lineups.ts` ne protège que
+ * des intitulés qu'on a pensé à y inscrire, et elle n'était écrite que là :
+ * les quatre autres appelants de `phasesLnr()` n'avaient rien.
+ *
+ * Or « passer au travers » ne veut pas dire « échouer ». `/finale/i`
+ * reconnaît « Huitième de finale » : un huitième de Challenge européen part
+ * donc chercher le segment `finale` du championnat. Le 4 avril 2026 il n'a
+ * rien trouvé et l'a dit — mais une saison où l'USAP dispute les deux aurait
+ * rendu la feuille de la finale de Top 14 et l'aurait écrite sur le match
+ * européen, sans un mot.
+ *
+ * Devant un intitulé inconnu, on rend donc la liste vide : le match sort du
+ * périmètre, et les appelants le disent.
+ */
+const COMPETITIONS_LNR = [/\btop 14\b/i, /\bpro d2\b/i, /\bbarrages?\b/i];
+
+/**
  * Phases à essayer pour un match : journée, phase finale ou barrage.
  *
  * `contexte` est ce que la base dit du match — nom de compétition et libellé
- * de tour, concaténés. La demi-finale se teste avant la finale, « demi-finale »
- * contenant « finale ».
+ * de tour, concaténés. Les appelants y mettent tantôt `name`, tantôt
+ * `shortName` : les deux écritures doivent être reconnues.
  *
- * Rend une liste vide quand rien ne correspond : une rencontre de coupe
- * d'Europe, que la LNR ne couvre pas.
+ * **La compétition se teste avant tout le reste.** Un mot de phase ne veut
+ * rien dire tant qu'on ne sait pas si la LNR couvre la rencontre. Le test
+ * passe aussi avant la journée : un match de poule européenne n'en porte pas
+ * aujourd'hui, mais son libellé de tour s'écrit déjà « Poule J1 », et rien
+ * n'empêcherait qu'on lui en pose une.
+ *
+ * La demi-finale se teste avant la finale, « demi-finale » contenant
+ * « finale ».
+ *
+ * Rend une liste vide dès que la LNR ne couvre pas la rencontre, ou qu'aucune
+ * phase ne se reconnaît.
  */
 export function phasesLnr(
   saison: string,
   matchday: number | null,
   contexte: string,
 ): string[] {
+  if (!COMPETITIONS_LNR.some((forme) => forme.test(contexte))) return [];
   if (matchday != null) return [`j${matchday}`];
   if (/demi[\s-]?finale/i.test(contexte)) return ["demi-finales"];
   if (/finale/i.test(contexte)) return ["finale"];

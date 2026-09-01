@@ -144,14 +144,6 @@ type Gravite =
 
 const GRAVES: Gravite[] = ["MANQUANT", "EN TROP"];
 
-/**
- * Compétitions que la LNR ne couvre pas. À écarter **avant** d'interroger
- * `phasesLnr()`, qui reconnaît « finale » dans « Huitième de finale » et
- * enverrait donc les matchs de coupe d'Europe chercher une feuille de
- * championnat inexistante — du bruit présenté comme un échec de lecture.
- */
-const COUPES_EUROPE = new Set(["Challenge Européen", "H-Cup"]);
-
 interface Anomalie {
   gravite: Gravite;
   numero: number;
@@ -304,18 +296,15 @@ async function main() {
     const adversaire = match.opponent.shortName ?? match.opponent.name;
     const etiquette = `${match.season.label} ${jour} ${adversaire.padEnd(16)}`;
 
-    if (COUPES_EUROPE.has(match.competition.shortName ?? "")) {
-      horsPerimetre.push(`${etiquette} (${match.competition.shortName})`);
-      continue;
-    }
-
     // La LNR sépare ses deux divisions sur deux sites : sans cette bascule,
     // une saison de Pro D2 se cherche sur top14.lnr.fr et ne rend rien.
     utiliserDivision(String(match.season.division) === "PRO_D2" ? "prod2" : "top14");
 
-    // `phasesLnr()` porte la règle complète — journée, demi-finale, finale,
-    // barrage et ses trois noms successifs. La refaire ici, c'est se
-    // condamner à en oublier un morceau.
+    // `phasesLnr()` porte la règle complète — la liste blanche des
+    // compétitions que la LNR couvre, puis journée, demi-finale, finale et
+    // barrage avec ses trois noms successifs. Ce script a longtemps porté sa
+    // propre liste noire des coupes d'Europe ; elle est partie dans la
+    // fonction, seule à en avoir besoin dans ses cinq appelants.
     const phases = phasesLnr(
       match.season.label,
       match.matchday,

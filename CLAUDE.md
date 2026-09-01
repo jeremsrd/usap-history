@@ -533,7 +533,19 @@ Ce qu'il faut savoir avant d'écrire du code :
   quelque chose ;
 - un changement peut porter **deux noms faux à la fois** ; la table
   `CHANGEMENTS_CORRIGES` de `seed-opponent-sheet.ts` est faite pour ça, et ne
-  s'écrit qu'avec la démonstration sous les yeux.
+  s'écrit qu'avec la démonstration sous les yeux ;
+- et **`phasesLnr()` ne répond que pour les compétitions que la LNR couvre** —
+  Top 14, Pro D2, barrage —, sur une **liste blanche**. Elle rendait
+  auparavant `["finale"]` pour un « Huitième de finale » de Challenge
+  européen, `/finale/i` le reconnaissant, et le match partait chercher le
+  segment `finale` du championnat. Le 4 avril 2026 il n'a rien trouvé et l'a
+  dit ; une saison où l'USAP dispute les deux aurait rendu la feuille de la
+  finale de Top 14 et l'aurait **écrite sur le match européen, sans un mot**.
+  La règle n'existait que dans `audit-opponent-lineups.ts`, sous forme de
+  liste noire ; les quatre autres appelants n'avaient rien. Elle est
+  désormais dans la fonction, et la liste noire a disparu du script.
+  `fix-opponent-lineup.ts` et `seed-cup-sheet.ts` gardent la leur : elle y
+  **route** vers l'EPCR, ce n'est pas la même règle.
 
 **La Pro D2 est sur un autre site**, `prod2.lnr.fr`, de structure identique :
 `utiliserDivision("prod2")` avant tout appel, ce que les trois scripts de la
@@ -1050,6 +1062,63 @@ Par ordre de valeur.
    Deux choses que la chaîne ne fait pas : la **mi-temps**, que la LNR ne
    publie pas — elle se déduirait du dernier fait avant la 40ᵉ, mais c'est une
    inférence —, et les **notes de retour en jeu**, écrites à la main.
+
+   **ET LES QUATRE SAISONS DE 2022-2023 À 2025-2026 ONT DÛ ÊTRE REPRISES À
+   LEUR TOUR**, le 1er septembre 2026, pour une raison qui vaut d'être
+   retenue : `seed-opponent-sheet.ts` y avait été passé **sans `--usap`**. Le
+   camp adverse était donc reconstitué depuis la LNR — 0 ligne à corriger sur
+   les 106 matchs, aux quatre saisons —, et le camp catalan était resté ce
+   qu'il était. **1 279 lignes** ont été réécrites : 369 en 2025-2026, 224 en
+   2024-2025, 366 en 2023-2024, 320 en 2022-2023.
+
+   **Rien ne le signalait, et c'est le point.** Les scores retombaient, les
+   essais aussi, les bonus et les agrégats de saison étaient conformes aux
+   classements officiels, l'audit des compositions adverses ne voyait rien —
+   il n'examine que l'adversaire. Le seul symptôme était la **somme des
+   minutes d'une équipe**, qui n'atteignait pas 1 200 sur 45 équipes-matchs :
+   `subIn` et `subOut` n'avaient jamais été écrits côté catalan, et
+   `minutesPlayed` était posé à la louche — 80 pour un titulaire, la même
+   valeur pour tout le banc. C'est le contrôle des minutes, et lui seul, qui a
+   ouvert le dossier ; il mérite d'être passé après toute reprise.
+
+   La reprise a soldé au passage quatre erreurs de fond que les totaux ne
+   trahissaient pas : **deux transformations d'essai de pénalité comptées
+   deux fois** sur la ligne de Tommaso Allan — le 18 novembre 2023 et le
+   9 mars 2024, l'essai de pénalité valant sept points transformation
+   comprise —, un **`totalPoints` périmé** pour Jake McIntyre le 20 avril 2024
+   (19 pour 21 au détail), et une **transformation attribuée au mauvais
+   buteur** le 14 juin 2026, rendue par la feuille à McIntyre plutôt qu'à
+   Allan.
+
+   Sept anomalies subsistent sur les quatre saisons, chacune pour une raison
+   distincte, et aucune n'est corrigeable sans inventer :
+   - **2026-02-22 Pau, 1 248 minutes** — l'exception déjà nommée plus bas :
+     la feuille se contredit sur les deux camps, le script refuse d'écrire ;
+   - **2025-12-07 Dragons, 1 179 pour 1 134** — match de Challenge européen,
+     hors périmètre de ce script ; il relève de `seed-cup-sheet.ts` ;
+   - **2026-06-06 Bayonne, 5 points de joueur pour 7 au score** — la LNR ne
+     nomme aucun buteur pour la transformation de la 49ᵉ. La base l'attribuait
+     à Tristan Tedder ; la reprise a retiré cette attribution et laissé les
+     deux points à l'équipe. C'est un gain : une identité inventée remplacée
+     par une lacune honnête, famille « points sans auteur » ;
+   - **2024-09-07 Bayonne, 1 166 minutes côté adverse**, et **2022-12-31 La
+     Rochelle, 1 192** — feuilles LNR incomplètes : le script signale l'écart
+     tout en n'ayant *aucune* ligne à modifier, ce qui prouve que la base dit
+     déjà exactement ce que dit la source ;
+   - **2023-04-22 Racing 92, 1 110 pour 1 143 attendus côté adverse** — même
+     cas, sur un match à carton rouge ;
+   - **2022-11-26 UBB, 1 220 minutes** — la feuille reconstitue trois essais
+     quand le compteur du match en porte deux. Le script échoue et n'écrit
+     rien, ce qui est le comportement voulu.
+
+   Deux autres matchs ont échoué sans laisser d'anomalie de minutes :
+   **2025-09-13 Toulouse** (un changement de la 51ᵉ non apparié, et une
+   feuille douteuse des deux côtés) et **2024-10-26 Racing 92** (26 points
+   reconstitués pour 23 au score, sans essai de pénalité pour l'expliquer).
+
+   Après reprise, `fix-bonus-points --dry` rend 0 correction et les quatre
+   saisons restent conformes à leur classement officiel — 43 points en
+   2022-2023, 58 en 2023-2024, 44 en 2024-2025, 29 en 2025-2026.
 
 2. **Poursuivre la phase 4** en remontant. **De 2008-2009 à 2020-2021, treize
    saisons sont faites**, toutes conformes à leur classement de référence :
