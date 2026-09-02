@@ -761,6 +761,7 @@ doublons.
 | `merge-duplicate-players-2026-08.ts` | **l'attestation des 25 fusions du 30 août 2026** : le lot en dur, chaque ligne accompagnée du nom que la source officielle écrit. Déjà appliqué, donc sans effet ; il ne vaut que par ce qu'il consigne, et pour rejouer le lot sur une base repartie de zéro |
 | `merge-opponents.ts` | fusionne deux fiches de club (`--keep`, `--drop`, `--nom`) ; repointe matchs, anciens noms et clubs de carrière, et fait hériter la fiche conservée des champs qu'elle n'avait pas |
 | `merge-players.ts` | fusionne deux fiches désignées par leur identifiant (`--keep`, `--drop`, `--nom`) ; ne cherche rien de lui-même, refuse la fusion si les deux figurent sur un même match. Simple ligne de commande au-dessus de `lib/fusion.ts` |
+| `fix-player-position.ts` | corrige le **poste de référence** d'un joueur (`--joueur=`, `--poste=`, `--dry`) — et avec lui les effectifs de saison et les lignes de **remplaçant**, où `positionPlayed` reprend la fiche faute de dossard parlant. Ne touche pas aux titulaires, dont le poste vient du numéro |
 | `rename-player.ts` | renomme une fiche, slug compris — un slug refait à la main sans le CUID rend la fiche introuvable |
 | `reassign-match-player.ts` | change le joueur porté par un dossard sur une feuille, quand la base a mis quelqu'un d'autre et que les deux noms se ressemblent trop pour que l'audit s'en aperçoive — **le seul instrument** pour un prénom faux sous un patronyme juste, que `fix-opponent-lineup.ts --identites` ne voit pas ; il repointe aussi ce que la chronologie du match attribuait à l'ancien occupant |
 | `delete-orphan-players.ts` | supprime les fiches vides de bout en bout — aucune feuille, aucun événement, aucune donnée personnelle, et pas `isActive` ; les figures historiques et les recrues à venir sont ainsi protégées |
@@ -1223,11 +1224,21 @@ désormais 319 et l'effectif 50.
 bien fait partie de cet effectif : le script ajoute, il ne supprime pas — à la
 différence d'`isActive`, qu'il abaisse sur les partants.
 
-**Un point ouvert subsiste** : les postes de Riccioni et d'Amituanai, que la
-LNR range en « 1ère ligne » sans trancher entre pilier et talonneur. Leurs
-deux lignes de saison sont les seules des 263 sans `position`, ce qui est
-honnête — on ne sait pas — et se corrigera depuis l'admin, ou à leur première
-feuille de match.
+**Les postes de Riccioni et d'Amituanai sont tranchés** depuis le 2 septembre
+2026, tous deux `PILIER_DROIT` : les 263 lignes d'effectif portent maintenant
+un poste, et aucun joueur de l'effectif n'est sans poste de référence.
+
+Les deux ne se valent pas en fiabilité, et c'est à savoir avant de s'en
+servir. **Riccioni est sourcé** — la Wikipédia française le dit « pilier
+droit » aux Saracens. **Amituanai ne l'est pas** : la LNR s'arrête à
+« 1ère ligne », la Wikipédia anglophone à « Prop », et il n'avait aucune
+feuille dont le dossard aurait tranché. C'est **Jérémy qui a décidé**, comme
+pour l'écusson d'Auch ou les stades de Dax et de Massy. Sa première feuille de
+Top 14 le confirmera ou l'infirmera — un n°1 vaudrait correction.
+
+**Le côté ne se déduit pas de la morphologie**, quoi qu'en suggèrent les
+180 cm pour 125 kg d'Amituanai : c'est une inférence, et le projet n'en écrit
+pas.
 
 ### Où reprendre
 
