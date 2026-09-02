@@ -1633,12 +1633,89 @@ Par ordre de valeur.
    la LNR n'a pas encore photographiées, cf. « Photos des joueurs » —, et les
    saisons sans aucun match.
 
-Sur les 120 saisons en base, 19 seulement portent des matchs : c'est le
+Sur les 120 saisons en base, 21 seulement portent des matchs : c'est le
 chantier de la phase 4, mené en remontant le temps saison par saison. Le bilan
 de 2021-2022 — 9V 0N 17D, 43 points, treizième — est calculé depuis les scores
 officiels mais n'a pas été confronté à un classement d'époque ; ceux de
 2020-2021, 2019-2020 et 2018-2019 l'ont été, et leurs scripts refusent
 d'écrire les agrégats s'ils s'en écartent.
+
+### Remonter avant 2006 — ce qu'il faudra changer
+
+**Réflexion du 2 septembre 2026, ouverte par Jérémy et non tranchée.** Elle
+est consignée ici pour ne pas se reperdre : rien de ce qui suit n'est
+implémenté.
+
+**Le constat, et il est chiffré : 99 saisons ne portent pas un seul match**,
+toutes antérieures à 2006-2007, qui est la plus ancienne en base. Or ni la LNR
+ni l'EPCR ne remontent là — la chaîne entière du projet, `seed-season`,
+`seed-lineup`, `seed-opponent-sheet`, `seed-chronologie`, `audit-opponent-lineups`,
+n'aura plus de source à interroger. Il faudra donc « être plus permissif », et
+c'est vrai. Mais le mot recouvre **deux choses opposées**, et l'une des deux ne
+doit pas bouger.
+
+#### Ce qui doit se relâcher : l'exigence de complétude
+
+Sans réserve, et le projet sait déjà le faire : une feuille à 22 est acceptée,
+`pointsSansAuteur` encaisse un score dont personne ne porte les points, deux
+matchs de 2008-2009 vivent sans composition. Il faudra étendre — un match sans
+aucune composition, une date au mois près, un joueur sans prénom, les comptes
+rendus d'avant-guerre écrivant « Ribère » et rien d'autre.
+
+**Et la forme existe déjà dans le code.** `effectifDeFeuille(saison)` et
+`pointsScaleFor(seasonStartYear)` font dépendre une règle de l'époque ; le
+même motif donnerait un `exigenceDeSaisie(saison)`. Les contrôles ne
+disparaissent pas, leur seuil suit la source disponible — c'est très
+différent de les désarmer.
+
+#### Ce qui ne doit pas se relâcher : l'appariement d'identité
+
+Et c'est contre-intuitif : **le risque augmente quand la source s'appauvrit.**
+Des noms courts, souvent sans prénom, multiplient les homonymes — la règle des
+« deux mots communs » n'a plus qu'un mot à se mettre sous la dent, et c'est
+exactement la configuration des accidents fondateurs de `noms.ts` (Kane
+Douglas / Wesley Douglas, Clement Ric / Ricky Riccitelli).
+
+L'asymétrie qui fonde la doctrine du projet ne change pas avec l'époque : **un
+doublon se repère et se fusionne, une identité fausse ne se voit pas.** Elle
+empire, même — sans feuille officielle à confronter,
+`audit-opponent-lineups.ts` n'a plus rien pour rattraper l'erreur, et c'est
+lui qui a démasqué les 22 faux hommes du 30 août 2026.
+
+#### Le vrai manque n'est pas la permissivité, c'est un troisième état
+
+La base ne sait dire que deux choses : le fait est **affirmé**, ou il est
+`null`, c'est-à-dire inconnu. Elle ne sait pas dire « **probable, d'après
+telle source** ».
+
+**Le symptôme est déjà visible**, et il ne demande pas d'attendre 1927 : le
+stade de Dax et celui de Massy, l'écusson d'Auch, le poste de Bradley
+Amituanai, les terrains de Tarbes et de Carcassonne — ces arbitrages vivent
+dans ce fichier et dans les messages de commit, **pas dans la base**. Sur deux
+ou trois cas c'est tenable. Sur 99 saisons où presque tout sera un arbitrage,
+ça ne l'est plus, et le site afficherait avec le même aplomb un score officiel
+de 2015 et une reconstitution de 1927.
+
+Deux formes possibles, à trancher le jour venu :
+
+- une table **`Attestation`** — quelle entité, quel champ, quelle source, quel
+  degré, tranché par qui et quand. Plus lourde, mais elle rend l'incertitude
+  **affichable**, donc honnête vis-à-vis du lecteur ;
+- plus léger, un `sourceNote` sur `Match` et un enum de confiance sur les
+  champs les plus disputés.
+
+La première a un mérite que la seconde n'a pas : elle vaut aussi pour les
+stades, les écussons et les postes, c'est-à-dire pour tout ce que ce fichier
+porte aujourd'hui faute de place en base.
+
+#### Ce qui ne bouge pas : les contrôles arithmétiques
+
+C'est la bonne nouvelle, et elle est solide : **ils ne dépendent d'aucune
+source.** La somme des points par joueur retombe sur le score, les minutes sur
+1 200, les agrégats de saison sur le classement d'époque — que Wikipédia et
+les almanachs donnent bien avant 2006, comme ils l'ont donné pour 2008-2009 où
+la LNR ne publie aucun classement. Ces contrôles deviennent **plus** précieux
+quand la source faiblit, puisqu'ils en sont alors le seul juge.
 
 ### Limites connues
 
