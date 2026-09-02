@@ -101,6 +101,31 @@ export function motsOrphelins(nom: string, reference: string): string[] {
 }
 
 /**
+ * Particules de nom, qui ne désignent personne. `mots()` écarte déjà ce qui
+ * fait moins de trois lettres — « le », « de » —, mais « van » et « der » en
+ * font exactement trois : sans cette liste, « Van Der Mescht », « Van Der
+ * Westhuizen » et « Van Der Merwe » se valent tous, et trois Sud-Africains
+ * sans rapport deviennent candidats l'un pour l'autre.
+ *
+ * Elles vivaient dans `joueurs.ts`, qui rapproche un nom de feuille d'une
+ * fiche ; elles sont ici parce que **tout** rapprochement de noms en a
+ * besoin. L'appariement de l'effectif ne les avait pas, et il tenait de ce
+ * fait « Jacobus Van Tonder » pour un candidat possible de « Martinus
+ * Jacobus Van Der Heever » — deux hommes que seul « Van » rapproche.
+ */
+const PARTICULES = new Set([
+  "van", "der", "den", "von", "dos", "das", "del", "della", "ter", "vander",
+]);
+
+/** Mots d'un nom qui identifient réellement quelqu'un. */
+export function motsUtiles(nom: string): string[] {
+  const utiles = mots(nom).filter((mot) => !PARTICULES.has(mot));
+  // Un nom fait entièrement de particules n'existe pas, mais on ne rend pas
+  // une liste vide : elle ferait correspondre n'importe qui à n'importe qui.
+  return utiles.length > 0 ? utiles : mots(nom);
+}
+
+/**
  * Nombre de mots communs, et longueur du plus long d'entre eux.
  *
  * Un mot de `b` ne sert qu'une fois : sans cela, un nom court les attire tous.

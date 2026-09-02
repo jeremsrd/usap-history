@@ -2,20 +2,22 @@
  * Portraits des joueurs de l'USAP — moisson, redimensionnement, crédits.
  *
  * ------------------------------------------------------------------------
- * POURQUOI PAS LA LNR, QUI EST LA SOURCE OFFICIELLE DU PROJET
+ * DEUX SOURCES, ET C'EST L'ÉPOQUE DU JOUEUR QUI TRANCHE
  *
- * Elle sert bien des portraits, `cdn.lnr.fr/joueur/{id}-{slug}/photo/
- * photoPortrait.{empreinte}`, et ses feuilles de match donnent l'URL de
- * fiche de chaque joueur d'une composition. Mais **elle ne les conserve que
- * pour les joueurs récents** : vérifié le 2 septembre 2026, les fiches de la
- * feuille Perpignan-Toulon du 25 août 2012 — Nicolas Mas, Alasdair
- * Strokosch, Jérémy Castex, Romain Terrain — ne portent aucune image, quand
- * celles de la J1 de 2025-2026 en portent toutes. Les joueurs les plus
- * capés de l'histoire récente du club étant précisément les anciens, la LNR
- * couvre mal ce chantier-ci.
+ * **La LNR pour l'effectif actuel.** Elle sert des portraits officiels
+ * standardisés — `cdn.lnr.fr/joueur/{id}-{slug}/photo/photoFull.{empreinte}`,
+ * 800×1200 en WebP, buste détouré sur fond transparent — et c'est la source
+ * officielle du projet. Le joueur y porte le maillot de la saison.
+ *
+ * **Mais elle ne les conserve que pour les joueurs récents**, et c'est
+ * vérifié : les fiches de la feuille Perpignan-Toulon du 25 août 2012 —
+ * Nicolas Mas, Alasdair Strokosch, Jérémy Castex, Romain Terrain — ne
+ * portent aucune image, quand celles de la J1 de 2025-2026 en portent
+ * toutes. Or les joueurs les plus capés de la base sont précisément les
+ * anciens : pour eux, la LNR ne peut rien.
  *
  * ------------------------------------------------------------------------
- * D'OÙ WIKIMEDIA COMMONS, ET CE QUE CE CHOIX SUPPOSE
+ * D'OÙ WIKIMEDIA COMMONS POUR LES ANCIENS, ET CE QUE CE CHOIX SUPPOSE
  *
  * Une photo de joueur est une œuvre protégée, et bien davantage qu'un
  * écusson : la republier sans droit n'est pas un usage toléré. Commons a
@@ -53,17 +55,30 @@
  * **c'est une heuristique et elle se trompe**. D'où `--planche`, qui écrit
  * une planche contact HTML : le résultat se regarde avant d'être publié.
  *
+ * ------------------------------------------------------------------------
+ * ET LES DROITS NE SONT PAS LES MÊMES DES DEUX CÔTÉS
+ *
+ * Commons donne une licence libre, la LNR non : ses portraits sont son bien,
+ * et les afficher relève du même arbitrage que les écussons de club — un
+ * usage d'usage sur un site d'histoire non commercial, qui appartient au
+ * propriétaire du site. `credits.json` le dit en toutes lettres plutôt que
+ * de le taire, et la fiche joueur affiche la mention.
+ *
  * Usage :
  *   npx tsx scripts/fetch-player-photos.ts --dry
+ *   npx tsx scripts/fetch-player-photos.ts             # les deux sources
+ *   npx tsx scripts/fetch-player-photos.ts --effectif  # la LNR seule
+ *   npx tsx scripts/fetch-player-photos.ts --commons   # Commons seul
  *   npx tsx scripts/fetch-player-photos.ts --images --planche   # sans la base
- *   npx tsx scripts/fetch-player-photos.ts
  *   npx tsx scripts/fetch-player-photos.ts --joueur="Guilhem Guirado" --force
- *   npx tsx scripts/fetch-player-photos.ts --planche
  */
 import { PrismaClient } from "@prisma/client";
 import sharp from "sharp";
+import { createHash } from "crypto";
 import { mkdirSync, writeFileSync, existsSync, readFileSync } from "fs";
 import { join } from "path";
+import { lireEffectif, utiliserDivision, type LnrEffectifJoueur } from "./lib/lnr";
+import { apparierEffectif } from "./lib/effectif";
 
 const prisma = new PrismaClient();
 
@@ -90,23 +105,45 @@ const PORTRAITS: Record<string, string> = {
   "Enzo Selponi": "Enzo Selponi",
   "David Mélé": "David Mélé",
   "Jake McIntyre": "Jake McIntyre",
+  // Trois recrues de 2026-2027 que la LNR n'a pas encore photographiées.
+  "Sevu Reece": "Sevu Reece",
+  "Braydon Ennor": "Braydon Ennor",
+  "Marco Riccioni": "Marco Riccioni",
 };
 
 /**
- * Joueurs de la liste que Wikipédia n'illustre pas, au 2 septembre 2026.
+ * Joueurs dispensés du garde-fou « l'article parle de Perpignan », parce
+ * qu'une **recrue toute fraîche** n'y est pas encore : Wikipédia met des
+ * semaines à enregistrer un transfert, et refuser sur ce motif reviendrait à
+ * n'illustrer que les joueurs installés.
+ *
+ * LA DISPENSE NE VAUT QUE PARCE QUE L'IDENTITÉ EST ÉTABLIE AUTREMENT, et
+ * chaque ligne est une affirmation vérifiée à la main. Marco Riccioni : la
+ * LNR l'inscrit à Perpignan en 1ère ligne, l'article décrit un pilier droit
+ * international italien né en 1997, alors aux Saracens — même nom, même
+ * poste, et il n'existe pas d'autre joueur de rugby de ce nom. L'article est
+ * en retard, pas faux.
+ */
+const ARTICLES_HORS_PERPIGNAN = new Set(["Marco Riccioni"]);
+
+/**
+ * Anciens que Wikipédia n'illustre pas, au 2 septembre 2026.
  *
  * Leur article existe pour la plupart, sans photo ; les fiches LNR de leur
  * époque n'en portent pas davantage. Ils sont nommés ici pour que le
  * récapitulatif les compte, plutôt que de les passer sous silence.
+ *
+ * **N'y inscrire qu'un joueur hors de l'effectif.** Lucas Dubois et Tristan
+ * Tedder y ont figuré une journée, avant que la moisson LNR ne les serve :
+ * un joueur en activité à l'USAP a son portrait officiel, c'est la source
+ * qu'il faut interroger avant de déclarer une lacune.
  */
 const SANS_PORTRAIT = [
   "Alan Brazo",
   "Guillaume Vilaceca",
   "Sadek Deghmache",
   "Genesis Mamea Lemalu",
-  "Lucas Dubois",
   "Sione Piukala",
-  "Tristan Tedder",
   // Wikipédia l'illustre, mais par un plan large d'un groupe pris de dos —
   // « Lifemi_Mafi_Munster_back.jpg ». Aucun cadrage n'en tire un portrait :
   // l'image ne montre pas le visage du joueur. Écartée délibérément, une
@@ -149,6 +186,65 @@ const CADRAGES: Record<string, { x: number; y: number; cote: number }> = {
   "James Hook": { x: 0.07, y: 0.04, cote: 0.55 },
   "Jean-Pierre Pérez": { x: 0.3, y: 0.074, cote: 0.4 },
 };
+
+/**
+ * LE PLACEHOLDER DE LA LNR, ET IL FAUT LE RECONNAÎTRE.
+ *
+ * Quand un joueur n'a pas encore été photographié, son CDN ne rend pas une
+ * erreur : il rend une **silhouette grise** de 237×335 pixels, 5 730 octets,
+ * sous l'URL normale de son portrait. C'est le même piège que le bouclier
+ * gris des écussons — enregistré sans contrôle, il aurait donné huit fiches
+ * illustrées d'une ombre.
+ *
+ * Le 2 septembre 2026, huit des cinquante joueurs de l'effectif étaient dans
+ * ce cas, tous des recrues : Riccioni, Amituanai, Taty, McGrath, Reece,
+ * Kubunakaravi, Ennor, Mascarenc. Les quarante-deux autres portraits ont
+ * chacun une empreinte distincte — le contrôle ne rejette donc rien de bon.
+ */
+const PLACEHOLDER_LNR = "60a0c0dc2df281db65ad3183dc7aa79ea1ee0d14bb583ff0d0cbc086cf5fd406";
+
+/**
+ * Part de la largeur du buste que le carré retient. 0,62 laisse le visage
+ * dominant et le col visible ; à 0,55 le crâne frôle le bord, à 0,70 la tête
+ * se perd dans les épaules.
+ */
+const PART_DU_BUSTE = 0.62;
+
+/**
+ * Carré cadré sur le visage d'un portrait officiel de la LNR.
+ *
+ * **CES IMAGES SONT DÉTOURÉES**, et c'est ce qui permet de se passer
+ * d'heuristique : le canal alpha donne la boîte exacte du buste. On rogne
+ * dessus, puis on prend un carré en haut, centré — sur un buste, la tête est
+ * en haut et au milieu, c'est une propriété de l'anatomie, pas une
+ * supposition sur l'image.
+ *
+ * UN CADRAGE EN FRACTIONS FIXES NE SUFFISAIT PAS, et le contre-exemple est
+ * net : le gabarit de la LNR **n'est pas uniforme d'un club à l'autre**.
+ * Les portraits pris à Perpignan cadrent le buste serré, celui de Benjamin
+ * Urdapilleta — repris de Clermont, comme sept autres recrues qui posent
+ * encore sous leur ancien maillot — recule d'un bon tiers. Les fractions
+ * calées sur le premier lot lui prenaient le vide au-dessus de la tête. Le
+ * détourage, lui, dit où est l'homme quel que soit le lot.
+ *
+ * Repli sur l'heuristique générale si le rognage ne donne rien d'exploitable
+ * — une image sans transparence, que `trim()` laisserait intacte.
+ */
+async function enCarreLnr(donnees: Buffer, nom: string): Promise<Buffer> {
+  try {
+    const rogne = await sharp(donnees).trim({ threshold: 1 }).png().toBuffer();
+    const { width = 0, height = 0 } = await sharp(rogne).metadata();
+    const cote = Math.min(Math.round(width * PART_DU_BUSTE), height);
+    if (cote < 200 || height < width) throw new Error("rognage inexploitable");
+    return sharp(rogne)
+      .extract({ left: Math.round((width - cote) / 2), top: 0, width: cote, height: cote })
+      .resize(COTE, COTE)
+      .webp({ quality: 82 })
+      .toBuffer();
+  } catch {
+    return enCarre(donnees, nom);
+  }
+}
 
 const DOSSIER = join(process.cwd(), "public", "images", "players");
 const CREDITS = join(DOSSIER, "credits.json");
@@ -215,7 +311,10 @@ interface Trouvaille {
  * il porte sur l'identité, pas sur l'image, et doit précéder tout
  * téléchargement.
  */
-async function portraitDeLArticle(titre: string): Promise<Trouvaille | string> {
+async function portraitDeLArticle(
+  titre: string,
+  dispense = false,
+): Promise<Trouvaille | string> {
   const page = (
     await api("https://fr.wikipedia.org/w/api.php", {
       action: "query",
@@ -231,7 +330,7 @@ async function portraitDeLArticle(titre: string): Promise<Trouvaille | string> {
   if (!page || page.missing) return `article « ${titre} » introuvable`;
 
   const extrait = String(page.extract ?? "");
-  if (!/perpignan|usap/i.test(extrait)) {
+  if (!dispense && !/perpignan|usap/i.test(extrait)) {
     return `l'article « ${page.title} » ne mentionne ni Perpignan ni l'USAP`;
   }
   if (!page.pageimage) return `l'article « ${page.title} » n'a pas d'illustration`;
@@ -314,6 +413,46 @@ async function enCarre(donnees: Buffer, nom: string): Promise<Buffer> {
     .toBuffer();
 }
 
+/**
+ * Le portrait officiel d'un joueur sur sa fiche LNR, ou l'explication du
+ * refus.
+ *
+ * La fiche est du HTML ordinaire, sans JSON embarqué : les images du CDN s'y
+ * lisent en clair. On ne retient que celles dont l'URL porte l'identifiant
+ * **de ce joueur** — la page affiche aussi les vignettes de ses coéquipiers,
+ * et les prendre pour les siennes donnerait le visage d'un autre.
+ */
+async function portraitLnr(
+  joueur: LnrEffectifJoueur,
+): Promise<{ url: string; donnees: Buffer; largeur: number; hauteur: number } | string> {
+  const fiche = `https://top14.lnr.fr/joueur/${joueur.id}-${joueur.slug}`;
+  const html = await (await fetch(fiche, { headers: UA })).text();
+  const siennes = [
+    ...new Set(
+      [...html.matchAll(/https:\\?\/\\?\/cdn\.lnr\.fr\/joueur\/[^"'\s]+/g)].map((m) =>
+        m[0].replace(/\\/g, ""),
+      ),
+    ),
+  ].filter((u) => u.includes(`${joueur.id}-${joueur.slug}/`));
+
+  const url =
+    siennes.find((u) => /\/photoFull\./.test(u)) ??
+    siennes.find((u) => /\/photoPortrait\./.test(u));
+  if (!url) return "aucune image sur sa fiche LNR";
+
+  const reponse = await fetch(url, { headers: UA });
+  if (!reponse.ok) return `${reponse.status} sur ${url}`;
+  const donnees = Buffer.from(await reponse.arrayBuffer());
+
+  if (createHash("sha256").update(donnees).digest("hex") === PLACEHOLDER_LNR) {
+    return "la LNR n'a que sa silhouette grise";
+  }
+  const { width = 0, height = 0 } = await sharp(donnees).metadata();
+  if (width < 300) return `image trop petite (${width}×${height})`;
+
+  return { url, donnees, largeur: width, hauteur: height };
+}
+
 async function main() {
   const args = process.argv.slice(2);
   const simulation = args.includes("--dry");
@@ -323,20 +462,108 @@ async function main() {
   // une heuristique, et `DATABASE_URL` pointe sur la production.
   const imagesSeules = args.includes("--images");
   const seul = args.find((a) => a.startsWith("--joueur="))?.split("=")[1];
+  // Sans précision, les deux sources : la LNR pour l'effectif, Commons pour
+  // les anciens. Chacune se demande seule.
+  const queCommons = args.includes("--commons");
+  const queEffectif = args.includes("--effectif");
 
   mkdirSync(DOSSIER, { recursive: true });
   const credits: Record<string, Credit> = existsSync(CREDITS)
     ? JSON.parse(readFileSync(CREDITS, "utf8"))
     : {};
 
-  const cibles = Object.entries(PORTRAITS).filter(([nom]) => !seul || nom === seul);
-  if (seul && !cibles.length) {
-    throw new Error(`« ${seul} » ne figure pas dans PORTRAITS`);
-  }
-
   let ecrits = 0;
   let sautes = 0;
   const refuses: string[] = [];
+  const remplacables: string[] = [];
+  // Un joueur que la LNR n'illustre pas et que Commons rattrape ne doit pas
+  // rester au relevé des refus : les deux sources passent l'une après
+  // l'autre, et c'est le résultat final qui compte.
+  const servis = new Set<string>();
+
+  // ---- L'effectif actuel, depuis la LNR --------------------------------
+  if (!queCommons) {
+    utiliserDivision("top14");
+    const effectif = await lireEffectif("perpignan");
+    const fiches = await prisma.player.findMany({
+      select: { id: true, firstName: true, lastName: true, photoUrl: true },
+    });
+    const { lies, aCreer, douteux, ambigus } = apparierEffectif(effectif, fiches);
+
+    // On ne devine jamais une identité : un joueur qu'on ne sait pas
+    // rattacher n'a pas de portrait, et il est nommé.
+    for (const { joueur, candidats } of ambigus) {
+      refuses.push(
+        `${joueur.prenoms} ${joueur.nom} — plusieurs fiches : ` +
+          candidats.map((c) => `${c.firstName} ${c.lastName}`).join(" / "),
+      );
+    }
+    for (const { joueur } of douteux) {
+      refuses.push(`${joueur.prenoms} ${joueur.nom} — le prénom ne suit pas le patronyme`);
+    }
+    for (const joueur of aCreer) {
+      refuses.push(`${joueur.prenoms} ${joueur.nom} — aucune fiche en base`);
+    }
+
+    console.log(`=== Effectif — ${lies.size} joueurs rattachés sur ${effectif.length} ===\n`);
+
+    for (const [ficheId, joueur] of lies) {
+      const fiche = fiches.find((f) => f.id === ficheId)!;
+      const nom = `${fiche.firstName} ${fiche.lastName}`;
+      if (seul && nom !== seul) continue;
+
+      if (fiche.photoUrl && !force) {
+        sautes++;
+        if (!fiche.photoUrl.startsWith("/images/players/")) remplacables.push(nom);
+        console.log(`  ·  ${nom.padEnd(28)} déjà illustré`);
+        continue;
+      }
+
+      const trouve = await portraitLnr(joueur);
+      if (typeof trouve === "string") {
+        refuses.push(`${nom} — ${trouve}`);
+        continue;
+      }
+
+      const cible = `${slugFichier(nom)}.webp`;
+      const carre = await enCarreLnr(trouve.donnees, nom);
+      console.log(
+        `  ${simulation ? "≈" : "✔"}  ${nom.padEnd(28)} ${(trouve.largeur + "×" + trouve.hauteur).padEnd(11)} ` +
+          `${Math.round(carre.length / 1024)} Ko  LNR`,
+      );
+
+      credits[cible] = {
+        joueur: nom,
+        fichier: `${joueur.id}-${joueur.slug}`,
+        auteur: "Ligue nationale de rugby",
+        licence: "© LNR, tous droits réservés",
+        source: `https://top14.lnr.fr/joueur/${joueur.id}-${joueur.slug}`,
+        original: trouve.url,
+      };
+
+      if (!simulation) {
+        writeFileSync(join(DOSSIER, cible), carre);
+        if (!imagesSeules) {
+          await prisma.player.update({
+            where: { id: fiche.id },
+            data: { photoUrl: `/images/players/${cible}` },
+          });
+        }
+      }
+      servis.add(nom);
+      ecrits++;
+      await new Promise((r) => setTimeout(r, 300));
+    }
+  }
+
+  // ---- Les anciens, depuis Wikimedia Commons ----------------------------
+  const cibles = queEffectif
+    ? []
+    : Object.entries(PORTRAITS).filter(([nom]) => !seul || nom === seul);
+  if (seul && !queEffectif && !cibles.length) {
+    throw new Error(`« ${seul} » ne figure pas dans PORTRAITS`);
+  }
+  if (cibles.length) console.log(`\n=== Anciens — Wikimedia Commons ===\n`);
 
   for (const [nom, titre] of cibles) {
     // La fiche, retrouvée sur le nom complet : la base sépare prénom et nom
@@ -361,7 +588,7 @@ async function main() {
       continue;
     }
 
-    const trouve = await portraitDeLArticle(titre);
+    const trouve = await portraitDeLArticle(titre, ARTICLES_HORS_PERPIGNAN.has(nom));
     if (typeof trouve === "string") {
       refuses.push(`${nom} — ${trouve}`);
       continue;
@@ -393,6 +620,7 @@ async function main() {
         });
       }
     }
+    servis.add(nom);
     ecrits++;
     await new Promise((r) => setTimeout(r, 300));
   }
@@ -410,10 +638,19 @@ async function main() {
 
   console.log(
     `\n${simulation ? "Simulation" : imagesSeules ? "Images écrites, base intacte" : "Écrit"} : ${ecrits} portrait(s), ${sautes} déjà illustré(s), ` +
-      `${refuses.length} refusé(s), ${SANS_PORTRAIT.length} sans source connue.`,
+      `${refuses.filter((r) => !servis.has(r.split(" — ")[0])).length} refusé(s), ` +
+      `${queEffectif ? 0 : SANS_PORTRAIT.length} sans source connue.`,
   );
-  for (const r of refuses) console.log(`  ✗  ${r}`);
-  for (const n of SANS_PORTRAIT) console.log(`  –  ${n} — aucune photo libre trouvée`);
+  const restants = refuses.filter((r) => !servis.has(r.split(" — ")[0]));
+  for (const r of restants) console.log(`  ✗  ${r}`);
+  if (!queEffectif) {
+    for (const n of SANS_PORTRAIT) console.log(`  –  ${n} — aucune photo libre trouvée`);
+  }
+  // Une photo d'une autre provenance sur un joueur que la LNR illustre : le
+  // script ne tranche pas, il le dit. `--force` remplacerait.
+  for (const n of remplacables) {
+    console.log(`  ?  ${n} — photo hébergée ailleurs, la LNR en a une`);
+  }
 
   await prisma.$disconnect();
 }

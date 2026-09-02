@@ -45,19 +45,12 @@
 
 import { PrismaClient, Position } from "@prisma/client";
 import { lireEffectif, type LnrEffectifJoueur } from "./lib/lnr";
-import { mots, memeMot, normalize } from "./lib/noms";
+import { normalize } from "./lib/noms";
+import { apparierEffectif, memeFamille, type FicheNommee } from "./lib/effectif";
 import { generatePlayerSlug } from "../src/lib/slugs";
 
 const prisma = new PrismaClient();
 const DRY_RUN = process.argv.includes("--dry");
-
-/**
- * Rapprochements tranchés à la main, de l'identifiant LNR vers le nom exact
- * porté en base. À n'employer que pour les cas que la règle laisse en doute —
- * y inscrire une ligne, c'est affirmer que ces deux écritures désignent le
- * même homme.
- */
-const LIENS_VERIFIES: Record<number, string> = {};
 
 /** Le poste de la LNR vers l'enum du projet ; `null` quand elle ne tranche pas. */
 const POSTES: Record<string, Position | null> = {
@@ -89,18 +82,9 @@ function casseNom(nom: string): string {
     .join(" ");
 }
 
-interface Fiche {
-  id: string;
-  firstName: string;
-  lastName: string;
+interface Fiche extends FicheNommee {
   isActive: boolean;
   position: Position | null;
-}
-
-/** Un mot du nom de famille en commun. */
-function memeFamille(a: string, b: string): boolean {
-  const cibles = mots(b);
-  return mots(a).some((mot) => cibles.some((cible) => memeMot(mot, cible)));
 }
 
 async function main() {
@@ -122,36 +106,9 @@ async function main() {
   });
   console.log(`${effectif.length} joueurs à la LNR, ${fiches.length} fiches en base\n`);
 
-  const lies = new Map<string, LnrEffectifJoueur>(); // id de fiche -> joueur LNR
-  const aCreer: LnrEffectifJoueur[] = [];
-  const douteux: { joueur: LnrEffectifJoueur; candidats: Fiche[] }[] = [];
-  const ambigus: { joueur: LnrEffectifJoueur; candidats: Fiche[] }[] = [];
-
-  for (const joueur of effectif) {
-    const nomVerifie = LIENS_VERIFIES[joueur.id];
-    if (nomVerifie) {
-      const fiche = fiches.find(
-        (f) => normalize(`${f.firstName} ${f.lastName}`) === normalize(nomVerifie),
-      );
-      if (!fiche) {
-        throw new Error(
-          `LIENS_VERIFIES[${joueur.id}] désigne « ${nomVerifie} », introuvable en base.`,
-        );
-      }
-      lies.set(fiche.id, joueur);
-      continue;
-    }
-
-    const parFamille = fiches.filter((f) => memeFamille(f.lastName, joueur.nom));
-    const avecPrenom = parFamille.filter((f) =>
-      memeFamille(f.firstName, joueur.prenoms),
-    );
-
-    if (avecPrenom.length === 1) lies.set(avecPrenom[0].id, joueur);
-    else if (avecPrenom.length > 1) ambigus.push({ joueur, candidats: avecPrenom });
-    else if (parFamille.length > 0) douteux.push({ joueur, candidats: parFamille });
-    else aCreer.push(joueur);
-  }
+  // La règle du rapprochement vit dans `lib/effectif.ts`, partagée avec
+  // `fetch-player-photos.ts`.
+  const { lies, aCreer, douteux, ambigus } = apparierEffectif(effectif, fiches);
 
   if (ambigus.length) {
     for (const { joueur, candidats } of ambigus) {

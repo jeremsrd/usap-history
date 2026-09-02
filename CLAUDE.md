@@ -251,7 +251,17 @@ confrontations avec l'USAP, et de gérer les joueurs passés par les deux camps
   trois lettres, mais « van » et « der » en font exactement trois — sans les
   écarter, « Van Der Mescht », « Van Der Westhuizen » et « Van Der Merwe » se
   valent tous, et trois hommes sans rapport deviennent candidats l'un pour
-  l'autre. `joueurs.ts` porte la liste.
+  l'autre.
+
+  **La liste vit dans `noms.ts`, et non plus dans `joueurs.ts`**, parce que
+  *tout* rapprochement de noms en a besoin — `motsUtiles()`. L'appariement de
+  l'effectif ne l'avait pas, et il tenait de ce fait « Jacobus Van Tonder »
+  pour un candidat possible de « Martinus Jacobus Van Der Heever », deux
+  hommes que seul « Van » rapproche : `sync-effectif.ts` **refusait d'écrire**
+  sur cette ambiguïté, et il le faisait depuis assez longtemps pour que
+  `LIENS_VERIFIES` soit resté vide. Une exception nominative l'aurait
+  débloqué ; la cause était ailleurs, et la corriger a levé l'ambiguïté sans
+  rien inscrire à la main.
 
   Dans tous les cas, à défaut de conclure, on crée une fiche après avoir
   prévenu. C'est délibéré : un doublon se repère et se fusionne, une identité
@@ -711,7 +721,11 @@ de son index les fiches qu'il aurait absorbées).
 Le code réutilisable va dans `scripts/lib/` : `lnr.ts` pour les feuilles de la
 LNR, `epcr.ts` pour le flux des coupes d'Europe, `noms.ts` pour le
 rapprochement des noms entre une source et la base, `joueurs.ts` pour
-retrouver ou créer une fiche à partir d'une feuille officielle, `fusion.ts`
+retrouver ou créer une fiche à partir d'une feuille officielle, `effectif.ts`
+pour rapprocher l'effectif publié par la LNR des fiches — règle plus stricte
+qu'ailleurs, un mot du **nom de famille** et un mot du prénom, parce qu'elle
+s'applique aux milliers de fiches de la base et non aux vingt-trois d'une
+feuille —, `fusion.ts`
 pour l'absorption d'une fiche par une autre, `stades.ts` pour le terrain d'une
 rencontre — historique des stades et lieux particuliers compris —, et
 `arbitres.ts` pour celui des arbitres — plus strict, puisqu'il exige le nom de famille : le corps
@@ -775,7 +789,7 @@ doublons.
 | `seed-cup-sheet.ts` | **le pendant pour les coupes d'Europe**, depuis l'EPCR : réalisations, cartons et temps de jeu des **deux camps**, plus l'arbitre, l'affluence et la mi-temps. Sans argument il reprend les dix-huit matchs européens ; `--dry`, `--detail`, `--match=AAAA-MM-JJ` comme le précédent |
 | `audit-opponent-lineups.ts` | confronte les compositions adverses aux feuilles officielles LNR — les deux divisions, phases finales comprises ; lecture seule, à lancer sur une saison ou sur tout. **Zéro anomalie est l'état attendu** ; les variantes d'affichage arbitrées sont tues par sa table `VARIANTES_DAFFICHAGE`, comptées au récapitulatif et listées par `--variantes` |
 | `fix-opponent-lineup.ts` | remet une composition en accord avec la feuille officielle — LNR pour le championnat, EPCR pour les coupes — (identités, dossards, titulaires, capitaine) ; `--usap` traite aussi le camp catalan |
-| `fetch-player-photos.ts` | rapatrie les portraits des joueurs depuis Wikimedia Commons dans `public/images/players/`, renseigne `photoUrl` et consigne auteur et licence dans `credits.json` ; `--dry`, `--images` pour n'écrire que les fichiers, `--planche` pour la planche contact, `--force` pour réécrire |
+| `fetch-player-photos.ts` | rapatrie les portraits dans `public/images/players/`, renseigne `photoUrl` et consigne auteur et licence dans `credits.json` : **la LNR pour l'effectif, Wikimedia Commons pour les anciens**. `--dry`, `--effectif` ou `--commons` pour n'en faire qu'une, `--images` pour n'écrire que les fichiers, `--planche` pour la planche contact, `--force` pour réécrire |
 | `fetch-club-logos.ts` | rapatrie les logos officiels des clubs dans `public/images/logos/`, depuis les CDN de la LNR et de l'EPCR, et renseigne `Opponent.logoUrl` |
 | `fix-match-venues.ts` | met les stades en ordre : fusionne les doublons, crée les manquants, rattache chaque club à son terrain — déduit des déplacements déjà enregistrés — puis complète les matchs sans lieu, par `terrainDuMatch()` |
 | `seed-stades-historiques.ts` | écrit les terrains d'**avant** : les trois clubs qui ont déménagé pendant la période couverte, chacun avec sa source. À relancer après `fix-match-venues.ts` si un stade manquait |
@@ -887,77 +901,132 @@ propriétaire du site.
 
 ## Photos des joueurs
 
-**23 fiches sur 308 sont illustrées**, dont 21 par la moisson du 2 septembre
-2026 : les joueurs les plus capés et les meilleurs marqueurs de la base.
-Les images sont servies par le site lui-même depuis
-`public/images/players/{slug}.webp` — 388 Ko au total, carrés de 400 pixels,
+**65 fiches sur 308 sont illustrées**, dont **45 des 50 joueurs de l'effectif
+professionnel**. Les images sont servies par le site lui-même depuis
+`public/images/players/{slug}.webp` — 1,3 Mo au total, carrés de 400 pixels,
 le plus grand affichage du site en faisant 160.
 
-**La source n'est pas la LNR, et ce n'est pas un oubli.** Elle sert bien des
-portraits — `cdn.lnr.fr/joueur/{id}-{slug}/photo/photoPortrait.{empreinte}`,
-et ses feuilles donnent l'URL de fiche de chaque joueur d'une composition —
-mais **elle ne les conserve que pour les joueurs récents** : vérifié sur la
-feuille Perpignan-Toulon du 25 août 2012, les fiches de Nicolas Mas,
-Alasdair Strokosch, Jérémy Castex et Romain Terrain ne portent aucune image,
-quand celles de la J1 de 2025-2026 en portent toutes. Or les joueurs les plus
-capés de la base sont précisément les anciens.
+**Deux sources, et c'est l'époque du joueur qui tranche.**
 
-**C'est donc Wikimedia Commons**, et le choix se défend sur les droits : une
-photo de joueur est une œuvre protégée, bien davantage qu'un écusson, et
-Commons est la seule source qui porte une **licence lisible par machine**.
-`fetch-player-photos.ts` refuse toute image dont la licence n'est pas libre,
-et consigne pour chacune son auteur, sa licence et sa page d'origine dans
-`public/images/players/credits.json`.
+### La LNR pour l'effectif actuel
+
+`cdn.lnr.fr/joueur/{id}-{slug}/photo/photoFull.{empreinte}`, l'identifiant
+venant de `/club/perpignan/effectif-staff` par `lireEffectif`. Portraits
+officiels en 800×1200 WebP, buste **détouré sur fond transparent**, le joueur
+sous le maillot de la saison. C'est la source officielle du projet.
+
+**Mais elle ne conserve ses portraits que pour les joueurs récents**, et c'est
+vérifié : sur la feuille Perpignan-Toulon du 25 août 2012, les fiches de
+Nicolas Mas, Alasdair Strokosch, Jérémy Castex et Romain Terrain ne portent
+aucune image, quand celles de la J1 de 2025-2026 en portent toutes.
+
+**ET ELLE A UN PLACEHOLDER, COMME POUR LES ÉCUSSONS.** Quand un joueur n'a
+pas encore été photographié, son CDN ne rend pas une erreur mais une
+**silhouette grise** de 237×335 pixels, 5 730 octets, sous l'URL normale du
+portrait — huit des cinquante joueurs de l'effectif au 2 septembre 2026, tous
+des recrues. `PLACEHOLDER_LNR` la reconnaît à son empreinte SHA-256 et refuse
+de l'enregistrer ; les quarante-deux autres portraits ont chacun une empreinte
+distincte, le contrôle ne rejette donc rien de bon.
+
+### Wikimedia Commons pour les anciens
+
+Une photo de joueur est une œuvre protégée, bien davantage qu'un écusson, et
+Commons est la seule source qui porte une **licence lisible par machine**. Le
+script refuse toute image dont la licence n'est pas libre.
 
 **CC BY ET CC BY-SA EXIGENT L'ATTRIBUTION.** Le crédit affiché sous la photo
-sur la fiche joueur — `creditPhoto()` de `src/lib/credits-photos.ts` — n'est
-donc pas décoratif : le retirer rendrait le site fautif. Les 21 portraits se
-répartissent en CC BY-SA 2.0, 3.0 et 4.0, CC BY 2.0 et une Licence Art Libre
-(David Marty).
+sur la fiche joueur — `creditPhoto()` de `src/lib/credits-photos.ts`, nourri
+par `public/images/players/credits.json` — n'est donc pas décoratif : le
+retirer rendrait le site fautif. La mention couvre aussi les portraits LNR, à
+qui `credits.json` attribue « © LNR, tous droits réservés » plutôt que de
+taire leur provenance.
 
-**Trois garde-fous, et le deuxième est le seul qui protège l'identité :**
+**Les droits ne sont pas les mêmes des deux côtés** : Commons donne une
+licence libre, la LNR non. Afficher ses portraits relève du même arbitrage
+que ses écussons — un usage toléré sur un site d'histoire non commercial, qui
+appartient au propriétaire du site.
 
-1. **l'article est nommé à la main**, dans la table `PORTRAITS`. Chercher par
+### Trois garde-fous, et le deuxième protège l'identité
+
+1. **L'article Commons est nommé à la main**, dans `PORTRAITS`. Chercher par
    mot-clé rendait « Lucas Dubois » ou « David Marty » sans qu'on puisse dire
-   de quel homme il s'agit — le piège des homonymes des feuilles de match, et
-   il se résout de la même façon ;
-2. **l'article doit mentionner Perpignan ou l'USAP.** Un titre juste ne prouve
-   pas l'identité : le script lit le texte de l'article et refuse le reste ;
-3. **la licence doit être libre**, et l'image assez grande pour être un
+   de quel homme il s'agit — le piège des homonymes des feuilles de match.
+2. **L'article doit mentionner Perpignan ou l'USAP.** Un titre juste ne
+   prouve pas l'identité. `ARTICLES_HORS_PERPIGNAN` en dispense les recrues
+   toutes fraîches, que Wikipédia n'a pas encore enregistrées — mais chaque
+   ligne est une affirmation vérifiée à la main : Marco Riccioni y figure
+   parce que la LNR l'inscrit à Perpignan en 1ère ligne et que l'article
+   décrit un pilier droit international italien né en 1997, alors aux
+   Saracens. L'article est en retard, pas faux.
+3. **La licence doit être libre**, et l'image assez grande pour être un
    portrait — sans quoi un logo de club ou un drapeau passerait.
 
-**LE RECADRAGE EST UNE HEURISTIQUE, ET IL A ÉCHOUÉ UNE FOIS SUR DEUX.** Le
-site affiche la photo en carré quand Commons sert des portraits en pied de
-1500×2700. `sharp.strategy.attention` seule vise le contraste, non le
-visage : à l'essai, elle a rendu le torse de Jean-Bernard Pujol et de David
-Mélé — tête coupée —, les jambes de Kisi Pulu, une mêlée sans visage pour
-Jean-Pierre Pérez et Tristan Labouteley. D'où le procédé en deux temps —
-sur une photo plus haute que large, ne garder d'abord que la **bande
-supérieure**, où la tête se trouve nécessairement, et ne laisser à
-l'attention que le cadrage horizontal — puis la table `CADRAGES`, huit
-recadrages relevés à la main sur l'original.
+Côté LNR, l'identité vient de `apparierEffectif()` : un joueur qu'on ne sait
+pas rattacher n'a pas de portrait, et il est nommé au relevé.
 
-**Ces deux dispositifs ne remplacent pas le coup d'œil** : `--planche` écrit
-une planche contact HTML, hors de `public/`, et c'est elle qui a montré les
+### Le cadrage, et pourquoi il diffère selon la source
+
+Le site affiche la photo en carré quand les deux sources servent des
+portraits verticaux.
+
+**Sur les portraits LNR, aucune heuristique n'est nécessaire : ils sont
+détourés.** Le canal alpha donne la boîte exacte du buste — on rogne dessus,
+puis on prend un carré en haut, centré, à 62 % de la largeur. Sur un buste,
+la tête est en haut et au milieu : c'est une propriété de l'anatomie, pas une
+supposition sur l'image.
+
+**UN CADRAGE EN FRACTIONS FIXES NE SUFFISAIT PAS**, et le contre-exemple est
+net : le gabarit de la LNR **n'est pas uniforme d'un club à l'autre**. Les
+portraits pris à Perpignan cadrent le buste serré, celui de Benjamin
+Urdapilleta — repris de Clermont, comme sept autres recrues qui posent encore
+sous leur ancien maillot — recule d'un bon tiers, et les fractions calées sur
+le premier lot lui prenaient le vide au-dessus de la tête. Le détourage, lui,
+dit où est l'homme quel que soit le lot.
+
+**Sur Commons, en revanche, le recadrage a échoué une fois sur deux.**
+`sharp.strategy.attention` vise le contraste et non le visage : elle a rendu
+le torse de Jean-Bernard Pujol et de David Mélé — tête coupée —, les jambes
+de Kisi Pulu, une mêlée sans visage pour Jean-Pierre Pérez et Tristan
+Labouteley. D'où le procédé en deux temps — sur une photo plus haute que
+large, ne garder d'abord que la **bande supérieure**, où la tête se trouve
+nécessairement, et ne laisser à l'attention que le cadrage horizontal — puis
+la table `CADRAGES`, huit recadrages relevés à la main sur l'original.
+
+**Ces dispositifs ne remplacent pas le coup d'œil** : `--planche` écrit une
+planche contact HTML, hors de `public/`, et c'est elle qui a montré les
 échecs. Un portrait ne se valide pas au journal d'exécution.
 
-**Une photo peut être libre et ne rien illustrer.** Wikipédia donne bien une
-image à Lifeimi Mafi — un plan large d'un groupe pris de dos,
-« Lifemi_Mafi_Munster_back.jpg ». Aucun cadrage n'en tire un portrait :
-elle est écartée délibérément, et le joueur figure dans `SANS_PORTRAIT`. Une
-absence vaut mieux qu'une image qui ne montre personne.
+**La transparence des portraits LNR est conservée**, et elle sert les deux
+thèmes comme celle des écussons : le buste se détache sur le fond de la carte,
+clair ou sombre, sans rectangle rapporté.
 
-**Sept des joueurs les plus capés n'ont aucune photo libre** : Alan Brazo,
-Guillaume Vilaceca, Sadek Deghmache, Genesis Mamea Lemalu, Lucas Dubois,
-Sione Piukala et Tristan Tedder. Leur article existe pour la plupart, sans
-illustration, et les fiches LNR de leur époque n'en portent pas davantage.
-Ils sont nommés dans le script pour que le récapitulatif les compte, une
-omission dite valant mieux qu'une omission tue.
+### Ce qui manque, et pourquoi
+
+**Cinq joueurs de l'effectif n'ont aucun portrait** : Bradley Amituanai, Simon
+Taty, Luke McGrath, Aisea Kubunakaravi et Diego Mascarenc — la LNR n'a que
+leur silhouette, et Wikipédia soit ne leur consacre pas d'article, soit n'en
+illustre pas. À reprendre quand la LNR aura photographié ses recrues : une
+simple relance les servira.
+
+**Six anciens n'ont aucune photo libre** : Alan Brazo, Guillaume Vilaceca,
+Sadek Deghmache, Genesis Mamea Lemalu, Sione Piukala et Lifeimi Mafi. Ils sont
+nommés dans `SANS_PORTRAIT` pour que le récapitulatif les compte — une
+omission dite valant mieux qu'une omission tue. **N'y inscrire qu'un joueur
+hors de l'effectif** : Lucas Dubois et Tristan Tedder y ont figuré une
+journée, avant que la moisson LNR ne les serve.
+
+**Une photo peut être libre et n'illustrer personne.** Wikipédia donne bien
+une image à Lifeimi Mafi — un plan large d'un groupe pris de dos,
+« Lifemi_Mafi_Munster_back.jpg ». Aucun cadrage n'en tire un portrait : elle
+est écartée délibérément. Une absence vaut mieux qu'une image qui ne montre
+personne.
 
 **Deux photos restent hébergées sur Supabase**, téléversées à la main avant
 cette chaîne : Tom Ecochard et Joseph Desclaux. `creditPhoto()` rend `null`
-pour elles, et la fiche n'affiche alors aucun crédit — leur provenance n'est
-pas connue du dépôt.
+pour elles et la fiche n'affiche alors aucun crédit, leur provenance n'étant
+pas connue du dépôt. Le script signale qu'Ecochard, qui est dans l'effectif, a
+un portrait officiel disponible ; il ne le remplace pas de lui-même — la photo
+en place est un choix.
 
 ## Ce que les pages affichent
 
@@ -1511,8 +1580,9 @@ Par ordre de valeur.
    2018-2019 est donc restée hors base, et il en ira de même en remontant tant
    qu'aucune source officielle ne les rouvre.
 3. **Le fond** : affluences (36 matchs sur 520 joués), biographies (1 joueur
-   sur 301), les 7 joueurs les plus capés que Wikipédia n'illustre pas (cf.
-   « Photos des joueurs »), et les saisons sans aucun match.
+   sur 301), les onze joueurs sans portrait — six anciens et cinq recrues que
+   la LNR n'a pas encore photographiées, cf. « Photos des joueurs » —, et les
+   saisons sans aucun match.
 
 Sur les 120 saisons en base, 19 seulement portent des matchs : c'est le
 chantier de la phase 4, mené en remontant le temps saison par saison. Le bilan
@@ -1645,9 +1715,9 @@ d'écrire les agrégats s'ils s'en écartent.
 - **Affluences éparses** : 36 matchs sur 520 joués, l'EPCR ayant fourni celles
   des coupes. **Sept matchs joués n'ont pas d'arbitre** — deux en 2010-2011,
   cinq en 2008-2009 —, la LNR n'en publiant pas les officiels ; c'est une
-  lacune qui s'aggrave en remontant. **23 fiches sur 308 sont illustrées** — les
-plus capées et les meilleurs marqueurs, cf. « Photos des joueurs » — et une seule
-porte une biographie.
+  lacune qui s'aggrave en remontant. **65 fiches sur 308 sont illustrées** — dont
+45 des 50 joueurs de l'effectif, cf. « Photos des joueurs » — et une seule porte
+une biographie.
 - **L'audit des compositions adverses ne signale plus rien** : 488 matchs
   examinés, 488 conformes, au 1er septembre 2026.
 

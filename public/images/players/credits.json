@@ -49,11 +49,11 @@
   },
   "enzo-forletta.webp": {
     "joueur": "Enzo Forletta",
-    "fichier": "Forlettta_2021.jpg",
-    "auteur": "34 super héros",
-    "licence": "CC BY-SA 4.0",
-    "source": "https://commons.wikimedia.org/wiki/File:Forlettta_2021.jpg",
-    "original": "https://upload.wikimedia.org/wikipedia/commons/f/f7/Forlettta_2021.jpg"
+    "fichier": "1440-enzo-forletta",
+    "auteur": "Ligue nationale de rugby",
+    "licence": "© LNR, tous droits réservés",
+    "source": "https://top14.lnr.fr/joueur/1440-enzo-forletta",
+    "original": "https://cdn.lnr.fr/joueur/1440-enzo-forletta/photo/photoFull.8fb9c3364ddb6923fbb9e4f0b5c4a223ec9dfa31"
   },
   "jean-bernard-pujol.webp": {
     "joueur": "Jean Bernard Pujol",
@@ -161,10 +161,346 @@
   },
   "jake-mcintyre.webp": {
     "joueur": "Jake McIntyre",
-    "fichier": "Jake_McIntyre_2014_Brisbane.jpg",
-    "auteur": "NAPARAZZI",
+    "fichier": "2005-jake-aron-mcintyre",
+    "auteur": "Ligue nationale de rugby",
+    "licence": "© LNR, tous droits réservés",
+    "source": "https://top14.lnr.fr/joueur/2005-jake-aron-mcintyre",
+    "original": "https://cdn.lnr.fr/joueur/2005-jake-aron-mcintyre/photo/photoFull.8fb9c3364ddb6923fbb9e4f0b5c4a223ec9dfa31"
+  },
+  "victor-montgaillard.webp": {
+    "joueur": "Victor Montgaillard",
+    "fichier": "2009-victor-montgaillard",
+    "auteur": "Ligue nationale de rugby",
+    "licence": "© LNR, tous droits réservés",
+    "source": "https://top14.lnr.fr/joueur/2009-victor-montgaillard",
+    "original": "https://cdn.lnr.fr/joueur/2009-victor-montgaillard/photo/photoFull.ee934f548fe09a4ae399664f51f3b337182a7bda"
+  },
+  "lucas-velarte.webp": {
+    "joueur": "Lucas Velarte",
+    "fichier": "2025-lucas-velarte",
+    "auteur": "Ligue nationale de rugby",
+    "licence": "© LNR, tous droits réservés",
+    "source": "https://top14.lnr.fr/joueur/2025-lucas-velarte",
+    "original": "https://cdn.lnr.fr/joueur/2025-lucas-velarte/photo/photoFull.ee934f548fe09a4ae399664f51f3b337182a7bda"
+  },
+  "bruce-devaux.webp": {
+    "joueur": "Bruce Devaux",
+    "fichier": "2389-bruce-devaux",
+    "auteur": "Ligue nationale de rugby",
+    "licence": "© LNR, tous droits réservés",
+    "source": "https://top14.lnr.fr/joueur/2389-bruce-devaux",
+    "original": "https://cdn.lnr.fr/joueur/2389-bruce-devaux/photo/photoFull.a97524dc594c8aeebbfcdd79d1f1b2c5bac42c46"
+  },
+  "sama-malolo.webp": {
+    "joueur": "Sama Malolo",
+    "fichier": "13637-sama-leonardo-malolo",
+    "auteur": "Ligue nationale de rugby",
+    "licence": "© LNR, tous droits réservés",
+    "source": "https://top14.lnr.fr/joueur/13637-sama-leonardo-malolo",
+    "original": "https://cdn.lnr.fr/joueur/13637-sama-leonardo-malolo/photo/photoFull.0fd69e9cc9f3330b798fbdadeac2e18e7398b39a"
+  },
+  "ignacio-ruiz.webp": {
+    "joueur": "Ignacio Ruiz",
+    "fichier": "11989-ignacio-ruiz",
+    "auteur": "Ligue nationale de rugby",
+    "licence": "© LNR, tous droits réservés",
+    "source": "https://top14.lnr.fr/joueur/11989-ignacio-ruiz",
+    "original": "https://cdn.lnr.fr/joueur/11989-ignacio-ruiz/photo/photoFull.8fb9c3364ddb6923fbb9e4f0b5c4a223ec9dfa31"
+  },
+  "mathys-lotrian.webp": {
+    "joueur": "Mathys Lotrian",
+    "fichier": "1967-mathys-lotrian",
+    "auteur": "Ligue nationale de rugby",
+    "licence": "© LNR, tous droits réservés",
+    "source": "https://top14.lnr.fr/joueur/1967-mathys-lotrian",
+    "original": "https://cdn.lnr.fr/joueur/1967-mathys-lotrian/photo/photoFull.ce1f70a258952f05b8109d6d3c202a083169242c"
+  },
+  "pietro-ceccarelli.webp": {
+    "joueur": "Pietro Ceccarelli",
+    "fichier": "398-pietro-ceccarelli",
+    "auteur": "Ligue nationale de rugby",
+    "licence": "© LNR, tous droits réservés",
+    "source": "https://top14.lnr.fr/joueur/398-pietro-ceccarelli",
+    "original": "https://cdn.lnr.fr/joueur/398-pietro-ceccarelli/photo/photoFull.8fb9c3364ddb6923fbb9e4f0b5c4a223ec9dfa31"
+  },
+  "cedate-gomes-sa.webp": {
+    "joueur": "Cedate Gomes Sa",
+    "fichier": "2162-cedate-gomes-sa",
+    "auteur": "Ligue nationale de rugby",
+    "licence": "© LNR, tous droits réservés",
+    "source": "https://top14.lnr.fr/joueur/2162-cedate-gomes-sa",
+    "original": "https://cdn.lnr.fr/joueur/2162-cedate-gomes-sa/photo/photoFull.8fb9c3364ddb6923fbb9e4f0b5c4a223ec9dfa31"
+  },
+  "giorgi-tetrashvili.webp": {
+    "joueur": "Giorgi Tetrashvili",
+    "fichier": "1990-giorgi-tetrashvili",
+    "auteur": "Ligue nationale de rugby",
+    "licence": "© LNR, tous droits réservés",
+    "source": "https://top14.lnr.fr/joueur/1990-giorgi-tetrashvili",
+    "original": "https://cdn.lnr.fr/joueur/1990-giorgi-tetrashvili/photo/photoFull.8fb9c3364ddb6923fbb9e4f0b5c4a223ec9dfa31"
+  },
+  "lorencio-boyer-gallardo.webp": {
+    "joueur": "Lorencio Boyer Gallardo",
+    "fichier": "1960-lorencio-boyer-gallardo",
+    "auteur": "Ligue nationale de rugby",
+    "licence": "© LNR, tous droits réservés",
+    "source": "https://top14.lnr.fr/joueur/1960-lorencio-boyer-gallardo",
+    "original": "https://cdn.lnr.fr/joueur/1960-lorencio-boyer-gallardo/photo/photoFull.f2617bcbe20b303abf45856e3481e166a7f7a555"
+  },
+  "jose-duarte-madeira.webp": {
+    "joueur": "José Duarte Madeira",
+    "fichier": "860-jose-duarte-madeira",
+    "auteur": "Ligue nationale de rugby",
+    "licence": "© LNR, tous droits réservés",
+    "source": "https://top14.lnr.fr/joueur/860-jose-duarte-madeira",
+    "original": "https://cdn.lnr.fr/joueur/860-jose-duarte-madeira/photo/photoFull.ee934f548fe09a4ae399664f51f3b337182a7bda"
+  },
+  "bastien-chinarro.webp": {
+    "joueur": "Bastien Chinarro",
+    "fichier": "1970-bastien-chinarro",
+    "auteur": "Ligue nationale de rugby",
+    "licence": "© LNR, tous droits réservés",
+    "source": "https://top14.lnr.fr/joueur/1970-bastien-chinarro",
+    "original": "https://cdn.lnr.fr/joueur/1970-bastien-chinarro/photo/photoFull.ee934f548fe09a4ae399664f51f3b337182a7bda"
+  },
+  "adrien-warion.webp": {
+    "joueur": "Adrien Warion",
+    "fichier": "2388-adrien-warion",
+    "auteur": "Ligue nationale de rugby",
+    "licence": "© LNR, tous droits réservés",
+    "source": "https://top14.lnr.fr/joueur/2388-adrien-warion",
+    "original": "https://cdn.lnr.fr/joueur/2388-adrien-warion/photo/photoFull.ee934f548fe09a4ae399664f51f3b337182a7bda"
+  },
+  "davit-lagvilava.webp": {
+    "joueur": "Davit Lagvilava",
+    "fichier": "11773-davit-lagvilava",
+    "auteur": "Ligue nationale de rugby",
+    "licence": "© LNR, tous droits réservés",
+    "source": "https://top14.lnr.fr/joueur/11773-davit-lagvilava",
+    "original": "https://cdn.lnr.fr/joueur/11773-davit-lagvilava/photo/photoFull.8fb9c3364ddb6923fbb9e4f0b5c4a223ec9dfa31"
+  },
+  "mathieu-tanguy.webp": {
+    "joueur": "Mathieu Tanguy",
+    "fichier": "2342-mathieu-tanguy",
+    "auteur": "Ligue nationale de rugby",
+    "licence": "© LNR, tous droits réservés",
+    "source": "https://top14.lnr.fr/joueur/2342-mathieu-tanguy",
+    "original": "https://cdn.lnr.fr/joueur/2342-mathieu-tanguy/photo/photoFull.8fb9c3364ddb6923fbb9e4f0b5c4a223ec9dfa31"
+  },
+  "jacobus-van-tonder.webp": {
+    "joueur": "Jacobus Van Tonder",
+    "fichier": "693-jacobus-van-tonder",
+    "auteur": "Ligue nationale de rugby",
+    "licence": "© LNR, tous droits réservés",
+    "source": "https://top14.lnr.fr/joueur/693-jacobus-van-tonder",
+    "original": "https://cdn.lnr.fr/joueur/693-jacobus-van-tonder/photo/photoFull.8fb9c3364ddb6923fbb9e4f0b5c4a223ec9dfa31"
+  },
+  "jonathan-gray.webp": {
+    "joueur": "Jonathan Gray",
+    "fichier": "12498-jonathan-gray",
+    "auteur": "Ligue nationale de rugby",
+    "licence": "© LNR, tous droits réservés",
+    "source": "https://top14.lnr.fr/joueur/12498-jonathan-gray",
+    "original": "https://cdn.lnr.fr/joueur/12498-jonathan-gray/photo/photoFull.8fb9c3364ddb6923fbb9e4f0b5c4a223ec9dfa31"
+  },
+  "lachlan-swinton.webp": {
+    "joueur": "Lachlan Swinton",
+    "fichier": "12568-lachlan-william-swinton",
+    "auteur": "Ligue nationale de rugby",
+    "licence": "© LNR, tous droits réservés",
+    "source": "https://top14.lnr.fr/joueur/12568-lachlan-william-swinton",
+    "original": "https://cdn.lnr.fr/joueur/12568-lachlan-william-swinton/photo/photoFull.8fb9c3364ddb6923fbb9e4f0b5c4a223ec9dfa31"
+  },
+  "posolo-tuilagi.webp": {
+    "joueur": "Posolo Tuilagi",
+    "fichier": "1952-posolo-tuilagi",
+    "auteur": "Ligue nationale de rugby",
+    "licence": "© LNR, tous droits réservés",
+    "source": "https://top14.lnr.fr/joueur/1952-posolo-tuilagi",
+    "original": "https://cdn.lnr.fr/joueur/1952-posolo-tuilagi/photo/photoFull.ee934f548fe09a4ae399664f51f3b337182a7bda"
+  },
+  "joaquin-oviedo.webp": {
+    "joueur": "Joaquín Oviedo",
+    "fichier": "1955-joaquin-oviedo",
+    "auteur": "Ligue nationale de rugby",
+    "licence": "© LNR, tous droits réservés",
+    "source": "https://top14.lnr.fr/joueur/1955-joaquin-oviedo",
+    "original": "https://cdn.lnr.fr/joueur/1955-joaquin-oviedo/photo/photoFull.ee934f548fe09a4ae399664f51f3b337182a7bda"
+  },
+  "matteo-le-corvec.webp": {
+    "joueur": "Mattéo Le Corvec",
+    "fichier": "2383-matteo-le-corvec",
+    "auteur": "Ligue nationale de rugby",
+    "licence": "© LNR, tous droits réservés",
+    "source": "https://top14.lnr.fr/joueur/2383-matteo-le-corvec",
+    "original": "https://cdn.lnr.fr/joueur/2383-matteo-le-corvec/photo/photoFull.ee934f548fe09a4ae399664f51f3b337182a7bda"
+  },
+  "noe-della-schiava.webp": {
+    "joueur": "Noé Della Schiava",
+    "fichier": "1013-noe-della-schiava",
+    "auteur": "Ligue nationale de rugby",
+    "licence": "© LNR, tous droits réservés",
+    "source": "https://top14.lnr.fr/joueur/1013-noe-della-schiava",
+    "original": "https://cdn.lnr.fr/joueur/1013-noe-della-schiava/photo/photoFull.ee934f548fe09a4ae399664f51f3b337182a7bda"
+  },
+  "peceli-yato.webp": {
+    "joueur": "Peceli Yato",
+    "fichier": "679-peceli-yato",
+    "auteur": "Ligue nationale de rugby",
+    "licence": "© LNR, tous droits réservés",
+    "source": "https://top14.lnr.fr/joueur/679-peceli-yato",
+    "original": "https://cdn.lnr.fr/joueur/679-peceli-yato/photo/photoFull.8fb9c3364ddb6923fbb9e4f0b5c4a223ec9dfa31"
+  },
+  "patrick-sobela.webp": {
+    "joueur": "Patrick Sobela",
+    "fichier": "1103-patrick-sobela",
+    "auteur": "Ligue nationale de rugby",
+    "licence": "© LNR, tous droits réservés",
+    "source": "https://top14.lnr.fr/joueur/1103-patrick-sobela",
+    "original": "https://cdn.lnr.fr/joueur/1103-patrick-sobela/photo/photoFull.8fb9c3364ddb6923fbb9e4f0b5c4a223ec9dfa31"
+  },
+  "andro-dvali.webp": {
+    "joueur": "Andro Dvali",
+    "fichier": "12480-andro-dvali",
+    "auteur": "Ligue nationale de rugby",
+    "licence": "© LNR, tous droits réservés",
+    "source": "https://top14.lnr.fr/joueur/12480-andro-dvali",
+    "original": "https://cdn.lnr.fr/joueur/12480-andro-dvali/photo/photoFull.8fb9c3364ddb6923fbb9e4f0b5c4a223ec9dfa31"
+  },
+  "james-hall.webp": {
+    "joueur": "James Hall",
+    "fichier": "1782-james-robert-hall",
+    "auteur": "Ligue nationale de rugby",
+    "licence": "© LNR, tous droits réservés",
+    "source": "https://top14.lnr.fr/joueur/1782-james-robert-hall",
+    "original": "https://cdn.lnr.fr/joueur/1782-james-robert-hall/photo/photoFull.8fb9c3364ddb6923fbb9e4f0b5c4a223ec9dfa31"
+  },
+  "antoine-aucagne.webp": {
+    "joueur": "Antoine Aucagne",
+    "fichier": "1646-antoine-aucagne",
+    "auteur": "Ligue nationale de rugby",
+    "licence": "© LNR, tous droits réservés",
+    "source": "https://top14.lnr.fr/joueur/1646-antoine-aucagne",
+    "original": "https://cdn.lnr.fr/joueur/1646-antoine-aucagne/photo/photoFull.ee934f548fe09a4ae399664f51f3b337182a7bda"
+  },
+  "mayron-fahy.webp": {
+    "joueur": "Mayron Fahy",
+    "fichier": "12362-mayron-fahy",
+    "auteur": "Ligue nationale de rugby",
+    "licence": "© LNR, tous droits réservés",
+    "source": "https://top14.lnr.fr/joueur/12362-mayron-fahy",
+    "original": "https://cdn.lnr.fr/joueur/12362-mayron-fahy/photo/photoFull.8fb9c3364ddb6923fbb9e4f0b5c4a223ec9dfa31"
+  },
+  "tristan-tedder.webp": {
+    "joueur": "Tristan Tedder",
+    "fichier": "1976-tristan-james-tedder",
+    "auteur": "Ligue nationale de rugby",
+    "licence": "© LNR, tous droits réservés",
+    "source": "https://top14.lnr.fr/joueur/1976-tristan-james-tedder",
+    "original": "https://cdn.lnr.fr/joueur/1976-tristan-james-tedder/photo/photoFull.8fb9c3364ddb6923fbb9e4f0b5c4a223ec9dfa31"
+  },
+  "paolo-garbisi.webp": {
+    "joueur": "Paolo Garbisi",
+    "fichier": "1377-paolo-garbisi",
+    "auteur": "Ligue nationale de rugby",
+    "licence": "© LNR, tous droits réservés",
+    "source": "https://top14.lnr.fr/joueur/1377-paolo-garbisi",
+    "original": "https://cdn.lnr.fr/joueur/1377-paolo-garbisi/photo/photoFull.384db760340cd65fb4d20197b2fd537d352f4e54"
+  },
+  "benjamin-urdapilleta.webp": {
+    "joueur": "Benjamin Urdapilleta",
+    "fichier": "594-benjamin-urdapilleta",
+    "auteur": "Ligue nationale de rugby",
+    "licence": "© LNR, tous droits réservés",
+    "source": "https://top14.lnr.fr/joueur/594-benjamin-urdapilleta",
+    "original": "https://cdn.lnr.fr/joueur/594-benjamin-urdapilleta/photo/photoFull.9ad06975615c800c3ef1fb8eafaa6dfe41504c9c"
+  },
+  "lucas-dubois.webp": {
+    "joueur": "Lucas Dubois",
+    "fichier": "2010-lucas-dubois",
+    "auteur": "Ligue nationale de rugby",
+    "licence": "© LNR, tous droits réservés",
+    "source": "https://top14.lnr.fr/joueur/2010-lucas-dubois",
+    "original": "https://cdn.lnr.fr/joueur/2010-lucas-dubois/photo/photoFull.ee934f548fe09a4ae399664f51f3b337182a7bda"
+  },
+  "theo-forner.webp": {
+    "joueur": "Théo Forner",
+    "fichier": "1971-theo-forner",
+    "auteur": "Ligue nationale de rugby",
+    "licence": "© LNR, tous droits réservés",
+    "source": "https://top14.lnr.fr/joueur/1971-theo-forner",
+    "original": "https://cdn.lnr.fr/joueur/1971-theo-forner/photo/photoFull.ee934f548fe09a4ae399664f51f3b337182a7bda"
+  },
+  "jefferson-lee-joseph.webp": {
+    "joueur": "Jefferson-Lee Joseph",
+    "fichier": "92-jefferson-lee-joseph",
+    "auteur": "Ligue nationale de rugby",
+    "licence": "© LNR, tous droits réservés",
+    "source": "https://top14.lnr.fr/joueur/92-jefferson-lee-joseph",
+    "original": "https://cdn.lnr.fr/joueur/92-jefferson-lee-joseph/photo/photoFull.a97524dc594c8aeebbfcdd79d1f1b2c5bac42c46"
+  },
+  "setareki-toganiyadrava.webp": {
+    "joueur": "Setareki Toganiyadrava",
+    "fichier": "1951-setareki-toganiyadrava",
+    "auteur": "Ligue nationale de rugby",
+    "licence": "© LNR, tous droits réservés",
+    "source": "https://top14.lnr.fr/joueur/1951-setareki-toganiyadrava",
+    "original": "https://cdn.lnr.fr/joueur/1951-setareki-toganiyadrava/photo/photoFull.8fb9c3364ddb6923fbb9e4f0b5c4a223ec9dfa31"
+  },
+  "maelan-rabut.webp": {
+    "joueur": "Maëlan Rabut",
+    "fichier": "2364-maelan-rabut",
+    "auteur": "Ligue nationale de rugby",
+    "licence": "© LNR, tous droits réservés",
+    "source": "https://top14.lnr.fr/joueur/2364-maelan-rabut",
+    "original": "https://cdn.lnr.fr/joueur/2364-maelan-rabut/photo/photoFull.8fb9c3364ddb6923fbb9e4f0b5c4a223ec9dfa31"
+  },
+  "jeronimo-de-la-fuente.webp": {
+    "joueur": "Jerónimo De La Fuente",
+    "fichier": "1958-jeronimo-de-la-fuente",
+    "auteur": "Ligue nationale de rugby",
+    "licence": "© LNR, tous droits réservés",
+    "source": "https://top14.lnr.fr/joueur/1958-jeronimo-de-la-fuente",
+    "original": "https://cdn.lnr.fr/joueur/1958-jeronimo-de-la-fuente/photo/photoFull.ee934f548fe09a4ae399664f51f3b337182a7bda"
+  },
+  "eneriko-buliruarua.webp": {
+    "joueur": "Eneriko Buliruarua",
+    "fichier": "2632-eneriko-buliruarua",
+    "auteur": "Ligue nationale de rugby",
+    "licence": "© LNR, tous droits réservés",
+    "source": "https://top14.lnr.fr/joueur/2632-eneriko-buliruarua",
+    "original": "https://cdn.lnr.fr/joueur/2632-eneriko-buliruarua/photo/photoFull.8fb9c3364ddb6923fbb9e4f0b5c4a223ec9dfa31"
+  },
+  "maxim-granell.webp": {
+    "joueur": "Maxim Granell",
+    "fichier": "1961-maxim-granell",
+    "auteur": "Ligue nationale de rugby",
+    "licence": "© LNR, tous droits réservés",
+    "source": "https://top14.lnr.fr/joueur/1961-maxim-granell",
+    "original": "https://cdn.lnr.fr/joueur/1961-maxim-granell/photo/photoFull.f2617bcbe20b303abf45856e3481e166a7f7a555"
+  },
+  "sevu-reece.webp": {
+    "joueur": "Sevu Reece",
+    "fichier": "Sevu_Reece_2021.jpg",
+    "auteur": "Stefano Delfrate",
     "licence": "CC BY-SA 2.0",
-    "source": "https://commons.wikimedia.org/wiki/File:Jake_McIntyre_2014_Brisbane.jpg",
-    "original": "https://upload.wikimedia.org/wikipedia/commons/b/bf/Jake_McIntyre_2014_Brisbane.jpg"
+    "source": "https://commons.wikimedia.org/wiki/File:Sevu_Reece_2021.jpg",
+    "original": "https://upload.wikimedia.org/wikipedia/commons/3/3c/Sevu_Reece_2021.jpg"
+  },
+  "braydon-ennor.webp": {
+    "joueur": "Braydon Ennor",
+    "fichier": "Braydon_Ennor_2021.jpg",
+    "auteur": "Stefano Delfrate",
+    "licence": "CC BY-SA 2.0",
+    "source": "https://commons.wikimedia.org/wiki/File:Braydon_Ennor_2021.jpg",
+    "original": "https://upload.wikimedia.org/wikipedia/commons/5/51/Braydon_Ennor_2021.jpg"
+  },
+  "marco-riccioni.webp": {
+    "joueur": "Marco Riccioni",
+    "fichier": "Marco_Riccioni_2021.jpg",
+    "auteur": "Stefano Delfrate",
+    "licence": "CC BY-SA 2.0",
+    "source": "https://commons.wikimedia.org/wiki/File:Marco_Riccioni_2021.jpg",
+    "original": "https://upload.wikimedia.org/wikipedia/commons/2/2e/Marco_Riccioni_2021.jpg"
   }
 }
