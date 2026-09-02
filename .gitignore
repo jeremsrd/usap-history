@@ -42,3 +42,6 @@ next-env.d.ts
 
 # claude code worktrees
 .claude/worktrees/
+
+# Planche contact des portraits, instrument de relecture local
+scripts/.planche-portraits.html

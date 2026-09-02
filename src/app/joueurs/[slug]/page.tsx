@@ -6,6 +6,7 @@ import { estJoue } from "@/lib/matchs";
 import type { MatchResult } from "@prisma/client";
 import { POSITIONS } from "@/lib/constants";
 import { formatDateFR, countryCodeToFlag } from "@/lib/utils";
+import { creditPhoto } from "@/lib/credits-photos";
 import {
   Users,
   MapPin,
@@ -128,6 +129,8 @@ export default async function JoueurDetailPage({ params }: Props) {
   // sous d'autres couleurs : les deux carrières sont séparées.
   // Une rencontre à venir n'a pas de composition, mais rien ne l'interdit en
   // base : on ne garde que celles qui ont un score.
+  const credit = creditPhoto(player.photoUrl);
+
   const jouees = player.matchAppearances.filter(
     (
       ma,
@@ -170,8 +173,8 @@ export default async function JoueurDetailPage({ params }: Props) {
       {/* En-tête joueur */}
       <div className="mb-10 rounded-lg border border-border bg-usap-carte p-6">
         <div className="flex flex-col gap-6 sm:flex-row">
-          {/* Photo */}
-          <div className="flex shrink-0 justify-center sm:justify-start">
+          {/* Photo, et son crédit — les licences CC BY et CC BY-SA l'exigent */}
+          <div className="flex shrink-0 flex-col items-center sm:items-start">
             {player.photoUrl ? (
               <Image
                 src={player.photoUrl}
@@ -184,6 +187,20 @@ export default async function JoueurDetailPage({ params }: Props) {
               <div className="flex h-40 w-40 items-center justify-center rounded-lg bg-muted">
                 <Users className="h-16 w-16 text-muted-foreground" />
               </div>
+            )}
+            {credit && (
+              <p className="mt-2 w-40 text-center text-[10px] leading-tight text-muted-foreground sm:text-left">
+                Photo :{" "}
+                <a
+                  href={credit.source}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="underline hover:text-usap-sang"
+                >
+                  {credit.auteur}
+                </a>{" "}
+                — {credit.licence}
+              </p>
             )}
           </div>
 
