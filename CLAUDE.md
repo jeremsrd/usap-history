@@ -1708,14 +1708,101 @@ La première a un mérite que la seconde n'a pas : elle vaut aussi pour les
 stades, les écussons et les postes, c'est-à-dire pour tout ce que ce fichier
 porte aujourd'hui faute de place en base.
 
-#### Ce qui ne bouge pas : les contrôles arithmétiques
+#### Et les règles du jeu changent, donc l'arithmétique aussi
 
-C'est la bonne nouvelle, et elle est solide : **ils ne dépendent d'aucune
-source.** La somme des points par joueur retombe sur le score, les minutes sur
-1 200, les agrégats de saison sur le classement d'époque — que Wikipédia et
-les almanachs donnent bien avant 2006, comme ils l'ont donné pour 2008-2009 où
-la LNR ne publie aucun classement. Ces contrôles deviennent **plus** précieux
-quand la source faiblit, puisqu'ils en sont alors le seul juge.
+**C'est le problème le plus grave des trois, et il attaque le seul juge qui
+restait.** Soulevé par Jérémy le 2 septembre 2026 : avant, il n'y avait pas de
+remplacements, les points ne valaient pas la même chose, et l'on pouvait
+marquer d'un coup de pied tombé après une marque.
+
+**LE BARÈME DE MATCH EST EN DUR À QUATRE ENDROITS**, et c'est exactement le
+piège que ce fichier dénonce déjà pour les points de classement — « ne jamais
+recoder un `wins * 4 + draws * 2` en dur : c'est faux avant 2004-2005 ». Le
+même défaut existe pour les points du jeu, et personne ne l'a vu parce que la
+base ne remonte pas avant 2006-2007 :
+
+| Où | Ce qui est écrit en dur |
+|---|---|
+| `scripts/lib/lnr.ts`, `realisationsDepuisFaits` | essai +5, essai de pénalité +7, pénalité +3, drop +3 |
+| `scripts/seed-opponent-sheet.ts` | `7 * essaisDePenalite`, `5 * essaisCollectifs` |
+| `scripts/seed-cup-sheet.ts` | `7 * essaisDePenalite` |
+| `src/app/admin/matchs/[id]/actions.ts` | `tries * 5 + conversions * 2 + penalties * 3 + dropGoals * 3` |
+
+Il faudra un **`baremeDeMatch(seasonStartYear)`**, pendant de
+`pointsScaleFor()` pour le classement, et l'appeler partout plutôt que de
+recopier les valeurs.
+
+**Le barème, d'après la Wikipédia anglophone (« Laws of rugby union »), et à
+recouper :**
+
+| Période | Essai | Transf. | Pénalité | Drop |
+|---|---|---|---|---|
+| jusqu'en 1891 | 1 | 2 | 2 | 4 |
+| 1891 → 1893 | 2 | 3 | 3 | 4 |
+| 1893 → 1971 | 3 | 2 | 3 | 4 puis 3 (1948) |
+| 1971 → 1992 | 4 | 2 | 3 | 3 |
+| depuis 1992 | 5 | 2 | 3 | 3 |
+
+**Deux façons de marquer ont disparu, et le modèle ne sait pas les dire** :
+le but au pied depuis le sol en jeu ouvert, possible **jusqu'en 1905**, et le
+**but après une marque** — trois points —, aboli **en 1977**. Ce dernier n'est
+pas un drop ordinaire : le ranger dans `dropGoals` fausserait le compte des
+drops. `EventType` n'a ni l'un ni l'autre, et `MatchPlayer` n'a pas de colonne
+pour eux.
+
+**TROIS RÉSERVES, du même ordre que celles déjà posées sur les bonus.** Ces
+dates sont celles des **lois internationales** : le championnat de France a pu
+les appliquer avec décalage, et rien ici ne l'établit. Wikipédia n'est pas une
+source officielle — le projet l'a déjà admise en garde-fou pour 2008-2009,
+avec la même réserve écrite. Et **la date d'autorisation des remplacements
+n'est pas établie** : l'article des lois ne la donne pas, il faudra la
+chercher ailleurs.
+
+**Ce que l'absence de remplacements change, et ce n'est pas ce qu'on croit.**
+La somme des minutes vaut toujours 15 × 80 tant que personne ne sort — mais un
+blessé sortait alors **sans être remplacé**, et l'équipe finissait à quatorze.
+Le total tombe donc sous 1 200 sans qu'aucun carton ne l'explique, alors que
+`minutesAttendues()` ne connaît aujourd'hui que la privation sur carton. Et
+`effectifDeFeuille(saison)` devra descendre à 15 — sa borne basse est
+aujourd'hui à 22, attestée jusqu'à 2006-2007 sans qu'on sache jusqu'où elle
+recule.
+
+**Et la déduction des transformations cesse de fonctionner.**
+`realisationsDepuisFaits` retrouve les transformations en prenant le reliquat
+entre le score final et les faits inscrits, puis en le divisant par deux —
+cela ne marche que parce qu'aucune autre action ne vaut un nombre pair. Avec
+un **drop à quatre points**, donc avant 1948, un reliquat de 4 peut être deux
+transformations **ou** un drop, et l'inférence devient ambiguë. C'est le
+genre de silence qu'il faut prévoir : elle ne se plaindrait pas, elle
+répondrait faux.
+
+#### Ce qui tient malgré tout : les identités, pas les coefficients
+
+Il faut distinguer les deux, sans quoi la section précédente aurait l'air de
+tout emporter. Ce qui change, ce sont les **coefficients** — combien vaut un
+essai, combien de joueurs sur le terrain. Ce qui tient, ce sont les
+**identités** : la somme des points des joueurs égale le score de l'équipe, la
+somme des minutes égale le temps de jeu disponible, les agrégats de la saison
+égalent le classement publié. Ces égalités-là ne dépendent d'aucune source et
+d'aucune époque.
+
+Autrement dit, les contrôles ne disparaissent pas : ils deviennent
+**paramétrés**. Un `baremeDeMatch(saison)` et un `effectifDeFeuille(saison)`
+justes, et toute la chaîne de vérification continue de fonctionner en 1927
+comme en 2026 — c'est déjà ce que `pointsScaleFor()` fait pour le classement
+depuis qu'on est descendu sous 2004-2005.
+
+Et ils deviennent **plus** précieux quand la source faiblit, puisqu'ils en
+sont alors le seul juge. Les classements d'époque existent, Wikipédia et les
+almanachs les donnent bien avant 2006 — comme pour 2008-2009, où la LNR n'en
+publie aucun.
+
+**Mais un contrôle paramétré ne vaut que son paramètre.** Ce fichier porte
+déjà la démonstration du danger : au barrage du 14 juin 2026, le total des
+minutes retombait sur 1 200 et cachait quarante-sept minutes fictives, parce
+que la règle à laquelle on le comparait ignorait un carton orange. **Un total
+qui retombe n'est une preuve que si la règle est la bonne** — et en remontant
+d'un siècle, c'est la règle qu'on connaîtra le moins bien.
 
 ### Limites connues
 
