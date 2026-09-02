@@ -1750,22 +1750,56 @@ pas un drop ordinaire : le ranger dans `dropGoals` fausserait le compte des
 drops. `EventType` n'a ni l'un ni l'autre, et `MatchPlayer` n'a pas de colonne
 pour eux.
 
-**TROIS RÉSERVES, du même ordre que celles déjà posées sur les bonus.** Ces
+**DEUX RÉSERVES, du même ordre que celles déjà posées sur les bonus.** Ces
 dates sont celles des **lois internationales** : le championnat de France a pu
-les appliquer avec décalage, et rien ici ne l'établit. Wikipédia n'est pas une
-source officielle — le projet l'a déjà admise en garde-fou pour 2008-2009,
-avec la même réserve écrite. Et **la date d'autorisation des remplacements
-n'est pas établie** : l'article des lois ne la donne pas, il faudra la
-chercher ailleurs.
+les appliquer avec décalage, et rien ici ne l'établit. Et Wikipédia n'est pas
+une source officielle — le projet l'a déjà admise en garde-fou pour 2008-2009,
+avec la même réserve écrite.
+
+#### Les remplacements, et les trois âges qu'ils dessinent
+
+**Cherché et trouvé le 2 septembre 2026**, sur
+`rugbyfootballhistory.com/laws.htm` et le musée de World Rugby, qui
+concordent :
+
+| Période | Ce qui est permis |
+|---|---|
+| jusqu'en 1967-1968 | **rien** : quinze joueurs, et l'équipe finit à quatorze si l'un sort |
+| **1968-1969** | remplacement des **blessés** seulement, **deux au plus**, sur avis médical (loi 12) |
+| **1996** | remplacements **tactiques**, trois — puis une montée par paliers jusqu'à huit |
+
+Le premier remplacement d'un test est celui de Mike Gibson pour Barry John,
+Lions–Afrique du Sud à Pretoria, en 1968. Et ce n'est pas faute d'y avoir
+pensé plus tôt : la Nouvelle-Zélande l'avait proposé dès **1924**, refusé au
+motif que cela pesait sur les capitaines et prêtait à l'abus. Les
+remplacements **sanguins** arrivent au début des années 1990, entre les deux.
+
+**Ce qui reste à établir**, et il n'y a pas de source en ligne : les paliers
+intermédiaires entre trois et huit remplaçants, et surtout **la date
+d'application en France**. Aucune des sources consultées ne parle du
+championnat.
+
+**Mais on n'a pas besoin de la trouver ailleurs : la base la donnera.** C'est
+exactement ainsi que la borne de `effectifDeFeuille()` a été établie — en
+comptant les joueurs sur les feuilles de 2008-2009, puis de 2007-2008, puis de
+2006-2007. Le jour où l'on saisira une saison des années 1960 ou 1970, le
+nombre de noms sur la feuille dira la règle, et **c'est une meilleure preuve
+qu'un article** : elle porte sur le championnat lui-même.
 
 **Ce que l'absence de remplacements change, et ce n'est pas ce qu'on croit.**
 La somme des minutes vaut toujours 15 × 80 tant que personne ne sort — mais un
 blessé sortait alors **sans être remplacé**, et l'équipe finissait à quatorze.
 Le total tombe donc sous 1 200 sans qu'aucun carton ne l'explique, alors que
-`minutesAttendues()` ne connaît aujourd'hui que la privation sur carton. Et
-`effectifDeFeuille(saison)` devra descendre à 15 — sa borne basse est
-aujourd'hui à 22, attestée jusqu'à 2006-2007 sans qu'on sache jusqu'où elle
-recule.
+`minutesAttendues()` ne connaît aujourd'hui que la privation sur carton.
+
+Et entre 1968-1969 et 1996, une sortie est **toujours une blessure**, jamais
+un choix : une composition de cette période qui montrerait un troisième
+changement, ou un remplacement de confort, est fautive — c'est un contrôle
+gratuit, que le modèle actuel ne fait pas.
+
+`effectifDeFeuille(saison)` devra donc descendre à **17 entre 1968-1969 et
+1996**, puis à **15 avant** — sa borne basse est aujourd'hui à 22, attestée
+jusqu'à 2006-2007 sans qu'on sache jusqu'où elle recule.
 
 **Et la déduction des transformations cesse de fonctionner.**
 `realisationsDepuisFaits` retrouve les transformations en prenant le reliquat
