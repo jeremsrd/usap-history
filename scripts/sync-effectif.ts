@@ -7,8 +7,29 @@
  *
  * Ce que fait le script : il lit `/club/perpignan/effectif-staff`, rapproche
  * chaque joueur d'une fiche existante, crée celles qui manquent, lève
- * `isActive` sur tout l'effectif et l'abaisse sur ceux qui n'y sont plus.
+ * `isActive` sur tout l'effectif et l'abaisse sur ceux qui n'y sont plus, puis
+ * **inscrit l'effectif à la saison en cours** (`SeasonPlayer`).
  * Idempotent : une seconde exécution ne touche plus rien.
+ *
+ * POURQUOI LA LIGNE DE SAISON COMPTE, ET PAS SEULEMENT `isActive`. Les deux
+ * disent des choses différentes : `isActive` est un état — « aujourd'hui à
+ * l'USAP » —, la ligne de saison est un fait — « a fait partie de l'effectif
+ * de cette saison-là ». Et c'est le second que la **page des joueurs**
+ * interroge : elle ne montre que les fiches ayant un lien avéré avec le club
+ * — un match sous le maillot, un passage, un club de carrière marqué USAP, ou
+ * une ligne d'effectif de saison.
+ *
+ * SANS CETTE LIGNE, UNE RECRUE EST INVISIBLE JUSQU'À SON PREMIER MATCH. Le
+ * 2 septembre 2026, onze des cinquante joueurs de l'effectif étaient dans ce
+ * cas : Reece, Ennor, Riccioni, McGrath, Amituanai, Kubunakaravi, Rabut,
+ * Gomes Sa, Duarte Madeira, Swinton et Garbisi. Tous `isActive`, tous avec
+ * leur fiche et leur portrait, et aucun dans la liste des joueurs — le
+ * compteur « Effectif actuel » en annonçait 39 pour 50.
+ *
+ * ON N'EN RETIRE JAMAIS. Un joueur parti en cours de saison a bien fait
+ * partie de cet effectif-là : la ligne est un fait historique, pas un état.
+ * Le script ajoute, il ne supprime pas — à la différence d'`isActive`, qu'il
+ * abaisse sur les partants.
  *
  * SOURCE — la LNR, et pas le site du club. Le 29 août 2026, `usap.fr` affichait
  * encore l'effectif de la saison écoulée : Allan, Petaia, Ritchie, Brookes y
@@ -51,6 +72,18 @@ import { generatePlayerSlug } from "../src/lib/slugs";
 
 const prisma = new PrismaClient();
 const DRY_RUN = process.argv.includes("--dry");
+
+/**
+ * Label de la saison en cours, « 2026-2027 ».
+ *
+ * Une saison de rugby français commence en août : de juillet à décembre on
+ * est dans `AAAA-AAAA+1`, de janvier à juin dans `AAAA-1-AAAA`.
+ */
+function saisonEnCours(aujourdhui = new Date()): string {
+  const annee = aujourdhui.getFullYear();
+  const debut = aujourdhui.getMonth() >= 6 ? annee : annee - 1;
+  return `${debut}-${debut + 1}`;
+}
 
 /** Le poste de la LNR vers l'enum du projet ; `null` quand elle ne tranche pas. */
 const POSTES: Record<string, Position | null> = {
@@ -199,6 +232,41 @@ async function main() {
     console.log();
   }
 
+  // ---- L'effectif de la saison en cours ---------------------------------
+  const label = saisonEnCours();
+  const saison = await prisma.season.findFirst({ where: { label }, select: { id: true } });
+  if (!saison) {
+    throw new Error(`La saison ${label} n'est pas en base : la créer avant d'y inscrire l'effectif.`);
+  }
+  const dejaInscrits = new Set(
+    (
+      await prisma.seasonPlayer.findMany({
+        where: { seasonId: saison.id },
+        select: { playerId: true },
+      })
+    ).map((l) => l.playerId),
+  );
+  // Ceux qui manquent parmi les fiches connues ; les fiches à créer n'ont pas
+  // encore d'identifiant, elles s'ajouteront après leur création.
+  const aInscrire = [...lies.keys()].filter((id) => !dejaInscrits.has(id));
+
+  console.log(`=== Effectif ${label} ===`);
+  console.log(
+    `  ${dejaInscrits.size} déjà inscrits, ${aInscrire.length 
+    } à inscrire, ${aCreer.length} après création\n`,
+  );
+  if (aInscrire.length) {
+    for (const id of aInscrire) {
+      const f = fiches.find((x) => x.id === id)!;
+      console.log(
+        `  ${(f.firstName + " " + f.lastName).padEnd(28)}${
+          f.position ?? "poste à compléter"
+        }`,
+      );
+    }
+    console.log();
+  }
+
   if (DRY_RUN) {
     console.log("Simulation — relancer sans --dry pour appliquer.");
     return;
@@ -228,8 +296,25 @@ async function main() {
     await prisma.player.update({ where: { id: f.id }, data: { isActive: false } });
   }
 
+  // La ligne de saison de tout l'effectif, créations comprises. On relit
+  // `isActive` plutôt que de rejouer `lies` : les fiches créées ci-dessus n'y
+  // figurent pas, et ce sont précisément les recrues qu'il s'agit d'inscrire.
+  const effectifFinal = await prisma.player.findMany({
+    where: { isActive: true },
+    select: { id: true, position: true },
+  });
+  let inscrits = 0;
+  for (const joueur of effectifFinal) {
+    if (dejaInscrits.has(joueur.id)) continue;
+    await prisma.seasonPlayer.create({
+      data: { seasonId: saison.id, playerId: joueur.id, position: joueur.position },
+    });
+    inscrits++;
+  }
+
   const actifs = await prisma.player.count({ where: { isActive: true } });
   console.log(`Effectif enregistré : ${actifs} joueurs actifs.`);
+  console.log(`Effectif ${label} : ${inscrits} inscription(s), ${dejaInscrits.size + inscrits} au total.`);
 }
 
 main()

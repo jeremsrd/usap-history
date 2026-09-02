@@ -793,7 +793,7 @@ doublons.
 | `fetch-club-logos.ts` | rapatrie les logos officiels des clubs dans `public/images/logos/`, depuis les CDN de la LNR et de l'EPCR, et renseigne `Opponent.logoUrl` |
 | `fix-match-venues.ts` | met les stades en ordre : fusionne les doublons, crée les manquants, rattache chaque club à son terrain — déduit des déplacements déjà enregistrés — puis complète les matchs sans lieu, par `terrainDuMatch()` |
 | `seed-stades-historiques.ts` | écrit les terrains d'**avant** : les trois clubs qui ont déménagé pendant la période couverte, chacun avec sa source. À relancer après `fix-match-venues.ts` si un stade manquait |
-| `sync-effectif.ts` | met l'effectif professionnel en accord avec la LNR : crée les fiches manquantes, lève `isActive` sur l'effectif et l'abaisse sur les partants ; refuse d'écrire tant qu'un doublon ou un nom douteux subsiste |
+| `sync-effectif.ts` | met l'effectif professionnel en accord avec la LNR : crée les fiches manquantes, lève `isActive` sur l'effectif et l'abaisse sur les partants, puis **inscrit l'effectif à la saison en cours** (`SeasonPlayer`, en ajout seul) ; refuse d'écrire tant qu'un doublon ou un nom douteux subsiste |
 | `fix-null-penalty-tries.ts` | met à 0 les compteurs `penaltyTries` restés `null`, mais seulement là où les points retombent déjà sur le score |
 | `fix-barrages-access-match.ts` | les deux trous des barrages d'accession — arbitre du 12/06/2022, mi-temps du 03/06/2023 — et la transformation que la chronologie de ce dernier avait perdue |
 | `fix-carton-rouge-dragons-2025.ts` | la minute du carton rouge de Paia'aua, 35ᵉ pour 14ᵉ, dans la chronologie du 7 décembre 2025 ; porte les trois preuves concordantes |
@@ -901,7 +901,7 @@ propriétaire du site.
 
 ## Photos des joueurs
 
-**65 fiches sur 308 sont illustrées**, dont **46 des 50 joueurs de l'effectif
+**65 fiches sur 319 sont illustrées**, dont **46 des 50 joueurs de l'effectif
 professionnel**. Les images sont servies par le site lui-même depuis
 `public/images/players/{slug}.webp` — 1,3 Mo au total, carrés de 400 pixels,
 le plus grand affichage du site en faisant 160.
@@ -1191,11 +1191,43 @@ la LNR ne cale les coups d'envoi qu'au fil des désignations télévisées et po
 d'ici là une date de référence, que `seed-calendrier-2026-2027.ts` rafraîchit
 à chaque relance.
 
-**Deux points ouverts sur l'effectif 2026-2027** : les postes de Riccioni et
-d'Amituanai, que la LNR range en « 1ère ligne » sans trancher entre pilier et
-talonneur, et l'absence de lignes `SeasonPlayer` pour la saison — le modèle
-est alimenté de 2022-2023 à 2025-2026, mais il porte un dossard que la LNR ne
-publie pas avant les premières feuilles.
+**L'effectif 2026-2027 est inscrit à sa saison** depuis le 2 septembre 2026 :
+50 lignes `SeasonPlayer`, écrites par `sync-effectif.ts`, qui s'en charge
+désormais en même temps qu'`isActive`.
+
+**LA RÉSERVE QUI RETENAIT CES LIGNES ÉTAIT FAUSSE.** Ce fichier annonçait que
+le modèle « porte un dossard que la LNR ne publie pas avant les premières
+feuilles » — sauf qu'**aucune des 213 lignes des quatre saisons précédentes
+n'en porte** : `shirtNumber` est nullable et vaut `null` partout. Rien
+n'empêchait donc d'écrire l'effectif d'une saison qui commence, et l'attente
+d'un champ que personne ne remplit a coûté l'invisibilité de onze joueurs.
+**Vérifier dans la base avant d'inscrire un empêchement ici.**
+
+**Car `isActive` ne suffit pas à faire exister un joueur sur le site.** Les
+deux champs disent des choses différentes : `isActive` est un état — « à
+l'USAP aujourd'hui » —, la ligne de saison est un fait — « a fait partie de
+cet effectif-là ». Et c'est le second que la **page des joueurs** interroge,
+par `usapCondition` : elle ne montre que les fiches ayant un lien avéré avec
+le club — un match sous le maillot, un `usapStint`, un `careerClub` marqué
+USAP, ou une ligne d'effectif de saison.
+
+Onze des cinquante joueurs de l'effectif étaient donc **invisibles** —
+`isActive`, avec fiche et portrait, et absents de la liste, dont le compteur
+annonçait « Effectif actuel (39) » pour 50. Ce sont les recrues sans match
+sous le maillot : Reece, Ennor, Riccioni, McGrath, Amituanai, Kubunakaravi,
+Rabut, Gomes Sa, Duarte Madeira, Swinton et Garbisi — les cinq derniers ayant
+bien des feuilles en base, mais **contre** l'USAP. La liste en compte
+désormais 319 et l'effectif 50.
+
+**Ces lignes ne se retirent jamais.** Un joueur parti en cours de saison a
+bien fait partie de cet effectif : le script ajoute, il ne supprime pas — à la
+différence d'`isActive`, qu'il abaisse sur les partants.
+
+**Un point ouvert subsiste** : les postes de Riccioni et d'Amituanai, que la
+LNR range en « 1ère ligne » sans trancher entre pilier et talonneur. Leurs
+deux lignes de saison sont les seules des 263 sans `position`, ce qui est
+honnête — on ne sait pas — et se corrigera depuis l'admin, ou à leur première
+feuille de match.
 
 ### Où reprendre
 
@@ -1721,7 +1753,7 @@ d'écrire les agrégats s'ils s'en écartent.
 - **Affluences éparses** : 36 matchs sur 520 joués, l'EPCR ayant fourni celles
   des coupes. **Sept matchs joués n'ont pas d'arbitre** — deux en 2010-2011,
   cinq en 2008-2009 —, la LNR n'en publiant pas les officiels ; c'est une
-  lacune qui s'aggrave en remontant. **65 fiches sur 308 sont illustrées** — dont
+  lacune qui s'aggrave en remontant. **65 fiches sur 319 sont illustrées** — dont
 46 des 50 joueurs de l'effectif, cf. « Photos des joueurs » — et une seule porte
 une biographie.
 - **L'audit des compositions adverses ne signale plus rien** : 488 matchs
