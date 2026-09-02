@@ -901,7 +901,7 @@ propriétaire du site.
 
 ## Photos des joueurs
 
-**65 fiches sur 308 sont illustrées**, dont **45 des 50 joueurs de l'effectif
+**65 fiches sur 308 sont illustrées**, dont **46 des 50 joueurs de l'effectif
 professionnel**. Les images sont servies par le site lui-même depuis
 `public/images/players/{slug}.webp` — 1,3 Mo au total, carrés de 400 pixels,
 le plus grand affichage du site en faisant 160.
@@ -1021,12 +1021,18 @@ une image à Lifeimi Mafi — un plan large d'un groupe pris de dos,
 est écartée délibérément. Une absence vaut mieux qu'une image qui ne montre
 personne.
 
-**Deux photos restent hébergées sur Supabase**, téléversées à la main avant
-cette chaîne : Tom Ecochard et Joseph Desclaux. `creditPhoto()` rend `null`
-pour elles et la fiche n'affiche alors aucun crédit, leur provenance n'étant
-pas connue du dépôt. Le script signale qu'Ecochard, qui est dans l'effectif, a
-un portrait officiel disponible ; il ne le remplace pas de lui-même — la photo
-en place est un choix.
+**Une seule photo reste hébergée sur Supabase** : celle de Joseph Desclaux,
+téléversée à la main avant cette chaîne. `creditPhoto()` rend `null` pour
+elle et la fiche n'affiche alors aucun crédit, sa provenance n'étant pas
+connue du dépôt. Aucune source ne peut la remplacer : Desclaux est une figure
+d'avant-guerre, et ni la LNR ni Commons ne l'illustrent.
+
+**Celle de Tom Ecochard l'a été jusqu'au 2 septembre 2026**, où elle a cédé la
+place au portrait officiel de la LNR — il est dans l'effectif. Le script ne
+l'avait pas remplacée de lui-même : **une photo téléversée à la main est un
+choix, et il le signale au lieu de l'écraser** (« photo hébergée ailleurs, la
+LNR en a une »). C'est `--joueur="…" --force` qui tranche, et c'est bien ainsi
+que celle-ci a été remplacée, sur décision de Jérémy.
 
 ## Ce que les pages affichent
 
@@ -1716,7 +1722,7 @@ d'écrire les agrégats s'ils s'en écartent.
   des coupes. **Sept matchs joués n'ont pas d'arbitre** — deux en 2010-2011,
   cinq en 2008-2009 —, la LNR n'en publiant pas les officiels ; c'est une
   lacune qui s'aggrave en remontant. **65 fiches sur 308 sont illustrées** — dont
-45 des 50 joueurs de l'effectif, cf. « Photos des joueurs » — et une seule porte
+46 des 50 joueurs de l'effectif, cf. « Photos des joueurs » — et une seule porte
 une biographie.
 - **L'audit des compositions adverses ne signale plus rien** : 488 matchs
   examinés, 488 conformes, au 1er septembre 2026.
