@@ -57,7 +57,11 @@
 
 import { PrismaClient } from "@prisma/client";
 import { estCouperet } from "../src/lib/matchs";
-import { essaisOmisSansAuteur, pointsOmisSansAuteur } from "./lib/feuilles";
+import {
+  essaisOmisSansAuteur,
+  pointsOmisSansAuteur,
+  titulairesManquantsAdmis,
+} from "./lib/feuilles";
 import { memeMot, mots, normalize, proximite } from "./lib/noms";
 import {
   chercherFeuille,
@@ -715,11 +719,18 @@ async function main(cible: "adverse" | "usap") {
     let pointsSansAuteur = pointsOmisSansAuteur(jour, cible === "usap" ? "usap" : "adversaire");
 
     // Une composition qui n'aligne pas quinze titulaires ne permet pas de
-    // reconstituer les temps de jeu : chaque titulaire de trop ajoute jusqu'à
-    // 80 minutes fictives. La LNR dessine parfois seize joueurs sur son
-    // terrain — Lyon à Aimé-Giral le 29 octobre 2022.
+    // reconstituer les temps de jeu : chaque titulaire **de trop** ajoute
+    // jusqu'à 80 minutes fictives. La LNR dessine parfois seize joueurs sur
+    // son terrain — Lyon à Aimé-Giral le 29 octobre 2022.
+    //
+    // Un titulaire **manquant** ne fabrique rien, et il est admis là où la
+    // source en omet — cf. `titulairesManquantsAdmis`, et le même partage dans
+    // `seed-lineup.ts`. Sur ces saisons-là, les temps de jeu ne sont de toute
+    // façon pas écrits, la LNR ne publiant aucun changement.
     const titulaires = roster.filter((l) => l.isStarter).length;
-    if (titulaires !== 15) {
+    const titulairesFautifs =
+      titulaires > 15 || (titulaires < 15 && !titulairesManquantsAdmis(SAISON ?? ""));
+    if (titulairesFautifs) {
       ennuis.push(`${titulaires} titulaires dans la composition en base`);
     }
 
@@ -916,6 +927,28 @@ async function main(cible: "adverse" | "usap") {
 
     for (const inference of inferences) divergences.push(`${etiquette} : ${inference}`);
 
+    // **QUAND LA FEUILLE NE PORTE AUCUN CHANGEMENT, ON N'ÉCRIT PAS DE
+    // MINUTES.** La LNR n'en publie aucun sur 2005-2006 — les vingt-sept
+    // feuilles en donnent zéro, quand celles de 2006-2007 en donnent une
+    // douzaine par match. `calculerTempsDeJeu` rend alors 80 minutes à chaque
+    // titulaire et `null` à chaque remplaçant, ce qui revient à affirmer
+    // qu'aucun remplacement n'a eu lieu de toute la saison. C'est faux, et
+    // **rien ne le signalerait** : le total retombe pile sur les 1 200 minutes
+    // attendues, puisque c'est exactement 15 × 80.
+    //
+    // Les réalisations, elles, viennent des faits de match et restent
+    // écrites. Le temps de jeu est laissé à `null` des deux côtés — sur cette
+    // saison, `minutesPlayed` à `null` se lit « la source ne le dit pas », et
+    // non « n'est pas entré en jeu ». Arbitré par Jérémy le 3 septembre 2026.
+    const sansTempsDeJeu = feuille.changements.length === 0;
+    if (sansTempsDeJeu) {
+      for (const [, b] of lignes) {
+        b.minutes = null;
+        b.subIn = null;
+        b.subOut = null;
+      }
+    }
+
     const minutes = lignes.reduce((s, [, b]) => s + (b.minutes ?? 0), 0);
     const perduesRouge = lignes.reduce(
       (s, [, b]) => s + (b.rouge != null ? duree - b.rouge : 0),
@@ -930,7 +963,11 @@ async function main(cible: "adverse" | "usap") {
       .filter((x) => x.club === campTraite)
       .reduce((s2, x) => s2 + x.minutes, 0);
     const minutesAttendues = 15 * duree - perduesRouge - perduesCarton;
-    const alerte = minutes !== minutesAttendues ? ` ⚠ ${minutes}/${minutesAttendues} minutes` : "";
+    const alerte = sansTempsDeJeu
+      ? " ⚠ aucun changement publié — temps de jeu non écrit"
+      : minutes !== minutesAttendues
+        ? ` ⚠ ${minutes}/${minutesAttendues} minutes`
+        : "";
 
     // ---- Écart avec la base --------------------------------------------------
     const modifiees = lignes.filter(([id, b]) => {

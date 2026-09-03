@@ -248,6 +248,63 @@ const FEUILLES_HORS_CALENDRIER: Record<string, LnrRencontre> = {
     scoreRecevant: 13,
     scoreVisiteur: 25,
   },
+  // **2005-2006 EN COMPTE CINQ, ET LE BALAYAGE N'Y SUFFIT PLUS.** Les
+  // identifiants restent séquentiels, mais les journées ne sont plus jouées
+  // dans l'ordre : la J16 se joue le 11 mars, après la J17 du 18 février et la
+  // J18 du 3 mars, et leurs identifiants s'entrelacent — J15 à 3055, J17 à
+  // 3062, J18 de 3064 à 3070, J16 de 3072 à 3077. Il n'y a donc pas de « trou
+  // entre deux journées » où lire l'identifiant manquant.
+  //
+  // Ce qui reste vrai, c'est que **les clubs absents de la page désignent la
+  // rencontre**. Les six ou sept matchs publiés nomment douze ou treize des
+  // quatorze clubs ; les deux qui manquent sont les deux qui jouaient le match
+  // non publié, et l'un des deux est Perpignan. Le slug est alors connu, et il
+  // ne reste qu'à essayer les identifiants libres de la plage — treize au plus
+  // ici, dans les deux sens de la rencontre.
+  //
+  // **Les cinq scores ne viennent pas de la feuille**, dont le score courant
+  // est ici muet ou incomplet, mais du tableau croisé de Wikipédia. Ils ne
+  // sont pas crus sur parole : les vingt et une rencontres que la LNR publie
+  // totalisent 584 points marqués et 304 encaissés, pour 16 V et 5 D ; le
+  // classement en annonce 671, 398, 18 V et 8 D. Les cinq manquantes doivent
+  // donc valoir exactement 87 points marqués, 94 encaissés, 2 victoires et
+  // 3 défaites — et les cinq scores de Wikipédia donnent 87, 94, 2 et 3. Trois
+  // égalités indépendantes, aucune marge.
+  "2005-2006/j2": {
+    url: "https://top14.lnr.fr/feuille-de-match/2005-2006/j2/2959-biarritz-perpignan",
+    recevant: "biarritz",
+    visiteur: "perpignan",
+    scoreRecevant: 29,
+    scoreVisiteur: 8,
+  },
+  "2005-2006/j6": {
+    url: "https://top14.lnr.fr/feuille-de-match/2005-2006/j6/2987-toulouse-perpignan",
+    recevant: "toulouse",
+    visiteur: "perpignan",
+    scoreRecevant: 30,
+    scoreVisiteur: 22,
+  },
+  "2005-2006/j15": {
+    url: "https://top14.lnr.fr/feuille-de-match/2005-2006/j15/3055-perpignan-biarritz",
+    recevant: "perpignan",
+    visiteur: "biarritz",
+    scoreRecevant: 3,
+    scoreVisiteur: 17,
+  },
+  "2005-2006/j17": {
+    url: "https://top14.lnr.fr/feuille-de-match/2005-2006/j17/3062-perpignan-castres",
+    recevant: "perpignan",
+    visiteur: "castres",
+    scoreRecevant: 34,
+    scoreVisiteur: 3,
+  },
+  "2005-2006/j18": {
+    url: "https://top14.lnr.fr/feuille-de-match/2005-2006/j18/3064-clermont-perpignan",
+    recevant: "clermont",
+    visiteur: "perpignan",
+    scoreRecevant: 15,
+    scoreVisiteur: 20,
+  },
 };
 
 export async function chercherFeuille(
@@ -438,15 +495,31 @@ function campUsapDepuisUrl(url: string): Camp {
  * annoncé — aucun fuseau ne peut alors la faire changer de jour, quand minuit
  * la ferait basculer dans tout l'ouest.
  *
+ * **ET LE TROU NE VAUT PAS TOUJOURS EXACTEMENT MINUIT.** La demi-finale du
+ * 2 juin 2006 est annoncée « 2006-06-02T01:00:00+02:00 » — une heure du matin,
+ * quand les vingt-six journées de la même saison sont toutes à 00:00 sauf une.
+ * Prise au mot, elle recule la rencontre au 1er juin, la LNR datant elle-même
+ * le match du 2 comme Wikipédia. C'est le même trou, décalé d'une heure.
+ *
+ * La règle porte donc sur une **plage** et non sur une valeur : un coup
+ * d'envoi avant huit heures du matin n'est pas un horaire de rugby. Aucune
+ * rencontre de la base n'en porte un qui soit réel — les vrais coups d'envoi
+ * vont de 11h05 à 21h15 —, et la borne est assez basse pour qu'un match
+ * matinal, s'il en existait un, reste au-dessus. Vérifié : sur les 533 coups
+ * d'envoi renseignés de la base, le plus matinal est à 12h30 et le plus
+ * tardif à 21h05 — la borne n'en écarte aucun.
+ *
  * Les autres coups d'envoi sont rendus tels quels : ce sont de vrais
  * instants, et ils tombent tous en soirée ou en après-midi.
  */
+const PREMIERE_HEURE_PLAUSIBLE = 8;
+
 export function momentDuMatch(coupDEnvoi: string): {
   date: Date;
   kickoffTime: string | null;
 } {
   const heure = coupDEnvoi.slice(11, 16);
-  if (heure === "00:00") {
+  if (Number(heure.slice(0, 2)) < PREMIERE_HEURE_PLAUSIBLE) {
     return { date: new Date(`${coupDEnvoi.slice(0, 10)}T12:00:00Z`), kickoffTime: null };
   }
   return { date: new Date(coupDEnvoi), kickoffTime: heure };
@@ -634,6 +707,63 @@ export interface LnrCompositions {
   adversaire: LnrTitulaire[];
   /** Arbitre central, tel que la page le nomme parmi les officiels. */
   arbitre: string | null;
+  /**
+   * Camps dont la composition a été **écartée** parce que ses dossards sont
+   * fabriqués — cf. `dossardsFabriques`. Leur liste est rendue vide.
+   */
+  fabriquees: ("usap" | "adversaire")[];
+}
+
+/**
+ * LA LNR NUMÉROTE PARFOIS SES COMPOSITIONS PAR ORDRE ALPHABÉTIQUE.
+ *
+ * Ce n'est pas une erreur de dossard, c'est une composition qui n'existe pas.
+ * Sur quinze journées de 2005-2006, sa page `/compositions` dessine sur le
+ * terrain une **liste alphabétique de l'effectif du club**, numérotée de 1 à
+ * 22 : la quinzième journée aligne ainsi Alvarez-Kairelis, Bomati, Bortolaso,
+ * Bourret et Bozzi aux numéros 2 à 6 — cinq avants dans l'ordre du
+ * dictionnaire, ce qui n'est pas une équipe de rugby. Les noms sont ceux du
+ * club, l'ordre est celui de l'alphabet, et la liste est tronquée là où le
+ * compte de vingt-deux est atteint : des joueurs qui n'ont pas disputé la
+ * rencontre y figurent, et des titulaires en sont absents — le 7 janvier
+ * 2006, la feuille nomme Opeti Fonua marqueur d'un essai à la 80e et ne
+ * l'aligne pas.
+ *
+ * **LE MOTIF EST EN SERPENTIN**, la LNR remplissant son schéma du terrain
+ * ligne par ligne, en alternant les sens : la suite monte puis redescend, si
+ * bien qu'un simple contrôle de tri croissant la manque. Ce qui la trahit,
+ * c'est que deux dossards voisins portent presque toujours deux noms
+ * **voisins dans l'alphabet**, dans un sens ou dans l'autre.
+ *
+ * D'où cet indice : la part des couples de dossards consécutifs dont les rangs
+ * alphabétiques diffèrent d'exactement un. Il sépare sans ambiguïté, et la
+ * mesure porte sur toute la base :
+ *
+ *   - 2006-2007, 2007-2008, 2008-2009, 2013-2014, 2025-2026 : **jamais plus de
+ *     0,32**, médiane autour de 0,10 ;
+ *   - 2005-2006 : vingt-neuf équipes-matchs entre **0,48 et 0,95**, et les
+ *     vingt-trois autres à 0,21 ou moins. Aucune valeur entre les deux.
+ *
+ * Le seuil est posé à 0,40, au milieu du vide. Une composition au-dessus est
+ * **écartée**, jamais réparée : aucune source ne donne les vrais dossards de
+ * ces rencontres.
+ */
+export function dossardsFabriques(joueurs: LnrTitulaire[]): boolean {
+  if (joueurs.length < 10) return false;
+  const noms = [...joueurs]
+    .sort((a, b) => a.numero - b.numero)
+    .map((j) => j.lastName.normalize("NFD").replace(/\p{Diacritic}/gu, "").toLowerCase());
+  const rang = new Map<string, number>();
+  [...noms]
+    .sort((a, b) => (a < b ? -1 : a > b ? 1 : 0))
+    .forEach((n, r) => {
+      if (!rang.has(n)) rang.set(n, r);
+    });
+  let voisins = 0;
+  for (let i = 1; i < noms.length; i++) {
+    if (Math.abs(rang.get(noms[i])! - rang.get(noms[i - 1])!) === 1) voisins++;
+  }
+  return voisins / (noms.length - 1) >= 0.4;
 }
 
 /**
@@ -935,7 +1065,19 @@ export async function lireCompositions(url: string): Promise<LnrCompositions> {
       )?.[1]
       ?.trim() ?? null;
 
-  return { usap: trier(usap), adversaire: trier(autre[1]), arbitre };
+  // **Une composition aux dossards fabriqués est écartée, pas rendue.** Elle
+  // ne décrit pas la rencontre (cf. `dossardsFabriques`), et l'arbitre, lui,
+  // reste bon — c'est pourquoi on n'échoue pas : le script de saison ne vient
+  // ici que pour lui.
+  const fabriquees: ("usap" | "adversaire")[] = [];
+  const listes = { usap: trier(usap), adversaire: trier(autre[1]) };
+  for (const camp of ["usap", "adversaire"] as const) {
+    if (!dossardsFabriques(listes[camp])) continue;
+    fabriquees.push(camp);
+    listes[camp] = [];
+  }
+
+  return { ...listes, arbitre, fabriquees };
 }
 
 /** Points marqués par un fait de match. */

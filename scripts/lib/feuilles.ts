@@ -193,6 +193,35 @@ export const REALISATIONS_COMPLETEES: Record<string, RealisationsCompletees[]> =
       source: "Fiche ESPN gameId=99380 : essai de pénalité à la 26e minute.",
     },
   ],
+  // **Biarritz 12-9 Perpignan, demi-finale du 2 juin 2006.** La feuille de la
+  // LNR est entièrement vide sur cette rencontre — ni composition, ni fait, ni
+  // officiel —, quand son calendrier en donne le score. Wikipédia détaille le
+  // déroulé des phases finales, et c'est un match sans essai : neuf points
+  // catalans en trois pénalités, douze biarrots en trois pénalités et un drop.
+  //
+  // Les auteurs sont nommés — Edmonds à la 2e et à la 50e, Laharrague à la
+  // 74e ; Dupuy aux 6e, 31e et 55e, plus son drop de la 70e —, mais aucun ne
+  // se reporte sur une composition que la LNR ne publie pas : rien de tout
+  // cela n'a d'auteur **en base**, d'où les points sans auteur des deux côtés.
+  "2006-06-02": [
+    {
+      camp: "usap",
+      penalites: 3,
+      pointsSansAuteur: 9,
+      source:
+        "Wikipédia, modèle de match de la demi-finale : Edmonds (2e, 50e), " +
+        "Laharrague (74e).",
+    },
+    {
+      camp: "adversaire",
+      penalites: 3,
+      drops: 1,
+      pointsSansAuteur: 12,
+      source:
+        "Wikipédia, modèle de match de la demi-finale : Dupuy (6e, 31e, 55e), " +
+        "drop de Dupuy (70e).",
+    },
+  ],
 };
 
 /** Ajoute à un bilan de réalisations ce que la feuille officielle a omis. */
@@ -267,4 +296,46 @@ export function essaisOmisSansAuteur(jour: string, camp: "usap" | "adversaire"):
  */
 export function effectifDeFeuille(saison: string): number {
   return Number(saison.slice(0, 4)) >= 2008 ? 23 : 22;
+}
+
+/**
+ * NOMBRE DE JOUEURS EN DEÇÀ DUQUEL UNE FEUILLE N'EST PLUS EXPLOITABLE.
+ *
+ * Le critère d'acceptation du projet est ailleurs — **les quinze titulaires
+ * doivent être là**, et c'est le contrôle qui compte. Celui-ci n'est qu'un
+ * garde de forme : une feuille où il manquerait la moitié du banc trahirait
+ * plus vraisemblablement une lecture cassée qu'un oubli de la source.
+ *
+ * **Il dépend donc de ce que la source omet à chaque époque, et cela se
+ * compte.** Sur les 52 équipes-matchs de 2005-2006 : 32 portent les 22
+ * joueurs attendus, 12 en portent 21, et **8 en portent 20**. Sur celles de
+ * 2006-2007 et 2007-2008, l'oubli ne dépasse jamais un joueur. La borne est
+ * posée en conséquence, et elle reculera encore si l'on remonte : 2004-2005
+ * n'a pas été comptée.
+ */
+export function effectifMinimalDeFeuille(saison: string): number {
+  const omissionsTolerees = Number(saison.slice(0, 4)) <= 2005 ? 2 : 1;
+  return effectifDeFeuille(saison) - omissionsTolerees;
+}
+
+/**
+ * LA SOURCE OMET-ELLE DES TITULAIRES À CETTE ÉPOQUE ?
+ *
+ * Une composition de moins de quinze titulaires est **toujours** une lacune,
+ * jamais un fait de jeu : quinze joueurs commencent la rencontre. La question
+ * n'est donc pas de savoir si c'est normal, mais si c'est **la source** qui
+ * l'explique ou **la lecture** qu'on en fait.
+ *
+ * Jusqu'en 2005-2006, c'est la source : son schéma du terrain oublie des
+ * dossards précis — le n°10 catalan du 13 mai 2006, les n°4 et n°15 bayonnais
+ * du 8 avril —, sur six des vingt-six journées, et aucune autre source ne les
+ * donne. La composition partielle est alors écrite, avec un avertissement.
+ *
+ * À partir de 2006-2007, la LNR ne fait plus cela : sur les saisons reprises,
+ * une seule feuille omet un titulaire — le n°6 parisien du 21 avril 2012 —, et
+ * `TITULAIRES_MANQUANTS` le rend à son dossard depuis une autre source. Un
+ * écart y trahirait donc une lecture cassée, et il doit rester un échec.
+ */
+export function titulairesManquantsAdmis(saison: string): boolean {
+  return Number(saison.slice(0, 4)) <= 2005;
 }

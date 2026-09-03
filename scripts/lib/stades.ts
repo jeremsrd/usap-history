@@ -82,6 +82,12 @@ export const TERRAINS_PARTICULIERS: Record<string, string | null> = {
   // devenu Pierre-Fabre à Castres.
   "2009-05-30": "Matmut Stadium de Gerland",
   "2009-06-06": "Stade de France",
+  // Demi-finale du 2 juin 2006, Biarritz 12-9 Perpignan, au stade de la
+  // Mosson de Montpellier. Source : Wikipédia, dont le modèle de match nomme
+  // le lieu, et dont le score et la mi-temps concordent avec la LNR — laquelle
+  // désigne Biarritz recevant et ne publie ni composition ni fait sur cette
+  // rencontre.
+  "2006-06-02": "Stade de la Mosson",
 };
 
 /** Stade de l'USAP, seul terrain qu'elle ait connu sur la période couverte. */

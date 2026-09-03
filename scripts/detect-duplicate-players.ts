@@ -188,6 +188,12 @@ const DISTINCTS: [string, string][] = [
   // les deux premiers, l'EPCR, apparié au dossard, pour le troisième.
   ["Ryan Smith", "Fletcher Smith"],
   ["Ryan Smith", "Chris Smith"],
+  // Venue avec 2005-2006 : le père et le fils, comme les Tuilagi. Trevor
+  // Brennan, troisième ligne irlandais de Toulouse, n°19 le 23 septembre 2005
+  // et n°5 le 9 septembre 2006 ; Joshua, son fils, deuxième ligne du même
+  // club, cinq feuilles depuis 2021 dont un n°19. Quinze ans séparent la
+  // dernière de l'un de la première de l'autre.
+  ["Trevor Brennan", "Joshua Brennan"],
 ];
 
 const ARBITREES = new Set(

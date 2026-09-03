@@ -277,8 +277,8 @@ confrontations avec l'USAP, et de gérer les joueurs passés par les deux camps
   Vuidravuwalu) ou prénom d'usage sans lettre commune avec l'état civil
   (« Paddy » pour Patrick, « Richie » pour Richard). L'abréviation ordinaire
   n'a pas besoin de la table, le préfixe suffit.
-- `players` contient donc majoritairement des adversaires : 3 501 fiches ont
-  joué **contre** l'USAP, 321 sous son maillot — 158 des deux côtés. C'est
+- `players` contient donc majoritairement des adversaires : 3 516 fiches ont
+  joué **contre** l'USAP, 325 sous son maillot — 161 des deux côtés. C'est
   normal. Les pages de liste filtrent déjà sur `isOpponent: false`.
 - **Un import qui cherche sur le nom exact fabrique des doublons à chaque
   passage.** C'est arrivé pour de bon : un script relancé après une fusion a
@@ -336,10 +336,21 @@ Ne jamais remplir seulement le côté USAP :
     sont à 23, et les 25 compositions lisibles de 2007-2008 sont **toutes à
     22, sur les deux camps**. Écrire 23 en dur revenait à annoncer « la LNR en
     oublie un » cinquante-quatre fois sur une saison de 2007-2008, et à y
-    perdre le seul vrai oubli. **2006-2007 est aussi à 22**, vérifié sur ses
-    vingt-six feuilles : la borne basse recule d'un an sans être atteinte. On ne
-    sait toujours pas jusqu'où l'on remonte, ni ce qui valait avant — à établir en
-    reprenant 2006-2007, en comptant.
+    perdre le seul vrai oubli. **2006-2007 et 2005-2006 sont aussi à 22**,
+    vérifié sur leurs feuilles : la borne basse recule de deux ans sans être
+    atteinte, et **2004-2005 reste à compter**. Sur les 52 équipes-matchs de
+    2005-2006, 32 portent les 22 attendus, 12 en portent 21 et 8 en portent
+    20 : la source omet davantage à mesure qu'on remonte, d'où
+    `effectifMinimalDeFeuille(saison)`, qui tolère deux absents jusqu'en
+    2005-2006 et un seul ensuite.
+
+    **Et elle omet aussi des titulaires.** Six feuilles de 2005-2006 n'en
+    dessinent que treize ou quatorze, des dossards précis manquant à leur
+    schéma du terrain. `titulairesManquantsAdmis(saison)` porte le partage :
+    un titulaire **de trop** reste un échec à toute époque — il ajoute jusqu'à
+    80 minutes fictives —, un titulaire **manquant** ne fabrique rien et passe
+    en avertissement sur ces saisons-là. Arbitré par Jérémy le 3 septembre
+    2026.
   - **Un couperet peut aller en prolongations**, et le match dure alors
     **100 minutes**. La somme des minutes d'une équipe vaut 1 500 et non
     1 200 : c'est le cas de la demi-finale du 17 mai 2015 contre Agen, seule
@@ -571,17 +582,40 @@ Ce qu'il faut savoir avant d'écrire du code :
 - **un couperet peut être allé en prolongations**, et le match dure alors
   **cent minutes**, non quatre-vingts. `dureeDuMatch()` de
   `seed-opponent-sheet.ts` porte la règle et sa démonstration ;
-- **un coup d'envoi à 00:00 veut dire « heure inconnue »**, non « joué à
-  minuit » : la LNR en laisse ici et là, et pris au mot il recule le match
-  d'un jour, minuit à +02:00 valant 22 heures la veille en temps universel.
-  `momentDuMatch()` rend alors l'heure `null` et ancre la date à midi UTC.
-  Un seul cas connu, le Perpignan-Dax du 21 août 2015 ;
+- **un coup d'envoi avant huit heures du matin veut dire « heure inconnue »**,
+  non « joué à l'aube » : la LNR en laisse ici et là, et pris au mot il recule
+  le match d'un jour, minuit à +02:00 valant 22 heures la veille en temps
+  universel. `momentDuMatch()` rend alors l'heure `null` et ancre la date à
+  midi UTC.
+
+  **La règle a d'abord porté sur la seule valeur 00:00, et c'était trop
+  étroit** : la demi-finale du 2 juin 2006 est annoncée à **01:00**, et
+  reculait au 1er juin. C'est le même trou, décalé d'une heure. Elle porte
+  désormais sur une plage, et la borne est vérifiée — sur les 533 coups
+  d'envoi renseignés de la base, le plus matinal est à 12h30 ;
 - et **avant 2017-2018 il crédite neuf points à un essai de pénalité**, la
   transformation y étant comptée deux fois. `lireFeuille` le corrige et porte
   la démonstration, fait par fait ; sans elle, sept matchs de 2016-2017
   finissaient deux ou quatre points au-dessus de leur score officiel ;
 - **les postes de `/compositions` ne sont pas fiables** : `positionPlayed` se
   déduit du numéro de maillot ;
+- **ET SES COMPOSITIONS ELLES-MÊMES CESSENT DE L'ÊTRE EN 2005-2006.** Vingt-
+  trois de ses vingt-six feuilles y dessinent un quinze qui n'a jamais existé —
+  liste alphabétique de l'effectif du club, numérotée de 1 à 22 en serpentin,
+  ou brouillée sans l'être. Un talonneur y porte le n°10, un deuxième ligne le
+  n°11. **Rien dans la page ne le dit** : elle a la forme d'une vraie feuille.
+  `dossardsFabriques()` reconnaît le serpentin ; `concordanceDesDossards()` de
+  `lib/dossards.ts` tranche les autres, en confrontant chaque titulaire au
+  numéro qu'il porte ailleurs dans la base. **Devant une saison plus ancienne,
+  ne jamais tenir une composition pour vraie sans l'avoir confrontée** ;
+- **elle ne publie aucun changement avant 2006-2007** : les vingt-sept feuilles
+  de 2005-2006 en portent zéro, quand celles de 2006-2007 en donnent une
+  douzaine par match. Les temps de jeu ne se reconstituent alors pas, et
+  `seed-opponent-sheet.ts` refuse d'en écrire plutôt que de rendre 80 minutes à
+  chaque titulaire — ce qui ferait retomber le total sur 1 200 sans rien
+  signaler ;
+- **son archive s'arrête à 2004-2005** : `/calendrier-et-resultats/2003-2004/j1`
+  rend 404, quand 2004-2005 répond encore avec ses trente journées de Top 16 ;
 - la LNR **ampute les accents** — ne jamais réécrire une orthographe déjà en
   base à partir d'elle ;
 - elle **ne publie pas toutes ses compositions** : neuf journées de 2022-2023
@@ -742,8 +776,11 @@ bien les valeurs *corrigées*, pas celles encore en base, sinon le garde-fou men
 (le script d'une feuille qui fusionne des doublons doit, en simulation, exclure
 de son index les fiches qu'il aurait absorbées).
 
-Le code réutilisable va dans `scripts/lib/` : `lnr.ts` pour les feuilles de la
-LNR, `epcr.ts` pour le flux des coupes d'Europe, `noms.ts` pour le
+Le code réutilisable va dans `scripts/lib/` : `dossards.ts` pour vérifier
+qu'une composition officielle n'est pas brouillée — il confronte chaque
+titulaire au numéro qu'il porte ailleurs dans la base, et c'est le seul
+instrument qui voie les compositions fausses de 2005-2006 —, `lnr.ts` pour les
+feuilles de la LNR, `epcr.ts` pour le flux des coupes d'Europe, `noms.ts` pour le
 rapprochement des noms entre une source et la base, `joueurs.ts` pour
 retrouver ou créer une fiche à partir d'une feuille officielle, `effectif.ts`
 pour rapprocher l'effectif publié par la LNR des fiches — règle plus stricte
@@ -792,6 +829,7 @@ doublons.
 | `close-season-2025-2026.ts` | modèle de clôture de saison, avec garde-fou sur le classement officiel |
 | `seed-opponent-sheet.ts` | **le script du chantier adverse** : reprend une saison entière depuis la LNR — réalisations, cartons et temps de jeu reconstitués à partir des changements. Prend la saison en argument (`2023-2024`), `--dry` pour simuler, `--detail` pour le relevé des écarts avec la base, `--match=AAAA-MM-JJ` pour n'en reprendre qu'un, `--usap` pour traiter **aussi le camp catalan** — il passe alors deux fois, l'adverse puis l'USAP |
 | `seed-lineup.ts` | crée les **deux compositions** d'un match depuis la LNR quand il n'en a aucune — dossards, titulaires, capitaine, poste déduit du numéro. Premier temps de la reprise d'une rencontre ancienne ; `--dry`, `--force` pour réécrire |
+| `seed-season-2005-2006.ts` | crée les 27 matchs de la **plus ancienne saison en base** — 26 journées et une demi-finale, la première du Top 14. Modèle pour une saison dont la LNR ne publie ni changement ni composition fiable, et dont cinq journées sont hors calendrier |
 | `seed-season-2006-2007.ts` | crée les 26 matchs d'une saison de Top 14 sans phase finale — cinquième, **la plus ancienne en base**. Porte `SCORES_CORRIGES`, seule table du projet qui contredise un score officiel, et une `FEUILLES_SANS_FAITS` dont les entrées peuvent ne valoir **que pour un camp** : son contrôle arithmétique est rendu camp par camp, un score corrigé ne dispensant plus de rien |
 | `seed-season-2007-2008.ts` | crée les 27 matchs d'une saison de Top 14 **avec demi-finale** — quatrième, éliminée au Vélodrome. **Le modèle le plus récent.** Porte trois particularités : `FEUILLES_HORS_CALENDRIER` pour deux journées amputées, `FEUILLES_SANS_FAITS` pour une feuille muette, et un garde-fou Wikipédia qui sépare BO et BD |
 | `seed-season-2008-2009.ts` | crée les 28 matchs de la saison du titre 2009 — **le modèle le plus récent**, et le seul dont le garde-fou vienne de Wikipédia, la LNR ne publiant aucun classement pour cette saison |
@@ -1174,7 +1212,7 @@ Ce qui ne se déduit pas de la base, en revanche :
 à la mi-temps, ni compte-rendu : les saisons qui n'ont qu'elle pour source —
 2021-2022, 2020-2021, 2019-2020, 2018-2019, 2017-2018, 2016-2017, 2015-2016,
 2014-2015, 2013-2014, 2012-2013, 2011-2012, 2010-2011, 2009-2010, 2008-2009,
-2007-2008 et 2006-2007 — resteront vides sur ces trois colonnes,
+2007-2008, 2006-2007 et 2005-2006 — resteront vides sur ces trois colonnes,
 sauf à trouver ailleurs. L'EPCR, lui, donne les trois, d'où les mi-temps et les
 affluences des matchs de coupe d'Europe. Les vidéos viennent de la chaîne
 YouTube « TOP 14 - Officiel », qui ne remonte pas au-delà de 2022-2023.
@@ -1201,7 +1239,17 @@ chronologie avant de l'écrire.
 
 **Ce qu'un `null` veut dire.** Sur `MatchPlayer.minutesPlayed`, « n'est pas
 entré en jeu », et non « on ne sait pas » — les remplaçants non utilisés sont
-les seuls concernés. Sur `Match.scoreUsap` et `result`, « pas encore joué »,
+les seuls concernés.
+
+**SAUF EN 2005-2006, OÙ IL SE LIT « LA SOURCE NE LE DIT PAS ».** La LNR n'y
+publie aucun changement, sur aucune des vingt-sept feuilles : les temps de jeu
+ne se reconstituent pas, et `seed-opponent-sheet.ts` les laisse tous à `null`,
+titulaires compris. Sans cela il rendrait 80 minutes à chaque titulaire et
+`null` à chaque remplaçant — soit « aucun remplacement de toute la saison »,
+ce qui est faux et que **rien ne signalerait**, le total retombant pile sur les
+1 200 minutes attendues puisque c'est exactement 15 × 80. Son drapeau
+`sansTempsDeJeu` porte la règle ; les réalisations, elles, viennent des faits
+de match et restent écrites. Arbitré par Jérémy le 3 septembre 2026. Sur `Match.scoreUsap` et `result`, « pas encore joué »,
 jamais « zéro » : toute requête qui compte ou classe doit filtrer sur
 `MATCH_JOUE` (`src/lib/matchs.ts`). Sur les **compteurs de réalisations** —
 `triesUsap` et les siens —, « la source ne le dit pas », et c'est le cas de
@@ -1268,8 +1316,9 @@ pas.
 
 Par ordre de valeur.
 
-1. **Achever les saisons reprises.** De 2006-2007 à 2021-2022, seize
-   saisons ont leurs matchs, leurs compositions et leur chronologie ; il leur
+1. **Achever les saisons reprises.** De 2005-2006 à 2021-2022, dix-sept
+   saisons ont leurs matchs et leur chronologie, et toutes leurs compositions
+   sauf 2005-2006, dont la LNR n'en publie que trois de vraies ; il leur
    manque la clôture éditoriale — entraîneur, président, bilan rédigé —,
    les affluences que la LNR ne donne pas, et les mi-temps. La marche à suivre
    pour toute nouvelle saison est en tête de fichier, « Reprendre une
@@ -1510,6 +1559,84 @@ Par ordre de valeur.
 
 2. **Poursuivre la phase 4** en remontant.
 
+   **2005-2006 EST LA PLUS ANCIENNE SAISON DE LA BASE**, close le
+   3 septembre 2026 : la première du Top 14 — le championnat passe de seize
+   clubs à quatorze —, vingt-six journées et une demi-finale perdue 12-9 à
+   Biarritz. **Quatrième avec 84 points**, 18 V 0 N 8 D, 671 points marqués
+   pour 398, 9 bonus offensifs et 3 défensifs, conforme au classement de
+   Wikipédia. Biarritz est champion.
+
+   **L'archive de la LNR remonte d'une saison de plus et s'arrête là** :
+   2004-2005 répond encore, avec ses trente journées de Top 16 ; 2003-2004 rend
+   404.
+
+   **CINQ JOURNÉES SONT AMPUTÉES — J2, J6, J15, J17, J18 — et le balayage des
+   identifiants n'y suffit plus** : les journées de février et mars ne sont pas
+   jouées dans l'ordre, la J16 tombant après les J17 et J18, si bien que les
+   identifiants s'entrelacent et qu'il n'y a plus de trou où lire celui qui
+   manque. Ce sont les **clubs absents de la page** qui désignent la rencontre :
+   les six matchs publiés nomment douze des quatorze clubs, les deux autres
+   jouaient le match manquant, et l'un des deux est Perpignan. Le slug est
+   alors connu, et il ne reste qu'à essayer les identifiants libres.
+
+   **Leurs cinq scores viennent du tableau croisé de Wikipédia, et ils ne sont
+   pas crus sur parole.** Les vingt et une rencontres que la LNR publie
+   totalisent 584 points marqués et 304 encaissés, pour 16 V et 5 D ; le
+   classement en annonce 671, 398, 18 V et 8 D. Les cinq manquantes doivent
+   donc valoir exactement 87 points marqués, 94 encaissés, 2 victoires et
+   3 défaites — et les cinq scores de Wikipédia donnent 87, 94, 2 et 3. Trois
+   égalités indépendantes, sans marge.
+
+   **LA LNR NE PUBLIE AUCUN CHANGEMENT SUR CETTE SAISON.** Les vingt-sept
+   feuilles en portent zéro, quand celles de 2006-2007 en donnent une douzaine
+   par match. Les faits de match, eux, sont là. **Les temps de jeu ne sont donc
+   pas écrits** — cf. « Ce qu'un `null` veut dire ».
+
+   **ET SES COMPOSITIONS SONT FAUSSES, VINGT-TROIS SUR VINGT-SIX.** C'est la
+   découverte de la reprise, et la plus grave du projet à ce jour : la page
+   `/compositions` de la LNR dessine sur son terrain des quinze où un talonneur
+   porte le n°10 et un deuxième ligne le n°11. Une partie de ces listes est
+   franchement **alphabétique** — la quinzième journée aligne Alvarez-Kairelis,
+   Bomati, Bortolaso, Bourret et Bozzi aux numéros 2 à 6 —, et le motif est en
+   **serpentin**, la LNR remplissant son schéma ligne par ligne en alternant
+   les sens. Les autres sont brouillées sans l'être, et rien dans la page ne
+   les distingue d'une vraie feuille.
+
+   **Trois feuilles seulement sont bonnes** — les 20 et 26 août et le 8 octobre
+   2005 —, et elles se lisent d'un coup d'œil : Freshwater 1, Konieckiewicz 2,
+   Bozzi 3, Gaston 4, Hines 5. Les vingt-trois autres ont été écrites puis
+   effacées le jour même. Deux garde-fous les arrêtent désormais, et il en
+   fallait deux :
+   - `dossardsFabriques()` de `lib/lnr.ts`, qui reconnaît le serpentin
+     alphabétique sur la page seule, sans rien demander à la base ;
+   - `concordanceDesDossards()` de `lib/dossards.ts`, qui confronte chaque
+     titulaire au numéro qu'il porte **partout ailleurs dans la base**. C'est
+     lui qui décide, et il sépare sans ambiguïté : 0,82 à 0,93 sur les trois
+     vraies, 0,00 à 0,31 sur toutes les autres.
+
+   **Un camp brouillé condamne la feuille entière**, et c'est nécessaire : le
+   contrôle ne sait rien dire d'un club des années 2000, qui ne reparaît pas
+   assez dans la base pour qu'on connaisse les dossards de ses joueurs. Sans
+   cette règle, l'adversaire passerait faute de preuve.
+
+   **Les chronologies, elles, sont bonnes** — 23 sur 27. Ce sont les *faits* de
+   la LNR, non ses compositions, et rien ne les met en doute. Elles s'écrivent
+   d'ailleurs sans composition : `MatchEvent.playerId` reste alors `null` et
+   c'est la description qui nomme le joueur, ce que la page publique affiche.
+
+   Quatre matchs n'en ont pas : le 8 octobre 2005 à Bayonne, dont la feuille ne
+   porte aucun fait ; le 13 mai 2006 contre Toulon, où il manque une
+   transformation ; le 27 mai à Brive, dont le score courant fait gagner neuf
+   points à un essai ; et la demi-finale, dont la LNR ne publie ni fait ni
+   composition ni officiel.
+
+   **La demi-finale vient donc de Wikipédia pour trois choses** : ses
+   réalisations — trois pénalités de chaque côté, plus un drop biarrot, aucun
+   essai —, sa mi-temps de 6-3, et son terrain neutre, le stade de la Mosson de
+   Montpellier. Son coup d'envoi, que la LNR place à **une heure du matin**,
+   est traité comme « heure inconnue » : pris au mot, il reculait la rencontre
+   au 1er juin (cf. `momentDuMatch`).
+
    **2006-2007 EST CLOSE DEPUIS LE 3 SEPTEMBRE 2026**, et c'est une source
    revenue en ligne qui l'a débloquée. Ses agrégats étaient retenus par un seul
    chiffre : les feuilles lisibles donnaient **4 bonus offensifs pour les
@@ -1698,7 +1825,7 @@ Par ordre de valeur.
    la LNR n'a pas encore photographiées, cf. « Photos des joueurs » —, et les
    saisons sans aucun match.
 
-Sur les 120 saisons en base, 21 seulement portent des matchs : c'est le
+Sur les 120 saisons en base, 22 seulement portent des matchs : c'est le
 chantier de la phase 4, mené en remontant le temps saison par saison. Le bilan
 de 2021-2022 — 9V 0N 17D, 43 points, treizième — est calculé depuis les scores
 officiels mais n'a pas été confronté à un classement d'époque ; ceux de
@@ -1916,8 +2043,8 @@ d'un siècle, c'est la règle qu'on connaîtra le moins bien.
 
 **Ce à quoi il faut penser en écrivant une requête**
 
-- **`players` est aux neuf dixièmes des adversaires** : 3 352 fiches sur
-  3 673 n'ont jamais porté le maillot, 321 l'ont porté. Toute requête sur les joueurs doit
+- **`players` est aux neuf dixièmes des adversaires** : 3 463 fiches sur
+  3 788 n'ont jamais porté le maillot, 325 l'ont porté. Toute requête sur les joueurs doit
   filtrer `isOpponent: false`, sinon le résultat est faux. Les fiches
   affichent séparément « Matchs avec l'USAP » et « Matchs contre l'USAP », et
   les statistiques ne comptent que les premiers ; le tableau « contre » ne
@@ -2024,11 +2151,12 @@ d'un siècle, c'est la règle qu'on connaîtra le moins bien.
   ces sources décrivent le stade **d'aujourd'hui**, et rien n'a permis de
   vérifier qu'ils y recevaient déjà, en 2020-2021 pour l'un, le 2 septembre
   2018 pour l'autre.
-- **Affluences éparses** : 36 matchs sur 573 joués, l'EPCR ayant fourni celles
-  des coupes. **Quinze matchs joués n'ont pas d'arbitre** — quatre en
-  2006-2007, quatre en 2007-2008, cinq en 2008-2009, deux en 2010-2011 —, la
-  LNR n'en publiant pas les officiels ; c'est une lacune qui s'aggrave en
-  remontant, et les quatre saisons les plus anciennes en portent la totalité. **65 fiches sur 319 sont illustrées** — dont
+- **Affluences éparses** : 36 matchs sur 600 joués, l'EPCR ayant fourni celles
+  des coupes. **Vingt-trois matchs joués n'ont pas d'arbitre** — huit en
+  2005-2006, quatre en 2006-2007, quatre en 2007-2008, cinq en 2008-2009, deux
+  en 2010-2011 —, la LNR n'en publiant pas les officiels ; c'est une lacune qui
+  s'aggrave en remontant, et les cinq saisons les plus anciennes en portent la
+  totalité. **65 fiches sur 319 sont illustrées** — dont
 46 des 50 joueurs de l'effectif, cf. « Photos des joueurs » — et une seule porte
 une biographie.
 - **L'audit des compositions adverses ne signale plus rien**, saison par
@@ -2252,6 +2380,12 @@ deux hommes**, et toutes par la lecture des feuilles officielles :
   2022, Chris aux Lions en 2026 : trois demis d'ouverture, trois clubs, trois
   époques, chacun tenant son prénom de sa propre source officielle.
 
+**2005-2006 en a valu une cinquième** : Trevor Brennan, troisième ligne
+irlandais de Toulouse, n°19 le 23 septembre 2005 et n°5 le 9 septembre 2006, et
+**Joshua**, son fils, deuxième ligne du même club, cinq feuilles depuis 2021
+dont un n°19. Le père et le fils, comme les Tuilagi, et quinze ans séparent la
+dernière feuille de l'un de la première de l'autre.
+
 **La fiche neuve tombe dans le lot À VOIR sitôt son poste posé** — « même
 poste, clubs différents » —, et c'est le fonctionnement voulu : les deux
 paires Smith ne sont apparues qu'après la correction de Ryan. Arbitrer une
@@ -2318,7 +2452,7 @@ c'est sous cette forme que le plafonnement se manifeste.
 for S in 2026-2027 2025-2026 2024-2025 2023-2024 2022-2023 2021-2022 \
          2020-2021 2019-2020 2018-2019 2017-2018 2016-2017 2015-2016 \
          2014-2015 2013-2014 2012-2013 2011-2012 2010-2011 2009-2010 \
-         2008-2009 2007-2008 2006-2007; do
+         2008-2009 2007-2008 2006-2007 2005-2006; do
   npx tsx scripts/audit-opponent-lineups.ts "$S"
 done
 ```
@@ -2336,7 +2470,7 @@ rencontres en une fois, et **la LNR le plafonne** : le 1er septembre 2026,
 trois tentatives d'affilée ont rendu 175, 54 puis 268 matchs examinés, pour
 323, 444 et 44 feuilles « injoignables ». Le réseau était sain avant et après
 chaque exécution — ce n'est pas une panne, c'est une limitation de débit.
-Vingt et un processus courts passent sous le seuil là où un seul long ne passe
+Vingt-deux processus courts passent sous le seuil là où un seul long ne passe
 plus, et la même journée l'a vérifié deux fois.
 
 La boucle a deux autres mérites : une coupure ne coûte qu'une saison au lieu
@@ -2348,9 +2482,10 @@ se périme tout seul — il ne se recopie pas ici.
 
 **Une rencontre dont la base n'a aucune composition adverse est comptée à
 part**, et non auditée : la confronter ligne à ligne rendrait vingt et un
-« MANQUANT » qui n'annoncent rien. Deux sont dans ce cas, et pour de bon — le
+« MANQUANT » qui n'annoncent rien. Elles sont dix-sept, et pour de bon — le
 Brive-Perpignan du 26 avril 2008 et l'Auch-Perpignan du 30 mai 2008, dont la
-LNR corrompt un enregistrement qu'aucune source ne répare. Sans ce cas à part,
+LNR corrompt un enregistrement qu'aucune source ne répare, plus les quinze
+rencontres de 2005-2006 dont elle publie une composition fabriquée. Sans ce cas à part,
 elles portaient quarante-deux anomalies à chaque exécution et le total cessait
 d'être un signal, exactement comme les vingt-six rencontres à venir de
 2026-2027 avant qu'on ne les écarte.
