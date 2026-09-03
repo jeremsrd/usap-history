@@ -51,6 +51,20 @@
  * introuvable ». Et il recalculait la phase au lieu d'appeler `phasesLnr()`,
  * ne connaissant que la journée et le barrage : demi-finales et finales
  * partaient en « hors périmètre », comme si elles relevaient de l'EPCR.
+ *
+ * UN TROISIÈME, CORRIGÉ LE 3 SEPTEMBRE 2026 : une rencontre dont la base n'a
+ * **aucune** composition adverse était confrontée quand même, et rendait
+ * vingt et une anomalies « MANQUANT » à chaque exécution. Ce n'est pas une
+ * composition fautive, c'est une composition absente, et deux rencontres de
+ * 2007-2008 sont dans ce cas pour de bon — la LNR y corrompt un
+ * enregistrement, et rien ne le répare. Quarante-deux anomalies permanentes
+ * auraient suffi à ce qu'on apprenne à ignorer le total, ce qui est
+ * exactement le sinistre que ce script est censé prévenir. Elles sont
+ * désormais **comptées à part**, et nommées au récapitulatif.
+ *
+ * À ne pas confondre avec une « feuille non lue », où c'est la **source** qui
+ * manque : le Stade Français-Perpignan du 13 mai 2007 n'a de composition ni
+ * en base ni chez la LNR, et sort par là.
  */
 
 import { Prisma, PrismaClient } from "@prisma/client";
@@ -155,6 +169,20 @@ interface Anomalie {
 interface Bilan {
   anomalies: Anomalie[];
   variantes: string[];
+  /**
+   * **La base n'a aucune composition pour ce camp.** Ce n'est pas une
+   * composition fautive, c'est une composition absente, et la confronter ligne
+   * à ligne rend autant de « MANQUANT » qui n'annoncent rien de neuf. Les deux
+   * rencontres de 2007-2008 dont la LNR corrompt un enregistrement en sont là
+   * pour de bon (cf. CLAUDE.md) : sans ce cas à part, elles porteraient à
+   * elles seules quarante-deux anomalies à chaque exécution, et le total
+   * cesserait d'être un signal — c'est exactement ce que les vingt-six
+   * rencontres à venir de 2026-2027 faisaient avant qu'on ne les écarte.
+   *
+   * Le nombre exact dépend de la feuille : vingt-deux joueurs jusqu'en
+   * 2007-2008, vingt-trois depuis, moins ceux que la LNR omet elle-même.
+   */
+  sansComposition?: boolean;
 }
 
 /**
@@ -241,6 +269,9 @@ async function auditerMatch(
 
   const anomalies: Anomalie[] = [];
   const variantes: string[] = [];
+
+  // Rien à confronter : la rencontre est comptée à part, non auditée.
+  if (enBase.length === 0) return { anomalies, variantes, sansComposition: true };
 
   /**
    * Les joueurs sont d'abord appariés sur leur identité, pas sur leur numéro.
@@ -365,6 +396,8 @@ async function main() {
   let examines = 0;
   let sains = 0;
   const horsPerimetre: string[] = [];
+  /** Rencontres dont la base n'a aucune composition adverse : rien à auditer. */
+  const sansCompositionEnBase: string[] = [];
   const illisibles: string[] = [];
   const parGravite = new Map<Gravite, number>();
   const variantesTues: string[] = [];
@@ -413,8 +446,17 @@ async function main() {
       continue;
     }
 
+    const { anomalies, variantes, sansComposition } = await auditerMatch(
+      match.id,
+      officielle,
+      jour,
+    );
+    if (sansComposition) {
+      sansCompositionEnBase.push(etiquette);
+      continue;
+    }
+
     examines++;
-    const { anomalies, variantes } = await auditerMatch(match.id, officielle, jour);
     const retenues = GRAVES_SEULEMENT
       ? anomalies.filter((a) => GRAVES.includes(a.gravite))
       : anomalies;
@@ -448,6 +490,12 @@ async function main() {
   if (illisibles.length > 0) {
     console.log(`\n${illisibles.length} feuille(s) non lue(s) :`);
     for (const i of illisibles) console.log(`  ⚠ ${i}`);
+  }
+  if (sansCompositionEnBase.length > 0) {
+    console.log(
+      `\n${sansCompositionEnBase.length} match(s) sans composition en base, rien à auditer :`,
+    );
+    for (const ligne of sansCompositionEnBase) console.log(`  · ${ligne}`);
   }
   if (horsPerimetre.length > 0) {
     console.log(`\n${horsPerimetre.length} match(s) hors périmètre LNR (coupes d'Europe).`);

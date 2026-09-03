@@ -129,6 +129,21 @@ const TOUT = process.argv.includes("--tout");
  *             la LNR l'inscrit ainsi au n°22. Une fiche à feuille unique
  *             mérite qu'on regarde à deux fois : ici c'est bien la source qui
  *             écrit ce prénom, huit ans avant l'arrivée de Patricio.
+ *
+ * **Les deux dernières viennent de 2006-2007**, et le motif ne change pas : un
+ * dossard partagé au même club, à sept ans et plus d'intervalle.
+ *
+ *   Rouet     Sébastien, n°9 de Bayonne le 3 septembre 2006 puis de Narbonne
+ *             de 2014 à 2017, et Guillaume, n°9 de Bayonne de 2013 à 2023. Le
+ *             n°9 bayonnais les rapprochait ; la LNR écrit « Sebastien Rouet »
+ *             sur la feuille de 2006, et Guillaume, né en 1990, avait alors
+ *             seize ans.
+ *   Todeschini Joaquín, n°20 de Montpellier le 11 novembre 2006, une seule
+ *             feuille, et Federico, l'ouvreur international argentin du même
+ *             club de 2008 à 2010. Une fiche à feuille unique mérite qu'on
+ *             regarde à deux fois : la LNR y écrit bien « Joaquin
+ *             Todeschini », et l'homme existe — il entraîne aujourd'hui au
+ *             Chili.
  */
 const DISTINCTS: [string, string][] = [
   ["Sacha Lotrian", "Mathys Lotrian"],
@@ -164,6 +179,15 @@ const DISTINCTS: [string, string][] = [
   ["John Senio", "Kevin Senio"],
   // Venue avec 2008-2009, arbitrée sur les feuilles.
   ["Julien Raynaud", "Marc Raynaud"],
+  // Venues avec 2006-2007, arbitrées le 3 septembre 2026 sur les feuilles.
+  ["Guillaume Rouet", "Sebastien Rouet"],
+  ["Federico Todeschini", "Joaquin Todeschini"],
+  // Trois demis d'ouverture nommés Smith, trois clubs, trois époques : Ryan à
+  // Montauban de 2006 à 2008, Fletcher à Lyon en 2022, Chris aux Lions en
+  // 2026. Chacun tient son prénom de sa propre source officielle — la LNR pour
+  // les deux premiers, l'EPCR, apparié au dossard, pour le troisième.
+  ["Ryan Smith", "Fletcher Smith"],
+  ["Ryan Smith", "Chris Smith"],
 ];
 
 const ARBITREES = new Set(

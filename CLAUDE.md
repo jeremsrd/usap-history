@@ -277,8 +277,8 @@ confrontations avec l'USAP, et de gérer les joueurs passés par les deux camps
   Vuidravuwalu) ou prénom d'usage sans lettre commune avec l'état civil
   (« Paddy » pour Patrick, « Richie » pour Richard). L'abréviation ordinaire
   n'a pas besoin de la table, le préfixe suffit.
-- `players` contient donc majoritairement des adversaires : 3 305 fiches ont
-  joué **contre** l'USAP, 301 sous son maillot — 144 des deux côtés. C'est
+- `players` contient donc majoritairement des adversaires : 3 501 fiches ont
+  joué **contre** l'USAP, 321 sous son maillot — 158 des deux côtés. C'est
   normal. Les pages de liste filtrent déjà sur `isOpponent: false`.
 - **Un import qui cherche sur le nom exact fabrique des doublons à chaque
   passage.** C'est arrivé pour de bon : un script relancé après une fusion a
@@ -696,12 +696,36 @@ rapprochement de noms, donc aucune erreur d'identité possible.
   essais au frère célèbre, invente des cartons, oublie les essais de pénalité
   et raccourcit les noms composés. À ne ressortir que si les deux sources
   officielles venaient à manquer, et à recouper impérativement.
-- **allrugby.com** — seule source retrouvée pour le Challenge Cup 2022-2023,
-  mais **injoignable au 29 août 2026** (son hôte `www` ne répond plus). Si
-  elle revient : son tableau se lit **colonne par colonne** — treize colonnes,
-  les réalisations de l'USAP à gauche du nom, celles de l'adversaire à droite,
-  le club recevant à gauche et non l'USAP, et les remplacements de droite
-  écrivent la minute avant le nom, l'inverse de la gauche.
+- **allrugby.com** — **de nouveau joignable au 3 septembre 2026**, après
+  l'avoir été en août. Seule source retrouvée pour le Challenge Cup 2022-2023,
+  et c'est elle qui a débloqué 2006-2007.
+
+  Ce qu'elle donne : le **calendrier d'une saison ancienne** avec le score de
+  chaque rencontre, et surtout, **à côté du score, le bonus** — `<span
+  class="bonus">Bo</span>` ou `Bd`, sur la fiche de match comme sur le
+  calendrier. C'est la seule source connue qui attribue le bonus **match par
+  match** pour ces saisons-là : le classement, lui, n'en donne que le total, et
+  Wikipédia ne marque rien.
+
+  Ses fiches de match d'avant 2010 s'arrêtent là : ni composition, ni marqueur,
+  ni minute — l'« évolution du score » y est vide. Ne pas espérer en tirer une
+  décomposition.
+
+  Les URL sont `/{saison}/matchs/{domicile}-{exterieur}-{id}.html`, l'identifiant
+  se relevant sur `/competitions/top-14-{annee}/calendrier.html`. Un
+  `User-Agent` ordinaire suffit.
+
+  Son tableau de feuille de match, quand il existe, se lit **colonne par
+  colonne** — treize colonnes, les réalisations de l'USAP à gauche du nom,
+  celles de l'adversaire à droite, le club recevant à gauche et non l'USAP, et
+  les remplacements de droite écrivent la minute avant le nom, l'inverse de la
+  gauche.
+
+  **Ce n'est pas une source officielle, et c'est sa concordance qui la vaut.**
+  On ne s'en sert pas parce qu'elle affirme, mais parce qu'elle redit sans
+  écart ce que les feuilles lisibles établissent déjà — et le garde-fou de la
+  saison vérifie aussitôt ce qu'elle apporte en propre. Une source qui ne
+  concorderait qu'à moitié ne vaudrait rien.
 - **Direct commenté** : rugbyrama.fr, ici.fr — pour l'arbitre, la mi-temps et
   les faits de match.
 - **Résumé vidéo** : chaîne YouTube « TOP 14 - Officiel ». **Vérifier chaque
@@ -768,7 +792,7 @@ doublons.
 | `close-season-2025-2026.ts` | modèle de clôture de saison, avec garde-fou sur le classement officiel |
 | `seed-opponent-sheet.ts` | **le script du chantier adverse** : reprend une saison entière depuis la LNR — réalisations, cartons et temps de jeu reconstitués à partir des changements. Prend la saison en argument (`2023-2024`), `--dry` pour simuler, `--detail` pour le relevé des écarts avec la base, `--match=AAAA-MM-JJ` pour n'en reprendre qu'un, `--usap` pour traiter **aussi le camp catalan** — il passe alors deux fois, l'adverse puis l'USAP |
 | `seed-lineup.ts` | crée les **deux compositions** d'un match depuis la LNR quand il n'en a aucune — dossards, titulaires, capitaine, poste déduit du numéro. Premier temps de la reprise d'une rencontre ancienne ; `--dry`, `--force` pour réécrire |
-| `seed-season-2006-2007.ts` | crée les 26 matchs d'une saison de Top 14 sans phase finale — cinquième. **Ses agrégats ne sont pas écrits** : un bonus offensif sur cinq reste indécidable (cf. « Où reprendre »). Porte `SCORES_CORRIGES`, seule table du projet qui contredise un score officiel |
+| `seed-season-2006-2007.ts` | crée les 26 matchs d'une saison de Top 14 sans phase finale — cinquième, **la plus ancienne en base**. Porte `SCORES_CORRIGES`, seule table du projet qui contredise un score officiel, et une `FEUILLES_SANS_FAITS` dont les entrées peuvent ne valoir **que pour un camp** : son contrôle arithmétique est rendu camp par camp, un score corrigé ne dispensant plus de rien |
 | `seed-season-2007-2008.ts` | crée les 27 matchs d'une saison de Top 14 **avec demi-finale** — quatrième, éliminée au Vélodrome. **Le modèle le plus récent.** Porte trois particularités : `FEUILLES_HORS_CALENDRIER` pour deux journées amputées, `FEUILLES_SANS_FAITS` pour une feuille muette, et un garde-fou Wikipédia qui sépare BO et BD |
 | `seed-season-2008-2009.ts` | crée les 28 matchs de la saison du titre 2009 — **le modèle le plus récent**, et le seul dont le garde-fou vienne de Wikipédia, la LNR ne publiant aucun classement pour cette saison |
 | `seed-season-2009-2010.ts` | crée les 28 matchs de la saison de la finale perdue de 2010 : Top 14 **avec phase finale**, classement à corriger des barrages, terrains neutres, et réalisations complétées |
@@ -1149,8 +1173,8 @@ Ce qui ne se déduit pas de la base, en revanche :
 **Ce que les sources ne publient pas.** La LNR ne donne ni affluence, ni score
 à la mi-temps, ni compte-rendu : les saisons qui n'ont qu'elle pour source —
 2021-2022, 2020-2021, 2019-2020, 2018-2019, 2017-2018, 2016-2017, 2015-2016,
-2014-2015, 2013-2014, 2012-2013, 2011-2012, 2010-2011, 2009-2010 et
-2008-2009 — resteront vides sur ces trois colonnes,
+2014-2015, 2013-2014, 2012-2013, 2011-2012, 2010-2011, 2009-2010, 2008-2009,
+2007-2008 et 2006-2007 — resteront vides sur ces trois colonnes,
 sauf à trouver ailleurs. L'EPCR, lui, donne les trois, d'où les mi-temps et les
 affluences des matchs de coupe d'Europe. Les vidéos viennent de la chaîne
 YouTube « TOP 14 - Officiel », qui ne remonte pas au-delà de 2022-2023.
@@ -1244,14 +1268,16 @@ pas.
 
 Par ordre de valeur.
 
-1. **Achever les saisons reprises.** De 2008-2009 à 2021-2022, quatorze
+1. **Achever les saisons reprises.** De 2006-2007 à 2021-2022, seize
    saisons ont leurs matchs, leurs compositions et leur chronologie ; il leur
    manque la clôture éditoriale — entraîneur, président, bilan rédigé —,
    les affluences que la LNR ne donne pas, et les mi-temps. La marche à suivre
    pour toute nouvelle saison est en tête de fichier, « Reprendre une
    saison ».
 
-   Trente-trois anomalies connues de ces saisons, toutes assumées :
+   Trente-trois anomalies connues **de 2008-2009 à 2021-2022**, toutes
+   assumées — celles de 2007-2008 et de 2006-2007 sont avec leur saison, au
+   point suivant :
    - **La Rochelle totalise 1 206 minutes le 30 octobre 2021.** Sa feuille se
      contredit — Victor Vito sort *définitivement* à la 25ᵉ sur protocole
      commotion, puis elle le fait sortir encore à la 35ᵉ et rentrer deux fois.
@@ -1484,21 +1510,60 @@ Par ordre de valeur.
 
 2. **Poursuivre la phase 4** en remontant.
 
-   **2006-2007 EST LA PREMIÈRE SAISON DONT LES AGRÉGATS NE SONT PAS ÉCRITS.**
-   Ses 26 matchs le sont — scores, résultats, arbitres, bonus —, et tout
-   concorde avec le classement de référence sauf un chiffre : les feuilles
-   lisibles donnent **4 bonus offensifs pour les 5 annoncés**. Le cinquième est
-   dans l'une des trois rencontres dont la feuille LNR ne porte qu'un carton
-   jaune pour tout fait — Perpignan-Castres 20-16, Perpignan-Brive 24-13,
-   Brive-Perpignan 22-22 —, les deux autres matchs muets étant écartés par
-   l'arithmétique : 7 et 11 points ne font pas quatre essais. Les trois
-   candidats le peuvent tous, et **aucune source ne tranche** : Wikipédia ne
-   porte aucun marqueur de bonus pour cette saison. Le garde-fou refuse donc
-   d'écrire, ce qui est son rôle.
+   **2006-2007 EST CLOSE DEPUIS LE 3 SEPTEMBRE 2026**, et c'est une source
+   revenue en ligne qui l'a débloquée. Ses agrégats étaient retenus par un seul
+   chiffre : les feuilles lisibles donnaient **4 bonus offensifs pour les
+   5 annoncés**, le cinquième dormant dans l'une des trois rencontres dont la
+   feuille LNR ne porte qu'un carton jaune pour tout fait — Perpignan-Castres
+   20-16, Perpignan-Brive 24-13, Brive-Perpignan 22-22. Les trois pouvaient le
+   porter, et rien ne tranchait.
 
-   Le reste est pourtant validé au point près, et c'est ce qui rend l'écart
-   crédible : 493 points marqués, 398 encaissés, 16 V 1 N 9 D, 4 bonus
-   défensifs — tout retombe. La saison attend un chiffre, pas une reprise.
+   **`allrugby.com`, injoignable en août 2026, l'est de nouveau, et il marque le
+   bonus match par match.** Il donne « Bo » au Perpignan-Brive du 23 septembre
+   2006. La source n'est pas officielle, et **c'est sa concordance qui la
+   vaut** : sa lecture des vingt-six journées redonne exactement les bonus déjà
+   établis sur les feuilles lisibles — offensifs aux J3, J15, J17 et J24,
+   défensifs aux J9, J14, J18 et J25 —, sans un écart. Vingt-cinq
+   concordances, une seule information nouvelle, et le total tombe alors sur
+   les 5 BO et 4 BD du classement. Le garde-fou l'a vérifié, et il n'aurait pas
+   laissé passer une journée mal choisie.
+
+   La saison est donc complète : 26 matchs, 25 compositions, 20 chronologies,
+   l'arbitre sur 22, **16 V 1 N 9 D, 493 points marqués pour 398, 75 points,
+   cinquième** — et l'audit nom à nom ne signale rien sur ses 25 compositions.
+
+   Sept anomalies, toutes assumées :
+   - **cinq feuilles ne permettent pas de reconstituer le score** — J1, J7 et
+     J20, un seul fait chacune ; J8, qui ne porte que les réalisations
+     albigeoises ; J25, entièrement vide. Leurs compteurs sont à `null`, elles
+     n'ont ni réalisations de joueur ni chronologie ;
+   - **la J3 est contradictoire, et d'un seul côté.** Son fait de la 34ᵉ est
+     étiqueté « Pénalité » et vaut cinq points au score courant de la LNR
+     elle-même, là où une pénalité en vaut trois ; il porte de surcroît un
+     `conversionPlayer`, que les deux pénalités narbonnaises de la même feuille
+     n'ont pas. Deux lectures s'ensuivent — un essai non transformé, et il
+     manque un second essai non transformé ; ou une vraie pénalité, et il
+     manque un essai transformé — et les deux font les 45 points établis. Rien
+     ne départage, les compteurs catalans restent donc à `null` ; **ceux de
+     Narbonne sont écrits**, ses deux pénalités reconstituant ses six points
+     exactement.
+
+     **Le script y écrivait auparavant une décomposition fausse en silence** —
+     5 essais, 0 transformation, 1 pénalité, soit vingt-huit points pour
+     quarante-cinq au score —, parce qu'un score corrigé dispensait la
+     rencontre de tout contrôle arithmétique. Le contrôle est désormais rendu
+     **camp par camp**, et ce qui en dispense n'est plus le score corrigé mais
+     la déclaration explicite du camp indécidable ;
+   - **Albi n'aligne que 21 joueurs le 7 avril 2007** : la LNR y oublie un
+     remplaçant, les quinze titulaires sont là ;
+   - **le Stade Français-Perpignan du 13 mai 2007 n'a aucune composition.** La
+     LNR ne les publie pas, `prod2.lnr.fr` redirige, et allrugby n'en a pas
+     davantage pour cette saison. Sa feuille est vide de bout en bout ; seul
+     son bonus défensif se lit sur le score.
+
+   Castres ne totalise que 1 151 minutes le 18 novembre 2006, et **ce n'en est
+   pas une** : Alexandre Bias y prend un carton rouge à la 31ᵉ, et
+   `1200 − (80 − 31)` fait exactement 1 151.
 
    **De 2007-2008 à 2020-2021,
    quatorze saisons sont faites**, toutes conformes à leur classement de
@@ -1851,8 +1916,8 @@ d'un siècle, c'est la règle qu'on connaîtra le moins bien.
 
 **Ce à quoi il faut penser en écrivant une requête**
 
-- **`players` est aux neuf dixièmes des adversaires** : 3 171 fiches sur
-  3 472 n'ont jamais porté le maillot, 301 l'ont porté. Toute requête sur les joueurs doit
+- **`players` est aux neuf dixièmes des adversaires** : 3 352 fiches sur
+  3 673 n'ont jamais porté le maillot, 321 l'ont porté. Toute requête sur les joueurs doit
   filtrer `isOpponent: false`, sinon le résultat est faux. Les fiches
   affichent séparément « Matchs avec l'USAP » et « Matchs contre l'USAP », et
   les statistiques ne comptent que les premiers ; le tableau « contre » ne
@@ -1959,22 +2024,26 @@ d'un siècle, c'est la règle qu'on connaîtra le moins bien.
   ces sources décrivent le stade **d'aujourd'hui**, et rien n'a permis de
   vérifier qu'ils y recevaient déjà, en 2020-2021 pour l'un, le 2 septembre
   2018 pour l'autre.
-- **Affluences éparses** : 36 matchs sur 520 joués, l'EPCR ayant fourni celles
-  des coupes. **Sept matchs joués n'ont pas d'arbitre** — deux en 2010-2011,
-  cinq en 2008-2009 —, la LNR n'en publiant pas les officiels ; c'est une
-  lacune qui s'aggrave en remontant. **65 fiches sur 319 sont illustrées** — dont
+- **Affluences éparses** : 36 matchs sur 573 joués, l'EPCR ayant fourni celles
+  des coupes. **Quinze matchs joués n'ont pas d'arbitre** — quatre en
+  2006-2007, quatre en 2007-2008, cinq en 2008-2009, deux en 2010-2011 —, la
+  LNR n'en publiant pas les officiels ; c'est une lacune qui s'aggrave en
+  remontant, et les quatre saisons les plus anciennes en portent la totalité. **65 fiches sur 319 sont illustrées** — dont
 46 des 50 joueurs de l'effectif, cf. « Photos des joueurs » — et une seule porte
 une biographie.
-- **L'audit des compositions adverses ne signale plus rien** : 488 matchs
-  examinés, 488 conformes, au 1er septembre 2026.
+- **L'audit des compositions adverses ne signale plus rien**, saison par
+  saison, 2007-2008 et 2006-2007 comprises depuis le 3 septembre 2026.
 
-  **Le nombre examiné bouge, celui des anomalies non.** Sur les 546
-  rencontres en base, l'audit écarte d'abord les **26 rencontres à venir** de
-  2026-2027 — il filtre sur `MATCH_JOUE` —, puis les 22 de coupe d'Europe,
-  les 9 journées de 2022-2023 dont la LNR ne publie pas les compositions et
-  l'access match de 2021-2022 : restent 488. Le premier chiffre suit donc la
-  base et se périme tout seul — il valait 489 fin août 2026 —, le second est
-  le seul à porter un signal. Il est à zéro, et tout écart nouveau se voit.
+  **Le nombre examiné bouge, celui des anomalies non.** L'audit écarte les
+  **rencontres à venir** — il filtre sur `MATCH_JOUE` —, les matchs de coupe
+  d'Europe, les journées dont la LNR ne publie pas les compositions, et les
+  rencontres dont la base n'a aucune composition adverse. Le premier chiffre
+  suit donc la base et se périme tout seul, le second est le seul à porter un
+  signal. Il est à zéro sur chaque saison, et tout écart nouveau se voit.
+
+  **CES DEUX SAISONS N'AVAIENT JAMAIS ÉTÉ AUDITÉES**, la boucle de « Commandes »
+  s'arrêtant à 2008-2009 quand elles étaient déjà en base. Le premier passage y
+  a trouvé une identité fausse — cf. Ruan Smith, plus bas.
 
   **Le filtre sur les rencontres à venir date du 1er septembre 2026**, et il
   a supprimé un bruit qui masquait le signal : sans lui, l'audit allait
@@ -2061,6 +2130,25 @@ une biographie.
   instrument est `reassign-match-player.ts`, ligne par ligne, une fois la
   démonstration faite.
 
+  **ET L'ACCIDENT S'EST REPRODUIT EN REMONTANT, À L'IDENTIQUE.** « Ruan
+  Smith » portait cinq feuilles : le n°3 des Lions en Challenge européen le
+  10 décembre 2023 — le pilier australien, apparié au **dossard** par l'EPCR,
+  donc sans erreur possible —, et quatre lignes de Montauban de 2006 à 2008,
+  où la LNR écrit « Ryan Smith » sur chacune. Deux hommes, quinze ans et un
+  continent d'écart, réunis par la règle du prénom « à une lettre près » qui
+  fonde `joueurs.ts` — celle-là même qui rend « Mathieu » et « Matthieu » Ugena
+  au même homme.
+
+  **Le poste de référence avait propagé la faute**, comme il le fait toujours :
+  les deux lignes de banc du fly-half montalbanais étaient enregistrées
+  `PILIER_DROIT`, reprises de la fiche du pilier. `reassign-match-player.ts`
+  sur les quatre dossards, puis `fix-player-position.ts --poste=DEMI_OUVERTURE`
+  — son n°10 titulaire du 30 septembre 2006 le dit — ont soldé les deux.
+
+  **Ce cas dit à quoi sert d'auditer une saison qu'on vient d'écrire.** Aucun
+  autre contrôle ne l'aurait vu : les scores retombaient, les minutes aussi,
+  les points par joueur également.
+
   **Et un doublon peut en cacher un troisième homme.** « Carlu Johann Sadie »
   portait quatre feuilles : trois fois le pilier droit de l'UBB, que la LNR
   écrit ainsi en toutes lettres, et une fois le n°13 d'Agen du 2 septembre
@@ -2145,8 +2233,30 @@ doublon** que le niveau FORT ne pouvait pas voir, les clubs différant :
 Elliott / Elliot Stooke, une lettre d'écart, Bristol en 2022 puis Montpellier
 en 2023 — et les deux sources, EPCR et LNR, écrivent « Elliott ».
 
-`detect-duplicate-players.ts` rend désormais **CERTAIN 0, FORT 0, À VOIR 0**.
-C'est l'état attendu, et tout écart nouveau se verra.
+`detect-duplicate-players.ts` rend **CERTAIN 0, FORT 0, À VOIR 0**. C'est
+l'état attendu, et tout écart nouveau se verra.
+
+**2006-2007 lui a valu quatre paires de plus, toutes arbitrées comme étant
+deux hommes**, et toutes par la lecture des feuilles officielles :
+
+- **Rouet** — Sébastien, n°9 de Bayonne le 3 septembre 2006 puis de Narbonne
+  de 2014 à 2017, et Guillaume, n°9 de Bayonne de 2013 à 2023. Le n°9
+  bayonnais les rapprochait ; la LNR écrit « Sebastien Rouet » sur la feuille
+  de 2006, et Guillaume, né en 1990, avait alors seize ans ;
+- **Todeschini** — Joaquín, n°20 de Montpellier le 11 novembre 2006, une seule
+  feuille, et Federico, l'ouvreur international argentin du même club de 2008
+  à 2010. Une fiche à feuille unique mérite qu'on regarde à deux fois : la LNR
+  y écrit bien « Joaquin Todeschini », et l'homme existe — il entraîne
+  aujourd'hui au Chili ;
+- **Smith**, deux paires — Ryan à Montauban de 2006 à 2008, Fletcher à Lyon en
+  2022, Chris aux Lions en 2026 : trois demis d'ouverture, trois clubs, trois
+  époques, chacun tenant son prénom de sa propre source officielle.
+
+**La fiche neuve tombe dans le lot À VOIR sitôt son poste posé** — « même
+poste, clubs différents » —, et c'est le fonctionnement voulu : les deux
+paires Smith ne sont apparues qu'après la correction de Ryan. Arbitrer une
+identité en crée donc à arbitrer ; il faut relancer le détecteur **après** la
+correction, pas seulement après l'import.
 
 **Une règle qui vaut pour tout ce qui précède** : devant un nom qui ne
 s'apparie pas, **soupçonner la base avant la source** — et devant un prénom
@@ -2207,24 +2317,49 @@ c'est sous cette forme que le plafonnement se manifeste.
 ```bash
 for S in 2026-2027 2025-2026 2024-2025 2023-2024 2022-2023 2021-2022 \
          2020-2021 2019-2020 2018-2019 2017-2018 2016-2017 2015-2016 \
-         2014-2015 2013-2014 2012-2013 2011-2012 2010-2011 2009-2010 2008-2009; do
+         2014-2015 2013-2014 2012-2013 2011-2012 2010-2011 2009-2010 \
+         2008-2009 2007-2008 2006-2007; do
   npx tsx scripts/audit-opponent-lineups.ts "$S"
 done
 ```
 
-`npx tsx scripts/audit-opponent-lineups.ts` sans argument parcourt les 488
+**LA BOUCLE S'OUBLIE, ET ELLE A COÛTÉ QUATRE FAUX HOMMES.** Elle s'arrêtait à
+2008-2009 quand 2007-2008 et 2006-2007 étaient entrées en base : ces deux
+saisons n'avaient donc **jamais** été auditées, et personne ne s'en apercevait
+puisque le total global, lui, ne se lit nulle part. Le premier passage y a
+trouvé « Ruan Smith » là où la LNR écrit « Ryan Smith », sur quatre feuilles de
+Montauban de 2006 à 2008 (cf. « Limites connues »). **Ajouter la saison à la
+boucle fait partie de sa reprise**, au même titre que ses compositions.
+
+`npx tsx scripts/audit-opponent-lineups.ts` sans argument parcourt toutes les
 rencontres en une fois, et **la LNR le plafonne** : le 1er septembre 2026,
 trois tentatives d'affilée ont rendu 175, 54 puis 268 matchs examinés, pour
 323, 444 et 44 feuilles « injoignables ». Le réseau était sain avant et après
 chaque exécution — ce n'est pas une panne, c'est une limitation de débit.
-Dix-neuf processus courts passent sous le seuil là où un seul long ne passe
+Vingt et un processus courts passent sous le seuil là où un seul long ne passe
 plus, et la même journée l'a vérifié deux fois.
 
 La boucle a deux autres mérites : une coupure ne coûte qu'une saison au lieu
 de tout, et elle **donne le détail par saison**, que l'exécution globale ne
-donne pas. Le total attendu est de **488 examinés, 488 conformes, 0
-anomalie** ; les 26 rencontres de 2026-2027 sont écartées comme à venir, et
-22 matchs de coupe d'Europe sortent du périmètre LNR.
+donne pas. L'état attendu est **0 anomalie sur chaque saison** ; les
+26 rencontres de 2026-2027 sont écartées comme à venir, et 22 matchs de coupe
+d'Europe sortent du périmètre LNR. Le nombre d'examinés, lui, suit la base et
+se périme tout seul — il ne se recopie pas ici.
+
+**Une rencontre dont la base n'a aucune composition adverse est comptée à
+part**, et non auditée : la confronter ligne à ligne rendrait vingt et un
+« MANQUANT » qui n'annoncent rien. Deux sont dans ce cas, et pour de bon — le
+Brive-Perpignan du 26 avril 2008 et l'Auch-Perpignan du 30 mai 2008, dont la
+LNR corrompt un enregistrement qu'aucune source ne répare. Sans ce cas à part,
+elles portaient quarante-deux anomalies à chaque exécution et le total cessait
+d'être un signal, exactement comme les vingt-six rencontres à venir de
+2026-2027 avant qu'on ne les écarte.
+
+**Le Stade Français-Perpignan du 13 mai 2007 n'y est pas**, bien qu'il n'ait
+pas davantage de composition : la LNR n'en publie aucune non plus, si bien que
+la lecture échoue avant la confrontation et qu'il sort en « feuille non lue ».
+Les deux états se distinguent — l'un dit que la source manque, l'autre que la
+base manque là où la source est lisible.
 
 Trois choses à regarder sur chaque saison, dans cet ordre : `0 avec au moins
 une anomalie`, qui est le seul chiffre à porter un signal ; **aucune ligne

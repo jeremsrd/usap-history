@@ -44,18 +44,29 @@
  * score officiel — CLAUDE.md pose ailleurs que le calendrier fait foi, et
  * cette exception-là est démontrée, pas supposée. `SCORES_CORRIGES` la porte.
  *
- * TROIS FEUILLES SONT QUASI MUETTES — J1, J7 et J20, un seul fait chacune, là
- * où 2007-2008 n'en avait qu'une entièrement vide. Leurs scores sont connus,
+ * CINQ FEUILLES NE PERMETTENT PAS DE RECONSTITUER LE SCORE — J1, J7 et J20,
+ * un seul fait chacune ; J8, qui ne porte que les réalisations albigeoises ;
+ * J25, entièrement vide, compositions comprises. Leurs scores sont connus,
  * leur décomposition ne l'est pas, et Wikipédia ne détaille pas les
  * réalisations de cette saison. Elles sont donc écrites avec leurs
  * **compteurs à `null`**, comme l'Albi-Perpignan du 3 novembre 2007.
  *
- * **Leur bonus offensif est déduit du classement, et c'est légitime.** Les
- * trois sont une victoire, une victoire et un nul : aucune ne peut porter de
- * bonus défensif, la question ne se pose donc que pour l'offensif. Si les
- * vingt-trois autres journées en donnent déjà les cinq annoncés, les trois
- * n'en ont aucun — et le garde-fou de fin de script le vérifie. Ce n'est pas
- * une supposition, c'est une contrainte qui n'a qu'une solution.
+ * **ET LE CINQUIÈME BONUS OFFENSIF A ÉTÉ TROUVÉ : IL EST À LA J7.** Le
+ * classement seul ne pouvait pas le placer — trois journées muettes en étaient
+ * capables, et l'arithmétique n'en écartait aucune. La saison est restée sans
+ * agrégats pour ce seul chiffre, jusqu'à ce qu'`allrugby.com`, injoignable en
+ * août 2026, redevienne consultable : il marque le bonus match par match, et
+ * donne « Bo » au Perpignan-Brive 24-13 du 23 septembre 2006.
+ *
+ * **La source n'est pas officielle, et c'est sa concordance qui la vaut.** Sa
+ * lecture des vingt-six journées redonne exactement les bonus déjà établis sur
+ * les feuilles lisibles — les quatre offensifs des J3, J15, J17 et J24, les
+ * quatre défensifs des J9, J14, J18 et J25 —, sans un écart. Vingt-cinq
+ * concordances, une information nouvelle, et le total tombe alors sur les 5 BO
+ * et 4 BD du classement. Le garde-fou de fin de script le vérifie ; il ne
+ * l'aurait pas laissé passer si la journée avait été mal choisie.
+ *
+ * Elle confirme au passage le 45-6 de la J3, tout comme Sky Sports.
  *
  * PAS DE COUPE D'EUROPE EN BASE : le flux de l'EPCR ne rend rien avant
  * 2020-2021.
@@ -70,7 +81,8 @@
  * compositions ni les chronologies.**
  *
  * Sources : LNR (calendrier, feuilles, compositions) ; Wikipédia pour le
- * classement de la phase régulière et le score de la troisième journée.
+ * classement de la phase régulière et le score de la troisième journée ;
+ * allrugby.com pour le bonus offensif de la septième.
  *
  * Usage : npx tsx scripts/seed-season-2006-2007.ts [--dry]
  */
@@ -167,11 +179,64 @@ const SCORES_CORRIGES: Record<string, { usap: number; adverse: number }> = {
  * de script le vérifie, refusant d'écrire des agrégats qui s'écarteraient du
  * classement. La valeur ci-dessous est donc contrainte, pas supposée.
  */
-const FEUILLES_SANS_FAITS: Record<string, { bonusOffensif: boolean; bonusDefensif: boolean }> = {
+interface SansDetail {
+  bonusOffensif: boolean;
+  bonusDefensif: boolean;
+  /**
+   * Camps dont la décomposition est indécidable. **Les deux par défaut** — une
+   * feuille muette ne dit rien de personne. La J3 est le seul cas partiel : sa
+   * feuille reconstitue les six points de Narbonne au point près, et échoue sur
+   * les quarante-cinq de l'USAP.
+   */
+  camps?: ("usap" | "adversaire")[];
+}
+
+const FEUILLES_SANS_FAITS: Record<string, SansDetail> = {
   // Un carton jaune pour tout fait, et rien d'autre.
   j1: { bonusOffensif: false, bonusDefensif: false },
-  j7: { bonusOffensif: false, bonusDefensif: false },
+  // Perpignan 24-13 Brive : **le cinquième bonus offensif de la saison**, et
+  // la seule journée où le classement seul ne pouvait pas le placer. Il est
+  // marqué « Bo » par allrugby.com, dont la lecture des vingt-six journées
+  // redonne par ailleurs exactement les bonus déjà établis sur les feuilles
+  // lisibles — les quatre offensifs des J3, J15, J17 et J24, les quatre
+  // défensifs des J9, J14, J18 et J25. Vingt-cinq concordances et une seule
+  // information nouvelle : le total tombe alors sur les 5 BO et 4 BD du
+  // classement, et le garde-fou de fin de script le vérifie.
+  //
+  // **La décomposition, elle, reste inconnue — mais elle est contrainte.**
+  // Vingt-quatre points avec au moins quatre essais n'ont qu'une solution,
+  // quatre essais et deux transformations ; les treize points de Brive en ont
+  // plusieurs. Les compteurs restent donc à `null` des deux côtés, faute de
+  // pouvoir en écrire un seul sans écrire l'autre.
+  j7: { bonusOffensif: true, bonusDefensif: false },
   j20: { bonusOffensif: false, bonusDefensif: false },
+  // Perpignan 45-6 Narbonne : **la feuille n'est pas muette, elle est
+  // contradictoire**, et du seul côté catalan. Son fait de la 34e est étiqueté
+  // « Pénalité » et vaut cinq points à son propre score courant (14-3 → 19-3),
+  // là où une pénalité en vaut trois ; il porte de surcroît un
+  // `conversionPlayer`, que les deux pénalités narbonnaises de la même feuille
+  // n'ont pas. Deux lectures en découlent, et le score de 45 — établi par
+  // l'arithmétique de la saison, confirmé depuis par allrugby.com et Sky
+  // Sports — n'en départage aucune :
+  //
+  //   - le fait est un **essai non transformé**, le score courant est juste de
+  //     bout en bout, la feuille totalise 40, et il manque un second essai non
+  //     transformé : 7 essais, 5 transformations ;
+  //   - le fait est bien une **pénalité**, le score courant déraille à partir
+  //     de la 34e, la feuille totalise 38, et il manque un essai transformé :
+  //     6 essais, 6 transformations, 1 pénalité.
+  //
+  // Les deux font 45, les deux donnent le bonus offensif — six essais au
+  // moins, quand il en fallait quatre en 2006-2007 —, et rien ne tranche. Les
+  // compteurs catalans sont donc `null` : « on ne sait pas ». **Ceux de
+  // Narbonne restent écrits**, ses deux pénalités reconstituant ses six points
+  // exactement, d'où `camps`.
+  //
+  // Auparavant, le score corrigé dispensait la rencontre de tout contrôle
+  // arithmétique, et le script y écrivait 5 essais, 0 transformation et
+  // 1 pénalité — vingt-huit points pour quarante-cinq au score. Une
+  // décomposition fausse, affirmée en silence.
+  j3: { bonusOffensif: true, bonusDefensif: false, camps: ["usap"] },
   // Albi-Perpignan : la feuille porte les quatre réalisations albigeoises,
   // qui reconstituent bien leurs 16 points, et **aucune des catalanes**. Sept
   // points ne peuvent pas faire quatre essais : pas de bonus offensif. Neuf
@@ -231,9 +296,10 @@ interface Rencontre {
   attendance: number | null;
   usap: Realisations;
   adverse: Realisations;
-  /** Renseigné quand la LNR ne publie aucun fait : compteurs inconnus, bonus
-   *  repris d'une autre source (cf. `FEUILLES_SANS_FAITS`). */
-  sansDetail?: { bonusOffensif: boolean; bonusDefensif: boolean };
+  /** Renseigné quand la feuille ne permet pas de reconstituer le score :
+   *  compteurs inconnus, bonus repris d'une autre source
+   *  (cf. `FEUILLES_SANS_FAITS`). */
+  sansDetail?: SansDetail;
 }
 
 /**
@@ -297,25 +363,35 @@ async function championnat(echecs: string[]): Promise<Rencontre[]> {
       "adversaire",
       realisations(feuille.faits, campAdverse, scoreOpponent),
     );
-    // Une feuille muette ne permet aucune reconstitution : le contrôle serait
-    // toujours en échec, et il n'aurait rien à dire. Cf. `FEUILLES_SANS_FAITS`.
+    // Une feuille qui ne permet pas de reconstituer le score met le contrôle
+    // en échec pour toujours, et il n'aurait rien à dire : le camp concerné en
+    // est dispensé, et lui seul. Cf. `FEUILLES_SANS_FAITS`.
     const sansDetail = FEUILLES_SANS_FAITS[phase];
-    if (!sansDetail) {
+    const indecidables = sansDetail?.camps ?? (sansDetail ? ["usap", "adversaire"] : []);
+    const indecidableUsap = indecidables.includes("usap");
+    const indecidableAdverse = indecidables.includes("adversaire");
+    // **UN SCORE CORRIGÉ NE DISPENSE PAS DU CONTRÔLE.** Il en a dispensé, et
+    // la J3 y a écrit une décomposition fausse en silence — cf. l'entrée `j3`
+    // de `FEUILLES_SANS_FAITS`. Ce qui dispense, c'est de déclarer le camp
+    // indécidable, ce qui se lit dans la table et se démontre à côté.
+    if (!indecidableUsap || !indecidableAdverse) {
       const ecart: string[] = [];
-      // Sur une rencontre au score corrigé, les faits reconstituent par
-      // construction le score de la LNR : le contrôle porterait sur une valeur
-      // qu'on sait fausse. Cf. `SCORES_CORRIGES`.
-      if (!corrige && usap.total !== scoreUsap) {
+      if (!indecidableUsap && usap.total !== scoreUsap) {
         ecart.push(`USAP ${usap.total} pour ${scoreUsap}`);
       }
-      if (!corrige && adverse.total !== scoreOpponent) {
+      if (!indecidableAdverse && adverse.total !== scoreOpponent) {
         ecart.push(`${nom} ${adverse.total} pour ${scoreOpponent}`);
       }
       if (ecart.length > 0) {
         echecs.push(`${phase} : réalisations incohérentes — ${ecart.join(", ")}`);
         continue;
       }
-    } else if (usap.total === scoreUsap && adverse.total === scoreOpponent) {
+    }
+    if (
+      (!indecidableUsap || usap.total === scoreUsap) &&
+      (!indecidableAdverse || adverse.total === scoreOpponent) &&
+      sansDetail
+    ) {
       // **Le garde-fou porte sur la reconstitution, pas sur le nombre de
       // faits.** Ces feuilles-là n'en sont pas vides : trois portent un carton
       // jaune et rien d'autre, une porte les seuls points de l'adversaire. Ce
@@ -503,7 +579,12 @@ async function main() {
           ? MatchResult.DEFAITE
           : MatchResult.NUL;
 
-    const marques = r.sansDetail
+    // Quels camps la feuille ne permet pas de décomposer. Les deux, sauf J3.
+    const indecidables = r.sansDetail?.camps ?? (r.sansDetail ? ["usap", "adversaire"] : []);
+    const sansUsap = indecidables.includes("usap");
+    const sansAdverse = indecidables.includes("adversaire");
+
+    const marques = sansUsap
       ? "détail inconnu"
       : [
       r.usap.essais ? `${r.usap.essais}E` : null,
@@ -579,18 +660,19 @@ async function main() {
       bonusDefensif: bonus.bonusDefensif,
       refereeId: r.arbitre ? await trouverOuCreerArbitre(prisma, r.arbitre, false) : null,
       attendance: r.attendance,
-      // `null` se lit « on ne sait pas », jamais « zéro » : la feuille de la
-      // deuxième journée ne porte aucun fait (cf. `FEUILLES_SANS_FAITS`).
-      triesUsap: r.sansDetail ? null : r.usap.essais,
-      conversionsUsap: r.sansDetail ? null : r.usap.transformations,
-      penaltiesUsap: r.sansDetail ? null : r.usap.penalites,
-      dropGoalsUsap: r.sansDetail ? null : r.usap.drops,
-      penaltyTriesUsap: r.sansDetail ? null : r.usap.essaisDePenalite,
-      triesOpponent: r.sansDetail ? null : r.adverse.essais,
-      conversionsOpponent: r.sansDetail ? null : r.adverse.transformations,
-      penaltiesOpponent: r.sansDetail ? null : r.adverse.penalites,
-      dropGoalsOpponent: r.sansDetail ? null : r.adverse.drops,
-      penaltyTriesOpponent: r.sansDetail ? null : r.adverse.essaisDePenalite,
+      // `null` se lit « on ne sait pas », jamais « zéro » : certaines feuilles
+      // ne permettent pas de reconstituer le score, et la J3 ne l'interdit que
+      // d'un côté (cf. `FEUILLES_SANS_FAITS`).
+      triesUsap: sansUsap ? null : r.usap.essais,
+      conversionsUsap: sansUsap ? null : r.usap.transformations,
+      penaltiesUsap: sansUsap ? null : r.usap.penalites,
+      dropGoalsUsap: sansUsap ? null : r.usap.drops,
+      penaltyTriesUsap: sansUsap ? null : r.usap.essaisDePenalite,
+      triesOpponent: sansAdverse ? null : r.adverse.essais,
+      conversionsOpponent: sansAdverse ? null : r.adverse.transformations,
+      penaltiesOpponent: sansAdverse ? null : r.adverse.penalites,
+      dropGoalsOpponent: sansAdverse ? null : r.adverse.drops,
+      penaltyTriesOpponent: sansAdverse ? null : r.adverse.essaisDePenalite,
     };
 
     if (existant) {
