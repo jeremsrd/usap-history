@@ -854,6 +854,7 @@ doublons.
 | `close-season-2025-2026.ts` | modèle de clôture de saison, avec garde-fou sur le classement officiel |
 | `seed-opponent-sheet.ts` | **le script du chantier adverse** : reprend une saison entière depuis la LNR — réalisations, cartons et temps de jeu reconstitués à partir des changements. Prend la saison en argument (`2023-2024`), `--dry` pour simuler, `--detail` pour le relevé des écarts avec la base, `--match=AAAA-MM-JJ` pour n'en reprendre qu'un, `--usap` pour traiter **aussi le camp catalan** — il passe alors deux fois, l'adverse puis l'USAP |
 | `seed-lineup.ts` | crée les **deux compositions** d'un match depuis la LNR quand il n'en a aucune — dossards, titulaires, capitaine, poste déduit du numéro. Premier temps de la reprise d'une rencontre ancienne ; `--dry`, `--force` pour réécrire |
+| `seed-fiches-joueurs.ts` | complète les fiches joueur depuis **Wikipédia** : date, ville et pays de naissance, taille, surnom, et une **biographie composée** — jamais recopiée, CC BY-SA exigeant l'attribution. **L'identité tient à la catégorie, pas au titre** : l'article doit porter une catégorie citant Perpignan, faute de quoi il est refusé, et les pages d'homonymie sortent d'elles-mêmes. Le poste de l'infobox ne sert qu'à la phrase, **jamais à `Player.position`** — celui-là se déduit du numéro de maillot. `--dry`, `--joueur=`, `--introuvables` |
 | `seed-selections-distinctions.ts` | écrit `PlayerInternational` et `PlayerAward` depuis **Wikipédia**, seule source : 51 sélections et 7 distinctions. Tables figées dans le script, appariées au **nom exact** — `memeJoueur` est taillé pour les vingt-trois d'une feuille, pas pour 3 900 fiches, et rapprochait « Chris Cusiter » de Christophe Manas. Crée les pays et sélections manquants. 43 des 92 internationaux listés n'ont pas de fiche, la base commençant en 2004-2005 ; les Lions britanniques n'entrent pas, `NationalTeam` exigeant un pays. `--dry` |
 | `seed-carrieres.ts` | déduit `CareerClub` et `PlayerStint` des feuilles de match : un passage par club, l'USAP comprise. **Trois règles arbitrées**, toutes dans son en-tête : les compteurs de matchs et d'essais ne sont écrits que du côté catalan, où ils disent vrai ; un joueur dont un passage commence en 2004-2005 n'a **aucune** carrière, la base ne sachant pas depuis quand il était là ; et un second passage ne s'ouvre qu'après trois **occasions manquées** — les saisons où ce club-là a bien rencontré l'USAP —, faute de quoi les quatre saisons de Pro D2 feraient déménager tout le Top 14. `--dry`, `--joueur=` |
 | `seed-cloture-saisons.ts` | **la clôture éditoriale** : entraîneur, président et bilan de chaque saison, de 2004-2005 à 2024-2025. Écrit `Season.coachId`, `presidentId`, `notes` et le détail `SeasonCoach` — plusieurs entraîneurs par saison, avec rôle et dates. Source entière : Wikipédia, seule à publier le staff d'un club. `--dry`, `--saison=` ; n'écrase jamais un bilan existant |
@@ -1905,10 +1906,10 @@ Par ordre de valeur.
    site n'offre plus que les saisons récentes. La campagne européenne de
    2018-2019 est donc restée hors base, et il en ira de même en remontant tant
    qu'aucune source officielle ne les rouvre.
-3. **Le fond** : affluences (36 matchs sur 573 joués), biographies (1 joueur
-   sur 351), les onze joueurs sans portrait — six anciens et cinq recrues que
-   la LNR n'a pas encore photographiées, cf. « Photos des joueurs » —, et les
-   saisons sans aucun match.
+3. **Le fond** : affluences (36 matchs sur 573 joués), les 137 fiches joueur
+   que Wikipédia ne documente pas, les onze joueurs sans portrait — six
+   anciens et cinq recrues que la LNR n'a pas encore photographiées, cf.
+   « Photos des joueurs » —, et les saisons sans aucun match.
 
 Sur les 120 saisons en base, 22 seulement portent des matchs : c'est le
 chantier de la phase 4, mené en remontant le temps saison par saison. Le bilan
@@ -2252,8 +2253,14 @@ d'un siècle, c'est la règle qu'on connaîtra le moins bien.
   en 2010-2011 —, la LNR n'en publiant pas les officiels ; c'est une lacune qui
   s'aggrave en remontant, et les cinq saisons les plus anciennes en portent la
   totalité. **65 fiches sur 319 sont illustrées** — dont
-46 des 50 joueurs de l'effectif, cf. « Photos des joueurs » — et une seule porte
-une biographie.
+46 des 50 joueurs de l'effectif, cf. « Photos des joueurs ».
+
+  **214 fiches sur 351 portent une biographie** depuis le 4 septembre 2026, et
+  autant une date de naissance, une taille et un lieu de naissance
+  (cf. `seed-fiches-joueurs.ts`). Les 137 autres n'ont pas d'article Wikipédia,
+  ou en ont un que le contrôle d'identité refuse. **Le poids reste vide sur
+  toutes** : le modèle `Infobox Rugbyman` ne porte pas ce champ, et ce n'est
+  pas un défaut de lecture.
 - **L'audit des compositions adverses ne signale plus rien**, saison par
   saison, 2007-2008 et 2006-2007 comprises depuis le 3 septembre 2026.
 
