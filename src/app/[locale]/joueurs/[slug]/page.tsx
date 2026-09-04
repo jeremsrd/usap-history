@@ -1,0 +1,651 @@
+import Link from "@/components/Lien";
+import Image from "next/image";
+import { notFound, redirect } from "next/navigation";
+import { prisma } from "@/lib/prisma";
+import { estJoue } from "@/lib/matchs";
+import type { MatchResult } from "@prisma/client";
+import { POSITIONS } from "@/lib/constants";
+import { formatDateFR, countryCodeToFlag } from "@/lib/utils";
+import { creditPhoto } from "@/lib/credits-photos";
+import {
+  Users,
+  MapPin,
+  Calendar,
+  Ruler,
+  Weight,
+  Trophy,
+  Globe,
+  Shield,
+} from "lucide-react";
+import type { Metadata } from "next";
+import { cheminLocalise, type Langue } from "@/i18n/langues";
+
+/** Une participation à un match, telle que chargée par cette page. */
+type PlayerAppearance = {
+  id: string;
+  isStarter: boolean;
+  shirtNumber: number | null;
+  minutesPlayed: number | null;
+  tries: number;
+  totalPoints: number;
+  match: {
+    slug: string;
+    date: Date;
+    scoreUsap: number;
+    scoreOpponent: number;
+    result: string;
+    isHome: boolean;
+    competition: { shortName: string | null; name: string };
+    opponent: { shortName: string | null; name: string };
+  };
+};
+
+export const dynamic = "force-dynamic";
+
+type Props = {
+  params: Promise<{ locale: Langue; slug: string }>;
+};
+
+export async function generateMetadata({ params }: Props): Promise<Metadata> {
+  const { slug } = await params;
+
+  // Extraire l'id du slug (dernière partie après le dernier tiret, 25+ chars)
+  const id = extractIdFromSlug(slug);
+  if (!id) return { title: "Joueur introuvable - USAP Historia" };
+
+  const player = await prisma.player.findUnique({
+    where: { id },
+    select: { firstName: true, lastName: true, position: true },
+  });
+
+  if (!player) return { title: "Joueur introuvable - USAP Historia" };
+
+  const posLabel = player.position
+    ? POSITIONS[player.position]?.label
+    : undefined;
+
+  return {
+    title: `${player.firstName} ${player.lastName} - USAP Historia`,
+    description: `Fiche de ${player.firstName} ${player.lastName}${posLabel ? `, ${posLabel}` : ""} à l'USA Perpignan. Statistiques, carrière et matchs.`,
+  };
+}
+
+/**
+ * Extrait le CUID de la fin du slug.
+ * Les CUIDs Prisma font 25 caractères alphanumériques commençant par 'c'.
+ */
+function extractIdFromSlug(slug: string): string | null {
+  const match = slug.match(/([a-z0-9]{25,})$/);
+  return match ? match[1] : null;
+}
+
+export default async function JoueurDetailPage({ params }: Props) {
+  const { locale, slug } = await params;
+
+  const id = extractIdFromSlug(slug);
+  if (!id) notFound();
+
+  const player = await prisma.player.findUnique({
+    where: { id },
+    include: {
+      nationality: true,
+      birthCountry: true,
+      careerClubs: {
+        orderBy: { displayOrder: "asc" },
+        include: { country: true },
+      },
+      matchAppearances: {
+        include: {
+          match: {
+            select: {
+              slug: true,
+              date: true,
+              scoreUsap: true,
+              scoreOpponent: true,
+              result: true,
+              isHome: true,
+              matchday: true,
+              round: true,
+              competition: { select: { shortName: true, name: true } },
+              opponent: { select: { shortName: true, name: true } },
+              season: { select: { label: true } },
+            },
+          },
+        },
+        orderBy: { match: { date: "desc" } },
+      },
+      internationalCaps: { include: { nationalTeam: true } },
+      awards: { orderBy: { year: "desc" } },
+    },
+  });
+
+  if (!player) notFound();
+
+  // Rediriger si le slug a changé (joueur renommé)
+  if (player.slug !== slug) {
+    redirect(cheminLocalise(`/joueurs/${player.slug}`, locale));
+  }
+
+  // Un même joueur peut avoir porté le maillot catalan ET l'avoir affronté
+  // sous d'autres couleurs : les deux carrières sont séparées.
+  // Une rencontre à venir n'a pas de composition, mais rien ne l'interdit en
+  // base : on ne garde que celles qui ont un score.
+  const credit = creditPhoto(player.photoUrl);
+
+  const jouees = player.matchAppearances.filter(
+    (
+      ma,
+    ): ma is typeof ma & {
+      match: typeof ma.match & { scoreUsap: number; scoreOpponent: number; result: MatchResult };
+    } => estJoue(ma.match) && ma.match.result != null,
+  );
+  const usapAppearances = jouees.filter((ma) => !ma.isOpponent);
+  const againstAppearances = jouees.filter((ma) => ma.isOpponent);
+
+  // Stats agrégées : uniquement les matchs joués SOUS le maillot de l'USAP
+  const totalAppearances = usapAppearances.length;
+  const totalStarts = usapAppearances.filter((ma) => ma.isStarter).length;
+  const totalTries = usapAppearances.reduce((sum, ma) => sum + ma.tries, 0);
+  const totalPoints = usapAppearances.reduce(
+    (sum, ma) => sum + ma.totalPoints,
+    0,
+  );
+
+  const age = player.birthDate
+    ? Math.floor(
+        (Date.now() - new Date(player.birthDate).getTime()) /
+          (365.25 * 24 * 60 * 60 * 1000),
+      )
+    : null;
+
+  return (
+    <div className="mx-auto max-w-7xl px-4 py-10">
+      {/* Fil d'Ariane */}
+      <div className="mb-6 text-sm text-muted-foreground">
+        <Link href="/joueurs" className="hover:text-usap-sang">
+          Joueurs
+        </Link>
+        <span className="mx-2">/</span>
+        <span className="text-foreground">
+          {player.firstName} {player.lastName}
+        </span>
+      </div>
+
+      {/* En-tête joueur */}
+      <div className="mb-10 rounded-lg border border-border bg-usap-carte p-6">
+        <div className="flex flex-col gap-6 sm:flex-row">
+          {/* Photo, et son crédit — les licences CC BY et CC BY-SA l'exigent */}
+          <div className="flex shrink-0 flex-col items-center sm:items-start">
+            {player.photoUrl ? (
+              <Image
+                src={player.photoUrl}
+                alt={`${player.firstName} ${player.lastName}`}
+                width={160}
+                height={160}
+                className="h-40 w-40 rounded-lg object-cover"
+              />
+            ) : (
+              <div className="flex h-40 w-40 items-center justify-center rounded-lg bg-muted">
+                <Users className="h-16 w-16 text-muted-foreground" />
+              </div>
+            )}
+            {credit && (
+              <p className="mt-2 w-40 text-center text-[10px] leading-tight text-muted-foreground sm:text-left">
+                Photo :{" "}
+                <a
+                  href={credit.source}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="underline hover:text-usap-sang"
+                >
+                  {credit.auteur}
+                </a>{" "}
+                — {credit.licence}
+              </p>
+            )}
+          </div>
+
+          {/* Infos principales */}
+          <div className="flex-1">
+            <div className="flex flex-wrap items-start gap-3">
+              <h1 className="text-3xl font-bold uppercase tracking-wider text-foreground">
+                {player.firstName} {player.lastName}
+              </h1>
+              {player.isActive && (
+                <span className="mt-1 rounded bg-usap-sang/10 px-3 py-1 text-sm font-medium text-usap-sang">
+                  Effectif actuel
+                </span>
+              )}
+            </div>
+
+            {player.position && (
+              <p className="mt-1 text-lg text-usap-or">
+                {POSITIONS[player.position]?.label ?? player.position}
+              </p>
+            )}
+
+            <div className="mt-4 flex flex-wrap gap-x-6 gap-y-2 text-sm text-muted-foreground">
+              {player.nationality && (
+                <span className="flex items-center gap-1.5">
+                  <Globe className="h-4 w-4" />
+                  {countryCodeToFlag(player.nationality.code)}{" "}
+                  {player.nationality.name}
+                </span>
+              )}
+              {player.birthDate && (
+                <span className="flex items-center gap-1.5">
+                  <Calendar className="h-4 w-4" />
+                  {formatDateFR(player.birthDate)}
+                  {age && !player.deathDate && ` (${age} ans)`}
+                </span>
+              )}
+              {player.deathDate && (
+                <span className="flex items-center gap-1.5">
+                  <Calendar className="h-4 w-4" />
+                  Décédé le {formatDateFR(player.deathDate)}
+                </span>
+              )}
+              {player.birthPlace && (
+                <span className="flex items-center gap-1.5">
+                  <MapPin className="h-4 w-4" />
+                  {player.birthPlace}
+                  {player.birthCountry &&
+                    ` (${player.birthCountry.name})`}
+                </span>
+              )}
+              {player.height && (
+                <span className="flex items-center gap-1.5">
+                  <Ruler className="h-4 w-4" />
+                  {player.height} cm
+                </span>
+              )}
+              {player.weight && (
+                <span className="flex items-center gap-1.5">
+                  <Weight className="h-4 w-4" />
+                  {player.weight} kg
+                </span>
+              )}
+            </div>
+
+            {/* Stats USAP */}
+            {totalAppearances > 0 && (
+              <div className="mt-6 grid grid-cols-2 gap-4 border-t border-border pt-4 sm:grid-cols-4">
+                <StatBox label="Matchs" value={totalAppearances} />
+                <StatBox label="Titulaire" value={totalStarts} />
+                <StatBox label="Essais" value={totalTries} />
+                <StatBox
+                  label="Points"
+                  value={totalPoints}
+                  className="text-usap-or"
+                />
+              </div>
+            )}
+          </div>
+        </div>
+
+        {player.biography && (
+          <p className="mt-6 border-t border-border pt-4 text-sm text-muted-foreground">
+            {player.biography}
+          </p>
+        )}
+      </div>
+
+      {/* Carrière */}
+      {player.careerClubs.length > 0 && (
+        <section className="mb-10">
+          <h2 className="mb-4 text-2xl font-bold uppercase tracking-wider text-foreground">
+            Carrière
+          </h2>
+          <div className="overflow-x-auto rounded-lg border border-border">
+            <table className="w-full text-sm">
+              <thead>
+                <tr className="border-b border-border bg-muted/50">
+                  <th className="px-4 py-3 text-left font-semibold text-foreground">
+                    Période
+                  </th>
+                  <th className="px-4 py-3 text-left font-semibold text-foreground">
+                    Club
+                  </th>
+                  <th className="hidden px-4 py-3 text-left font-semibold text-foreground sm:table-cell">
+                    Pays
+                  </th>
+                  <th className="hidden px-4 py-3 text-center font-semibold text-foreground md:table-cell">
+                    Matchs
+                  </th>
+                  <th className="hidden px-4 py-3 text-center font-semibold text-foreground md:table-cell">
+                    Essais
+                  </th>
+                </tr>
+              </thead>
+              <tbody>
+                {player.careerClubs.map((cc) => (
+                  <tr
+                    key={cc.id}
+                    className={`border-b border-border transition-colors hover:bg-muted/30 ${
+                      cc.isUsap ? "bg-usap-sang/5" : ""
+                    }`}
+                  >
+                    <td className="whitespace-nowrap px-4 py-3 text-muted-foreground">
+                      {cc.startYear}
+                      {cc.endYear ? ` - ${cc.endYear}` : " - ..."}
+                    </td>
+                    <td className="px-4 py-3">
+                      <span
+                        className={`font-medium ${cc.isUsap ? "text-usap-sang" : "text-foreground"}`}
+                      >
+                        {cc.isUsap ? "USAP" : cc.clubName}
+                      </span>
+                      {cc.isLoan && (
+                        <span className="ml-2 text-xs text-muted-foreground">
+                          (prêt)
+                        </span>
+                      )}
+                    </td>
+                    <td className="hidden px-4 py-3 text-muted-foreground sm:table-cell">
+                      {cc.country && (
+                        <span>
+                          {countryCodeToFlag(cc.country.code)}{" "}
+                          {cc.country.name}
+                        </span>
+                      )}
+                    </td>
+                    <td className="hidden px-4 py-3 text-center text-muted-foreground md:table-cell">
+                      {cc.appearances ?? "—"}
+                    </td>
+                    <td className="hidden px-4 py-3 text-center text-muted-foreground md:table-cell">
+                      {cc.tries ?? "—"}
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+          {/* La carrière est déduite des feuilles de match, pas des contrats :
+              le dire ici plutôt que de laisser croire à un relevé officiel.
+              Cf. `scripts/seed-carrieres.ts`. */}
+          <p className="mt-2 text-xs text-muted-foreground">
+            Périodes établies sur les feuilles de match : première et dernière
+            apparition connues. Le passage réel peut déborder de part et
+            d&apos;autre, et seuls les clubs rencontrés par l&apos;USAP y
+            figurent.
+          </p>
+        </section>
+      )}
+
+      {/* Sélections internationales */}
+      {player.internationalCaps.length > 0 && (
+        <section className="mb-10">
+          <h2 className="mb-4 flex items-center gap-2 text-2xl font-bold uppercase tracking-wider text-foreground">
+            <Globe className="h-6 w-6 text-usap-or" />
+            Sélections internationales
+          </h2>
+          <div className="grid gap-4 sm:grid-cols-2 md:grid-cols-3">
+            {player.internationalCaps.map((cap) => (
+              <div
+                key={cap.id}
+                className="rounded-lg border border-border bg-usap-carte p-4"
+              >
+                <p className="font-bold text-foreground">
+                  {cap.nationalTeam.name}
+                </p>
+                <p className="mt-1 text-2xl font-bold text-usap-or">
+                  {cap.totalCaps}{" "}
+                  <span className="text-sm font-normal text-muted-foreground">
+                    sélection{cap.totalCaps > 1 ? "s" : ""}
+                  </span>
+                </p>
+                {/* La source ne donne que l'année : la date est stockée au
+                    1er janvier, on n'en affiche donc que l'année. */}
+                {cap.firstCapDate && (
+                  <p className="text-sm text-muted-foreground">
+                    {new Date(cap.firstCapDate).getUTCFullYear()}
+                    {cap.lastCapDate &&
+                      new Date(cap.lastCapDate).getUTCFullYear() !==
+                        new Date(cap.firstCapDate).getUTCFullYear() &&
+                      ` à ${new Date(cap.lastCapDate).getUTCFullYear()}`}
+                  </p>
+                )}
+                {cap.totalTries != null && cap.totalTries > 0 && (
+                  <p className="text-sm text-muted-foreground">
+                    {cap.totalTries} essai{cap.totalTries > 1 ? "s" : ""}
+                  </p>
+                )}
+              </div>
+            ))}
+          </div>
+          {/* Le compte est celui des sélections obtenues sous le maillot de
+              l'USAP, pas d'une carrière : le dire, sans quoi le nombre est
+              faux. Cf. `scripts/seed-selections-distinctions.ts`. */}
+          <p className="mt-2 text-xs text-muted-foreground">
+            Sélections obtenues sous les couleurs de l&apos;USAP, et non sur
+            l&apos;ensemble de la carrière. Listes arrêtées en 2016 pour les
+            internationaux français, en 2017 pour les étrangers.
+          </p>
+        </section>
+      )}
+
+      {/* Récompenses */}
+      {player.awards.length > 0 && (
+        <section className="mb-10">
+          <h2 className="mb-4 flex items-center gap-2 text-2xl font-bold uppercase tracking-wider text-foreground">
+            <Trophy className="h-6 w-6 text-usap-or" />
+            Distinctions
+          </h2>
+          <div className="grid gap-3 sm:grid-cols-2">
+            {player.awards.map((award) => (
+              <div
+                key={award.id}
+                className="flex items-center gap-3 rounded-lg border border-border bg-usap-carte p-4"
+              >
+                <Trophy className="h-5 w-5 shrink-0 text-usap-or" />
+                <div>
+                  <p className="font-medium text-foreground">{award.name}</p>
+                  <p className="text-sm text-muted-foreground">
+                    {award.year}
+                    {award.category && ` — ${award.category}`}
+                  </p>
+                </div>
+              </div>
+            ))}
+          </div>
+        </section>
+      )}
+
+      {/* Matchs sous le maillot de l'USAP */}
+      {usapAppearances.length > 0 && (
+        <section className={againstAppearances.length > 0 ? "mb-10" : ""}>
+          <h2 className="mb-4 flex items-center gap-2 text-2xl font-bold uppercase tracking-wider text-foreground">
+            <Calendar className="h-6 w-6 text-usap-or" />
+            Matchs avec l&apos;USAP ({usapAppearances.length})
+          </h2>
+          <MatchHistoryTable appearances={usapAppearances} />
+        </section>
+      )}
+
+      {/* Confrontations sous d'autres couleurs */}
+      {againstAppearances.length > 0 && (
+        <section>
+          <h2 className="mb-2 flex items-center gap-2 text-2xl font-bold uppercase tracking-wider text-foreground">
+            <Shield className="h-6 w-6 text-muted-foreground" />
+            Matchs contre l&apos;USAP ({againstAppearances.length})
+          </h2>
+          <p className="mb-4 text-sm text-muted-foreground">
+            {usapAppearances.length > 0
+              ? "Rencontres disputées sous d'autres couleurs. Ces matchs ne comptent pas dans les statistiques ci-dessus."
+              : "Ce joueur n'a jamais porté le maillot de l'USAP : il figure dans la base au titre des adversaires rencontrés."}
+          </p>
+          <MatchHistoryTable appearances={againstAppearances} isOpponent />
+        </section>
+      )}
+    </div>
+  );
+}
+
+/**
+ * Tableau d'historique de matchs, partagé entre les rencontres jouées pour
+ * l'USAP et celles jouées contre elle. En mode adversaire, les colonnes
+ * d'essais et de points décrivent la performance face aux Catalans : elles
+ * sont affichées en sourdine pour ne pas être confondues avec les stats USAP.
+ */
+function MatchHistoryTable({
+  appearances,
+  isOpponent = false,
+}: {
+  appearances: PlayerAppearance[];
+  isOpponent?: boolean;
+}) {
+  return (
+    <div className="overflow-x-auto rounded-lg border border-border">
+      <table className="w-full text-sm">
+        <thead>
+          <tr className="border-b border-border bg-muted/50">
+            <th className="px-3 py-2 text-left font-semibold text-foreground">
+              Date
+            </th>
+            <th className="hidden px-3 py-2 text-left font-semibold text-foreground sm:table-cell">
+              Compét.
+            </th>
+            <th className="px-3 py-2 text-left font-semibold text-foreground">
+              Match
+            </th>
+            <th className="px-3 py-2 text-center font-semibold text-foreground">
+              Score
+            </th>
+            <th className="px-3 py-2 text-center font-semibold text-foreground">
+              N°
+            </th>
+            <th className="hidden px-3 py-2 text-center font-semibold text-foreground sm:table-cell">
+              Min
+            </th>
+            <th className="hidden px-3 py-2 text-center font-semibold text-foreground md:table-cell">
+              Essais
+            </th>
+            <th className="hidden px-3 py-2 text-center font-semibold text-foreground md:table-cell">
+              Pts
+            </th>
+          </tr>
+        </thead>
+        <tbody>
+          {appearances.map((ma) => {
+            const m = ma.match;
+            // Le résultat est toujours exprimé du point de vue de l'USAP :
+            // pour un adversaire, une victoire catalane est donc un revers.
+            const favourable = isOpponent
+              ? m.result === "DEFAITE"
+              : m.result === "VICTOIRE";
+            const unfavourable = isOpponent
+              ? m.result === "VICTOIRE"
+              : m.result === "DEFAITE";
+            const resultColor = favourable
+              ? "bg-green-500/10 text-green-600"
+              : unfavourable
+                ? "bg-red-500/10 text-red-500"
+                : "bg-muted text-muted-foreground";
+            const oppName = m.opponent.shortName || m.opponent.name;
+
+            return (
+              <tr
+                key={ma.id}
+                className="border-b border-border transition-colors hover:bg-muted/30"
+              >
+                <td className="whitespace-nowrap px-3 py-2 text-muted-foreground">
+                  {formatDateFR(m.date)}
+                </td>
+                <td className="hidden whitespace-nowrap px-3 py-2 text-muted-foreground sm:table-cell">
+                  {m.competition.shortName || m.competition.name}
+                </td>
+                <td className="px-3 py-2">
+                  <Link
+                    href={`/matchs/${m.slug}`}
+                    className="font-medium text-foreground hover:text-usap-sang"
+                  >
+                    {m.isHome ? (
+                      <>
+                        <span className="font-bold">USAP</span> - {oppName}
+                      </>
+                    ) : (
+                      <>
+                        {oppName} - <span className="font-bold">USAP</span>
+                      </>
+                    )}
+                  </Link>
+                </td>
+                <td className="px-3 py-2 text-center">
+                  <span
+                    className={`inline-block rounded px-2 py-0.5 text-xs font-bold ${resultColor}`}
+                  >
+                    {m.isHome
+                      ? `${m.scoreUsap} - ${m.scoreOpponent}`
+                      : `${m.scoreOpponent} - ${m.scoreUsap}`}
+                  </span>
+                </td>
+                <td className="px-3 py-2 text-center text-muted-foreground">
+                  {ma.shirtNumber ?? "—"}
+                  {!ma.isStarter && ma.shirtNumber && (
+                    <span className="text-xs text-muted-foreground">*</span>
+                  )}
+                </td>
+                <td className="hidden px-3 py-2 text-center text-muted-foreground sm:table-cell">
+                  {ma.minutesPlayed != null ? (
+                    <span>{ma.minutesPlayed}&apos;</span>
+                  ) : (
+                    <span>—</span>
+                  )}
+                </td>
+                <td className="hidden px-3 py-2 text-center md:table-cell">
+                  {ma.tries > 0 ? (
+                    <span
+                      className={
+                        isOpponent
+                          ? "font-medium text-muted-foreground"
+                          : "font-medium text-foreground"
+                      }
+                    >
+                      {ma.tries}
+                    </span>
+                  ) : (
+                    <span className="text-muted-foreground">—</span>
+                  )}
+                </td>
+                <td className="hidden px-3 py-2 text-center md:table-cell">
+                  {ma.totalPoints > 0 ? (
+                    <span
+                      className={
+                        isOpponent
+                          ? "font-medium text-muted-foreground"
+                          : "font-medium text-usap-or"
+                      }
+                    >
+                      {ma.totalPoints}
+                    </span>
+                  ) : (
+                    <span className="text-muted-foreground">—</span>
+                  )}
+                </td>
+              </tr>
+            );
+          })}
+        </tbody>
+      </table>
+    </div>
+  );
+}
+
+function StatBox({
+  label,
+  value,
+  className = "",
+}: {
+  label: string;
+  value: number;
+  className?: string;
+}) {
+  return (
+    <div className="text-center">
+      <div className={`text-2xl font-bold ${className || "text-foreground"}`}>
+        {value}
+      </div>
+      <div className="text-xs text-muted-foreground">{label}</div>
+    </div>
+  );
+}

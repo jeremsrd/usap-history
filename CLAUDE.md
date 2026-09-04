@@ -26,7 +26,7 @@ usap-history/
 ├── CLAUDE.md                     # Ce fichier — conventions et règles de saisie
 ├── prisma/schema.prisma          # Schéma de la base
 ├── src/
-│   ├── app/                      # App Router — 36 pages
+│   ├── app/                      # App Router — 36 pages, sous `[locale]`
 │   │   ├── page.tsx              # Accueil
 │   │   ├── saisons/              # page.tsx + [label]/page.tsx
 │   │   ├── matchs/               # page.tsx + [slug]/page.tsx
@@ -50,6 +50,7 @@ usap-history/
 │   │   ├── ScoreEvolution.tsx    # graphe d'évolution du score d'un match
 │   │   ├── VideoEmbed.tsx        # résumé YouTube/Dailymotion en click-to-play
 │   │   └── ui/ImageUpload.tsx
+│   ├── i18n/                     # langues.ts — les langues et le préfixe d'URL
 │   ├── lib/                      # prisma.ts, slugs.ts, utils.ts, constants.ts,
 │   │                             #   periodes.ts, supabase/
 │   └── types/index.ts
@@ -1255,6 +1256,58 @@ rapprochement avec `Trophy` se fait sur l'**année de fin de saison** et la
 compétition ; l'expression est ancrée au début du libellé de tour, faute de
 quoi une demi-finale en hériterait. Il n'y a pas de clé étrangère entre un
 match et un titre : le jour où il en faudrait une, c'est là qu'elle irait.
+
+## Bilingue français / catalan
+
+**Le site vise le français et le catalan**, et le chantier se fait en deux
+temps. Le premier est posé le 4 septembre 2026 : **la langue est dans
+l'adresse**, et rien n'est encore traduit.
+
+Pourquoi commencer par là plutôt que par les traductions : sortir un site de
+son unilinguisme coûte d'autant plus cher qu'il a de pages, et celui-ci en
+gagne à chaque séance. Le faire tant qu'il est petit était le moment.
+
+**Le catalan visé est celui de Catalunya Nord**, le rossellonais. L'USAP est un
+club nord-catalan, et un supporter d'ici entend la différence avec le catalan
+de Barcelone.
+
+### Ce qui est en place
+
+- **`src/app/[locale]/`** porte toutes les pages, l'admin et la connexion
+  comprises. Seuls `api/` et `auth/` restent à la racine : ce sont des
+  gestionnaires de route, ils n'ont pas besoin de layout.
+- **`[locale]/layout.tsx` est le layout racine** — c'est lui qui écrit
+  `<html lang>`, et c'est la raison du déplacement : `lang` ne peut pas suivre
+  la langue si le layout racine est au-dessus du segment.
+- **`generateStaticParams` pré-rend les deux langues**, et `dynamicParams` est
+  à `false` : `/es/joueurs` rend 404 plutôt que de se rabattre en silence sur
+  le français. Une langue qu'on n'a pas ne s'invente pas plus qu'un score.
+- **`src/middleware.ts` redirige tout chemin sans langue** vers `/fr/…`, en
+  **307** et non en 308 : le jour où la langue par défaut se négociera avec le
+  navigateur, une redirection permanente mise en cache serait un piège. Il
+  continue par ailleurs de rafraîchir la session Supabase sur l'admin, dont le
+  filtre a suivi le nouveau chemin.
+- **`@/components/Lien` remplace `next/link`** dans les 35 fichiers qui en
+  importaient. Il lit la langue dans l'adresse et préfixe les chemins internes,
+  ce qui a évité de réécrire les cent six liens du site — et d'en oublier un.
+  Il laisse passer les liens externes et **les ancres** : sans cette
+  précaution, `#points` serait devenu `/fr#points` et aurait cassé la page des
+  réalisateurs.
+- Les six redirections de slug passent par `cheminLocalise()`, faute de quoi un
+  joueur renommé sortait de sa langue.
+
+### Ce qui reste
+
+- **Le second temps** : sortir les phrases du code dans un dictionnaire
+  français, pour qu'un dictionnaire catalan puisse lui répondre.
+- **Pas encore de sélecteur de langue**, et c'est volontaire : offrir un
+  « català » qui rend du français tromperait le lecteur. Il viendra avec les
+  premières traductions.
+- **Pas encore d'`hreflang`** dans les métadonnées.
+- **Les textes de la base** — bilans de saison, biographies — sont un chantier
+  à part, et le plus lourd : ils grossissent à chaque saison reprise. Une
+  traduction manquante devra se voir, comme se voit une donnée que la source ne
+  publie pas.
 
 ## Identité visuelle
 
