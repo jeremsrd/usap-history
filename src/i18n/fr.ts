@@ -125,6 +125,15 @@ export const fr = {
     points: "Points",
     actuel: "Actuel",
   },
+  langue: {
+    choisir: "Changer de langue",
+    /**
+     * **Écrit en catalan, et c'est voulu** : il s'adresse à quelqu'un qui vient
+     * de choisir le catalan. À faire relire par un catalanophone — le
+     * rossellonais est la variété visée.
+     */
+    nonTraduit: "Traducció al català en curs. Aquesta pàgina encara està en francès.",
+  },
   pied: {
     mention: "USAP Historia — Données historiques de l'USA Perpignan depuis 1902",
   },

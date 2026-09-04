@@ -1336,11 +1336,30 @@ une journée.
 **L'admin n'y entrera pas**, et c'est délibéré : c'est le bureau de Jérémy,
 pas une page publique.
 
+### Le sélecteur, et le bandeau qui va avec
+
+`SelecteurLangue` bascule d'une langue à l'autre **sans quitter la page** —
+`/fr/records` mène à `/ca/records`, non à l'accueil. Il figure deux fois dans
+le Header, en bureau et en mobile.
+
+**Deux libellés plutôt que deux drapeaux.** Un drapeau désigne un État, non une
+langue, et le raccourci serait doublement faux ici : le catalan se parle des
+deux côtés de la frontière, et l'écusson qui conviendrait au catalan de
+Perpignan est celui du club, déjà en tête de page. « FR » et « CA » ne se
+confondent avec rien et se lisent à toutes les tailles.
+
+**Et une langue offerte mais pas traduite doit le dire.** Le layout pose sur
+toute page qui n'est pas en français un bandeau : « Traducció al català en
+curs. Aquesta pàgina encara està en francès. » Sans lui, le sélecteur
+promettrait du catalan et rendrait du français — ce qui vaut moins que pas de
+sélecteur du tout. Le bandeau disparaîtra de lui-même quand la langue par
+défaut cessera d'être la seule traduite.
+
+**Cette phrase est à faire relire par un catalanophone**, comme tout le
+catalan à venir.
+
 ### Ce qui reste
 
-- **Pas encore de sélecteur de langue**, et c'est volontaire : offrir un
-  « català » qui rend du français tromperait le lecteur. Il viendra avec les
-  premières traductions.
 - **Pas encore d'`hreflang`** dans les métadonnées.
 - **Les textes de la base** — bilans de saison, biographies — sont un chantier
   à part, et le plus lourd : ils grossissent à chaque saison reprise. Une

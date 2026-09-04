@@ -7,6 +7,7 @@ import { usePathname } from "next/navigation";
 import { ChevronDown, Menu, Settings, X } from "lucide-react";
 import { NAV_LINKS, NAV_LINKS_MAIN, NAV_LINKS_MORE } from "@/lib/constants";
 import { cheminSansLangue } from "@/i18n/langues";
+import SelecteurLangue from "@/components/SelecteurLangue";
 import { cn } from "@/lib/utils";
 import { ThemeToggle } from "@/components/ThemeToggle";
 
@@ -142,12 +143,14 @@ export default function Header({ libelles }: { libelles: Record<string, string> 
             >
               <Settings className="h-4 w-4" />
             </Link>
+            <SelecteurLangue titre={libelles["langue.choisir"]} />
             <ThemeToggle libelles={libelles} />
           </div>
         </div>
 
-        {/* Mobile: theme toggle + burger */}
+        {/* Mobile: langue + theme toggle + burger */}
         <div className="flex items-center gap-1 md:hidden">
+          <SelecteurLangue titre={libelles["langue.choisir"]} />
           <ThemeToggle libelles={libelles} />
           <button
             onClick={() => setIsOpen(!isOpen)}

@@ -58,3 +58,14 @@ export function cheminSansLangue(chemin: string): string {
   if (!estUneLangue(premier)) return chemin;
   return chemin.slice(premier.length + 1) || "/";
 }
+
+/**
+ * Le même chemin, dans une autre langue.
+ *
+ * C'est ce dont le sélecteur a besoin : passer de `/fr/records` à
+ * `/ca/records` sans quitter la page qu'on lisait. Un chemin sans langue en
+ * reçoit une plutôt que d'être laissé tel quel.
+ */
+export function cheminEnLangue(chemin: string, langue: Langue): string {
+  return cheminLocalise(cheminSansLangue(chemin), langue);
+}
