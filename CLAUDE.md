@@ -2228,11 +2228,36 @@ d'un siècle, c'est la règle qu'on connaîtra le moins bien.
   passages à l'USAP, tirés des feuilles de match (cf. `seed-carrieres.ts`).
   Ce sont des modèles de **contrat** nourris de **traces** — la nuance est
   écrite sur chaque ligne, et désormais affichée sous la table de la fiche.
-- Erreur d'hydratation React, antérieure et non diagnostiquée (probablement
-  `next-themes`). **Elle n'est pas propre aux pages de match**, comme ce
-  fichier l'a longtemps dit : `/stades`, `/presidents` et `/entraineurs` la
-  rendent aussi, et elle se lit sur des pages qu'aucune modification récente
-  n'a touchées. À vérifier ailleurs avant de l'imputer à un changement.
+- **L'ERREUR D'HYDRATATION N'EN EST PAS UNE, ET C'EST DIAGNOSTIQUÉ** — le
+  4 septembre 2026. Ce fichier l'a longtemps annoncée « sur les pages de
+  match, probablement `next-themes` » : la cause était à moitié juste, le
+  périmètre faux, et la permanence fausse.
+
+  **Sur un chargement ordinaire, il n'y a aucune erreur.** Vérifié dans un
+  onglet neuf sur `/stades`, `/presidents`, `/matchs` et une fiche de match,
+  en thème clair comme en thème sombre posé par `localStorage` : la console
+  reste vide.
+
+  Elle n'apparaît que lorsque la **préférence de couleur du système change au
+  moment d'un chargement** — ce qui, dans cette session, venait de
+  `resize_window colorScheme` de l'outil de navigation, et non du site.
+  `next-themes` est bien en cause, mais par `enableSystem` : son script écrit
+  la classe et le `color-scheme` sur `<html>` avant l'hydratation, d'après la
+  préférence système. Si celle-ci bascule entre le rendu serveur et
+  l'hydratation, React trouve un arbre qu'il n'a pas produit. Le cas ordinaire
+  est couvert par le `suppressHydrationWarning` posé sur `<html>`.
+
+  **Il n'y a donc rien à corriger dans le code.** Retirer `enableSystem`
+  supprimerait la course résiduelle, mais aussi la faculté de suivre le
+  réglage du système : c'est un arbitrage de produit, pas un correctif.
+
+  **ET LA MÉTHODE COMPTE PLUS QUE LA CONCLUSION.** Le tampon de console de
+  l'outil est **cumulatif** : lu avec `onlyErrors` et une petite limite, il
+  rend le même message ancien à chaque appel. Trois bissections — retirer le
+  `ThemeToggle`, puis le `Header`, puis le `ThemeProvider` — ont ainsi paru
+  échouer alors qu'elles ne prouvaient rien. **Compter les occurrences avant
+  et après, ou ouvrir un onglet neuf**, avant de conclure quoi que ce soit
+  d'un message de console.
 
 **Ce à quoi il faut penser en écrivant une requête**
 
