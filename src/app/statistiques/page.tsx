@@ -450,6 +450,12 @@ export default async function StatistiquesPage() {
               />
             ))}
           </div>
+          <Link
+            href="/realisateurs"
+            className="mt-3 inline-block text-sm font-medium text-usap-sang hover:underline"
+          >
+            Voir le classement complet →
+          </Link>
         </section>
 
         {/* Plus capés */}
@@ -472,6 +478,12 @@ export default async function StatistiquesPage() {
               />
             ))}
           </div>
+          <Link
+            href="/centurions"
+            className="mt-3 inline-block text-sm font-medium text-usap-sang hover:underline"
+          >
+            Voir le classement complet →
+          </Link>
         </section>
 
         {/* Meilleurs essayeurs */}
@@ -494,6 +506,12 @@ export default async function StatistiquesPage() {
               />
             ))}
           </div>
+          <Link
+            href="/marqueurs"
+            className="mt-3 inline-block text-sm font-medium text-usap-sang hover:underline"
+          >
+            Voir le classement complet →
+          </Link>
         </section>
       </div>
 

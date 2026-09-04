@@ -26,7 +26,7 @@ usap-history/
 ├── CLAUDE.md                     # Ce fichier — conventions et règles de saisie
 ├── prisma/schema.prisma          # Schéma de la base
 ├── src/
-│   ├── app/                      # App Router — 35 pages
+│   ├── app/                      # App Router — 36 pages
 │   │   ├── page.tsx              # Accueil
 │   │   ├── saisons/              # page.tsx + [label]/page.tsx
 │   │   ├── matchs/               # page.tsx + [slug]/page.tsx
@@ -38,6 +38,7 @@ usap-history/
 │   │   ├── presidents/           # idem
 │   │   ├── centurions/            # les joueurs à 100 matchs ou plus
 │   │   ├── marqueurs/             # les joueurs à 10 essais ou plus
+│   │   ├── realisateurs/          # les joueurs à 50 points ou plus
 │   │   ├── palmares/, statistiques/
 │   │   ├── login/, auth/callback/, api/upload/
 │   │   └── admin/                # protégé — saisons, matchs (+ [id]), joueurs,
@@ -1186,6 +1187,22 @@ la LNR n'y publiant pas un seul fait de match, et 2005-2006 n'en porte que
 quatre. Ce n'est pas une troncature, c'est un zéro — un marqueur de ces
 années-là paraît n'avoir jamais marqué. La page le dit en tête, et rappelle
 que l'essai de pénalité et l'essai collectif n'ont pas d'auteur.
+
+**Page des meilleurs réalisateurs — et le détail y retombe.** `/realisateurs`
+retient les joueurs à **cinquante points ou plus**, soixante-deux à ce jour, et
+donne la décomposition : essais, transformations, pénalités, drops. Elle est
+sûre — sur les 13 478 lignes du camp catalan, `tries × 5 + conversions × 2 +
+penalties × 3 + dropGoals × 3` retombe sur `totalPoints` **sans une seule
+exception**. Un essai de pénalité, lui, n'a pas d'auteur et n'entre donc dans
+aucune de ces colonnes.
+
+**Les trois classements partagent leurs conventions**, et c'est délibéré : le
+camp catalan, les rencontres jouées, toutes compétitions confondues, un seuil
+plutôt qu'un « top N », et à égalité le moins de matchs devant. `JoueurCellule`
+leur donne la même présentation du joueur. Les trois extraits de
+`/statistiques` — plus capés, meilleurs marqueurs, meilleurs réalisateurs —
+lient désormais vers eux : sans ce lien, une page complète existait sans que
+rien n'y mène depuis son propre résumé.
 
 **Fiche de match — le titre qu'elle a décidé.** Une finale affiche une
 bannière « Champion » ou « Finaliste » avec un lien vers le palmarès. Le
