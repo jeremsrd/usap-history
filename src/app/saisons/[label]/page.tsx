@@ -312,9 +312,18 @@ export default async function SaisonDetailPage({ params }: Props) {
                   INTERIMAIRE: "Intérimaire",
                 };
                 const roleLabel = roleLabels[sc.role] ?? sc.role;
-                const period =
-                  sc.startDate || sc.endDate
-                    ? ` (${sc.startDate ? new Date(sc.startDate).toLocaleDateString("fr-FR", { month: "short" }) : ""}${sc.endDate ? ` → ${new Date(sc.endDate).toLocaleDateString("fr-FR", { month: "short" })}` : " → …"})`
+                // Une prise ou une fin de fonction en cours de saison. Seul
+                // le mois est affiché : la source ne donne pas toujours le
+                // jour (cf. `seed-cloture-saisons.ts`), et le mois suffit à
+                // situer le changement.
+                const mois = (d: Date | string) =>
+                  new Date(d).toLocaleDateString("fr-FR", { month: "short" });
+                const period = sc.startDate
+                  ? sc.endDate
+                    ? ` (${mois(sc.startDate)} → ${mois(sc.endDate)})`
+                    : ` (depuis ${mois(sc.startDate)})`
+                  : sc.endDate
+                    ? ` (jusqu'à ${mois(sc.endDate)})`
                     : "";
                 return (
                   <p key={sc.id}>

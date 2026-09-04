@@ -854,6 +854,7 @@ doublons.
 | `close-season-2025-2026.ts` | modèle de clôture de saison, avec garde-fou sur le classement officiel |
 | `seed-opponent-sheet.ts` | **le script du chantier adverse** : reprend une saison entière depuis la LNR — réalisations, cartons et temps de jeu reconstitués à partir des changements. Prend la saison en argument (`2023-2024`), `--dry` pour simuler, `--detail` pour le relevé des écarts avec la base, `--match=AAAA-MM-JJ` pour n'en reprendre qu'un, `--usap` pour traiter **aussi le camp catalan** — il passe alors deux fois, l'adverse puis l'USAP |
 | `seed-lineup.ts` | crée les **deux compositions** d'un match depuis la LNR quand il n'en a aucune — dossards, titulaires, capitaine, poste déduit du numéro. Premier temps de la reprise d'une rencontre ancienne ; `--dry`, `--force` pour réécrire |
+| `seed-cloture-saisons.ts` | **la clôture éditoriale** : entraîneur, président et bilan de chaque saison, de 2004-2005 à 2024-2025. Écrit `Season.coachId`, `presidentId`, `notes` et le détail `SeasonCoach` — plusieurs entraîneurs par saison, avec rôle et dates. Source entière : Wikipédia, seule à publier le staff d'un club. `--dry`, `--saison=` ; n'écrase jamais un bilan existant |
 | `seed-season-2004-2005.ts` | crée les 30 matchs de la **plus ancienne saison en base**, la dernière du Top 16 et la dernière que la LNR archive. Modèle pour une saison dont la source ne publie **aucun fait** : compteurs à `null` partout, bonus défensif calculé sur le seul score, bonus offensif introuvable — et **agrégats délibérément non écrits**. Porte le second `SCORES_CORRIGES` du projet, démontré deux fois |
 | `seed-season-2005-2006.ts` | crée les 27 matchs de la saison suivante — 26 journées et une demi-finale, la première du Top 14. Modèle pour une saison dont la LNR ne publie ni changement ni composition fiable, et dont cinq journées sont hors calendrier |
 | `seed-season-2006-2007.ts` | crée les 26 matchs d'une saison de Top 14 sans phase finale — cinquième, **la plus ancienne en base**. Porte `SCORES_CORRIGES`, seule table du projet qui contredise un score officiel, et une `FEUILLES_SANS_FAITS` dont les entrées peuvent ne valoir **que pour un camp** : son contrôle arithmétique est rendu camp par camp, un score corrigé ne dispensant plus de rien |
@@ -1342,11 +1343,15 @@ pas.
 
 Par ordre de valeur.
 
-1. **Achever les saisons reprises.** De 2005-2006 à 2021-2022, dix-sept
-   saisons ont leurs matchs et leur chronologie, et toutes leurs compositions
-   sauf 2005-2006, dont la LNR n'en publie que trois de vraies ; il leur
-   manque la clôture éditoriale — entraîneur, président, bilan rédigé —,
-   les affluences que la LNR ne donne pas, et les mi-temps. La marche à suivre
+1. **Achever les saisons reprises.** De 2004-2005 à 2021-2022, dix-huit
+   saisons ont leurs matchs, et toutes leurs compositions sauf 2005-2006, dont
+   la LNR n'en publie que trois de vraies, et 2004-2005, dont elle n'en publie
+   que dix-sept.
+
+   **La clôture éditoriale est faite depuis le 4 septembre 2026** : les
+   vingt-deux saisons qui portent des matchs joués ont leur entraîneur, leur
+   président et leur bilan rédigé — `seed-cloture-saisons.ts`. Il leur manque
+   encore les affluences que la LNR ne donne pas, et les mi-temps. La marche à suivre
    pour toute nouvelle saison est en tête de fichier, « Reprendre une
    saison ».
 
