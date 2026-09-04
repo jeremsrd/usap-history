@@ -854,6 +854,7 @@ doublons.
 | `close-season-2025-2026.ts` | modèle de clôture de saison, avec garde-fou sur le classement officiel |
 | `seed-opponent-sheet.ts` | **le script du chantier adverse** : reprend une saison entière depuis la LNR — réalisations, cartons et temps de jeu reconstitués à partir des changements. Prend la saison en argument (`2023-2024`), `--dry` pour simuler, `--detail` pour le relevé des écarts avec la base, `--match=AAAA-MM-JJ` pour n'en reprendre qu'un, `--usap` pour traiter **aussi le camp catalan** — il passe alors deux fois, l'adverse puis l'USAP |
 | `seed-lineup.ts` | crée les **deux compositions** d'un match depuis la LNR quand il n'en a aucune — dossards, titulaires, capitaine, poste déduit du numéro. Premier temps de la reprise d'une rencontre ancienne ; `--dry`, `--force` pour réécrire |
+| `seed-carrieres.ts` | déduit `CareerClub` et `PlayerStint` des feuilles de match : un passage par club, l'USAP comprise. **Trois règles arbitrées**, toutes dans son en-tête : les compteurs de matchs et d'essais ne sont écrits que du côté catalan, où ils disent vrai ; un joueur dont un passage commence en 2004-2005 n'a **aucune** carrière, la base ne sachant pas depuis quand il était là ; et un second passage ne s'ouvre qu'après trois **occasions manquées** — les saisons où ce club-là a bien rencontré l'USAP —, faute de quoi les quatre saisons de Pro D2 feraient déménager tout le Top 14. `--dry`, `--joueur=` |
 | `seed-cloture-saisons.ts` | **la clôture éditoriale** : entraîneur, président et bilan de chaque saison, de 2004-2005 à 2024-2025. Écrit `Season.coachId`, `presidentId`, `notes` et le détail `SeasonCoach` — plusieurs entraîneurs par saison, avec rôle et dates. Source entière : Wikipédia, seule à publier le staff d'un club. `--dry`, `--saison=` ; n'écrase jamais un bilan existant |
 | `seed-season-2004-2005.ts` | crée les 30 matchs de la **plus ancienne saison en base**, la dernière du Top 16 et la dernière que la LNR archive. Modèle pour une saison dont la source ne publie **aucun fait** : compteurs à `null` partout, bonus défensif calculé sur le seul score, bonus offensif introuvable — et **agrégats délibérément non écrits**. Porte le second `SCORES_CORRIGES` du projet, démontré deux fois |
 | `seed-season-2005-2006.ts` | crée les 27 matchs de la saison suivante — 26 journées et une demi-finale, la première du Top 14. Modèle pour une saison dont la LNR ne publie ni changement ni composition fiable, et dont cinq journées sont hors calendrier |
@@ -1903,8 +1904,8 @@ Par ordre de valeur.
    site n'offre plus que les saisons récentes. La campagne européenne de
    2018-2019 est donc restée hors base, et il en ira de même en remontant tant
    qu'aucune source officielle ne les rouvre.
-3. **Le fond** : affluences (36 matchs sur 520 joués), biographies (1 joueur
-   sur 301), les onze joueurs sans portrait — six anciens et cinq recrues que
+3. **Le fond** : affluences (36 matchs sur 573 joués), biographies (1 joueur
+   sur 351), les onze joueurs sans portrait — six anciens et cinq recrues que
    la LNR n'a pas encore photographiées, cf. « Photos des joueurs » —, et les
    saisons sans aucun match.
 
@@ -2119,8 +2120,12 @@ d'un siècle, c'est la règle qu'on connaîtra le moins bien.
 
 - `EventType` ne comporte pas `CARTON_ORANGE`. Le champ `MatchPlayer.orangeCard`
   existe et s'affiche, mais la sanction ne peut pas figurer dans la chronologie.
-- Les modèles `CareerClub`, `PlayerStint`, `PlayerInternational` et
-  `PlayerAward` existent et ne sont pas alimentés.
+- Les modèles `PlayerInternational` et `PlayerAward` existent et ne sont pas
+  alimentés. `CareerClub` et `PlayerStint` le sont depuis le 4 septembre 2026,
+  **par déduction et non par source** : 4 931 lignes de carrière et 295
+  passages à l'USAP, tirés des feuilles de match (cf. `seed-carrieres.ts`).
+  Ce sont des modèles de **contrat** nourris de **traces** — la nuance est
+  écrite sur chaque ligne, et désormais affichée sous la table de la fiche.
 - Erreur d'hydratation React sur les pages de match, antérieure et non
   diagnostiquée (probablement `next-themes`).
 

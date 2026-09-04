@@ -359,6 +359,15 @@ export default async function JoueurDetailPage({ params }: Props) {
               </tbody>
             </table>
           </div>
+          {/* La carrière est déduite des feuilles de match, pas des contrats :
+              le dire ici plutôt que de laisser croire à un relevé officiel.
+              Cf. `scripts/seed-carrieres.ts`. */}
+          <p className="mt-2 text-xs text-muted-foreground">
+            Périodes établies sur les feuilles de match : première et dernière
+            apparition connues. Le passage réel peut déborder de part et
+            d&apos;autre, et seuls les clubs rencontrés par l&apos;USAP y
+            figurent.
+          </p>
         </section>
       )}
 
