@@ -194,6 +194,18 @@ const DISTINCTS: [string, string][] = [
   // club, cinq feuilles depuis 2021 dont un n°19. Quinze ans séparent la
   // dernière de l'un de la première de l'autre.
   ["Trevor Brennan", "Joshua Brennan"],
+  // Venues avec 2004-2005, arbitrées le 4 septembre 2026 sur les feuilles.
+  //   Mas       Nicolas, le pilier droit aux 128 feuilles, et Ugo, deux
+  //             feuilles de banc en 2020-2021 : vingt ans les séparent. C'est
+  //             un n°20 de Nicolas en 2004-2005 qui a créé la collision.
+  //   Boulogne  Jordan, n°20 de l'USAP à Castres le 18 septembre 2004, une
+  //             seule feuille, et Kevin, le demi de mêlée d'Albi, Biarritz et
+  //             l'USAP, trente feuilles à partir de 2007. La LNR écrit
+  //             « Jordan Boulogne » en toutes lettres sur celle de 2004, où
+  //             elle nomme aussi Nicolas Mas au n°16 : la base est fidèle à sa
+  //             source, et rien ne permet de les réunir.
+  ["Nicolas Mas", "Ugo Mas"],
+  ["Kevin Boulogne", "Jordan Boulogne"],
 ];
 
 const ARBITREES = new Set(

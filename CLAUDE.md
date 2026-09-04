@@ -338,11 +338,15 @@ Ne jamais remplir seulement le côté USAP :
     oublie un » cinquante-quatre fois sur une saison de 2007-2008, et à y
     perdre le seul vrai oubli. **2006-2007 et 2005-2006 sont aussi à 22**,
     vérifié sur leurs feuilles : la borne basse recule de deux ans sans être
-    atteinte, et **2004-2005 reste à compter**. Sur les 52 équipes-matchs de
+    atteinte. Sur les 52 équipes-matchs de
     2005-2006, 32 portent les 22 attendus, 12 en portent 21 et 8 en portent
     20 : la source omet davantage à mesure qu'on remonte, d'où
     `effectifMinimalDeFeuille(saison)`, qui tolère deux absents jusqu'en
-    2005-2006 et un seul ensuite.
+    2005-2006 et un seul ensuite. **2004-2005 descend jusqu'à dix-sept** —
+    les quinze titulaires et deux remplaçants —, et son plancher vaut donc
+    dix-sept : il ne protège plus de grand-chose, le contrôle qui compte étant
+    celui des quinze titulaires, que ses dix-sept feuilles publiées satisfont
+    toutes.
 
     **Et elle omet aussi des titulaires.** Six feuilles de 2005-2006 n'en
     dessinent que treize ou quatorze, des dossards précis manquant à leur
@@ -405,11 +409,14 @@ la victoire, ce qui l'incite à jouer plutôt qu'à gérer.
 d'une rencontre. Ne jamais recoder un `wins * 4 + draws * 2` en dur : c'est
 faux avant 2004-2005.
 
-Trois réserves à lever avant d'attaquer les saisons anciennes :
-la date de la décision LNR de 2004 n'est pas sourcée (seule la saison
-d'application est attestée par les classements) ; la Wikipédia française
-laisse 2004-2007 dans le flou sur le seuil défensif, il faudrait les
-règlements LNR de ces saisons, qui ne sont plus en ligne ; et la date
+**La bascule de 2004-2005 est attestée depuis le 4 septembre 2026**, par la
+saison elle-même : son classement porte deux colonnes BO et BD, et 18×4 + 1×2
++ 9 + 3 font les 86 points annoncés à l'USAP — le vieux barème en donnerait 67.
+Le seuil défensif de sept points l'est aussi, les trois bonus défensifs du
+classement se retrouvant exactement sur les scores.
+
+Deux réserves subsistent : la **date de la décision** LNR de 2004 n'est
+toujours pas sourcée — seule la saison d'application l'est —, et la date
 d'introduction des bonus dans les coupes d'Europe n'a pas été vérifiée.
 
 **Aucun bonus sur un match couperet** : phase finale européenne, barrage
@@ -614,8 +621,18 @@ Ce qu'il faut savoir avant d'écrire du code :
   `seed-opponent-sheet.ts` refuse d'en écrire plutôt que de rendre 80 minutes à
   chaque titulaire — ce qui ferait retomber le total sur 1 200 sans rien
   signaler ;
-- **son archive s'arrête à 2004-2005** : `/calendrier-et-resultats/2003-2004/j1`
-  rend 404, quand 2004-2005 répond encore avec ses trente journées de Top 16 ;
+- **son archive s'arrête à 2004-2005**, désormais en base :
+  `/calendrier-et-resultats/2003-2004/j1` rend 404, quand 2004-2005 répond avec
+  ses trente journées de Top 16 ;
+- **et elle n'y publie ni fait ni changement.** Les vingt-sept feuilles de
+  2005-2006 portent des faits et aucun changement ; les **trente de 2004-2005
+  n'ont ni l'un ni l'autre** — pas un essai, pas un carton, pas un
+  remplacement. Il n'y a donc là ni chronologie, ni réalisation par joueur, ni
+  temps de jeu à écrire, et les compteurs de la rencontre restent à `null` ;
+- **le Top 16 est dans la liste blanche de `phasesLnr()`** depuis 2004-2005 :
+  ses journées se lisent sur les mêmes URL que celles du Top 14, sous le même
+  `top14.lnr.fr`. L'omettre aurait mis toute la saison hors périmètre, en
+  silence ;
 - la LNR **ampute les accents** — ne jamais réécrire une orthographe déjà en
   base à partir d'elle ;
 - elle **ne publie pas toutes ses compositions** : neuf journées de 2022-2023
@@ -749,6 +766,14 @@ rapprochement de noms, donc aucune erreur d'identité possible.
   se relevant sur `/competitions/top-14-{annee}/calendrier.html`. Un
   `User-Agent` ordinaire suffit.
 
+  **SA COUVERTURE COMPLÈTE COMMENCE À 2006-2007, ET PAS AVANT.** Pour
+  2005-2006 (`top-14-2006`) comme pour 2004-2005 (`top-16-2005`), son
+  calendrier ne publie que les rencontres d'**un seul club, Clermont** — ses
+  vingt-six ou trente matchs, et rien d'autre. Il n'y a ni sélecteur de club ni
+  calendrier par club pour ces saisons-là : la page `/clubs/usap/calendrier`
+  n'affiche que la saison en cours. C'est ce qui empêche d'y placer les neuf
+  bonus offensifs de 2004-2005.
+
   Son tableau de feuille de match, quand il existe, se lit **colonne par
   colonne** — treize colonnes, les réalisations de l'USAP à gauche du nom,
   celles de l'adversaire à droite, le club recevant à gauche et non l'USAP, et
@@ -829,7 +854,8 @@ doublons.
 | `close-season-2025-2026.ts` | modèle de clôture de saison, avec garde-fou sur le classement officiel |
 | `seed-opponent-sheet.ts` | **le script du chantier adverse** : reprend une saison entière depuis la LNR — réalisations, cartons et temps de jeu reconstitués à partir des changements. Prend la saison en argument (`2023-2024`), `--dry` pour simuler, `--detail` pour le relevé des écarts avec la base, `--match=AAAA-MM-JJ` pour n'en reprendre qu'un, `--usap` pour traiter **aussi le camp catalan** — il passe alors deux fois, l'adverse puis l'USAP |
 | `seed-lineup.ts` | crée les **deux compositions** d'un match depuis la LNR quand il n'en a aucune — dossards, titulaires, capitaine, poste déduit du numéro. Premier temps de la reprise d'une rencontre ancienne ; `--dry`, `--force` pour réécrire |
-| `seed-season-2005-2006.ts` | crée les 27 matchs de la **plus ancienne saison en base** — 26 journées et une demi-finale, la première du Top 14. Modèle pour une saison dont la LNR ne publie ni changement ni composition fiable, et dont cinq journées sont hors calendrier |
+| `seed-season-2004-2005.ts` | crée les 30 matchs de la **plus ancienne saison en base**, la dernière du Top 16 et la dernière que la LNR archive. Modèle pour une saison dont la source ne publie **aucun fait** : compteurs à `null` partout, bonus défensif calculé sur le seul score, bonus offensif introuvable — et **agrégats délibérément non écrits**. Porte le second `SCORES_CORRIGES` du projet, démontré deux fois |
+| `seed-season-2005-2006.ts` | crée les 27 matchs de la saison suivante — 26 journées et une demi-finale, la première du Top 14. Modèle pour une saison dont la LNR ne publie ni changement ni composition fiable, et dont cinq journées sont hors calendrier |
 | `seed-season-2006-2007.ts` | crée les 26 matchs d'une saison de Top 14 sans phase finale — cinquième, **la plus ancienne en base**. Porte `SCORES_CORRIGES`, seule table du projet qui contredise un score officiel, et une `FEUILLES_SANS_FAITS` dont les entrées peuvent ne valoir **que pour un camp** : son contrôle arithmétique est rendu camp par camp, un score corrigé ne dispensant plus de rien |
 | `seed-season-2007-2008.ts` | crée les 27 matchs d'une saison de Top 14 **avec demi-finale** — quatrième, éliminée au Vélodrome. **Le modèle le plus récent.** Porte trois particularités : `FEUILLES_HORS_CALENDRIER` pour deux journées amputées, `FEUILLES_SANS_FAITS` pour une feuille muette, et un garde-fou Wikipédia qui sépare BO et BD |
 | `seed-season-2008-2009.ts` | crée les 28 matchs de la saison du titre 2009 — **le modèle le plus récent**, et le seul dont le garde-fou vienne de Wikipédia, la LNR ne publiant aucun classement pour cette saison |
@@ -1559,16 +1585,68 @@ Par ordre de valeur.
 
 2. **Poursuivre la phase 4** en remontant.
 
-   **2005-2006 EST LA PLUS ANCIENNE SAISON DE LA BASE**, close le
+   **2004-2005 EST LA PLUS ANCIENNE SAISON DE LA BASE**, et **la dernière que
+   la LNR archive** : `/calendrier-et-resultats/2003-2004/j1` rend 404. C'est
+   aussi la dernière du **Top 16** — seize clubs, trente journées —, une
+   compétition qui n'existait pas en base et qu'il a fallu créer, puis inscrire
+   à la liste blanche de `phasesLnr()` sans quoi toute la saison serait sortie
+   du périmètre sans un mot.
+
+   Cinquième, l'USAP ne dispute pas la phase finale. **30 matchs écrits,
+   17 compositions, 16 arbitres, aucune chronologie** — et **les agrégats ne
+   sont pas écrits**, pour la raison dite plus bas.
+
+   **ELLE ATTESTE LA BASCULE DU BARÈME, QUI N'ÉTAIT QUE SUPPOSÉE.** Ce fichier
+   posait plus haut que le 3/2/1 sans bonus cède au 4/2/0 avec bonus en
+   2004-2005, en réservant que « seule la saison d'application est attestée par
+   les classements ». C'est désormais attesté ici : le classement de Wikipédia
+   porte deux colonnes BO et BD, et 18×4 + 1×2 + 9 + 3 font bien les 86 points
+   annoncés — le vieux barème en donnerait 67.
+
+   **LA LNR N'Y PUBLIE NI FAIT NI CHANGEMENT**, ce qui est un cran de plus
+   qu'en 2005-2006, où les faits étaient là. Aucune des trente feuilles ne
+   porte un essai, un carton ou un remplacement — vérifié sur treize d'entre
+   elles, réparties d'août à mai. D'où : compteurs de réalisations à `null`
+   partout, aucune chronologie, aucune réalisation par joueur, aucun temps de
+   jeu.
+
+   **ET C'EST CE QUI BLOQUE LES AGRÉGATS : LES NEUF BONUS OFFENSIFS.** Tout le
+   reste du classement se retrouve exactement — 18 V 1 N 11 D, 688 points
+   marqués, 583 encaissés — et **les trois bonus défensifs aussi**, puisque
+   ceux-là ne dépendent que du score. L'offensif se compte en essais, la LNR
+   n'en publie aucun, et `allrugby.com` — qui marque le bonus match par match à
+   partir de 2006-2007 — **ne couvre de cette saison que les rencontres de
+   Clermont**. Le garde-fou refuse donc d'écrire, ce qui est son rôle : c'est
+   l'état où 2006-2007 est restée jusqu'à ce qu'une source revienne en ligne.
+
+   **ET LA LNR SE TROMPE SUR UN SCORE, DÉMONTRÉ DEUX FOIS.** Elle donne 29-23
+   au Bourgoin-Perpignan de la seizième journée ; Wikipédia donne 33-23. La
+   colonne des points marqués de la saison retombe sur les 688 annoncés au
+   point près, quand celle des encaissés vaut 579 pour 583 — et J16 est la
+   seule rencontre où les deux sources divergent, de exactement quatre points.
+   Le **compte des bonus défensifs** dit la même chose autrement : une défaite
+   23-29 en donne un, une défaite 23-33 non ; avec le score de la LNR la saison
+   en compte quatre, avec celui de Wikipédia exactement les trois du
+   classement. C'est le second cas du projet où une autre source l'emporte
+   contre le score officiel, et le premier démontré deux fois.
+
+   **SES COMPOSITIONS SONT VRAIES, ET C'EST À VÉRIFIER À CHAQUE FOIS.** Leur
+   indice alphabétique va de 0,27 à 0,41, le régime des saisons saines, quand
+   les compositions fabriquées de 2005-2006 montaient de 0,55 à 0,95. Toutes
+   portent leurs quinze titulaires, ce que 2005-2006 ne faisait pas. **La
+   dégradation de la source n'est donc pas monotone** : elle s'aggrave sur les
+   faits et s'améliore sur les compositions. Treize feuilles sur trente n'en
+   publient simplement aucune.
+
+   L'effectif de feuille y descend jusqu'à **dix-sept joueurs**, la LNR en
+   oubliant jusqu'à cinq au banc : `effectifMinimalDeFeuille` le sait.
+
+   **2005-2006 EST LA SAISON SUIVANTE**, close le
    3 septembre 2026 : la première du Top 14 — le championnat passe de seize
    clubs à quatorze —, vingt-six journées et une demi-finale perdue 12-9 à
    Biarritz. **Quatrième avec 84 points**, 18 V 0 N 8 D, 671 points marqués
    pour 398, 9 bonus offensifs et 3 défensifs, conforme au classement de
    Wikipédia. Biarritz est champion.
-
-   **L'archive de la LNR remonte d'une saison de plus et s'arrête là** :
-   2004-2005 répond encore, avec ses trente journées de Top 16 ; 2003-2004 rend
-   404.
 
    **CINQ JOURNÉES SONT AMPUTÉES — J2, J6, J15, J17, J18 — et le balayage des
    identifiants n'y suffit plus** : les journées de février et mars ne sont pas
@@ -2452,7 +2530,7 @@ c'est sous cette forme que le plafonnement se manifeste.
 for S in 2026-2027 2025-2026 2024-2025 2023-2024 2022-2023 2021-2022 \
          2020-2021 2019-2020 2018-2019 2017-2018 2016-2017 2015-2016 \
          2014-2015 2013-2014 2012-2013 2011-2012 2010-2011 2009-2010 \
-         2008-2009 2007-2008 2006-2007 2005-2006; do
+         2008-2009 2007-2008 2006-2007 2005-2006 2004-2005; do
   npx tsx scripts/audit-opponent-lineups.ts "$S"
 done
 ```

@@ -1129,8 +1129,14 @@ export function phasesBarrage(saison: string): string[] {
  *
  * Devant un intitulé inconnu, on rend donc la liste vide : le match sort du
  * périmètre, et les appelants le disent.
+ *
+ * **Le Top 16 y est entré avec 2004-2005**, dernière saison du championnat à
+ * seize clubs et la plus ancienne que la LNR archive. Ses trente journées se
+ * lisent sur les mêmes URL que celles du Top 14, sous le même
+ * `top14.lnr.fr` : c'est bien elle qui les publie, et l'omettre aurait mis
+ * toute la saison hors périmètre sans un mot.
  */
-const COMPETITIONS_LNR = [/\btop 14\b/i, /\bpro d2\b/i, /\bbarrages?\b/i];
+const COMPETITIONS_LNR = [/\btop 14\b/i, /\btop 16\b/i, /\bpro d2\b/i, /\bbarrages?\b/i];
 
 /**
  * Phases à essayer pour un match : journée, phase finale ou barrage.

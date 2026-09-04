@@ -309,13 +309,18 @@ export function effectifDeFeuille(saison: string): number {
  * **Il dépend donc de ce que la source omet à chaque époque, et cela se
  * compte.** Sur les 52 équipes-matchs de 2005-2006 : 32 portent les 22
  * joueurs attendus, 12 en portent 21, et **8 en portent 20**. Sur celles de
- * 2006-2007 et 2007-2008, l'oubli ne dépasse jamais un joueur. La borne est
- * posée en conséquence, et elle reculera encore si l'on remonte : 2004-2005
- * n'a pas été comptée.
+ * 2006-2007 et 2007-2008, l'oubli ne dépasse jamais un joueur.
+ *
+ * **2004-2005 descend jusqu'à dix-sept**, soit les quinze titulaires et deux
+ * remplaçants seulement : la LNR en oublie alors jusqu'à cinq au banc. Le
+ * plancher y vaut donc dix-sept, et il ne protège plus de grand-chose — c'est
+ * assumé, le contrôle qui compte étant celui des quinze titulaires, que les
+ * dix-sept feuilles publiées de cette saison satisfont toutes.
  */
 export function effectifMinimalDeFeuille(saison: string): number {
-  const omissionsTolerees = Number(saison.slice(0, 4)) <= 2005 ? 2 : 1;
-  return effectifDeFeuille(saison) - omissionsTolerees;
+  const annee = Number(saison.slice(0, 4));
+  if (annee <= 2004) return 17;
+  return effectifDeFeuille(saison) - (annee <= 2005 ? 2 : 1);
 }
 
 /**

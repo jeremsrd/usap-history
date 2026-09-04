@@ -138,6 +138,15 @@ const VARIANTES_DAFFICHAGE: [base: string, feuille: string][] = [
   ["Cyril Blanchard", "Cyriel Blanchard"],
   ["Eddie Sawailau", "Edward Dratai Sawailau"],
   ["Napolioni Nalaga", "Naipolioni Vonowale Nalaga"],
+  // Apparues avec 2004-2005, et **la source se contredit elle-même dans les
+  // deux cas**. Thibaut Privat, deuxième ligne de Clermont puis de
+  // Montpellier, porte dix-huit feuilles en base ; la LNR l'écrit « Thibault »
+  // sur celle du 19 février 2005 et « Thibaut » partout ailleurs. Yohann
+  // Authier, lui, est « Yohann » à Grenoble le 21 mai 2005 et « Johann » à
+  // Oyonnax le 12 avril 2014 — neuf ans, deux clubs, un seul homme, deux
+  // orthographes officielles.
+  ["Thibaut Privat", "Thibault Privat"],
+  ["Johann Authier", "Yohann Authier"],
 ];
 
 const VARIANTES = new Set(
