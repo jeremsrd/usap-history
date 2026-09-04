@@ -26,7 +26,7 @@ usap-history/
 ├── CLAUDE.md                     # Ce fichier — conventions et règles de saisie
 ├── prisma/schema.prisma          # Schéma de la base
 ├── src/
-│   ├── app/                      # App Router — 36 pages
+│   ├── app/                      # App Router — 35 pages
 │   │   ├── page.tsx              # Accueil
 │   │   ├── saisons/              # page.tsx + [label]/page.tsx
 │   │   ├── matchs/               # page.tsx + [slug]/page.tsx
@@ -37,8 +37,7 @@ usap-history/
 │   │   ├── entraineurs/          # idem
 │   │   ├── presidents/           # idem
 │   │   ├── centurions/            # les joueurs à 100 matchs ou plus
-│   │   ├── marqueurs/             # les joueurs à 10 essais ou plus
-│   │   ├── realisateurs/          # les joueurs à 50 points ou plus
+│   │   ├── realisateurs/          # points, essais et points au pied
 │   │   ├── palmares/, statistiques/
 │   │   ├── login/, auth/callback/, api/upload/
 │   │   └── admin/                # protégé — saisons, matchs (+ [id]), joueurs,
@@ -1175,34 +1174,39 @@ commence en 2004-2005 : les centurions d'avant n'y sont pas, et ceux qui
 joué plus de matchs que leur ligne n'en montre. Sans cet avertissement, la
 page se lirait comme un palmarès exhaustif.
 
-**Page des meilleurs marqueurs — un seuil, pas un « top N ».** `/marqueurs`
-retient les joueurs à **dix essais ou plus**, quarante-sept à ce jour. Un
-classement coupé au cinquantième tomberait au milieu d'une égalité — ils sont
-plusieurs à huit essais —, quand un seuil se dit et se vérifie. À nombre
-d'essais égal, le moins de matchs passe devant.
+**Page des meilleurs réalisateurs — trois classements, une seule page.**
+`/realisateurs` porte tout ce qui se marque : **aux points** (seuil 50,
+soixante-deux joueurs), **aux essais** (seuil 10, quarante-sept) et **au pied**
+(seuil 50, vingt-deux — transformations, pénalités et drops). Une page par
+classement avait été essayée et défaite le 4 septembre 2026, sur l'arbitrage de
+Jérémy : trois entrées de menu pour la même donnée, quand un jeu d'ancres suffit.
 
-**Sa réserve de couverture est plus lourde que celle des centurions**, et
-c'est pourquoi elle est écrite autrement : **2004-2005 ne porte aucun essai**,
-la LNR n'y publiant pas un seul fait de match, et 2005-2006 n'en porte que
-quatre. Ce n'est pas une troncature, c'est un zéro — un marqueur de ces
-années-là paraît n'avoir jamais marqué. La page le dit en tête, et rappelle
-que l'essai de pénalité et l'essai collectif n'ont pas d'auteur.
+**Les trois ne se recopient pas**, et c'est ce qui justifie de les garder tous
+les trois : les populations diffèrent — un ailier figure aux essais et pas au
+pied, un buteur l'inverse —, et un même joueur y tient trois rangs distincts.
+Les centurions, eux, gardent leur page : ils comptent des matchs, pas des
+points.
 
-**Page des meilleurs réalisateurs — et le détail y retombe.** `/realisateurs`
-retient les joueurs à **cinquante points ou plus**, soixante-deux à ce jour, et
-donne la décomposition : essais, transformations, pénalités, drops. Elle est
-sûre — sur les 13 478 lignes du camp catalan, `tries × 5 + conversions × 2 +
-penalties × 3 + dropGoals × 3` retombe sur `totalPoints` **sans une seule
-exception**. Un essai de pénalité, lui, n'a pas d'auteur et n'entre donc dans
-aucune de ces colonnes.
+**Un seuil, jamais un « top N ».** Un classement coupé au cinquantième tombe au
+milieu d'une égalité ; un seuil se dit et se vérifie. À valeur égale, le moins
+de matchs passe devant.
 
-**Les trois classements partagent leurs conventions**, et c'est délibéré : le
-camp catalan, les rencontres jouées, toutes compétitions confondues, un seuil
-plutôt qu'un « top N », et à égalité le moins de matchs devant. `JoueurCellule`
-leur donne la même présentation du joueur. Les trois extraits de
-`/statistiques` — plus capés, meilleurs marqueurs, meilleurs réalisateurs —
-lient désormais vers eux : sans ce lien, une page complète existait sans que
-rien n'y mène depuis son propre résumé.
+**La décomposition des points est sûre** : sur les 13 478 lignes du camp
+catalan, `tries × 5 + conversions × 2 + penalties × 3 + dropGoals × 3` retombe
+sur `totalPoints` **sans une seule exception**. Un essai de pénalité, lui, n'a
+pas d'auteur et n'entre dans aucune colonne.
+
+**La réserve de couverture y est plus lourde que sur les centurions**, et elle
+est donc écrite autrement : **2004-2005 ne porte aucune réalisation**, la LNR
+n'y publiant pas un seul fait de match, et 2005-2006 presque aucune. Ce n'est
+pas une troncature, c'est un zéro — un buteur de ces années-là paraîtrait
+n'avoir jamais marqué. Nicolas Laharrague y figure à 416 points quand ses deux
+premières saisons ne comptent pour rien.
+
+**Les extraits de `/statistiques` lient vers les sections** — plus capés vers
+les centurions, meilleurs marqueurs vers `#essais`, meilleurs réalisateurs vers
+`#points`. Sans ce lien, une page complète existait sans que rien n'y mène
+depuis son propre résumé.
 
 **Fiche de match — le titre qu'elle a décidé.** Une finale affiche une
 bannière « Champion » ou « Finaliste » avec un lien vers le palmarès. Le

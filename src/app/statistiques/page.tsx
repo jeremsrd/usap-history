@@ -451,7 +451,7 @@ export default async function StatistiquesPage() {
             ))}
           </div>
           <Link
-            href="/realisateurs"
+            href="/realisateurs#points"
             className="mt-3 inline-block text-sm font-medium text-usap-sang hover:underline"
           >
             Voir le classement complet →
@@ -507,7 +507,7 @@ export default async function StatistiquesPage() {
             ))}
           </div>
           <Link
-            href="/marqueurs"
+            href="/realisateurs#essais"
             className="mt-3 inline-block text-sm font-medium text-usap-sang hover:underline"
           >
             Voir le classement complet →
