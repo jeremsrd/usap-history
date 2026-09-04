@@ -108,6 +108,7 @@ export const NAV_LINKS_MAIN = [
 
 // Liens secondaires regroupés dans le dropdown "Explorer"
 export const NAV_LINKS_MORE = [
+  { href: "/centurions", label: "Centurions" },
   { href: "/adversaires", label: "Adversaires" },
   { href: "/stades", label: "Stades" },
   { href: "/arbitres", label: "Arbitres" },

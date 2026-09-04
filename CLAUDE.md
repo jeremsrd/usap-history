@@ -26,7 +26,7 @@ usap-history/
 ├── CLAUDE.md                     # Ce fichier — conventions et règles de saisie
 ├── prisma/schema.prisma          # Schéma de la base
 ├── src/
-│   ├── app/                      # App Router — 33 pages
+│   ├── app/                      # App Router — 34 pages
 │   │   ├── page.tsx              # Accueil
 │   │   ├── saisons/              # page.tsx + [label]/page.tsx
 │   │   ├── matchs/               # page.tsx + [slug]/page.tsx
@@ -36,6 +36,7 @@ usap-history/
 │   │   ├── stades/               # idem
 │   │   ├── entraineurs/          # idem
 │   │   ├── presidents/           # idem
+│   │   ├── centurions/            # les joueurs à 100 matchs ou plus
 │   │   ├── palmares/, statistiques/
 │   │   ├── login/, auth/callback/, api/upload/
 │   │   └── admin/                # protégé — saisons, matchs (+ [id]), joueurs,
@@ -1154,6 +1155,22 @@ compétitions qui ont les deux phases : un barrage d'accession, seul match de
 sa compétition, garde son intitulé, et une poule de coupe d'Europe reste d'un
 bloc. Les bilans ne comptent que les rencontres **jouées** (`estJoue`), un
 calendrier à venir ne pesant pas dans un bilan.
+
+**Page des centurions — et ce qu'elle ne peut pas dire.** `/centurions`
+recense les joueurs à cent matchs ou plus sous le maillot catalan. Un match s'y
+compte **comme sur la fiche du joueur** — une ligne de composition sur une
+rencontre jouée, remplaçant non entré compris —, et c'est délibéré : deux
+pages qui lient l'une vers l'autre ne peuvent pas annoncer deux nombres
+différents pour le même homme. Compter les seules feuilles où le joueur est
+entré en jeu ferait tomber la liste de 40 à 37 noms, et le critère serait
+faux là où la source ne publie pas les temps de jeu — 2004-2005 et 2005-2006
+n'en ont aucun.
+
+**Le tableau ne couvre pas l'histoire du club, et il le dit en tête.** La base
+commence en 2004-2005 : les centurions d'avant n'y sont pas, et ceux qui
+étaient déjà là en 2004 — Nicolas Mas, David Marty, Perry Freshwater — ont
+joué plus de matchs que leur ligne n'en montre. Sans cet avertissement, la
+page se lirait comme un palmarès exhaustif.
 
 **Fiche de match — le titre qu'elle a décidé.** Une finale affiche une
 bannière « Champion » ou « Finaliste » avec un lien vers le palmarès. Le
