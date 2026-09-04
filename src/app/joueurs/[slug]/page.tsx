@@ -393,6 +393,17 @@ export default async function JoueurDetailPage({ params }: Props) {
                     sélection{cap.totalCaps > 1 ? "s" : ""}
                   </span>
                 </p>
+                {/* La source ne donne que l'année : la date est stockée au
+                    1er janvier, on n'en affiche donc que l'année. */}
+                {cap.firstCapDate && (
+                  <p className="text-sm text-muted-foreground">
+                    {new Date(cap.firstCapDate).getUTCFullYear()}
+                    {cap.lastCapDate &&
+                      new Date(cap.lastCapDate).getUTCFullYear() !==
+                        new Date(cap.firstCapDate).getUTCFullYear() &&
+                      ` à ${new Date(cap.lastCapDate).getUTCFullYear()}`}
+                  </p>
+                )}
                 {cap.totalTries != null && cap.totalTries > 0 && (
                   <p className="text-sm text-muted-foreground">
                     {cap.totalTries} essai{cap.totalTries > 1 ? "s" : ""}
@@ -401,6 +412,14 @@ export default async function JoueurDetailPage({ params }: Props) {
               </div>
             ))}
           </div>
+          {/* Le compte est celui des sélections obtenues sous le maillot de
+              l'USAP, pas d'une carrière : le dire, sans quoi le nombre est
+              faux. Cf. `scripts/seed-selections-distinctions.ts`. */}
+          <p className="mt-2 text-xs text-muted-foreground">
+            Sélections obtenues sous les couleurs de l&apos;USAP, et non sur
+            l&apos;ensemble de la carrière. Listes arrêtées en 2016 pour les
+            internationaux français, en 2017 pour les étrangers.
+          </p>
         </section>
       )}
 
