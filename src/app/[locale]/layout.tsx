@@ -4,6 +4,8 @@ import Header from "@/components/Header";
 import Footer from "@/components/Footer";
 import { ThemeProvider } from "@/components/ThemeProvider";
 import { LANGUES, estUneLangue, type Langue } from "@/i18n/langues";
+import { dictionnaire } from "@/i18n/dictionnaire";
+import { NAV_LINKS } from "@/lib/constants";
 import { notFound } from "next/navigation";
 import "../globals.css";
 
@@ -53,6 +55,19 @@ export default async function RootLayout({
   const { locale } = await params;
   if (!estUneLangue(locale)) notFound();
   const langue: Langue = locale;
+  const t = await dictionnaire(langue);
+
+  // Les libellés du menu, résolus ici : le Header est un composant client.
+  const libelles: Record<string, string> = {
+    "nav.admin": t("nav.admin"),
+    "nav.logo": t("nav.logo"),
+    "nav.explorer": t("nav.explorer"),
+    "nav.menu": t("nav.menu"),
+    "nav.fermer": t("nav.fermer"),
+    "theme.versClair": t("theme.versClair"),
+    "theme.versSombre": t("theme.versSombre"),
+    ...Object.fromEntries(NAV_LINKS.map((l) => [l.cle, t(l.cle)])),
+  };
 
   return (
     <html lang={langue} suppressHydrationWarning>
@@ -66,9 +81,9 @@ export default async function RootLayout({
           disableTransitionOnChange
         >
           <div className="flex min-h-screen flex-col">
-            <Header />
+            <Header libelles={libelles} />
             <main className="flex-1">{children}</main>
-            <Footer />
+            <Footer mention={t("pied.mention")} />
           </div>
         </ThemeProvider>
       </body>

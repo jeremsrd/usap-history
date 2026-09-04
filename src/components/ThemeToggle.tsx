@@ -4,7 +4,7 @@ import { useTheme } from "next-themes";
 import { useEffect, useState } from "react";
 import { Sun, Moon } from "lucide-react";
 
-export function ThemeToggle() {
+export function ThemeToggle({ libelles }: { libelles: Record<string, string> }) {
   const { theme, setTheme } = useTheme();
   const [mounted, setMounted] = useState(false);
 
@@ -20,7 +20,9 @@ export function ThemeToggle() {
     <button
       onClick={() => setTheme(theme === "dark" ? "light" : "dark")}
       className="rounded-md p-2 text-muted-foreground transition-colors hover:bg-accent hover:text-foreground"
-      aria-label={theme === "dark" ? "Passer en mode clair" : "Passer en mode sombre"}
+      aria-label={
+        theme === "dark" ? libelles["theme.versClair"] : libelles["theme.versSombre"]
+      }
     >
       {theme === "dark" ? <Sun size={20} /> : <Moon size={20} />}
     </button>

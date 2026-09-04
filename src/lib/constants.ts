@@ -97,25 +97,30 @@ export const MATCH_RESULTS: Record<string, string> = {
 // =============================================================================
 
 // Liens principaux affichés directement dans la barre de navigation
+/**
+ * Les liens de navigation portent une **clé de dictionnaire**, non un libellé :
+ * c'est le layout qui les traduit et les passe au Header, lequel est un
+ * composant client et n'a donc pas accès au dictionnaire côté serveur.
+ */
 export const NAV_LINKS_MAIN = [
-  { href: "/", label: "Accueil" },
-  { href: "/saisons", label: "Saisons" },
-  { href: "/matchs", label: "Matchs" },
-  { href: "/joueurs", label: "Joueurs" },
-  { href: "/statistiques", label: "Statistiques" },
-  { href: "/palmares", label: "Palmarès" },
+  { href: "/", cle: "nav.accueil" },
+  { href: "/saisons", cle: "nav.saisons" },
+  { href: "/matchs", cle: "nav.matchs" },
+  { href: "/joueurs", cle: "nav.joueurs" },
+  { href: "/statistiques", cle: "nav.statistiques" },
+  { href: "/palmares", cle: "nav.palmares" },
 ] as const;
 
 // Liens secondaires regroupés dans le dropdown "Explorer"
 export const NAV_LINKS_MORE = [
-  { href: "/centurions", label: "Centurions" },
-  { href: "/realisateurs", label: "Meilleurs réalisateurs" },
-  { href: "/records", label: "Records" },
-  { href: "/adversaires", label: "Adversaires" },
-  { href: "/stades", label: "Stades" },
-  { href: "/arbitres", label: "Arbitres" },
-  { href: "/entraineurs", label: "Entraîneurs" },
-  { href: "/presidents", label: "Présidents" },
+  { href: "/centurions", cle: "nav.centurions" },
+  { href: "/realisateurs", cle: "nav.realisateurs" },
+  { href: "/records", cle: "nav.records" },
+  { href: "/adversaires", cle: "nav.adversaires" },
+  { href: "/stades", cle: "nav.stades" },
+  { href: "/arbitres", cle: "nav.arbitres" },
+  { href: "/entraineurs", cle: "nav.entraineurs" },
+  { href: "/presidents", cle: "nav.presidents" },
 ] as const;
 
 // Tous les liens (pour le menu mobile)

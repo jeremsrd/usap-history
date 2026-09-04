@@ -2,17 +2,28 @@ import Link from "@/components/Lien";
 import { prisma } from "@/lib/prisma";
 import { formatDateFR } from "@/lib/utils";
 import { CalendarDays, Flame, Trophy } from "lucide-react";
+import { dictionnaire } from "@/i18n/dictionnaire";
+import type { Langue } from "@/i18n/langues";
 import type { Metadata } from "next";
 
 export const dynamic = "force-dynamic";
 
-export const metadata: Metadata = {
-  title: "Records - USAP Historia",
-  description:
-    "Les records de l'USA Perpignan sur un match et sur une saison : plus larges victoires, plus gros scores, meilleures séries.",
-};
+export async function generateMetadata({
+  params,
+}: {
+  params: Promise<{ locale: Langue }>;
+}): Promise<Metadata> {
+  const t = await dictionnaire((await params).locale);
+  return { title: t("records.metaTitre"), description: t("records.metaDescription") };
+}
 
-export default async function RecordsPage() {
+export default async function RecordsPage({
+  params,
+}: {
+  params: Promise<{ locale: Langue }>;
+}) {
+  const t = await dictionnaire((await params).locale);
+
   const matchs = await prisma.match.findMany({
     where: { result: { not: null }, scoreUsap: { not: null } },
     select: {
@@ -152,35 +163,30 @@ export default async function RecordsPage() {
     return record;
   }
   const series = [
-    { label: "Victoires d'affilée", ...serie((r) => r === "VICTOIRE") },
-    { label: "Sans défaite", ...serie((r) => r !== "DEFAITE") },
-    { label: "Défaites d'affilée", ...serie((r) => r === "DEFAITE") },
+    { label: t("records.serieVictoires"), ...serie((r) => r === "VICTOIRE") },
+    { label: t("records.serieSansDefaite"), ...serie((r) => r !== "DEFAITE") },
+    { label: t("records.serieDefaites"), ...serie((r) => r === "DEFAITE") },
   ];
 
   return (
     <div className="mx-auto max-w-7xl px-4 py-10">
       <h1 className="mb-2 flex items-center gap-3 text-3xl font-bold uppercase tracking-wider text-foreground">
         <Flame className="h-8 w-8 text-usap-or" />
-        Records
+        {t("records.titre")}
       </h1>
       <p className="mb-6 text-muted-foreground">
-        Ce que l&apos;USAP a fait de mieux et de pire, sur une rencontre et sur
-        une saison.
+        {t("records.chapeau")}
       </p>
 
       <div className="mb-10 rounded-lg border border-border bg-muted/30 p-4 text-sm text-muted-foreground">
         <p>
           <span className="font-semibold text-foreground">
-            Ce sont les records de la période couverte, pas ceux du club.
+            {t("records.reserveTitre")}
           </span>{" "}
-          La base commence en 2004-2005 pour les rencontres, en 2005-2006 pour
-          les bilans de saison : un siècle d&apos;histoire lui échappe encore.
+          {t("records.reserveTexte")}
         </p>
         <p className="mt-2">
-          Les bilans de saison portent sur le <strong>championnat seul</strong>,
-          phases finales exclues, et les saisons ne se comparent pas à armes
-          égales : une saison de Pro D2 compte trente journées quand le Top 14
-          en compte vingt-six. Le nombre de matchs est rappelé à chaque ligne.
+          {t("records.reserveSaisons")}
         </p>
       </div>
 
@@ -188,12 +194,12 @@ export default async function RecordsPage() {
       <section className="mb-12">
         <h2 className="mb-4 flex items-center gap-2 text-xl font-bold uppercase tracking-wider text-foreground">
           <CalendarDays className="h-5 w-5 text-usap-or" />
-          Sur un match
+          {t("records.surUnMatch")}
         </h2>
         <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
           {plusLargeVictoire && (
             <Carte
-              label="Plus large victoire"
+              label={t("records.plusLargeVictoire")}
               valeur={`+${plusLargeVictoire.scoreUsap - plusLargeVictoire.scoreOpponent}`}
               detail={affiche(plusLargeVictoire)}
               contexte={`${plusLargeVictoire.season.label} — ${formatDateFR(plusLargeVictoire.date)}`}
@@ -202,7 +208,7 @@ export default async function RecordsPage() {
           )}
           {plusLourdeDefaite && (
             <Carte
-              label="Plus lourde défaite"
+              label={t("records.plusLourdeDefaite")}
               valeur={`−${plusLourdeDefaite.scoreOpponent - plusLourdeDefaite.scoreUsap}`}
               detail={affiche(plusLourdeDefaite)}
               contexte={`${plusLourdeDefaite.season.label} — ${formatDateFR(plusLourdeDefaite.date)}`}
@@ -211,7 +217,7 @@ export default async function RecordsPage() {
           )}
           {plusDePoints && (
             <Carte
-              label="Plus de points marqués"
+              label={t("records.plusDePointsMarques")}
               valeur={plusDePoints.scoreUsap}
               detail={affiche(plusDePoints)}
               contexte={`${plusDePoints.season.label} — ${formatDateFR(plusDePoints.date)}`}
@@ -220,7 +226,7 @@ export default async function RecordsPage() {
           )}
           {plusEncaisses && (
             <Carte
-              label="Plus de points encaissés"
+              label={t("records.plusDePointsEncaisses")}
               valeur={plusEncaisses.scoreOpponent}
               detail={affiche(plusEncaisses)}
               contexte={`${plusEncaisses.season.label} — ${formatDateFR(plusEncaisses.date)}`}
@@ -229,7 +235,7 @@ export default async function RecordsPage() {
           )}
           {plusDEssais && (
             <Carte
-              label="Plus d'essais marqués"
+              label={t("records.plusDEssais")}
               valeur={plusDEssais.triesUsap!}
               detail={affiche(plusDEssais)}
               contexte={`${plusDEssais.season.label} — ${formatDateFR(plusDEssais.date)}`}
@@ -238,7 +244,7 @@ export default async function RecordsPage() {
           )}
           {totalLePlusHaut && (
             <Carte
-              label="Match le plus prolifique"
+              label={t("records.matchProlifique")}
               valeur={totalLePlusHaut.scoreUsap + totalLePlusHaut.scoreOpponent}
               detail={affiche(totalLePlusHaut)}
               contexte={`${totalLePlusHaut.season.label} — ${formatDateFR(totalLePlusHaut.date)}`}
@@ -247,7 +253,7 @@ export default async function RecordsPage() {
           )}
           {plusDePointsJoueur?.player && (
             <Carte
-              label="Points d'un joueur"
+              label={t("records.pointsJoueur")}
               valeur={plusDePointsJoueur.totalPoints}
               detail={plusDePointsJoueur.player.firstName + " " + plusDePointsJoueur.player.lastName}
               contexte={`${plusDePointsJoueur.match.isHome ? "" : "à "}${plusDePointsJoueur.match.opponent?.shortName} — ${formatDateFR(plusDePointsJoueur.match.date)}`}
@@ -256,7 +262,7 @@ export default async function RecordsPage() {
           )}
           {plusDEssaisJoueur?.player && (
             <Carte
-              label="Essais d'un joueur"
+              label={t("records.essaisJoueur")}
               valeur={plusDEssaisJoueur.tries}
               detail={plusDEssaisJoueur.player.firstName + " " + plusDEssaisJoueur.player.lastName}
               contexte={`${plusDEssaisJoueur.match.isHome ? "" : "à "}${plusDEssaisJoueur.match.opponent?.shortName} — ${formatDateFR(plusDEssaisJoueur.match.date)}`}
@@ -265,7 +271,7 @@ export default async function RecordsPage() {
           )}
           {plusDePenalites?.player && (
             <Carte
-              label="Pénalités d'un joueur"
+              label={t("records.penalitesJoueur")}
               valeur={plusDePenalites.penalties}
               detail={plusDePenalites.player.firstName + " " + plusDePenalites.player.lastName}
               contexte={`${plusDePenalites.match.isHome ? "" : "à "}${plusDePenalites.match.opponent?.shortName} — ${formatDateFR(plusDePenalites.match.date)}`}
@@ -274,12 +280,12 @@ export default async function RecordsPage() {
           )}
           {plusGrosseAffluence && (
             <Carte
-              label="Plus forte affluence"
+              label={t("records.affluence")}
               valeur={plusGrosseAffluence.attendance!.toLocaleString("fr-FR")}
               detail={affiche(plusGrosseAffluence)}
               contexte={`${plusGrosseAffluence.season.label} — ${formatDateFR(plusGrosseAffluence.date)}`}
               href={`/matchs/${plusGrosseAffluence.slug}`}
-              note="36 matchs seulement ont une affluence renseignée."
+              note={t("records.affluenceNote")}
             />
           )}
         </div>
@@ -289,18 +295,18 @@ export default async function RecordsPage() {
       <section className="mb-12">
         <h2 className="mb-4 flex items-center gap-2 text-xl font-bold uppercase tracking-wider text-foreground">
           <Trophy className="h-5 w-5 text-usap-or" />
-          Sur une saison
+          {t("records.surUneSaison")}
         </h2>
         <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
           {[
-            { label: "Plus de points au classement", s: plusDePointsSaison, v: (s: Saison) => s.totalPoints },
-            { label: "Plus de victoires", s: plusDeVictoires, v: (s: Saison) => s.wins },
-            { label: "Plus de défaites", s: plusDeDefaites, v: (s: Saison) => s.losses },
-            { label: "Plus de points marqués", s: plusMarques, v: (s: Saison) => s.pointsFor },
-            { label: "Plus de points encaissés", s: plusEncaissesSaison, v: (s: Saison) => s.pointsAgainst },
-            { label: "Meilleure différence", s: meilleureDiff, v: (s: Saison) => `+${diff(s)}` },
-            { label: "Pire différence", s: pireDiff, v: (s: Saison) => `${diff(s)}` },
-            { label: "Plus de bonus offensifs", s: plusDeBonus, v: (s: Saison) => s.bonusOffensif },
+            { label: t("records.saisonPoints"), s: plusDePointsSaison, v: (s: Saison) => s.totalPoints },
+            { label: t("records.saisonVictoires"), s: plusDeVictoires, v: (s: Saison) => s.wins },
+            { label: t("records.saisonDefaites"), s: plusDeDefaites, v: (s: Saison) => s.losses },
+            { label: t("records.saisonMarques"), s: plusMarques, v: (s: Saison) => s.pointsFor },
+            { label: t("records.saisonEncaisses"), s: plusEncaissesSaison, v: (s: Saison) => s.pointsAgainst },
+            { label: t("records.saisonMeilleureDiff"), s: meilleureDiff, v: (s: Saison) => `+${diff(s)}` },
+            { label: t("records.saisonPireDiff"), s: pireDiff, v: (s: Saison) => `${diff(s)}` },
+            { label: t("records.saisonBonus"), s: plusDeBonus, v: (s: Saison) => s.bonusOffensif },
           ].map(
             ({ label, s, v }) =>
               s && (
@@ -309,14 +315,17 @@ export default async function RecordsPage() {
                   label={label}
                   valeur={v(s) ?? "—"}
                   detail={s.label}
-                  contexte={`${s.division === "PRO_D2" ? "Pro D2" : "Top 14"} — ${s.matchesPlayed} matchs`}
+                  contexte={t("records.matchsDeSaison", {
+                    division: s.division === "PRO_D2" ? "Pro D2" : "Top 14",
+                    n: s.matchesPlayed ?? 0,
+                  })}
                   href={`/saisons/${s.label}`}
                 />
               ),
           )}
           {meilleurMarqueurSaison && (
             <Carte
-              label="Essais sur une saison"
+              label={t("records.essaisSurUneSaison")}
               valeur={meilleurMarqueurSaison.essais}
               detail={meilleurMarqueurSaison.nom}
               contexte={meilleurMarqueurSaison.saison}
@@ -325,7 +334,7 @@ export default async function RecordsPage() {
           )}
           {meilleurRealisateurSaison && (
             <Carte
-              label="Points sur une saison"
+              label={t("records.pointsSurUneSaison")}
               valeur={meilleurRealisateurSaison.points}
               detail={meilleurRealisateurSaison.nom}
               contexte={meilleurRealisateurSaison.saison}
@@ -339,11 +348,10 @@ export default async function RecordsPage() {
       <section>
         <h2 className="mb-1 flex items-center gap-2 text-xl font-bold uppercase tracking-wider text-foreground">
           <Flame className="h-5 w-5 text-usap-or" />
-          Séries
+          {t("records.series")}
         </h2>
         <p className="mb-4 text-sm text-muted-foreground">
-          Rencontres consécutives, toutes compétitions confondues et sans
-          coupure entre les saisons.
+          {t("records.seriesChapeau")}
         </p>
         <div className="grid gap-3 sm:grid-cols-3">
           {series.map((s) => (

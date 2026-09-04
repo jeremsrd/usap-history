@@ -13,12 +13,15 @@ export function JoueurCellule({
   lastName,
   photoUrl,
   isActive,
+  libelleActuel,
 }: {
   slug: string;
   firstName: string;
   lastName: string;
   photoUrl: string | null;
   isActive: boolean;
+  /** « Actuel » — passé par la page, qui seule tient le dictionnaire. */
+  libelleActuel: string;
 }) {
   return (
     <Link href={`/joueurs/${slug}`} className="group flex items-center gap-3">
@@ -40,7 +43,7 @@ export function JoueurCellule({
       </span>
       {isActive && (
         <span className="rounded bg-usap-sang/10 px-1.5 py-0.5 text-xs font-medium text-usap-sang">
-          Actuel
+          {libelleActuel}
         </span>
       )}
     </Link>

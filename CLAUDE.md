@@ -1296,10 +1296,48 @@ de Barcelone.
 - Les six redirections de slug passent par `cheminLocalise()`, faute de quoi un
   joueur renommé sortait de sa langue.
 
+### Le dictionnaire — second temps, commencé
+
+`src/i18n/fr.ts` porte les phrases, `src/i18n/dictionnaire.ts` la façon d'y
+puiser : `const t = await dictionnaire(langue)` puis `t("centurions.titre")`.
+
+- **Le français est la source.** Une entrée qui manque à une autre langue
+  **retombe sur le français** plutôt que d'afficher une clé nue : un lecteur
+  préfère une phrase dans la mauvaise langue à `joueurs.titre`. Une clé
+  *inconnue*, en revanche, est une faute de frappe et non une traduction
+  manquante — elle est signalée en développement.
+- **Les clés sont explicites, non les phrases françaises elles-mêmes.** Écrire
+  `t("Joueurs")` eût été plus court, mais ce site porte des paragraphes
+  entiers — les réserves de couverture des classements font trois lignes —, et
+  une clé de trois lignes ne se relit pas.
+- **Le pluriel se demande à `Intl.PluralRules`**, non à un `n > 1 ? "s" : ""`
+  recopié partout. Les deux langues ne l'accordent pas pareil : le français
+  écrit « 0 joueur » au singulier, le catalan « 0 jugadors » au pluriel. La
+  règle appartient à la langue, pas à la page.
+- **Le dictionnaire ne part pas dans le navigateur.** `dictionnaire()` est
+  appelé côté serveur ; les composants clients — Header, bascule de thème,
+  cellule de joueur — reçoivent leurs libellés **en props**. Trois mots de menu
+  ne valent pas d'embarquer le cahier entier.
+- **Le balisage ne rentre pas dans une phrase traduite.** Le `<strong>` qui
+  soulignait « championnat seul » sur la page des records a été retiré : une
+  chaîne à traduire qui porte du HTML se traduit mal et se relit encore moins
+  bien.
+
+**Ce qui est sorti du code au 4 septembre 2026** : l'ossature — Header, pied de
+page, bascule de thème, libellés de navigation — et trois pages, `centurions`,
+`realisateurs` et `records`, avec les en-têtes de tableau qu'elles partagent.
+
+**Ce qui ne l'est pas** : les vingt et une autres pages publiques, qui portent
+encore leur français en clair. Elles marchent, elles ne sont simplement pas
+prêtes pour le catalan. **Les sortir au fil des séances**, quand on touche une
+page pour autre chose — c'est ainsi que la migration se finit sans y consacrer
+une journée.
+
+**L'admin n'y entrera pas**, et c'est délibéré : c'est le bureau de Jérémy,
+pas une page publique.
+
 ### Ce qui reste
 
-- **Le second temps** : sortir les phrases du code dans un dictionnaire
-  français, pour qu'un dictionnaire catalan puisse lui répondre.
 - **Pas encore de sélecteur de langue**, et c'est volontaire : offrir un
   « català » qui rend du français tromperait le lecteur. Il viendra avec les
   premières traductions.
@@ -1308,6 +1346,10 @@ de Barcelone.
   à part, et le plus lourd : ils grossissent à chaque saison reprise. Une
   traduction manquante devra se voir, comme se voit une donnée que la source ne
   publie pas.
+- **Les ressources pour le catalan** : Termcat pour le vocabulaire du rugby,
+  le DIEC2 pour la langue générale, Softcatalà pour un premier jet. Et une
+  relecture d'ici — le rossellonais n'est pas le catalan de Barcelone, et un
+  supporter l'entend.
 
 ## Identité visuelle
 

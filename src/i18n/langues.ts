@@ -45,3 +45,16 @@ export function langueDuChemin(chemin: string): Langue {
   const premier = chemin.split("/")[1] ?? "";
   return estUneLangue(premier) ? premier : LANGUE_PAR_DEFAUT;
 }
+
+/**
+ * Le chemin sans son segment de langue — « /fr/joueurs » rend « /joueurs ».
+ *
+ * Nécessaire partout où l'on compare un chemin à un lien : les liens du menu
+ * s'écrivent sans langue, le chemin courant en porte une, et sans ce retrait
+ * aucun onglet ne paraîtrait actif.
+ */
+export function cheminSansLangue(chemin: string): string {
+  const premier = chemin.split("/")[1] ?? "";
+  if (!estUneLangue(premier)) return chemin;
+  return chemin.slice(premier.length + 1) || "/";
+}

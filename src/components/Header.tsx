@@ -6,13 +6,20 @@ import Image from "next/image";
 import { usePathname } from "next/navigation";
 import { ChevronDown, Menu, Settings, X } from "lucide-react";
 import { NAV_LINKS, NAV_LINKS_MAIN, NAV_LINKS_MORE } from "@/lib/constants";
+import { cheminSansLangue } from "@/i18n/langues";
 import { cn } from "@/lib/utils";
 import { ThemeToggle } from "@/components/ThemeToggle";
 
-export default function Header() {
+/**
+ * Les libellés viennent du serveur : le Header est un composant client, et le
+ * dictionnaire n'a pas à partir dans le navigateur pour trois mots de menu.
+ */
+export default function Header({ libelles }: { libelles: Record<string, string> }) {
   const [isOpen, setIsOpen] = useState(false);
   const [moreOpen, setMoreOpen] = useState(false);
-  const pathname = usePathname();
+  // **Le chemin porte la langue, les liens non.** Sans ce retrait, aucun lien
+  // du menu ne paraîtrait actif depuis que les adresses sont préfixées.
+  const pathname = cheminSansLangue(usePathname());
   const moreRef = useRef<HTMLDivElement>(null);
 
   // Fermer le dropdown "Explorer" quand on clique ailleurs
@@ -44,7 +51,7 @@ export default function Header() {
         <Link href="/" className="flex items-center gap-2">
           <Image
             src="/images/usap/logo.png"
-            alt="Logo USAP"
+            alt={libelles["nav.logo"]}
             width={32}
             height={32}
             className="h-8 w-8"
@@ -73,7 +80,7 @@ export default function Header() {
                     : "text-muted-foreground hover:bg-accent hover:text-foreground",
                 )}
               >
-                {link.label}
+                {libelles[link.cle]}
               </Link>
             ))}
 
@@ -88,7 +95,7 @@ export default function Header() {
                     : "text-muted-foreground hover:bg-accent hover:text-foreground",
                 )}
               >
-                Explorer
+                {libelles["nav.explorer"]}
                 <ChevronDown
                   className={cn(
                     "h-3.5 w-3.5 transition-transform",
@@ -112,7 +119,7 @@ export default function Header() {
                             : "text-muted-foreground hover:bg-accent hover:text-foreground",
                         )}
                       >
-                        {link.label}
+                        {libelles[link.cle]}
                       </Link>
                     ))}
                   </div>
@@ -131,21 +138,21 @@ export default function Header() {
                   ? "text-usap-sang"
                   : "text-muted-foreground hover:bg-accent hover:text-foreground",
               )}
-              title="Administration"
+              title={libelles["nav.admin"]}
             >
               <Settings className="h-4 w-4" />
             </Link>
-            <ThemeToggle />
+            <ThemeToggle libelles={libelles} />
           </div>
         </div>
 
         {/* Mobile: theme toggle + burger */}
         <div className="flex items-center gap-1 md:hidden">
-          <ThemeToggle />
+          <ThemeToggle libelles={libelles} />
           <button
             onClick={() => setIsOpen(!isOpen)}
             className="rounded-md p-2 text-muted-foreground hover:bg-accent hover:text-foreground"
-            aria-label={isOpen ? "Fermer le menu" : "Ouvrir le menu"}
+            aria-label={isOpen ? libelles["nav.fermer"] : libelles["nav.menu"]}
           >
             {isOpen ? <X size={24} /> : <Menu size={24} />}
           </button>
@@ -169,14 +176,14 @@ export default function Header() {
                   : "text-muted-foreground hover:bg-accent hover:text-foreground",
               )}
             >
-              {link.label}
+              {libelles[link.cle]}
             </Link>
           ))}
 
           {/* Séparateur + Explorer */}
           <div className="my-2 border-t border-border" />
           <div className="px-3 py-1 text-xs font-semibold uppercase tracking-wider text-muted-foreground">
-            Explorer
+            {libelles["nav.explorer"]}
           </div>
           {NAV_LINKS_MORE.map((link) => (
             <Link
@@ -191,7 +198,7 @@ export default function Header() {
                   : "text-muted-foreground hover:bg-accent hover:text-foreground",
               )}
             >
-              {link.label}
+              {libelles[link.cle]}
             </Link>
           ))}
 

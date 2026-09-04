@@ -1,6 +1,8 @@
 import { prisma } from "@/lib/prisma";
 import { POSITIONS } from "@/lib/constants";
 import { JoueurCellule } from "@/components/JoueurCellule";
+import { dictionnaire } from "@/i18n/dictionnaire";
+import type { Langue } from "@/i18n/langues";
 import { Shield } from "lucide-react";
 import type { Metadata } from "next";
 
@@ -9,13 +11,26 @@ export const dynamic = "force-dynamic";
 /** Nombre de matchs à partir duquel un joueur entre au tableau. */
 const SEUIL = 100;
 
-export const metadata: Metadata = {
-  title: "Centurions - USAP Historia",
-  description:
-    "Les joueurs qui ont porté au moins cent fois le maillot de l'USA Perpignan : matchs, titularisations, essais et points.",
-};
+export async function generateMetadata({
+  params,
+}: {
+  params: Promise<{ locale: Langue }>;
+}): Promise<Metadata> {
+  const t = await dictionnaire((await params).locale);
+  return {
+    title: t("centurions.metaTitre"),
+    description: t("centurions.metaDescription"),
+  };
+}
 
-export default async function CenturionsPage() {
+export default async function CenturionsPage({
+  params,
+}: {
+  params: Promise<{ locale: Langue }>;
+}) {
+  const t = await dictionnaire((await params).locale);
+  const libelleActuel = t("classement.actuel");
+
   // Un « match » se compte comme sur la fiche joueur : une ligne de
   // composition sur une rencontre **jouée**, sous le maillot catalan. Un
   // remplaçant qui n'est pas entré en jeu compte donc pour une feuille — c'est
@@ -92,18 +107,11 @@ export default async function CenturionsPage() {
     <div className="mx-auto max-w-7xl px-4 py-10">
       <h1 className="mb-2 flex items-center gap-3 text-3xl font-bold uppercase tracking-wider text-foreground">
         <Shield className="h-8 w-8 text-usap-or" />
-        Centurions
+        {t("centurions.titre")}
       </h1>
       <p className="mb-6 text-muted-foreground">
-        {centurions.length} joueurs ont porté au moins {SEUIL} fois le maillot
-        catalan
-        {enActivite > 0 && (
-          <>
-            {" "}
-            — dont {enActivite} encore à l&apos;effectif
-          </>
-        )}
-        .
+        {t("centurions.compte", { n: centurions.length, seuil: SEUIL })}
+        {enActivite > 0 && t("centurions.dontActifs", { n: enActivite })}.
       </p>
 
       {/* Ce que le tableau ne peut pas dire, et il faut le dire : la base ne
@@ -111,17 +119,11 @@ export default async function CenturionsPage() {
       <div className="mb-8 rounded-lg border border-border bg-muted/30 p-4 text-sm text-muted-foreground">
         <p>
           <span className="font-semibold text-foreground">
-            Ce tableau ne couvre pas toute l&apos;histoire du club.
+            {t("centurions.reserveTitre")}
           </span>{" "}
-          Les feuilles de match ne sont disponibles qu&apos;à partir de la
-          saison 2004-2005 : les centurions des époques antérieures n&apos;y
-          figurent pas, et ceux qui étaient déjà là en 2004 ont joué davantage
-          de matchs que le compte affiché.
+          {t("centurions.reserveTexte")}
         </p>
-        <p className="mt-2">
-          Un match se compte comme sur la fiche du joueur : une feuille de match
-          sur une rencontre jouée, toutes compétitions confondues.
-        </p>
+        <p className="mt-2">{t("centurions.reserveCompte")}</p>
       </div>
 
       <div className="overflow-x-auto rounded-lg border border-border">
@@ -129,28 +131,28 @@ export default async function CenturionsPage() {
           <thead>
             <tr className="border-b border-border bg-muted/50">
               <th className="px-3 py-3 text-center font-semibold text-foreground">
-                #
+                {t("classement.rang")}
               </th>
               <th className="px-4 py-3 text-left font-semibold text-foreground">
-                Joueur
+                {t("classement.joueur")}
               </th>
               <th className="hidden px-4 py-3 text-left font-semibold text-foreground sm:table-cell">
-                Poste
+                {t("classement.poste")}
               </th>
               <th className="hidden px-4 py-3 text-left font-semibold text-foreground md:table-cell">
-                Période
+                {t("classement.periode")}
               </th>
               <th className="px-4 py-3 text-center font-semibold text-foreground">
-                Matchs
+                {t("classement.matchs")}
               </th>
               <th className="hidden px-4 py-3 text-center font-semibold text-foreground lg:table-cell">
-                Titulaire
+                {t("classement.titulaire")}
               </th>
               <th className="hidden px-4 py-3 text-center font-semibold text-foreground lg:table-cell">
-                Essais
+                {t("classement.essais")}
               </th>
               <th className="hidden px-4 py-3 text-center font-semibold text-foreground lg:table-cell">
-                Points
+                {t("classement.points")}
               </th>
             </tr>
           </thead>
@@ -170,6 +172,7 @@ export default async function CenturionsPage() {
                     lastName={joueur.lastName}
                     photoUrl={joueur.photoUrl}
                     isActive={joueur.isActive}
+                    libelleActuel={libelleActuel}
                   />
                 </td>
                 <td className="hidden px-4 py-3 text-muted-foreground sm:table-cell">

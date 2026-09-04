@@ -2,6 +2,8 @@ import { prisma } from "@/lib/prisma";
 import { POSITIONS } from "@/lib/constants";
 import { JoueurCellule } from "@/components/JoueurCellule";
 import { Award, Footprints, Target } from "lucide-react";
+import { dictionnaire, type Traduire } from "@/i18n/dictionnaire";
+import type { Langue } from "@/i18n/langues";
 import type { Metadata } from "next";
 
 export const dynamic = "force-dynamic";
@@ -18,11 +20,17 @@ const SEUIL_POINTS = 50;
 const SEUIL_ESSAIS = 10;
 const SEUIL_AU_PIED = 50;
 
-export const metadata: Metadata = {
-  title: "Meilleurs réalisateurs - USAP Historia",
-  description:
-    "Les meilleurs réalisateurs de l'USA Perpignan : points marqués, essais et points au pied.",
-};
+export async function generateMetadata({
+  params,
+}: {
+  params: Promise<{ locale: Langue }>;
+}): Promise<Metadata> {
+  const t = await dictionnaire((await params).locale);
+  return {
+    title: t("realisateurs.metaTitre"),
+    description: t("realisateurs.metaDescription"),
+  };
+}
 
 interface Fiche {
   id: string;
@@ -48,7 +56,14 @@ interface Bilan {
 /** Points marqués au pied : la transformation, la pénalité et le drop. */
 const auPied = (b: Bilan) => 2 * b.transformations + 3 * (b.penalites + b.drops);
 
-export default async function RealisateursPage() {
+export default async function RealisateursPage({
+  params,
+}: {
+  params: Promise<{ locale: Langue }>;
+}) {
+  const t = await dictionnaire((await params).locale);
+  const libelleActuel = t("classement.actuel");
+
   // Mêmes conventions que la page des centurions : le camp catalan, les
   // rencontres jouées, toutes compétitions confondues.
   const lignes = await prisma.matchPlayer.findMany({
@@ -122,18 +137,17 @@ export default async function RealisateursPage() {
     <div className="mx-auto max-w-7xl px-4 py-10">
       <h1 className="mb-2 flex items-center gap-3 text-3xl font-bold uppercase tracking-wider text-foreground">
         <Target className="h-8 w-8 text-usap-or" />
-        Meilleurs réalisateurs
+        {t("realisateurs.titre")}
       </h1>
       <p className="mb-6 text-muted-foreground">
-        Trois classements de ce que les Catalans ont marqué : aux points, aux
-        essais, au pied.
+        {t("realisateurs.chapeau")}
       </p>
 
       <nav className="mb-8 flex flex-wrap gap-2">
         {[
-          { href: "#points", label: `Aux points (${auxPoints.length})` },
-          { href: "#essais", label: `Aux essais (${auxEssais.length})` },
-          { href: "#au-pied", label: `Au pied (${auPiedListe.length})` },
+          { href: "#points", label: t("realisateurs.ongletPoints", { n: auxPoints.length }) },
+          { href: "#essais", label: t("realisateurs.ongletEssais", { n: auxEssais.length }) },
+          { href: "#au-pied", label: t("realisateurs.ongletAuPied", { n: auPiedListe.length }) },
         ].map((l) => (
           <a
             key={l.href}
@@ -149,28 +163,23 @@ export default async function RealisateursPage() {
       <div className="mb-10 rounded-lg border border-border bg-muted/30 p-4 text-sm text-muted-foreground">
         <p>
           <span className="font-semibold text-foreground">
-            Deux saisons manquent presque entièrement à ces comptes.
+            {t("realisateurs.reserveTitre")}
           </span>{" "}
-          La LNR ne publie aucun fait de match pour 2004-2005 — ni essai, ni
-          transformation, ni pénalité — et n&apos;en publie qu&apos;une poignée
-          pour 2005-2006. Les joueurs de ces années-là ont marqué davantage que
-          ce que leur ligne affiche, et les époques antérieures ne sont pas en
-          base du tout.
+          {t("realisateurs.reserveTexte")}
         </p>
         <p className="mt-2">
-          Le détail retombe sur le total partout : essai 5 points,
-          transformation 2, pénalité et drop 3. Un essai de pénalité, lui, vaut
-          sept points et n&apos;a pas d&apos;auteur — il compte pour
-          l&apos;équipe et pour personne, comme un essai collectif.
+          {t("realisateurs.reserveBareme")}
         </p>
       </div>
 
       <Classement
+        t={t}
+        libelleActuel={libelleActuel}
         id="points"
         icone={<Target className="h-5 w-5 text-usap-or" />}
-        titre="Aux points"
-        critere={`Les joueurs à ${SEUIL_POINTS} points ou plus, toutes réalisations confondues.`}
-        entete="Points"
+        titre={t("realisateurs.sectionPoints")}
+        critere={t("realisateurs.criterePoints", { seuil: SEUIL_POINTS })}
+        entete={t("classement.points")}
         lignes={auxPoints.map(({ joueur, bilan }) => ({
           joueur,
           bilan,
@@ -182,22 +191,24 @@ export default async function RealisateursPage() {
             { label: "D", valeur: bilan.drops },
           ],
         }))}
-        legende="E : essais — T : transformations — P : pénalités — D : drops"
+        legende={t("realisateurs.legendeComplete")}
       />
 
       <Classement
+        t={t}
+        libelleActuel={libelleActuel}
         id="essais"
         icone={<Award className="h-5 w-5 text-usap-or" />}
-        titre="Aux essais"
-        critere={`Les joueurs à ${SEUIL_ESSAIS} essais ou plus.`}
-        entete="Essais"
+        titre={t("realisateurs.sectionEssais")}
+        critere={t("realisateurs.critereEssais", { seuil: SEUIL_ESSAIS })}
+        entete={t("classement.essais")}
         lignes={auxEssais.map(({ joueur, bilan }) => ({
           joueur,
           bilan,
           valeur: bilan.essais,
           extras: [
             {
-              label: "Essais/match",
+              label: t("realisateurs.enteteEssaisParMatch"),
               valeur: (bilan.essais / bilan.matchs).toFixed(2).replace(".", ","),
             },
           ],
@@ -205,11 +216,13 @@ export default async function RealisateursPage() {
       />
 
       <Classement
+        t={t}
+        libelleActuel={libelleActuel}
         id="au-pied"
         icone={<Footprints className="h-5 w-5 text-usap-or" />}
-        titre="Au pied"
-        critere={`Les joueurs à ${SEUIL_AU_PIED} points au pied ou plus — transformations, pénalités et drops.`}
-        entete="Au pied"
+        titre={t("realisateurs.sectionAuPied")}
+        critere={t("realisateurs.critereAuPied", { seuil: SEUIL_AU_PIED })}
+        entete={t("realisateurs.sectionAuPied")}
         lignes={auPiedListe.map(({ joueur, bilan }) => ({
           joueur,
           bilan,
@@ -220,7 +233,7 @@ export default async function RealisateursPage() {
             { label: "D", valeur: bilan.drops },
           ],
         }))}
-        legende="T : transformations — P : pénalités — D : drops"
+        legende={t("realisateurs.legendeAuPied")}
       />
     </div>
   );
@@ -235,6 +248,8 @@ function Classement({
   entete,
   lignes,
   legende,
+  t,
+  libelleActuel,
 }: {
   id: string;
   icone: React.ReactNode;
@@ -248,6 +263,8 @@ function Classement({
     extras: Array<{ label: string; valeur: number | string }>;
   }>;
   legende?: string;
+  t: Traduire;
+  libelleActuel: string;
 }) {
   const annee = (d: Date) => d.getUTCFullYear();
 
@@ -264,16 +281,16 @@ function Classement({
           <thead>
             <tr className="border-b border-border bg-muted/50">
               <th className="px-3 py-3 text-center font-semibold text-foreground">
-                #
+                {t("classement.rang")}
               </th>
               <th className="px-4 py-3 text-left font-semibold text-foreground">
-                Joueur
+                {t("classement.joueur")}
               </th>
               <th className="hidden px-4 py-3 text-left font-semibold text-foreground md:table-cell">
-                Poste
+                {t("classement.poste")}
               </th>
               <th className="hidden px-4 py-3 text-left font-semibold text-foreground md:table-cell">
-                Période
+                {t("classement.periode")}
               </th>
               <th className="px-4 py-3 text-center font-semibold text-foreground">
                 {entete}
@@ -287,7 +304,7 @@ function Classement({
                 </th>
               ))}
               <th className="hidden px-4 py-3 text-center font-semibold text-foreground lg:table-cell">
-                Matchs
+                {t("classement.matchs")}
               </th>
             </tr>
           </thead>
@@ -307,6 +324,7 @@ function Classement({
                     lastName={joueur.lastName}
                     photoUrl={joueur.photoUrl}
                     isActive={joueur.isActive}
+                    libelleActuel={libelleActuel}
                   />
                 </td>
                 <td className="hidden px-4 py-3 text-muted-foreground md:table-cell">
