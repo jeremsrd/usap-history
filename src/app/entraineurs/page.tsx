@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { prisma } from "@/lib/prisma";
 import { User } from "lucide-react";
+import { duPlusRecent, libellePeriode, periodeDesSaisons } from "@/lib/periodes";
 import type { Metadata } from "next";
 
 export const dynamic = "force-dynamic";
@@ -12,12 +13,27 @@ export const metadata: Metadata = {
 };
 
 export default async function EntraineursPage() {
-  const coaches = await prisma.coach.findMany({
-    orderBy: [{ lastName: "asc" }, { firstName: "asc" }],
+  // **Chronologique, non alphabétique.** `Coach` n'a pas de colonne de dates :
+  // la période se tire des saisons, celles de l'entraîneur principal comme
+  // celles du staff détaillé — un adjoint n'a que les secondes.
+  const fiches = await prisma.coach.findMany({
     include: {
+      seasons: { select: { label: true, startYear: true } },
+      seasonCoaches: {
+        select: { season: { select: { label: true, startYear: true } } },
+      },
       _count: { select: { seasons: true, seasonCoaches: true } },
     },
   });
+  const coaches = fiches
+    .map((c) => ({
+      ...c,
+      periode: periodeDesSaisons([
+        ...c.seasons,
+        ...c.seasonCoaches.map((sc) => sc.season),
+      ]),
+    }))
+    .sort((a, b) => duPlusRecent(a.periode, b.periode));
 
   return (
     <div className="mx-auto max-w-7xl px-4 py-10">
@@ -57,6 +73,13 @@ export default async function EntraineursPage() {
                 </p>
                 {coach.role && (
                   <p className="mt-1 text-sm text-usap-or">{coach.role}</p>
+                )}
+                {/* Sans la période affichée, l'ordre chronologique paraîtrait
+                    aussi arbitraire que l'ordre alphabétique. */}
+                {libellePeriode(coach.periode) && (
+                  <p className="mt-1 text-sm text-muted-foreground">
+                    {libellePeriode(coach.periode)}
+                  </p>
                 )}
                 <p className="mt-1 text-sm text-muted-foreground">
                   {Math.max(coach._count.seasons, coach._count.seasonCoaches)} saison

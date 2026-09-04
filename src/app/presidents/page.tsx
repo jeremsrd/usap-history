@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { prisma } from "@/lib/prisma";
 import { User } from "lucide-react";
+import { duPlusRecent, libellePeriode, periodeDesSaisons } from "@/lib/periodes";
 import type { Metadata } from "next";
 
 export const dynamic = "force-dynamic";
@@ -12,12 +13,18 @@ export const metadata: Metadata = {
 };
 
 export default async function PresidentsPage() {
-  const presidents = await prisma.president.findMany({
-    orderBy: [{ startYear: "desc" }],
+  // **L'ordre vient des saisons, non de `startYear`.** Deux présidents sur
+  // quatre ont ce champ vide, et un tri dessus les faisait remonter en tête,
+  // devant ceux dont on connaît les dates : la liste paraissait arbitraire.
+  const fiches = await prisma.president.findMany({
     include: {
+      seasons: { select: { label: true, startYear: true } },
       _count: { select: { seasons: true } },
     },
   });
+  const presidents = fiches
+    .map((p) => ({ ...p, periode: periodeDesSaisons(p.seasons) }))
+    .sort((a, b) => duPlusRecent(a.periode, b.periode));
 
   return (
     <div className="mx-auto max-w-7xl px-4 py-10">
@@ -33,11 +40,12 @@ export default async function PresidentsPage() {
       {presidents.length > 0 ? (
         <div className="grid gap-4 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4">
           {presidents.map((president) => {
+            // Le mandat quand la fiche le porte, les saisons en base sinon.
             const period = president.startYear
               ? president.endYear
                 ? `${president.startYear}–${president.endYear}`
                 : `Depuis ${president.startYear}`
-              : null;
+              : libellePeriode(president.periode);
 
             return (
               <Link

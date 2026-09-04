@@ -50,7 +50,8 @@ usap-history/
 │   │   ├── ScoreEvolution.tsx    # graphe d'évolution du score d'un match
 │   │   ├── VideoEmbed.tsx        # résumé YouTube/Dailymotion en click-to-play
 │   │   └── ui/ImageUpload.tsx
-│   ├── lib/                      # prisma.ts, slugs.ts, utils.ts, constants.ts, supabase/
+│   ├── lib/                      # prisma.ts, slugs.ts, utils.ts, constants.ts,
+│   │                             #   periodes.ts, supabase/
 │   └── types/index.ts
 ├── scripts/                      # ~180 scripts d'import, un par match ou par lot
 │   └── lib/                      # lnr.ts (feuilles de match LNR), noms.ts
@@ -1231,6 +1232,23 @@ n'en est pas une.
 sens usuel du mot, et le contraire aurait fabriqué des séries plus courtes que
 la réalité.
 
+**Présidents et entraîneurs — chronologique, et la période affichée avec.**
+Les deux listes étaient l'une alphabétique, l'autre triée sur
+`President.startYear` — un champ que **deux présidents sur quatre ont vide**,
+si bien qu'ils remontaient en tête devant ceux dont on connaît les dates. Les
+deux se trient désormais sur **les saisons que la base leur attache**, du plus
+récent au plus ancien, par `lib/periodes.ts`.
+
+`Coach` n'a aucune colonne de dates : sa période se tire des saisons de
+l'entraîneur principal **et** du staff détaillé — un adjoint n'a que les
+secondes. Et elle est **affichée** sur chaque carte, sans quoi l'ordre
+chronologique paraîtrait aussi arbitraire que l'ordre alphabétique.
+
+**C'est la période couverte par la base, pas le mandat** : Marcel Dagrenat y
+paraît de 2004-2005 à 2006-2007 parce que l'archive de la LNR ne remonte pas
+plus haut, non parce qu'il aurait pris ses fonctions cette année-là. Le mandat
+reste affiché quand la fiche le porte — « Depuis 2013 », « 2007–2012 ».
+
 **Fiche de match — le titre qu'elle a décidé.** Une finale affiche une
 bannière « Champion » ou « Finaliste » avec un lien vers le palmarès. Le
 rapprochement avec `Trophy` se fait sur l'**année de fin de saison** et la
@@ -2210,8 +2228,11 @@ d'un siècle, c'est la règle qu'on connaîtra le moins bien.
   passages à l'USAP, tirés des feuilles de match (cf. `seed-carrieres.ts`).
   Ce sont des modèles de **contrat** nourris de **traces** — la nuance est
   écrite sur chaque ligne, et désormais affichée sous la table de la fiche.
-- Erreur d'hydratation React sur les pages de match, antérieure et non
-  diagnostiquée (probablement `next-themes`).
+- Erreur d'hydratation React, antérieure et non diagnostiquée (probablement
+  `next-themes`). **Elle n'est pas propre aux pages de match**, comme ce
+  fichier l'a longtemps dit : `/stades`, `/presidents` et `/entraineurs` la
+  rendent aussi, et elle se lit sur des pages qu'aucune modification récente
+  n'a touchées. À vérifier ailleurs avant de l'imputer à un changement.
 
 **Ce à quoi il faut penser en écrivant une requête**
 
