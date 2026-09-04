@@ -1,25 +1,23 @@
 import { prisma } from "@/lib/prisma";
 import { POSITIONS } from "@/lib/constants";
 import { JoueurCellule } from "@/components/JoueurCellule";
-import { Shield } from "lucide-react";
+import { Award } from "lucide-react";
 import type { Metadata } from "next";
 
 export const dynamic = "force-dynamic";
 
-/** Nombre de matchs à partir duquel un joueur entre au tableau. */
-const SEUIL = 100;
+/** Nombre d'essais à partir duquel un joueur entre au tableau. */
+const SEUIL = 10;
 
 export const metadata: Metadata = {
-  title: "Centurions - USAP Historia",
+  title: "Meilleurs marqueurs - USAP Historia",
   description:
-    "Les joueurs qui ont porté au moins cent fois le maillot de l'USA Perpignan : matchs, titularisations, essais et points.",
+    "Les meilleurs marqueurs d'essais de l'USA Perpignan : essais, matchs et moyenne par rencontre.",
 };
 
-export default async function CenturionsPage() {
-  // Un « match » se compte comme sur la fiche joueur : une ligne de
-  // composition sur une rencontre **jouée**, sous le maillot catalan. Un
-  // remplaçant qui n'est pas entré en jeu compte donc pour une feuille — c'est
-  // la convention du site, et les deux pages doivent dire le même nombre.
+export default async function MarqueursPage() {
+  // Mêmes conventions que la page des centurions : le camp catalan, les
+  // rencontres jouées, toutes compétitions confondues.
   const lignes = await prisma.matchPlayer.findMany({
     where: {
       isOpponent: false,
@@ -28,18 +26,14 @@ export default async function CenturionsPage() {
     },
     select: {
       playerId: true,
-      isStarter: true,
       tries: true,
-      totalPoints: true,
       match: { select: { date: true } },
     },
   });
 
   interface Bilan {
-    matchs: number;
-    titularisations: number;
     essais: number;
-    points: number;
+    matchs: number;
     premier: Date;
     dernier: Date;
   }
@@ -47,25 +41,22 @@ export default async function CenturionsPage() {
   const parJoueur = new Map<string, Bilan>();
   for (const l of lignes) {
     const b = parJoueur.get(l.playerId!) ?? {
-      matchs: 0,
-      titularisations: 0,
       essais: 0,
-      points: 0,
+      matchs: 0,
       premier: l.match.date,
       dernier: l.match.date,
     };
-    b.matchs++;
-    if (l.isStarter) b.titularisations++;
     b.essais += l.tries;
-    b.points += l.totalPoints;
+    b.matchs++;
     if (l.match.date < b.premier) b.premier = l.match.date;
     if (l.match.date > b.dernier) b.dernier = l.match.date;
     parJoueur.set(l.playerId!, b);
   }
 
   const retenus = [...parJoueur.entries()]
-    .filter(([, b]) => b.matchs >= SEUIL)
-    .sort((a, b) => b[1].matchs - a[1].matchs);
+    .filter(([, b]) => b.essais >= SEUIL)
+    // À égalité d'essais, le plus efficace passe devant : moins de matchs.
+    .sort((a, b) => b[1].essais - a[1].essais || a[1].matchs - b[1].matchs);
 
   const fiches = await prisma.player.findMany({
     where: { id: { in: retenus.map(([id]) => id) } },
@@ -81,46 +72,39 @@ export default async function CenturionsPage() {
   });
   const parId = new Map(fiches.map((f) => [f.id, f]));
 
-  const centurions = retenus
+  const marqueurs = retenus
     .map(([id, bilan]) => ({ joueur: parId.get(id)!, bilan }))
-    .filter((c) => c.joueur);
+    .filter((m) => m.joueur);
 
-  const enActivite = centurions.filter((c) => c.joueur.isActive).length;
   const annee = (d: Date) => d.getUTCFullYear();
 
   return (
     <div className="mx-auto max-w-7xl px-4 py-10">
       <h1 className="mb-2 flex items-center gap-3 text-3xl font-bold uppercase tracking-wider text-foreground">
-        <Shield className="h-8 w-8 text-usap-or" />
-        Centurions
+        <Award className="h-8 w-8 text-usap-or" />
+        Meilleurs marqueurs
       </h1>
       <p className="mb-6 text-muted-foreground">
-        {centurions.length} joueurs ont porté au moins {SEUIL} fois le maillot
-        catalan
-        {enActivite > 0 && (
-          <>
-            {" "}
-            — dont {enActivite} encore à l&apos;effectif
-          </>
-        )}
-        .
+        {marqueurs.length} joueurs ont marqué au moins {SEUIL} essais sous le
+        maillot catalan.
       </p>
 
-      {/* Ce que le tableau ne peut pas dire, et il faut le dire : la base ne
-          remonte pas avant 2004-2005, faute de source. */}
+      {/* La réserve est plus lourde ici que sur les centurions : deux saisons
+          ne portent pour ainsi dire aucun essai, faute de source. */}
       <div className="mb-8 rounded-lg border border-border bg-muted/30 p-4 text-sm text-muted-foreground">
         <p>
           <span className="font-semibold text-foreground">
-            Ce tableau ne couvre pas toute l&apos;histoire du club.
+            Deux saisons manquent presque entièrement à ce compte.
           </span>{" "}
-          Les feuilles de match ne sont disponibles qu&apos;à partir de la
-          saison 2004-2005 : les centurions des époques antérieures n&apos;y
-          figurent pas, et ceux qui étaient déjà là en 2004 ont joué davantage
-          de matchs que le compte affiché.
+          La LNR ne publie aucun fait de match pour 2004-2005 — pas un essai,
+          pas un carton — et n&apos;en publie qu&apos;une poignée pour
+          2005-2006. Les joueurs de ces années-là ont marqué davantage que ce
+          que leur ligne affiche, et les époques antérieures ne sont pas en base
+          du tout.
         </p>
         <p className="mt-2">
-          Un match se compte comme sur la fiche du joueur : une feuille de match
-          sur une rencontre jouée, toutes compétitions confondues.
+          Un essai de pénalité n&apos;a pas d&apos;auteur, et un essai
+          collectif non plus : ils comptent pour l&apos;équipe et pour personne.
         </p>
       </div>
 
@@ -141,21 +125,18 @@ export default async function CenturionsPage() {
                 Période
               </th>
               <th className="px-4 py-3 text-center font-semibold text-foreground">
-                Matchs
-              </th>
-              <th className="hidden px-4 py-3 text-center font-semibold text-foreground lg:table-cell">
-                Titulaire
-              </th>
-              <th className="hidden px-4 py-3 text-center font-semibold text-foreground lg:table-cell">
                 Essais
               </th>
               <th className="hidden px-4 py-3 text-center font-semibold text-foreground lg:table-cell">
-                Points
+                Matchs
+              </th>
+              <th className="hidden px-4 py-3 text-center font-semibold text-foreground lg:table-cell">
+                Essais/match
               </th>
             </tr>
           </thead>
           <tbody>
-            {centurions.map(({ joueur, bilan }, i) => (
+            {marqueurs.map(({ joueur, bilan }, i) => (
               <tr
                 key={joueur.id}
                 className="border-b border-border transition-colors last:border-0 hover:bg-muted/30"
@@ -183,16 +164,13 @@ export default async function CenturionsPage() {
                     ` - ${annee(bilan.dernier)}`}
                 </td>
                 <td className="px-4 py-3 text-center font-bold text-usap-sang">
-                  {bilan.matchs}
-                </td>
-                <td className="hidden px-4 py-3 text-center text-muted-foreground lg:table-cell">
-                  {bilan.titularisations}
-                </td>
-                <td className="hidden px-4 py-3 text-center text-muted-foreground lg:table-cell">
                   {bilan.essais}
                 </td>
                 <td className="hidden px-4 py-3 text-center text-muted-foreground lg:table-cell">
-                  {bilan.points}
+                  {bilan.matchs}
+                </td>
+                <td className="hidden px-4 py-3 text-center text-muted-foreground lg:table-cell">
+                  {(bilan.essais / bilan.matchs).toFixed(2).replace(".", ",")}
                 </td>
               </tr>
             ))}

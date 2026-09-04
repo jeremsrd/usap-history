@@ -26,7 +26,7 @@ usap-history/
 ├── CLAUDE.md                     # Ce fichier — conventions et règles de saisie
 ├── prisma/schema.prisma          # Schéma de la base
 ├── src/
-│   ├── app/                      # App Router — 34 pages
+│   ├── app/                      # App Router — 35 pages
 │   │   ├── page.tsx              # Accueil
 │   │   ├── saisons/              # page.tsx + [label]/page.tsx
 │   │   ├── matchs/               # page.tsx + [slug]/page.tsx
@@ -37,6 +37,7 @@ usap-history/
 │   │   ├── entraineurs/          # idem
 │   │   ├── presidents/           # idem
 │   │   ├── centurions/            # les joueurs à 100 matchs ou plus
+│   │   ├── marqueurs/             # les joueurs à 10 essais ou plus
 │   │   ├── palmares/, statistiques/
 │   │   ├── login/, auth/callback/, api/upload/
 │   │   └── admin/                # protégé — saisons, matchs (+ [id]), joueurs,
@@ -44,6 +45,7 @@ usap-history/
 │   │                             #   presidents, competitions, pays, palmares
 │   ├── components/
 │   │   ├── Header.tsx, Footer.tsx, ThemeProvider.tsx, ThemeToggle.tsx
+│   │   ├── JoueurCellule.tsx     # portrait + nom + badge, pour les classements
 │   │   ├── ScoreEvolution.tsx    # graphe d'évolution du score d'un match
 │   │   ├── VideoEmbed.tsx        # résumé YouTube/Dailymotion en click-to-play
 │   │   └── ui/ImageUpload.tsx
@@ -1171,6 +1173,19 @@ commence en 2004-2005 : les centurions d'avant n'y sont pas, et ceux qui
 étaient déjà là en 2004 — Nicolas Mas, David Marty, Perry Freshwater — ont
 joué plus de matchs que leur ligne n'en montre. Sans cet avertissement, la
 page se lirait comme un palmarès exhaustif.
+
+**Page des meilleurs marqueurs — un seuil, pas un « top N ».** `/marqueurs`
+retient les joueurs à **dix essais ou plus**, quarante-sept à ce jour. Un
+classement coupé au cinquantième tomberait au milieu d'une égalité — ils sont
+plusieurs à huit essais —, quand un seuil se dit et se vérifie. À nombre
+d'essais égal, le moins de matchs passe devant.
+
+**Sa réserve de couverture est plus lourde que celle des centurions**, et
+c'est pourquoi elle est écrite autrement : **2004-2005 ne porte aucun essai**,
+la LNR n'y publiant pas un seul fait de match, et 2005-2006 n'en porte que
+quatre. Ce n'est pas une troncature, c'est un zéro — un marqueur de ces
+années-là paraît n'avoir jamais marqué. La page le dit en tête, et rappelle
+que l'essai de pénalité et l'essai collectif n'ont pas d'auteur.
 
 **Fiche de match — le titre qu'elle a décidé.** Une finale affiche une
 bannière « Champion » ou « Finaliste » avec un lien vers le palmarès. Le
