@@ -1342,11 +1342,20 @@ pas une page publique.
 `/fr/records` mène à `/ca/records`, non à l'accueil. Il figure deux fois dans
 le Header, en bureau et en mobile.
 
-**Deux libellés plutôt que deux drapeaux.** Un drapeau désigne un État, non une
-langue, et le raccourci serait doublement faux ici : le catalan se parle des
-deux côtés de la frontière, et l'écusson qui conviendrait au catalan de
-Perpignan est celui du club, déjà en tête de page. « FR » et « CA » ne se
-confondent avec rien et se lisent à toutes les tailles.
+**Deux drapeaux, et ils sont dessinés.** Le tricolore et la senyera, en SVG de
+quelques lignes. Unicode n'a pas de senyera — son jeu de drapeaux régionaux
+s'arrête à l'Angleterre, l'Écosse et le pays de Galles —, et rendre le catalan
+par 🇪🇸 serait faux : le catalan de ce site est celui de Catalunya Nord, qui est
+en France. Deux SVG règlent la question et rendent partout pareil, sans
+dépendre d'une police d'emoji.
+
+**Un drapeau seul ne se lit ni au clavier ni à voix haute** : chaque lien porte
+le nom de sa langue en `aria-label`, en `title` et en texte caché, et l'actif
+est marqué `aria-current` autant que par son anneau.
+
+Le choix a d'abord été deux libellés, « FR » et « CA », au motif qu'un drapeau
+désigne un État et non une langue. **Arbitré par Jérémy le 4 septembre 2026**
+en faveur des drapeaux.
 
 **Et une langue offerte mais pas traduite doit le dire.** Le layout pose sur
 toute page qui n'est pas en français un bandeau : « Traducció al català en
