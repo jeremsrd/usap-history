@@ -26,7 +26,7 @@ usap-history/
 ├── CLAUDE.md                     # Ce fichier — conventions et règles de saisie
 ├── prisma/schema.prisma          # Schéma de la base
 ├── src/
-│   ├── app/                      # App Router — 35 pages
+│   ├── app/                      # App Router — 36 pages
 │   │   ├── page.tsx              # Accueil
 │   │   ├── saisons/              # page.tsx + [label]/page.tsx
 │   │   ├── matchs/               # page.tsx + [slug]/page.tsx
@@ -38,6 +38,7 @@ usap-history/
 │   │   ├── presidents/           # idem
 │   │   ├── centurions/            # les joueurs à 100 matchs ou plus
 │   │   ├── realisateurs/          # points, essais et points au pied
+│   │   ├── records/               # records sur un match, sur une saison, séries
 │   │   ├── palmares/, statistiques/
 │   │   ├── login/, auth/callback/, api/upload/
 │   │   └── admin/                # protégé — saisons, matchs (+ [id]), joueurs,
@@ -1207,6 +1208,28 @@ premières saisons ne comptent pour rien.
 les centurions, meilleurs marqueurs vers `#essais`, meilleurs réalisateurs vers
 `#points`. Sans ce lien, une page complète existait sans que rien n'y mène
 depuis son propre résumé.
+
+**Page des records — et ce qu'un record vaut ici.** `/records` donne dix
+records **sur un match**, dix **sur une saison** et trois **séries**, chacun
+lié à la rencontre, à la saison ou au joueur qui le porte.
+
+**Ce sont les records de la période couverte, pas ceux du club**, et la page le
+dit en tête : la base commence en 2004-2005 pour les rencontres, en 2005-2006
+pour les bilans de saison — 2004-2005 n'ayant pas d'agrégats, faute de ses neuf
+bonus offensifs. Un siècle lui échappe.
+
+**Et les saisons ne se comparent pas à armes égales.** Les bilans portent sur
+le championnat seul, phases finales exclues, mais une saison de Pro D2 compte
+trente journées quand le Top 14 en compte vingt-six : les records de volume —
+points marqués, victoires — penchent mécaniquement vers la Pro D2, et trois
+des quatre premiers en viennent. La division et le nombre de matchs sont donc
+rappelés sur chaque carte, plutôt que de laisser croire à une comparaison qui
+n'en est pas une.
+
+**Les séries ne coupent pas aux saisons** : quinze défaites d'affilée du
+25 août 2018 au 26 janvier 2019, toutes compétitions confondues. C'est le
+sens usuel du mot, et le contraire aurait fabriqué des séries plus courtes que
+la réalité.
 
 **Fiche de match — le titre qu'elle a décidé.** Une finale affiche une
 bannière « Champion » ou « Finaliste » avec un lien vers le palmarès. Le

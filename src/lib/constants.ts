@@ -110,6 +110,7 @@ export const NAV_LINKS_MAIN = [
 export const NAV_LINKS_MORE = [
   { href: "/centurions", label: "Centurions" },
   { href: "/realisateurs", label: "Meilleurs réalisateurs" },
+  { href: "/records", label: "Records" },
   { href: "/adversaires", label: "Adversaires" },
   { href: "/stades", label: "Stades" },
   { href: "/arbitres", label: "Arbitres" },
