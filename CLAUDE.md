@@ -903,7 +903,7 @@ doublons.
 | `seed-calendrier-europe-2026-2027.ts` | le pendant pour la **coupe d'Europe** : les quatre matchs de poule de Challenge Cup depuis le flux de l'EPCR, sans score. Crée l'Ulster, et pose deux terrains à la main avec leur source — Ravenhill à Belfast, Rodney Parade à Newport —, l'USAP n'y ayant jamais joué. `--dry` |
 | `set-arbitre.ts` | pose l'arbitre d'une rencontre quand il vient d'ailleurs que d'une feuille — la désignation de la semaine, donnée par Jérémy. `--match=AAAA-MM-JJ --nom="Prénom Nom"`, `--dry`, `--force` pour remplacer un arbitre déjà posé ; passe par `lib/arbitres.ts`, jamais par un slug refait à la main |
 | `seed-season-2021-2022.ts` | crée les rencontres d'une saison entière — date et heure, compétition, adversaire, lieu, score, réalisations, résultat, bonus, arbitre — puis les agrégats de saison. Premier jalon de la phase 4 |
-| `lib/erc.ts` | **les comptes rendus de l'ERC dans la Wayback Machine**, source officielle des coupes d'Europe d'avant l'EPCR : compositions à 22 numérotées, capitaines, cartons, réalisations par joueur, essais de pénalité, affluence, stade. Lecteur du format 2007-2008 (`eng/12_NNNN.php`, en latin-1) ; le format Match Centre de 2010-2013, plus riche encore — mi-temps, arbitre, chronologie minutée —, reste à écrire. Quatre secondes entre deux pages et un cache sur disque : l'archive refuse tout après une centaine de requêtes rapprochées |
+| `lib/erc.ts` | **les pages de l'ERC dans la Wayback Machine**, source officielle des coupes d'Europe d'avant l'EPCR. Deux lecteurs : les comptes rendus de 2007-2008 (`eng/12_NNNN.php`, en latin-1) — compositions à 22 numérotées, capitaines, cartons, réalisations par joueur, essais de pénalité, affluence, stade — et le **Match Centre** de 2010-2013 (`eng/matchcentre/NNNNN.php`), qui ajoute la mi-temps, l'arbitre et une **chronologie minutée**. Quatre secondes entre deux pages et un cache sur disque : l'archive refuse tout après une centaine de requêtes rapprochées |
 | `seed-cup-espn.ts` | **une campagne européenne d'avant 2020-2021, depuis ESPN** — rencontres, compositions des deux camps et réalisations par joueur, par `lib/espn.ts`. Rien ne s'écrit sans le classement de poule de Wikipédia, en dur par saison dans `CAMPAGNES`, et les réalisations d'un camp ne s'écrivent que si leur somme retombe sur son score. Minutes, minutes de carton, arbitre, affluence et chronologie restent à `null` : la source ne les donne pas. `<saison>`, `--dry`, `--match=` |
 | `seed-cup-sheet.ts` | **le pendant pour les coupes d'Europe**, depuis l'EPCR : réalisations, cartons et temps de jeu des **deux camps**, plus l'arbitre, l'affluence et la mi-temps. Sans argument il reprend les dix-huit matchs européens ; `--dry`, `--detail`, `--match=AAAA-MM-JJ` comme le précédent |
 | `audit-opponent-lineups.ts` | confronte les compositions adverses aux feuilles officielles LNR — les deux divisions, phases finales comprises ; lecture seule, à lancer sur une saison ou sur tout. **Zéro anomalie est l'état attendu** ; les variantes d'affichage arbitrées sont tues par sa table `VARIANTES_DAFFICHAGE`, comptées au récapitulatif et listées par `--variantes` |
@@ -2440,18 +2440,53 @@ Par ordre de valeur.
    d'avant-match puis compte rendu : l'instantané demandé doit être
    **postérieur** au match, et la table `erc` de `CAMPAGNES` porte les deux.
 
-   **ET C'EST LE PROCHAIN CHANTIER, PAS UNE NOTE DE BAS DE PAGE.** Les pages
-   Match Centre de l'ERC — `eng/matchcentre/NNNNN.php`, archivées de 2010 à
-   2013 — portent ce qu'aucune autre source n'a pour ces années : la
-   **mi-temps, l'arbitre et ses juges de touche, l'affluence, une chronologie
-   minutée** de chaque réalisation, et les deux listes de 1 à 23 avec T C D P.
-   C'est l'organisateur lui-même, l'équivalent de l'EPCR pour 2010-2011,
-   2011-2012 et 2012-2013 — trois campagnes aujourd'hui écrites depuis ESPN,
-   avec trois camps muets en 2012-2013 et aucune chronologie. Le lecteur de
-   ce format est à écrire dans `lib/erc.ts` ; le Rovigo-Perpignan du
-   13 octobre 2012 est la page 19178, le Worcester-Perpignan du 6 décembre la
-   19713, et la liste des 181 pages archivées de 2012-2013 se relève par
-   `cdx?url=ercrugby.com/eng/matchcentre/*`.
+   **LE MATCH CENTRE EST LU, ET 2012-2013 EN EST REPRISE**, le 5 septembre
+   2026 au soir. Six pages sur huit ont été retrouvées dans l'archive — une
+   à une parmi les identifiants voisins de chaque journée, la page du club et
+   celles des poules ne les liant plus, leurs liens étaient dynamiques :
+   19178, 19383, 19944, 20166, 20340, et 20639 pour le quart, qui n'est
+   archivé qu'en présentation d'avant-match. Le Worcester-Perpignan du
+   6 décembre 2012 (19713) n'existe que dans cet état-là, et la demi-finale
+   n'a aucune page archivée : ces deux-là restent à ESPN. Les six autres
+   viennent de l'organisateur — compositions, réalisations, cartons, mi-temps,
+   arbitres, affluences —, et **cinq portent une chronologie minutée**, 94
+   événements qui finissent chacun sur le score, les premières de la base
+   sur un match européen d'avant 2020. Le camp catalan du 40-22 contre
+   Rovigo, muet chez ESPN, boucle désormais : six essais, cinq
+   transformations.
+
+   **Quatre règles sont nées de cette reprise**, toutes dans
+   `seed-cup-espn.ts` :
+   - **l'essai de pénalité se lit dans l'écart**, la page ne l'écrivant
+     nulle part : cinq points sans auteur, comme avant 2017, et sa minute est
+     celle d'une transformation que nul essai ne précède — deux
+     transformations de David Mélé à la 58ᵉ pour un seul essai nommé, à
+     Rovigo. Chaque essai n'absorbe qu'une transformation ;
+   - **l'ERC écrit les surnoms, ESPN l'état civil** — « Goyo » Zabaloy,
+     « Deccie » Cusack, « Kapu » Olaeta, « Pingui » Monje à Gernika —, et
+     les deux feuilles décrivent le même match : au même dossard, sous un
+     patronyme qui concorde, c'est le même homme, et il garde le prénom
+     d'ESPN, qui est celui de la base. Sans cela chaque Basque aurait eu
+     deux fiches ;
+   - **le dossard d'ESPN prime quand le même homme y porte un autre
+     numéro.** À Rovigo le 13 octobre 2012, le Match Centre permute trois
+     paires entre le terrain et le banc — Batlle au 23 et Michel au 11,
+     Jones et Tumiati, Calabrese et Duca — quand sa propre chronologie donne
+     deux essais à Batlle dans la première demi-heure. La page de
+     l'organisateur porte là l'équipe annoncée, ESPN l'équipe alignée ;
+   - **une chronologie qui ne retombe pas sur le score n'est pas écrite.**
+
+   Deux réserves. Les pages des deux premières journées ne marquent aucun
+   capitaine, les quatre suivantes si : « aucun » s'y lit « la source ne le
+   dit pas ». Et les minutes des joueurs restent à `null` : le Match Centre
+   ne date que les réalisations, pas les changements.
+
+   **Et le même chantier attend 2010-2011 et 2011-2012**, dont les pages
+   Match Centre sont archivées — 270 en 2010, 377 en 2011, 526 en 2012 — et
+   qui n'ont aujourd'hui qu'ESPN : un camp muet en 2010-2011, deux
+   rencontres sans composition en 2011-2012, et aucune chronologie. Les
+   identifiants se relèvent par `cdx?url=ercrugby.com/eng/matchcentre/*`
+   sur la fenêtre de la saison, puis page à page autour de chaque journée.
 
    **Trois écussons manquent, et c'est faute de source** : Rovigo et Gernika
    ne jouent plus l'Europe et n'ont pas d'entrée EPCR ; avec les Cavalieri

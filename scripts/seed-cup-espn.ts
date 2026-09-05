@@ -41,17 +41,19 @@
  * et réécrites.
  */
 
-import { PrismaClient, MatchResult, Prisma, type Position } from "@prisma/client";
+import { PrismaClient, MatchResult, Prisma, EventType, type Position } from "@prisma/client";
 import {
   chercherMatchsUsap,
   lireMatch,
   USAP_ESPN,
   type EspnEquipe,
+  type EspnJoueur,
   type EspnMatch,
   type Ligue,
 } from "./lib/espn";
 import { CLUBS_ESPN } from "./lib/clubs";
-import { lirePageArchivee, lireCompteRendu2007 } from "./lib/erc";
+import { lirePageArchivee, lireCompteRendu2007, lireMatchCentre, type ErcEvenement } from "./lib/erc";
+import { normalize } from "./lib/noms";
 import { POSTE_PAR_NUMERO, trouverOuCreerJoueur } from "./lib/joueurs";
 import { trouverOuCreerArbitre } from "./lib/arbitres";
 import { concordanceDesDossards } from "./lib/dossards";
@@ -383,6 +385,21 @@ const CAMPAGNES: Record<string, Campagne> = {
         affluence: 12242,
       },
     ],
+    // Les pages Match Centre de l'ERC, retrouvées une à une dans l'archive
+    // parmi les identifiants voisins de chaque journée — la page du club et
+    // celles des poules ne les lient plus, leurs liens étaient dynamiques.
+    // Six pages sur huit : celle du Worcester-Perpignan du 6 décembre 2012
+    // (19713) n'est archivée qu'en présentation d'avant-match, et la
+    // demi-finale n'a aucune page archivée — 20888, 20889 et 20945 à 20947
+    // sont d'autres rencontres. Ces deux-là restent à ESPN.
+    erc: {
+      "2012-10-13": { page: "matchcentre/19178.php", instantane: "20121016221224" },
+      "2012-10-20": { page: "matchcentre/19383.php", instantane: "20121023" },
+      "2012-12-15": { page: "matchcentre/19944.php", instantane: "20121218" },
+      "2013-01-12": { page: "matchcentre/20166.php", instantane: "20130115" },
+      "2013-01-17": { page: "matchcentre/20340.php", instantane: "20130121" },
+      "2013-04-05": { page: "matchcentre/20639.php", instantane: "20130409" },
+    },
     note: "Challenge européen, poule 1 — première, demi-finaliste",
   },
   /**
@@ -588,6 +605,10 @@ interface Rencontre {
   alertes: string[];
   /** Camps dont la composition ne s'écrit pas — `false` l'USAP, `true` l'adversaire. */
   campsSansComposition: Set<boolean>;
+  /** L'arbitre selon l'ERC, quand sa page le donne. */
+  arbitre: string | null;
+  /** La chronologie selon l'ERC, quand sa page en a une ; `[domicile, extérieur]` pour les essais de pénalité. */
+  chronologie: { evenements: ErcEvenement[]; essaisDePenalite: [number[], number[]] } | null;
 }
 
 async function lireCampagne(
@@ -630,23 +651,44 @@ async function lireCampagne(
     // validé par la poule, sert de contrôle : un compte rendu qui ne le
     // redonne pas n'est pas celui de cette rencontre.
     const archive = campagne.erc?.[jour];
+    let arbitre: string | null = null;
+    let chronologie: Rencontre["chronologie"] = null;
     if (archive) {
-      const erc = lireCompteRendu2007(await lirePageArchivee(archive.page, archive.instantane));
+      const brut = await lirePageArchivee(archive.page, archive.instantane);
+      const centre = archive.page.startsWith("matchcentre/") ? lireMatchCentre(brut) : null;
+      const erc = centre ?? lireCompteRendu2007(brut);
       const ercUsap = isHome ? erc.domicile : erc.exterieur;
       const ercAdverse = isHome ? erc.exterieur : erc.domicile;
-      if (ercUsap.score !== usap.score || ercAdverse.score !== adverse.score) {
+      if (ercUsap.score == null || ercUsap.joueurs.length === 0) {
+        // L'instantané a saisi la présentation d'avant-match : rien à en
+        // tirer, la rencontre reste à ESPN, et on le dit.
+        console.log(`  ⚠ ERC ${archive.page} : présentation d'avant-match, « ${erc.titre} » — ESPN conservé`);
+      } else if (ercUsap.score !== usap.score || ercAdverse.score !== adverse.score) {
         echecs.push(
           `${etiquette} : l'ERC donne ${erc.domicile.nom} ${erc.domicile.score}-${erc.exterieur.score} ` +
             `${erc.exterieur.nom}, ESPN ${usap.score}-${adverse.score} — « ${erc.titre} »`,
         );
         continue;
+      } else {
+        usap.joueurs = harmoniserPrenoms(ercUsap.joueurs, usap.joueurs, `${etiquette} USAP`);
+        usap.essaisSansAuteur = ercUsap.essaisSansAuteur;
+        adverse.joueurs = harmoniserPrenoms(ercAdverse.joueurs, adverse.joueurs, `${etiquette} ${adverse.nom}`);
+        adverse.essaisSansAuteur = ercAdverse.essaisSansAuteur;
+        if (erc.affluence) feuille.affluence = erc.affluence;
+        if (centre) {
+          // Le Match Centre donne la mi-temps, l'arbitre et la chronologie.
+          usap.miTemps = ercUsap.miTemps;
+          adverse.miTemps = ercAdverse.miTemps;
+          arbitre = centre.arbitre;
+          chronologie = { evenements: centre.evenements, essaisDePenalite: centre.essaisDePenaliteMinutes };
+        }
+        console.log(
+          `  ERC ${archive.page} : « ${erc.titre} »` +
+            (erc.affluence ? `, ${erc.affluence} spectateurs` : "") +
+            (arbitre ? `, arbitre ${arbitre}` : "") +
+            (chronologie ? `, ${chronologie.evenements.length} faits` : ""),
+        );
       }
-      usap.joueurs = ercUsap.joueurs;
-      usap.essaisSansAuteur = ercUsap.essaisSansAuteur;
-      adverse.joueurs = ercAdverse.joueurs;
-      adverse.essaisSansAuteur = ercAdverse.essaisSansAuteur;
-      if (erc.affluence) feuille.affluence = erc.affluence;
-      console.log(`  ERC ${archive.page} : « ${erc.titre} »${erc.affluence ? `, ${erc.affluence} spectateurs` : ""}`);
     }
 
     const opponentNom = CLUBS_ESPN[adverse.nom];
@@ -753,9 +795,72 @@ async function lireCampagne(
             : MatchResult.NUL,
       alertes,
       campsSansComposition,
+      arbitre,
+      chronologie,
     });
   }
   return rencontres;
+}
+
+/**
+ * Les joueurs de l'ERC, avec le prénom qu'ESPN leur donne.
+ *
+ * **L'ERC écrit les surnoms, ESPN l'état civil.** Les Basques de Gernika
+ * sont « Goyo » Zabaloy, « Deccie » Cusack, « Kapu » Olaeta, « Pingui »
+ * Monje sur le Match Centre, quand ESPN — et la base, depuis lui — porte
+ * Gregorio, Declan, Iker. Les deux feuilles décrivent le même match : au
+ * même dossard et sous le même patronyme, c'est le même homme, et l'état
+ * civil vaut mieux que le surnom. Le dossard, les réalisations et le
+ * brassard restent ceux de l'ERC, qui est l'organisateur. Un patronyme qui
+ * diffère au même numéro se signale et garde l'ERC.
+ */
+function harmoniserPrenoms(erc: EspnJoueur[], espn: EspnJoueur[], etiquette: string): EspnJoueur[] {
+  if (espn.length === 0) return erc;
+  const parNumero = new Map(espn.map((j) => [j.numero, j]));
+  const lettres = (n: string) => normalize(n).replace(/[^a-z]/g, "");
+  // **Le dossard d'ESPN prime quand le même homme y porte un autre numéro.**
+  // À Rovigo le 13 octobre 2012, le Match Centre permute trois paires entre
+  // le terrain et le banc — Batlle au 23 et Michel au 11 côté catalan, Jones
+  // et Tumiati, Calabrese et Duca côté italien — quand sa propre chronologie
+  // donne deux essais à Batlle dans la première demi-heure, ce qu'un n°23
+  // ne fait pas. La page de l'organisateur porte là l'équipe annoncée, ESPN
+  // l'équipe alignée. Les réalisations restent celles de l'ERC.
+  const parNom = new Map(espn.map((j) => [lettres(`${j.firstName} ${j.lastName}`), j]));
+  const renumerotes = erc.map((j) => {
+    const meme = parNom.get(lettres(`${j.firstName} ${j.lastName}`));
+    if (!meme || meme.numero === j.numero) return j;
+    console.log(
+      `    ⚠ ${etiquette} : ${j.firstName} ${j.lastName} n°${j.numero} à l'ERC, n°${meme.numero} chez ESPN — le dossard d'ESPN est gardé`,
+    );
+    return { ...j, numero: meme.numero, isStarter: meme.numero <= 15 };
+  });
+  erc = renumerotes.sort((a, b) => a.numero - b.numero);
+  return erc.map((j) => {
+    const e = parNumero.get(j.numero);
+    if (!e) return j;
+    const memeHomme =
+      // même patronyme, à un trait d'union près — « Tchale Watchou » ;
+      lettres(e.lastName) === lettres(j.lastName) ||
+      // l'un des deux noms complets finit par le patronyme de l'autre —
+      // « Parrish Garcia Parrado » pour « Carlos | Garcia Parrado »,
+      // « Oscar Astarloa » pour « Oscar | Astarloa Uriarte » ;
+      lettres(`${e.firstName} ${e.lastName}`).endsWith(lettres(j.lastName)) ||
+      lettres(`${j.firstName} ${j.lastName}`).endsWith(lettres(e.lastName)) ||
+      lettres(e.lastName).startsWith(lettres(j.lastName)) ||
+      // même prénom et patronymes qui commencent pareil sur cinq lettres —
+      // « Etxebarria » pour « Etxeberria de la Rosa ».
+      (lettres(e.firstName) === lettres(j.firstName) &&
+        lettres(e.lastName).slice(0, 5) === lettres(j.lastName).slice(0, 5));
+    if (memeHomme) {
+      return normalize(`${e.firstName} ${e.lastName}`) === normalize(`${j.firstName} ${j.lastName}`)
+        ? j
+        : { ...j, firstName: e.firstName, lastName: e.lastName };
+    }
+    console.log(
+      `    ⚠ ${etiquette} n°${j.numero} : « ${j.firstName} ${j.lastName} » à l'ERC, « ${e.firstName} ${e.lastName} » chez ESPN — l'ERC est gardé`,
+    );
+    return j;
+  });
 }
 
 /**
@@ -886,6 +991,90 @@ function controlerLaPhaseFinale(
     }
   }
   return ecarts;
+}
+
+// =============================================================================
+// CHRONOLOGIE
+// =============================================================================
+
+/**
+ * La ligne de temps d'après le Match Centre de l'ERC, dans la forme de
+ * `seed-chronologie.ts` : « Essai de Machin (Club). 7-10. », score de l'USAP
+ * en premier. Le joueur est retrouvé dans la composition écrite — la page
+ * n'écrit que l'initiale et le patronyme, « D Mele » — et l'essai de
+ * pénalité est posé à la minute de sa transformation orpheline. **Une
+ * chronologie qui ne retombe pas sur le score n'est pas écrite** : une
+ * minute ne s'invente pas, et un score courant faux vaut moins que rien.
+ */
+function chronologieDeLaBase(
+  r: Rencontre,
+  lignes: LigneAEcrire[],
+): Array<{ minute: number; type: EventType; isUsap: boolean; playerId: string | null; description: string }> | null {
+  const { evenements, essaisDePenalite } = r.chronologie!;
+  const POINTS = { essai: 5, transformation: 2, penalite: 3, drop: 3 } as const;
+  const TYPES = {
+    essai: EventType.ESSAI,
+    transformation: EventType.TRANSFORMATION,
+    penalite: EventType.PENALITE,
+    drop: EventType.DROP,
+  } as const;
+  const LIBELLES = { essai: "Essai", transformation: "Transformation", penalite: "Pénalité", drop: "Drop" } as const;
+  const de = (nom: string) => (/^[aeiouyàâéèêëîïôöûü]/i.test(nom) ? `d'${nom}` : `de ${nom}`);
+
+  // Les noms complets, par camp, pour rendre à « D Mele » sa fiche.
+  const nomsParLigne = new Map(lignes.map((l) => [l, l.playerId]));
+  const retrouver = (nom: string, isUsap: boolean, equipe: EspnEquipe) => {
+    const [initiale, ...reste] = nom.split(/\s+/);
+    const patronyme = normalize(reste.join(" "));
+    const candidats = equipe.joueurs.filter(
+      (j) =>
+        normalize(j.lastName) === patronyme && normalize(j.firstName).startsWith(normalize(initiale).charAt(0)),
+    );
+    if (candidats.length !== 1) return { nom: null as string | null, playerId: null as string | null };
+    const ligne = lignes.find((l) => l.isOpponent === !isUsap && l.shirtNumber === candidats[0].numero);
+    return { nom: `${candidats[0].firstName} ${candidats[0].lastName}`, playerId: ligne ? nomsParLigne.get(ligne) ?? null : null };
+  };
+
+  type Fait = { minute: number; type: keyof typeof POINTS | "essai-de-penalite"; isUsap: boolean; nom: string | null; playerId: string | null };
+  const faits: Fait[] = evenements.map((e) => {
+    const isUsap = e.domicile === r.isHome;
+    const { nom, playerId } = retrouver(e.nom, isUsap, isUsap ? r.usap : r.adverse);
+    return { minute: e.minute, type: e.type, isUsap, nom, playerId };
+  });
+  for (const [k, minutes] of essaisDePenalite.entries()) {
+    const isUsap = (k === 0) === r.isHome;
+    for (const minute of minutes) faits.push({ minute, type: "essai-de-penalite", isUsap, nom: null, playerId: null });
+  }
+  faits.sort((a, b) => a.minute - b.minute || (a.type === "transformation" ? 1 : 0) - (b.type === "transformation" ? 1 : 0));
+
+  let usap = 0;
+  let adverse = 0;
+  const club = (isUsap: boolean) => (isUsap ? "USAP" : r.opponentNom);
+  const sortie = faits.map((f) => {
+    const points = f.type === "essai-de-penalite" ? 5 : POINTS[f.type];
+    if (f.isUsap) usap += points;
+    else adverse += points;
+    const libelle =
+      f.type === "essai-de-penalite"
+        ? `Essai de pénalité (${club(f.isUsap)}).`
+        : f.nom
+          ? `${LIBELLES[f.type]} ${de(f.nom)} (${club(f.isUsap)}).`
+          : `${LIBELLES[f.type]} (${club(f.isUsap)}).`;
+    return {
+      minute: f.minute,
+      type: f.type === "essai-de-penalite" ? EventType.ESSAI_PENALITE : TYPES[f.type],
+      isUsap: f.isUsap,
+      playerId: f.playerId,
+      description: `${libelle} ${usap}-${adverse}.`,
+    };
+  });
+  if (usap !== r.usap.score || adverse !== r.adverse.score) {
+    console.log(
+      `  ⚠ chronologie non écrite : elle finit à ${usap}-${adverse} pour ${r.usap.score}-${r.adverse.score}`,
+    );
+    return null;
+  }
+  return sortie;
 }
 
 // =============================================================================
@@ -1122,9 +1311,8 @@ async function main() {
     });
     // Ce que Wikipédia donne d'un couperet et qu'ESPN n'a pas.
     const officiel = (campagne.phaseFinale ?? []).find((o) => o.tour === r.feuille.tour);
-    const refereeId = officiel?.arbitre
-      ? await trouverOuCreerArbitre(prisma, officiel.arbitre, false)
-      : null;
+    const nomArbitre = officiel?.arbitre ?? r.arbitre;
+    const refereeId = nomArbitre ? await trouverOuCreerArbitre(prisma, nomArbitre, false) : null;
     const donnees: Prisma.MatchUncheckedCreateInput = {
       slug: generateMatchSlug({
         competitionShortName: competition.shortName,
@@ -1202,6 +1390,15 @@ async function main() {
       data: lignesRetenues.map((l) => ({ ...l, matchId })),
     });
     lignesEcrites += lignesRetenues.length;
+
+    if (r.chronologie) {
+      const evenements = chronologieDeLaBase(r, lignesRetenues);
+      if (evenements) {
+        await prisma.matchEvent.deleteMany({ where: { matchId } });
+        await prisma.matchEvent.createMany({ data: evenements.map((e) => ({ ...e, matchId })) });
+        console.log(`  chronologie : ${evenements.length} événements`);
+      }
+    }
   }
 
   console.log(
