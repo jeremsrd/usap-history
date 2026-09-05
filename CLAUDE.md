@@ -904,6 +904,8 @@ doublons.
 | `set-arbitre.ts` | pose l'arbitre d'une rencontre quand il vient d'ailleurs que d'une feuille — la désignation de la semaine, donnée par Jérémy. `--match=AAAA-MM-JJ --nom="Prénom Nom"`, `--dry`, `--force` pour remplacer un arbitre déjà posé ; passe par `lib/arbitres.ts`, jamais par un slug refait à la main |
 | `seed-season-2021-2022.ts` | crée les rencontres d'une saison entière — date et heure, compétition, adversaire, lieu, score, réalisations, résultat, bonus, arbitre — puis les agrégats de saison. Premier jalon de la phase 4 |
 | `lib/erc.ts` | **les pages de l'ERC dans la Wayback Machine**, source officielle des coupes d'Europe d'avant l'EPCR. Deux lecteurs : les comptes rendus de 2007-2008 (`eng/12_NNNN.php`, en latin-1) — compositions à 22 numérotées, capitaines, cartons, réalisations par joueur, essais de pénalité, affluence, stade — et le **Match Centre** de 2010-2013 (`eng/matchcentre/NNNNN.php`), qui ajoute la mi-temps, l'arbitre et une **chronologie minutée**. Quatre secondes entre deux pages et un cache sur disque : l'archive refuse tout après une centaine de requêtes rapprochées |
+| `lib/gallica.ts` | **la presse numérisée de Gallica**, pour l'avant-guerre : le fascicule d'un jour, les pages où un mot figure, l'OCR d'une page en ALTO — césures recousues —, et ce qu'un article dit d'un match : les deux XV par lignes (« Les équipes se présentèrent comme suit »), le capitaine, l'arbitre, le score et la mi-temps d'un titre. Trente secondes entre deux requêtes, cache sur disque : Gallica rend 429 dès la cinquième page rapprochée |
+| `seed-match-gallica.ts` | **une rencontre d'avant-guerre depuis *L'Auto*, en simulation seulement** : retrouve le numéro du lendemain, imprime XV, capitaines, arbitre, score et mi-temps avec les écarts — une ligne qui ne compte pas ses hommes, un club à quatorze —, et confronte chaque nom à la base. Refuse d'écrire tant que la base ne sait pas porter la provenance d'une composition ni le barème de 1925. `--match=AAAA-MM-JJ --dry` ; les rencontres connues sont dans `MATCHS` |
 | `seed-cup-espn.ts` | **une campagne européenne d'avant 2020-2021, depuis ESPN** — rencontres, compositions des deux camps et réalisations par joueur, par `lib/espn.ts`. Rien ne s'écrit sans le classement de poule de Wikipédia, en dur par saison dans `CAMPAGNES`, et les réalisations d'un camp ne s'écrivent que si leur somme retombe sur son score. Minutes, minutes de carton, arbitre, affluence et chronologie restent à `null` : la source ne les donne pas. `<saison>`, `--dry`, `--match=` |
 | `seed-cup-sheet.ts` | **le pendant pour les coupes d'Europe**, depuis l'EPCR : réalisations, cartons et temps de jeu des **deux camps**, plus l'arbitre, l'affluence et la mi-temps. Sans argument il reprend les dix-huit matchs européens ; `--dry`, `--detail`, `--match=AAAA-MM-JJ` comme le précédent |
 | `audit-opponent-lineups.ts` | confronte les compositions adverses aux feuilles officielles LNR — les deux divisions, phases finales comprises ; lecture seule, à lancer sur une saison ou sur tout. **Zéro anomalie est l'état attendu** ; les variantes d'affichage arbitrées sont tues par sa table `VARIANTES_DAFFICHAGE`, comptées au récapitulatif et listées par `--variantes` |
@@ -2636,6 +2638,17 @@ derrière un contrôle de sécurité qu'un script ne passe pas ;
 plafonne à quelques requêtes par minute** — 429 « Trop de requêtes » dès la
 cinquième page ALTO rapprochée —, et un balayage se fait à 30 ou
 45 secondes d'intervalle, en arrière-plan.
+
+**Le lecteur existe depuis le 6 septembre 2026** — `lib/gallica.ts` et
+`seed-match-gallica.ts` —, et sa première simulation, la finale du 3 mai
+1925 dans *L'Auto* du lendemain, dit à la fois ce qu'il sait faire et où
+l'OCR s'arrête. Il rend le fascicule, les deux pages où Perpignan est nommé,
+le score « 5 à 0 », l'arbitre M. Vigné, les deux XV par lignes avec leurs
+capitaines, Jean Sebédio et « Raruis ». Carcassonne est à quinze ; **le XV
+catalan n'a que quatorze noms** : l'OCR a perdu l'étiquette « demis » et
+un nom avec elle, et Carbonne se retrouve cinquième trois-quarts. Le
+script le signale et ne complète rien : c'est là qu'un humain doit relire
+l'image. Aucun des vingt-neuf noms n'est en base, ce qui est attendu.
 
 **Ce qui est mort ou vide** : `usap.fr` d'avant 2005 n'a laissé qu'un forum
 dans l'archive ; `finalesrugby.com` est un domaine parqué ; `rugbyarchive.net`
