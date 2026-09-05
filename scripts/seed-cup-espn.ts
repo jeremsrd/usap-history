@@ -51,6 +51,7 @@ import {
   type Ligue,
 } from "./lib/espn";
 import { CLUBS_ESPN } from "./lib/clubs";
+import { lirePageArchivee, lireCompteRendu2007 } from "./lib/erc";
 import { POSTE_PAR_NUMERO, trouverOuCreerJoueur } from "./lib/joueurs";
 import { trouverOuCreerArbitre } from "./lib/arbitres";
 import { concordanceDesDossards } from "./lib/dossards";
@@ -111,6 +112,14 @@ interface Campagne {
     arbitre?: string;
     affluence?: number;
   }>;
+  /**
+   * Les comptes rendus de l'ERC dans la Wayback Machine, par jour de match :
+   * la page et l'instantané à demander — postérieur à la rencontre, sans quoi
+   * l'archive rend la présentation d'avant-match. Quand une rencontre en a
+   * un, ses compositions, réalisations et affluence viennent de là et non
+   * d'ESPN : c'est l'organisateur lui-même. Cf. `lib/erc.ts`.
+   */
+  erc?: Record<string, { page: string; instantane: string }>;
   /** Ce qu'on sait de la campagne, pour le journal et pour la relecture. */
   note: string;
 }
@@ -305,6 +314,19 @@ const CAMPAGNES: Record<string, Campagne> = {
         affluence: 16048,
       },
     ],
+    // Les comptes rendus de l'ERC : six sur sept. **La première journée
+    // manque** — Perpignan-Dragons du 9 novembre 2007 —, la page n'étant
+    // archivée sous aucun identifiant voisin de ceux de sa journée
+    // (12_7397 à 12_7412 lus un à un). Elle retombe sur ESPN, qui n'a
+    // que le score.
+    erc: {
+      "2007-11-17": { page: "12_7454.php", instantane: "20071125" },
+      "2007-12-09": { page: "12_7425.php", instantane: "20071215" },
+      "2007-12-15": { page: "12_7435.php", instantane: "20071220" },
+      "2008-01-12": { page: "12_8228.php", instantane: "20080201" },
+      "2008-01-19": { page: "12_8239.php", instantane: "20080125" },
+      "2008-04-05": { page: "12_8546.php", instantane: "20080412" },
+    },
     note: "Heineken Cup, poule 1 — première, quart de finaliste",
   },
   /**
@@ -535,8 +557,12 @@ function realisations(equipe: EspnEquipe): Realisations {
     penalites: somme((j) => j.penalites),
     drops: somme((j) => j.drops),
   };
+  // L'essai de pénalité d'avant 2017 vaut cinq points et se transformait :
+  // il compte dans les essais et dans le total, sa transformation est déjà
+  // sur la ligne du buteur.
+  r.essais += equipe.essaisSansAuteur;
   const total = 5 * r.essais + 2 * r.transformations + 3 * r.penalites + 3 * r.drops;
-  const points = somme((j) => j.points);
+  const points = somme((j) => j.points) + 5 * equipe.essaisSansAuteur;
   return {
     ...r,
     total,
@@ -591,6 +617,37 @@ async function lireCampagne(
     const date = new Date(feuille.date || resume.date);
     const jour = date.toLocaleDateString("fr-CA", { timeZone: "Europe/Paris" });
     const etiquette = `${jour} ${adverse.nom}`;
+
+    // **Sans composition, ESPN n'a pas de mi-temps non plus** : son 0-0 veut
+    // dire « inconnu », et il faut le lire avant qu'un compte rendu de l'ERC
+    // ne vienne remplir les joueurs — la mi-temps, elle, n'y est pas.
+    if (usap.joueurs.length === 0 || adverse.joueurs.length === 0) {
+      usap.miTemps = null;
+      adverse.miTemps = null;
+    }
+
+    // **L'ERC prime sur ESPN quand on a son compte rendu.** Le score d'ESPN,
+    // validé par la poule, sert de contrôle : un compte rendu qui ne le
+    // redonne pas n'est pas celui de cette rencontre.
+    const archive = campagne.erc?.[jour];
+    if (archive) {
+      const erc = lireCompteRendu2007(await lirePageArchivee(archive.page, archive.instantane));
+      const ercUsap = isHome ? erc.domicile : erc.exterieur;
+      const ercAdverse = isHome ? erc.exterieur : erc.domicile;
+      if (ercUsap.score !== usap.score || ercAdverse.score !== adverse.score) {
+        echecs.push(
+          `${etiquette} : l'ERC donne ${erc.domicile.nom} ${erc.domicile.score}-${erc.exterieur.score} ` +
+            `${erc.exterieur.nom}, ESPN ${usap.score}-${adverse.score} — « ${erc.titre} »`,
+        );
+        continue;
+      }
+      usap.joueurs = ercUsap.joueurs;
+      usap.essaisSansAuteur = ercUsap.essaisSansAuteur;
+      adverse.joueurs = ercAdverse.joueurs;
+      adverse.essaisSansAuteur = ercAdverse.essaisSansAuteur;
+      if (erc.affluence) feuille.affluence = erc.affluence;
+      console.log(`  ERC ${archive.page} : « ${erc.titre} »${erc.affluence ? `, ${erc.affluence} spectateurs` : ""}`);
+    }
 
     const opponentNom = CLUBS_ESPN[adverse.nom];
     if (!opponentNom) {
@@ -702,6 +759,21 @@ async function lireCampagne(
 }
 
 /**
+ * Un score peut-il résulter d'au moins quatre essais ? Cinq points l'essai,
+ * deux la transformation — au plus une par essai —, trois la pénalité ou le
+ * drop. On essaie chaque nombre d'essais possible, puis chaque nombre de
+ * transformations : le reste doit être un multiple de trois.
+ */
+function peutPorterQuatreEssais(score: number): boolean {
+  for (let essais = 4; 5 * essais <= score; essais++) {
+    for (let transfos = 0; transfos <= essais && 5 * essais + 2 * transfos <= score; transfos++) {
+      if ((score - 5 * essais - 2 * transfos) % 3 === 0) return true;
+    }
+  }
+  return false;
+}
+
+/**
  * Le garde-fou : la poule reconstituée doit redonner le classement de
  * Wikipédia. Rend la liste des écarts, vide si tout retombe. Les essais ne
  * sont comparés que si toutes les feuilles du camp bouclent ; sinon ils sont
@@ -728,7 +800,14 @@ function controlerLaPoule(
   // le classement en compte quatre, trois sont sur des feuilles qui bouclent,
   // et le 35-14 contre Trévise, seul muet, porte le quatrième. Le nombre
   // d'essais, lui, reste inconnu : `triesUsap` n'est pas touché.
-  const muets = poule.filter((r) => r.bonusIndecidable && !r.bonusOffensif);
+  // **Un score qui ne peut pas contenir quatre essais n'est pas muet.** À
+  // Worcester en 2012-2013, l'USAP marque 21 points sur une feuille qui ne
+  // boucle pas : quatre essais font déjà vingt, et il n'existe aucune façon
+  // de marquer le point restant. Le bonus y est donc exclu par l'arithmétique
+  // seule, ce qui laisse deux feuilles muettes pour deux bonus manquants.
+  const muets = poule.filter(
+    (r) => r.bonusIndecidable && !r.bonusOffensif && peutPorterQuatreEssais(r.usap.score!),
+  );
   const manquants = officiel.bonusOffensifs - poule.filter((r) => r.bonusOffensif).length;
   if (manquants > 0 && muets.length === manquants) {
     for (const r of muets) {

@@ -99,6 +99,9 @@ const NOMS_DUSAGE: string[][] = [
   // d'usage — mais le remède est le même, faute de quoi chaque campagne
   // européenne lui refabriquerait une fiche.
   ["boutemane", "boutemmani"],
+  // L'ERC écrit « Yoann » Vivalda, deuxième ligne catalan, que la LNR donne
+  // « Yohan » : deux lettres d'écart, une de trop pour la règle.
+  ["yoann", "yohan"],
 ];
 
 /**

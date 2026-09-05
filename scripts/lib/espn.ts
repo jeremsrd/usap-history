@@ -76,6 +76,12 @@ export interface EspnEquipe {
   nom: string;
   score: number | null;
   miTemps: number | null;
+  /**
+   * Essais que la source n'attribue à personne — l'essai de pénalité
+   * d'avant 2017, cinq points et une transformation créditée au buteur.
+   * ESPN n'en connaît pas ; l'ERC les compte à part, cf. `lib/erc.ts`.
+   */
+  essaisSansAuteur: number;
   joueurs: EspnJoueur[];
 }
 
@@ -247,6 +253,7 @@ function versEquipe(brut: any, competitor: any): EspnEquipe {
     score:
       competitor?.score != null && competitor.score !== "" ? Number(competitor.score) : null,
     miTemps: miTemps != null && miTemps !== "" ? Number(miTemps) : null,
+    essaisSansAuteur: 0,
     joueurs,
   };
 }

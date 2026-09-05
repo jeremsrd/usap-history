@@ -147,6 +147,15 @@ const TOUT = process.argv.includes("--tout");
  */
 const DISTINCTS: [string, string][] = [
   ["Sacha Lotrian", "Mathys Lotrian"],
+  // Trois paires de frères sortis par les coupes d'Europe d'avant l'EPCR, le
+  // 5 septembre 2026, chacun nommé par sa propre feuille — l'ERC pour 2008,
+  // ESPN pour 2011-2013 : Aled Thomas n°15 des Dragons le 19 janvier 2008,
+  // Martyn quatre ans plus tard au même numéro ; Peter Sidoli n°5 en 2008,
+  // Robert en 2011-2012 ; Iker Olaeta n°14 de Gernika en octobre 2012, Iñigo
+  // en janvier 2013.
+  ["Martyn Thomas", "Aled Thomas"],
+  ["Robert Sidoli", "Peter Sidoli"],
+  ["Iker Olaeta", "Inigo Olaeta"],
   ["Grégory Le Corvec", "Mattéo Le Corvec"],
   // Lot À VOIR, arbitré le 30 août 2026 sur les feuilles officielles.
   ["Jonathan Gray", "Richie Gray"],

@@ -903,6 +903,7 @@ doublons.
 | `seed-calendrier-europe-2026-2027.ts` | le pendant pour la **coupe d'Europe** : les quatre matchs de poule de Challenge Cup depuis le flux de l'EPCR, sans score. Crée l'Ulster, et pose deux terrains à la main avec leur source — Ravenhill à Belfast, Rodney Parade à Newport —, l'USAP n'y ayant jamais joué. `--dry` |
 | `set-arbitre.ts` | pose l'arbitre d'une rencontre quand il vient d'ailleurs que d'une feuille — la désignation de la semaine, donnée par Jérémy. `--match=AAAA-MM-JJ --nom="Prénom Nom"`, `--dry`, `--force` pour remplacer un arbitre déjà posé ; passe par `lib/arbitres.ts`, jamais par un slug refait à la main |
 | `seed-season-2021-2022.ts` | crée les rencontres d'une saison entière — date et heure, compétition, adversaire, lieu, score, réalisations, résultat, bonus, arbitre — puis les agrégats de saison. Premier jalon de la phase 4 |
+| `lib/erc.ts` | **les comptes rendus de l'ERC dans la Wayback Machine**, source officielle des coupes d'Europe d'avant l'EPCR : compositions à 22 numérotées, capitaines, cartons, réalisations par joueur, essais de pénalité, affluence, stade. Lecteur du format 2007-2008 (`eng/12_NNNN.php`, en latin-1) ; le format Match Centre de 2010-2013, plus riche encore — mi-temps, arbitre, chronologie minutée —, reste à écrire. Quatre secondes entre deux pages et un cache sur disque : l'archive refuse tout après une centaine de requêtes rapprochées |
 | `seed-cup-espn.ts` | **une campagne européenne d'avant 2020-2021, depuis ESPN** — rencontres, compositions des deux camps et réalisations par joueur, par `lib/espn.ts`. Rien ne s'écrit sans le classement de poule de Wikipédia, en dur par saison dans `CAMPAGNES`, et les réalisations d'un camp ne s'écrivent que si leur somme retombe sur son score. Minutes, minutes de carton, arbitre, affluence et chronologie restent à `null` : la source ne les donne pas. `<saison>`, `--dry`, `--match=` |
 | `seed-cup-sheet.ts` | **le pendant pour les coupes d'Europe**, depuis l'EPCR : réalisations, cartons et temps de jeu des **deux camps**, plus l'arbitre, l'affluence et la mi-temps. Sans argument il reprend les dix-huit matchs européens ; `--dry`, `--detail`, `--match=AAAA-MM-JJ` comme le précédent |
 | `audit-opponent-lineups.ts` | confronte les compositions adverses aux feuilles officielles LNR — les deux divisions, phases finales comprises ; lecture seule, à lancer sur une saison ou sur tout. **Zéro anomalie est l'état attendu** ; les variantes d'affichage arbitrées sont tues par sa table `VARIANTES_DAFFICHAGE`, comptées au récapitulatif et listées par `--variantes` |
@@ -1579,7 +1580,7 @@ chronologie avant de l'écrire.
 entré en jeu », et non « on ne sait pas » — les remplaçants non utilisés sont
 les seuls concernés.
 
-**SAUF EN 2005-2006 — ET SUR LES TRENTE-HUIT MATCHS DE COUPE D'EUROPE DE 2008-2009 À 2018-2019 VENUS D'ESPN, cf. `seed-cup-espn.ts` —, OÙ IL SE LIT « LA SOURCE NE LE DIT PAS ».** La LNR n'y
+**SAUF EN 2005-2006 — ET SUR LES CINQUANTE-TROIS MATCHS DE COUPE D'EUROPE DE 2007-2008 À 2018-2019 VENUS D'ESPN ET DE L'ERC, cf. `seed-cup-espn.ts` —, OÙ IL SE LIT « LA SOURCE NE LE DIT PAS ».** La LNR n'y
 publie aucun changement, sur aucune des vingt-sept feuilles : les temps de jeu
 ne se reconstituent pas, et `seed-opponent-sheet.ts` les laisse tous à `null`,
 titulaires compris. Sans cela il rendrait 80 minutes à chaque titulaire et
@@ -2242,10 +2243,10 @@ Par ordre de valeur.
      essais de pénalité. Elle n'est admissible ici que faute de mieux, et
      **à recouper** — au minimum par l'arithmétique des points, au mieux par
      une seconde source ;
-   - **la seconde source est l'ERC elle-même, par la Wayback Machine.**
-     `ercrugby.com` publiait des feuilles de match ; l'archive en garde des
-     centaines de pages entre 2008 et 2012. Elle était **hors ligne le
-     5 septembre** — à réessayer, c'est ce qui permettrait de recouper ESPN ;
+   - **la seconde source est l'ERC elle-même, par la Wayback Machine**, et
+     elle vaut mieux qu'ESPN : c'est l'organisateur. Ses comptes rendus de
+     2007-2008 et ses pages Match Centre de 2010 à 2013 sont archivés — cf.
+     `lib/erc.ts`, et le chantier ouvert plus bas ;
    - **allrugby.com** n'a de coupes d'Europe que pour la saison en cours
      (`/competitions/champions-cup/`, `/competitions/challenge-cup/`) : ses
      adresses par saison rendent 404 avant 2026-2027 ;
@@ -2406,17 +2407,59 @@ Par ordre de valeur.
    bouclent en donnent six, chacune arithmétiquement juste. L'écart se
    signale ; les points, les victoires et les bonus restent le garde-fou.
 
-   **Deux campagnes restent à écrire, et ESPN n'y suffit pas** : 2007-2008,
-   dont il n'a **aucune composition** sur les sept matchs — scores et rien
-   d'autre, deux bonus offensifs à placer parmi six feuilles muettes —, et
-   2012-2013, où trois camps catalans ne bouclent pas pour deux BO à placer.
-   La règle du classement ne tranche que lorsque les muets sont exactement
-   aussi nombreux que les bonus manquants. Il faut une source par match :
-   `allrugby.com`, qui marque le bonus, ou les comptes rendus de l'ERC dans
-   la Wayback Machine — `ercrugby.com/eng/news/*.php` en 2012-2013,
-   `/eng/12_*.php` en 2007-2008, tous à retrouver par leur titre. L'archive
-   a **refusé toute connexion** le 5 septembre 2026 après une centaine de
-   requêtes rapprochées : y aller doucement.
+   **2012-2013 ET 2007-2008 SONT LES SEPTIÈME ET HUITIÈME**, écrites le même
+   soir, et **les huit campagnes sont en base**. 2012-2013, Challenge
+   européen, poule 1, **première** avec 25 points — 5 V 1 D, 293 marqués pour
+   89, un 79-12 à Rovigo et un 90-12 contre Gernika, quatre BO —, quart gagné
+   30-19 contre Toulouse et demi perdue 22-25 contre le Stade Français, tous
+   deux à Aimé-Giral, arbitres et affluences d'après Wikipédia : huit matchs,
+   368 lignes, Worcester, Rovigo et Gernika en base avec Sixways, le Stadio
+   Mario Battaglini et l'Estadio Urbieta. 2007-2008, Heineken Cup, poule 1,
+   **première** avec 22 points — 5 V 1 D, 171 pour 79, deux BO —, quart perdu
+   9-20 chez London Irish au Madejski Stadium devant 16 048 personnes, Alain
+   Rolland arbitre : sept matchs, 264 lignes, London Irish en base.
+
+   **Ce qui a débloqué chacune.** Pour 2012-2013, l'arithmétique seule :
+   trois camps catalans ne bouclent pas pour deux BO manquants, mais **21
+   points ne peuvent pas contenir quatre essais** — vingt pour les essais, et
+   aucune façon de marquer le point restant —, `peutPorterQuatreEssais()` le
+   dit, et il ne reste que deux feuilles muettes pour deux bonus. Pour
+   2007-2008, ESPN n'avait rien que les scores, et c'est **l'ERC par la
+   Wayback Machine** qui a tout donné, cf. `lib/erc.ts` : six comptes rendus
+   sur sept, douze camps qui bouclent au point près, capitaines, cartons, et
+   l'essai de pénalité de London Irish du 9 décembre 2007 — cinq points sans
+   auteur, comme en 2009, portés par `essaisSansAuteur`. La première
+   journée, Perpignan-Dragons 23-19, **n'a pas de compte rendu archivé** —
+   les pages 12_7397 à 12_7412 ont été lues une à une — et reste sans
+   composition ni mi-temps : ESPN y écrit 0-0, qui veut dire « inconnu ».
+
+   **La règle de l'ERC** : quand une rencontre a son compte rendu, ses
+   compositions, ses réalisations et son affluence viennent de là et non
+   d'ESPN, le score d'ESPN — validé par la poule — servant de contrôle. Une
+   page a une adresse stable mais un contenu qui change, présentation
+   d'avant-match puis compte rendu : l'instantané demandé doit être
+   **postérieur** au match, et la table `erc` de `CAMPAGNES` porte les deux.
+
+   **ET C'EST LE PROCHAIN CHANTIER, PAS UNE NOTE DE BAS DE PAGE.** Les pages
+   Match Centre de l'ERC — `eng/matchcentre/NNNNN.php`, archivées de 2010 à
+   2013 — portent ce qu'aucune autre source n'a pour ces années : la
+   **mi-temps, l'arbitre et ses juges de touche, l'affluence, une chronologie
+   minutée** de chaque réalisation, et les deux listes de 1 à 23 avec T C D P.
+   C'est l'organisateur lui-même, l'équivalent de l'EPCR pour 2010-2011,
+   2011-2012 et 2012-2013 — trois campagnes aujourd'hui écrites depuis ESPN,
+   avec trois camps muets en 2012-2013 et aucune chronologie. Le lecteur de
+   ce format est à écrire dans `lib/erc.ts` ; le Rovigo-Perpignan du
+   13 octobre 2012 est la page 19178, le Worcester-Perpignan du 6 décembre la
+   19713, et la liste des 181 pages archivées de 2012-2013 se relève par
+   `cdx?url=ercrugby.com/eng/matchcentre/*`.
+
+   **Trois écussons manquent, et c'est faute de source** : Rovigo et Gernika
+   ne jouent plus l'Europe et n'ont pas d'entrée EPCR ; avec les Cavalieri
+   Prato, ce sont les trois seuls adversaires sans écusson. Un site de club ou
+   Wikipédia, à arbitrer comme pour Auch. « Yoann » Vivalda, deux lettres
+   d'écart avec le « Yohan » de la LNR, rejoint `NOMS_DUSAGE` ; et trois
+   paires de frères — Thomas, Sidoli, Olaeta —, chacun nommé par sa propre
+   feuille, sont entrées dans `DISTINCTS`.
 3. **Le fond** : affluences (36 matchs sur 573 joués), les 137 fiches joueur
    que Wikipédia ne documente pas, les onze joueurs sans portrait — six
    anciens et cinq recrues que la LNR n'a pas encore photographiées, cf.
@@ -2790,8 +2833,10 @@ d'un siècle, c'est la règle qu'on connaîtra le moins bien.
   Leicester-Perpignan du 6 décembre 2008, Thomond Park et Franklin's Gardens
   pour les déplacements de 2009-2010, Parc y Scarlets pour celui de 2010-2011,
   Sandy Park et le Stadio Lungobisenzio pour ceux de 2011-2012, Murrayfield
-  pour 2013-2014, l'AJ Bell Stadium et le Sportsground pour 2018-2019,
-  viennent de la même source par `seed-cup-espn.ts` — et ses deux terrains
+  pour 2013-2014, l'AJ Bell Stadium et le Sportsground pour 2018-2019, le
+  Madejski Stadium pour 2007-2008, Sixways, le Stadio Mario Battaglini et
+  l'Estadio Urbieta pour 2012-2013, viennent de la même source par
+  `seed-cup-espn.ts` — et ses deux terrains
   neutres de 2011, Montjuïc et Milton Keynes, de `TERRAINS_PARTICULIERS`.
 
   Trois des stades de la liste de `fix-match-venues.ts` ne viennent pas d'une
