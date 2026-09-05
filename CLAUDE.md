@@ -886,6 +886,8 @@ doublons.
 | `seed-lineup-barrage-2022.ts` | la composition du barrage du 12 juin 2022, seule de la saison qu'aucune source ne publie : listes fournies à la main, recoupées avec les changements de la feuille officielle |
 | `seed-chronologie.ts` | écrit la **ligne de temps** d'un match depuis la LNR : essais, transformations déduites du score courant, pénalités, drops et cartons, avec les noms tels que la base les écrit. Troisième temps ; `--dry` |
 | `seed-calendrier-2026-2027.ts` | crée une saison et son calendrier de championnat **avant** qu'elle ne commence : date, heure, journée, adversaire, lieu, sans score ni résultat. Une relance met à jour les dates au fur et à mesure que la LNR les cale |
+| `seed-calendrier-europe-2026-2027.ts` | le pendant pour la **coupe d'Europe** : les quatre matchs de poule de Challenge Cup depuis le flux de l'EPCR, sans score. Crée l'Ulster, et pose deux terrains à la main avec leur source — Ravenhill à Belfast, Rodney Parade à Newport —, l'USAP n'y ayant jamais joué. `--dry` |
+| `set-arbitre.ts` | pose l'arbitre d'une rencontre quand il vient d'ailleurs que d'une feuille — la désignation de la semaine, donnée par Jérémy. `--match=AAAA-MM-JJ --nom="Prénom Nom"`, `--dry`, `--force` pour remplacer un arbitre déjà posé ; passe par `lib/arbitres.ts`, jamais par un slug refait à la main |
 | `seed-season-2021-2022.ts` | crée les rencontres d'une saison entière — date et heure, compétition, adversaire, lieu, score, réalisations, résultat, bonus, arbitre — puis les agrégats de saison. Premier jalon de la phase 4 |
 | `seed-cup-sheet.ts` | **le pendant pour les coupes d'Europe**, depuis l'EPCR : réalisations, cartons et temps de jeu des **deux camps**, plus l'arbitre, l'affluence et la mi-temps. Sans argument il reprend les dix-huit matchs européens ; `--dry`, `--detail`, `--match=AAAA-MM-JJ` comme le précédent |
 | `audit-opponent-lineups.ts` | confronte les compositions adverses aux feuilles officielles LNR — les deux divisions, phases finales comprises ; lecture seule, à lancer sur une saison ou sur tout. **Zéro anomalie est l'état attendu** ; les variantes d'affichage arbitrées sont tues par sa table `VARIANTES_DAFFICHAGE`, comptées au récapitulatif et listées par `--variantes` |
@@ -1583,7 +1585,12 @@ l'état.
 adversaire et leur terrain, sans score. Seules les premières ont un horaire —
 la LNR ne cale les coups d'envoi qu'au fil des désignations télévisées et pose
 d'ici là une date de référence, que `seed-calendrier-2026-2027.ts` rafraîchit
-à chaque relance.
+à chaque relance. **Et ses quatre matchs de poule de Challenge Cup** depuis le
+5 septembre 2026 — Dragons à Newport, Zebre et Ulster à Aimé-Giral, Cheetahs à
+Bloemfontein —, par `seed-calendrier-europe-2026-2027.ts` ; la phase finale
+n'existe pas encore dans le flux. **L'arbitre de la première journée, Kévin
+Bralley, vient de Jérémy** et non d'une feuille, par `set-arbitre.ts` : la LNR
+ne désigne l'arbitre sur sa feuille qu'après le match.
 
 **L'effectif 2026-2027 est inscrit à sa saison** depuis le 2 septembre 2026 :
 50 lignes `SeasonPlayer`, écrites par `sync-effectif.ts`, qui s'en charge
@@ -2192,11 +2199,50 @@ Par ordre de valeur.
    en a une — le second traite en plus le terrain neutre d'une finale —,
    `seed-season-2021-2022.ts` pour une saison avec coupe d'Europe.
 
-   **Attention aux coupes d'Europe d'avant 2020-2021 : il n'y a pas de
-   source.** Le flux de l'EPCR ne rend rien avant la saison 2020-2021, et son
-   site n'offre plus que les saisons récentes. La campagne européenne de
-   2018-2019 est donc restée hors base, et il en ira de même en remontant tant
-   qu'aucune source officielle ne les rouvre.
+   **Les coupes d'Europe d'avant 2020-2021 n'ont pas de source officielle,
+   mais elles en ont une.** Le flux de l'EPCR ne rend rien avant 2020-2021 —
+   revérifié le 5 septembre 2026 sur 2019-2020, 2018-2019, 2013-2014 et
+   2009-2010, zéro match à chaque fois — et son site n'offre plus que les
+   saisons récentes. **Huit campagnes manquent donc à la base** sur la période
+   qu'elle couvre : Heineken Cup 2007-2008, 2008-2009, 2009-2010, 2010-2011
+   et 2013-2014, Challenge européen 2011-2012, 2012-2013 et 2018-2019 —
+   cinquante-trois rencontres d'après ESPN, phases finales comprises : 7, 6,
+   6, 8, 6, 8, 6 et 6. Et les trois
+   premières saisons de la base, 2004-2005 à 2006-2007, ont aussi eu leur
+   Heineken Cup, sans qu'aucune source lue par machine ne la donne.
+
+   **L'inventaire des sources, fait le 5 septembre 2026** :
+
+   - **ESPN couvre les huit campagnes manquantes**, et rien avant 2007-2008.
+     Ligues `271937` (Champions Cup, Heineken Cup comprise) et `272073`
+     (Challenge Cup), sur `site.api.espn.com/apis/site/v2/sports/rugby/{ligue}/
+     scoreboard?dates=AAAAMMJJ-AAAAMMJJ`. **Il répond sans `User-Agent` et
+     rend 403 avec celui d'un navigateur** — l'inverse de la LNR. Le `summary`
+     d'un match de 2009 donne les **deux compositions à 22** avec dossard,
+     titulaire, capitaine et entrées-sorties, les **réalisations par joueur**
+     — essais, transformations, pénalités, drops, points, cartons — et la
+     **mi-temps** ; mais ni arbitre, ni affluence, ni stade, ni chronologie.
+     C'est la source que le projet a écartée pour le championnat, et pour
+     cause : elle attribue au frère célèbre, invente des cartons, oublie les
+     essais de pénalité. Elle n'est admissible ici que faute de mieux, et
+     **à recouper** — au minimum par l'arithmétique des points, au mieux par
+     une seconde source ;
+   - **la seconde source est l'ERC elle-même, par la Wayback Machine.**
+     `ercrugby.com` publiait des feuilles de match ; l'archive en garde des
+     centaines de pages entre 2008 et 2012. Elle était **hors ligne le
+     5 septembre** — à réessayer, c'est ce qui permettrait de recouper ESPN ;
+   - **allrugby.com** n'a de coupes d'Europe que pour la saison en cours
+     (`/competitions/champions-cup/`, `/competitions/challenge-cup/`) : ses
+     adresses par saison rendent 404 avant 2026-2027 ;
+   - **Wikipédia** donne les scores et les classements de poule de chaque
+     campagne, et sert de garde-fou comme pour 2008-2009.
+
+   **Ce qu'il faudra écrire** : un `lib/espn.ts` sur le modèle de `epcr.ts`,
+   puis un `seed-cup-espn.ts` — scores et bonus d'abord, compositions et
+   réalisations ensuite, sous la même discipline que les feuilles LNR : somme
+   des points par joueur égale au score, quinze titulaires, appariement des
+   noms par `lib/joueurs.ts` et jamais sur le seul patronyme. Le rouge de
+   vingt minutes ne vaut pas pour ces années-là.
 3. **Le fond** : affluences (36 matchs sur 573 joués), les 137 fiches joueur
    que Wikipédia ne documente pas, les onze joueurs sans portrait — six
    anciens et cinq recrues que la LNR n'a pas encore photographiées, cf.
@@ -2553,10 +2599,14 @@ d'un siècle, c'est la règle qu'on connaîtra le moins bien.
   65000 Tarbes — est bien celle de ce stade. Deux sources concordantes, aucune
   officielle au sens du projet, et la même réserve sur l'époque.
 
-  Quatre clubs n'ont toujours pas de terrain rattaché : Connacht, Cardiff,
-  Dragons et Lions, que l'USAP n'a reçus qu'à Aimé-Giral. Sans déplacement
-  là-bas, rien ne permet de le déduire — mais aucun match n'en souffre, ces
-  quatre-là n'ayant jamais reçu l'USAP.
+  Trois clubs n'ont toujours pas de terrain rattaché : Connacht, Cardiff et
+  Lions, que l'USAP n'a reçus qu'à Aimé-Giral. Sans déplacement là-bas, rien
+  ne permet de le déduire — mais aucun match n'en souffre, ces trois-là
+  n'ayant jamais reçu l'USAP. **Les Dragons en avaient un quatrième jusqu'au
+  5 septembre 2026** : l'USAP va à Newport le 16 octobre, et Rodney Parade a
+  été posé à la main, comme Ravenhill pour l'Ulster reçu le 10 janvier — deux
+  terrains d'aujourd'hui d'après Wikipédia, avec la réserve habituelle sur
+  l'époque, cf. `seed-calendrier-europe-2026-2027.ts`.
 
   Trois des stades de la liste de `fix-match-venues.ts` ne viennent pas d'une
   donnée officielle : Albert-Domec à Carcassonne et Robert-Diochon à Rouen,

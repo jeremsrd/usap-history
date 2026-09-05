@@ -77,6 +77,7 @@ export const CLUBS_EPCR: Record<string, string> = {
   Ospreys: "Ospreys",
   "Racing 92": "Racing 92",
   "Toyota Cheetahs": "Cheetahs",
+  "Ulster Rugby": "Ulster",
   "Zebre Parma": "Zebre",
   "Toyota Cheetahs ": "Cheetahs",
 };
