@@ -109,9 +109,28 @@ export async function chercherJoueur(
   // communs, sans quoi « Christiaan Van Der Merwe » et « Gideon Van Der
   // Merwe » en partagent deux — « van » et « der » — et se valent.
   const sansParticules = (nom: string) => motsUtiles(nom).join(" ");
+
+  // **Deux mots de patronyme communs ne suffisent pas non plus quand les
+  // prénoms se contredisent.** « Ignacio Fernandez Lobbe », deuxième ligne de
+  // Northampton, s'est retrouvé sur la fiche de son frère Juan Martín,
+  // troisième ligne de Toulon, le 16 octobre 2009 : « Fernandez » et
+  // « Lobbe » faisaient les deux mots communs, et le prénom ne pesait rien.
+  // C'est le piège du frère célèbre, celui-là même qui a fait écarter ESPN du
+  // championnat. Un prénom donné des deux côtés doit donc s'accorder — un mot
+  // en commun, à un préfixe ou à une lettre près —, faute de quoi le candidat
+  // est un homonyme et non le même homme. Un prénom absent d'un côté ne
+  // contredit rien.
+  const prenomsCompatibles = (a: string, b: string) => {
+    const ma = motsUtiles(a);
+    const mb = motsUtiles(b);
+    if (ma.length === 0 || mb.length === 0) return true;
+    if (distance(normalize(a), normalize(b)) <= 1) return true;
+    return ma.some((x) => mb.some((y) => memeMot(x, y)));
+  };
   const candidats = tous.filter(
     (j) =>
       memeFamille(j.lastName) &&
+      prenomsCompatibles(j.firstName, officiel.firstName) &&
       proximite(
         sansParticules(`${j.firstName} ${j.lastName}`),
         sansParticules(nomCherche),

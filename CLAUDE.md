@@ -254,6 +254,20 @@ confrontations avec l'USAP, et de gérer les joueurs passés par les deux camps
     les noms longs qui commencent comme lui. `proximite()` consomme désormais
     chaque mot de la cible au plus une fois.
 
+  - **et deux mots de patronyme communs ne suffisent pas non plus quand les
+    prénoms se contredisent.** « Ignacio Fernandez Lobbe », deuxième ligne de
+    Northampton, s'est retrouvé le 16 octobre 2009 sur la fiche de son frère
+    Juan Martín, troisième ligne de Toulon : « Fernandez » et « Lobbe »
+    faisaient les deux mots communs, tous deux du nom de famille, et le prénom
+    ne pesait rien. C'est le piège du frère célèbre — celui-là même qui a
+    fait écarter ESPN du championnat —, et il s'est refermé sur la première
+    campagne européenne venue d'ESPN. Un prénom donné des deux côtés doit
+    donc s'accorder, un mot en commun à un préfixe ou à une lettre près ; un
+    prénom absent d'un côté ne contredit rien. Vérifié sans régression sur
+    240 recherches de fiches à prénom composé, et sur les deux campagnes
+    européennes déjà écrites. Corrigé par `reassign-match-player.ts` sur les
+    deux lignes de Northampton, le 5 septembre 2026.
+
   S'y ajoute une quatrième précaution, née des noms sud-africains : **les
   particules ne désignent personne.** `mots()` écarte déjà ce qui fait moins de
   trois lettres, mais « van » et « der » en font exactement trois — sans les
@@ -1565,7 +1579,7 @@ chronologie avant de l'écrire.
 entré en jeu », et non « on ne sait pas » — les remplaçants non utilisés sont
 les seuls concernés.
 
-**SAUF EN 2005-2006 — ET SUR LES SIX MATCHS DE HEINEKEN CUP 2008-2009 VENUS D'ESPN, cf. `seed-cup-espn.ts` —, OÙ IL SE LIT « LA SOURCE NE LE DIT PAS ».** La LNR n'y
+**SAUF EN 2005-2006 — ET SUR LES DOUZE MATCHS DE HEINEKEN CUP 2008-2009 ET 2009-2010 VENUS D'ESPN, cf. `seed-cup-espn.ts` —, OÙ IL SE LIT « LA SOURCE NE LE DIT PAS ».** La LNR n'y
 publie aucun changement, sur aucune des vingt-sept feuilles : les temps de jeu
 ne se reconstituent pas, et `seed-opponent-sheet.ts` les laisse tous à `null`,
 titulaires compris. Sans cela il rendrait 80 minutes à chaque titulaire et
@@ -2269,7 +2283,32 @@ Par ordre de valeur.
    d'affluence, pas de chronologie. Et **`audit-opponent-lineups.ts` ne peut
    pas les relire** : il route les coupes vers l'EPCR, qui n'en sait rien.
 
-   **Sept campagnes restent à écrire**, chacune avec son classement de poule
+   **2009-2010 A SUIVI LE MÊME JOUR** : Heineken Cup, poule 1, troisième
+   derrière le Munster et Northampton — 2 V 4 D, 108 points marqués pour 123,
+   un bonus offensif et deux défensifs, 11 points, conformes à Wikipédia. Six
+   matchs à 23 joueurs par camp cette fois, 253 lignes, 46 fiches adverses
+   créées, Northampton et le Munster entrent en base avec Franklin's Gardens
+   et Thomond Park. Une seule feuille ne boucle pas, l'USAP contre Northampton
+   le 16 octobre, 26 points pour 29.
+
+   **Et une composition y est écartée, mais pas sa rencontre.** À Trévise le
+   10 octobre 2009, la liste de Benetton chez ESPN a perdu un pilier et tous
+   ses numéros suivants sont décalés d'un cran — un deuxième ligne au 3, le
+   demi de mêlée au 8, l'ouvreur au 9 —, ce que `lib/dossards.ts` a vu à
+   17 % d'accord quand le camp catalan de la même feuille est à 93 %.
+   **Chez ESPN, un camp brouillé n'écarte que lui**, à la différence de la
+   LNR dont les deux compositions viennent d'une même page : la rencontre est
+   écrite avec son score, validé par la poule, et le seul camp catalan. Et le
+   contrôle passe désormais **avant** la création des fiches, sans quoi un
+   camp écarté semait les siennes sans aucune feuille.
+
+   **Les écussons des clubs européens anciens viennent des calendriers récents
+   de l'EPCR** : Leicester, Northampton et le Munster jouent encore la
+   Champions Cup, et `fetch-club-logos.ts` les trouve dès qu'ils sont dans
+   `CLUBS_EPCR` sous le nom que l'EPCR leur donne. Un club disparu de
+   l'Europe n'aura pas cette chance ; `SOURCES_HORS_LNR` est là pour lui.
+
+   **Six campagnes restent à écrire**, chacune avec son classement de poule
    dans `CAMPAGNES` et ses clubs dans `CLUBS_ESPN` : 2007-2008 et 2010-2011
    ont une phase finale — quart à Londres, quart et demi en 2011 —, 2012-2013
    aussi, quart et demi de Challenge. Le rouge de vingt minutes ne vaut pas
@@ -2542,6 +2581,11 @@ d'un siècle, c'est la règle qu'on connaîtra le moins bien.
   les statistiques ne comptent que les premiers ; le tableau « contre » ne
   montre ni minutes ni réalisations, ce détail n'étant visible que sur les
   pages de match.
+- **`delete-orphan-players.ts --dry` rend 76 candidates au 5 septembre 2026**,
+  toutes antérieures à ce jour et sans rapport avec les campagnes
+  européennes — Phil Davies, Sylvain Barthes, Alessandro Stoica… Elles n'ont
+  pas été supprimées : leur origine n'a pas été établie, et une suppression
+  ne se relit pas. À arbitrer avant de relancer le script sans `--dry`.
 - **Onze fiches ne sont rattachées à aucun match, et c'est normal** : cinq
   figures citées pour mémoire, avec biographie — Dan Carter, Joseph Desclaux,
   Aimé Giral, Percy Montgomery, Jean-François Imbernon —, et six recrues de
@@ -2638,7 +2682,8 @@ d'un siècle, c'est la règle qu'on connaîtra le moins bien.
   été posé à la main, comme Ravenhill pour l'Ulster reçu le 10 janvier — deux
   terrains d'aujourd'hui d'après Wikipédia, avec la réserve habituelle sur
   l'époque, cf. `seed-calendrier-europe-2026-2027.ts`. Welford Road, pour le
-  Leicester-Perpignan du 6 décembre 2008, vient de la même source par
+  Leicester-Perpignan du 6 décembre 2008, Thomond Park et Franklin's Gardens
+  pour les déplacements de 2009-2010, viennent de la même source par
   `seed-cup-espn.ts`.
 
   Trois des stades de la liste de `fix-match-venues.ts` ne viennent pas d'une

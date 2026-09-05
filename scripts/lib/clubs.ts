@@ -70,10 +70,13 @@ export const CLUBS_EPCR: Record<string, string> = {
   "Fidelity SecureDrive Lions": "Lions",
   "Glasgow Warriors": "Glasgow",
   "Gloucester Rugby": "Gloucester",
+  "Leicester Tigers": "Leicester",
   "Lyon O.U.": "Lyon",
   Montpellier: "Montpellier",
+  "Munster Rugby": "Munster",
   "Newcastle Falcons": "Newcastle",
   "Newcastle Red Bulls": "Newcastle",
+  "Northampton Saints": "Northampton",
   Ospreys: "Ospreys",
   "Racing 92": "Racing 92",
   "Toyota Cheetahs": "Cheetahs",
@@ -91,5 +94,7 @@ export const CLUBS_EPCR: Record<string, string> = {
 export const CLUBS_ESPN: Record<string, string> = {
   "Benetton Treviso": "Benetton",
   "Leicester Tigers": "Leicester",
+  Munster: "Munster",
+  "Northampton Saints": "Northampton",
   Ospreys: "Ospreys",
 };

@@ -127,6 +127,39 @@ const CAMPAGNES: Record<string, Campagne> = {
     },
     note: "Heineken Cup, poule 3 — troisième, éliminée en poule",
   },
+  /**
+   * Heineken Cup 2009-2010, poule 1 : Munster, Northampton, Perpignan,
+   * Trévise. Troisième, deux victoires à domicile, dont un 9-8 perdu à
+   * Trévise et un 0-34 à Northampton. Classement d'après la Wikipédia
+   * anglophone, « 2009–10 Heineken Cup ». Franklin's Gardens et Thomond Park
+   * d'après Wikipédia.
+   */
+  "2009-2010": {
+    ligue: "champions-cup",
+    competition: "H-Cup",
+    nouveauxAdversaires: [
+      { name: "Northampton Saints", shortName: "Northampton", city: "Northampton", pays: "ENG" },
+      { name: "Munster Rugby", shortName: "Munster", city: "Limerick", pays: "IE" },
+    ],
+    terrains: [
+      { club: "Northampton", stade: "Franklin's Gardens", ville: "Northampton", capacite: 15249 },
+      { club: "Munster", stade: "Thomond Park", ville: "Limerick", capacite: 25600 },
+    ],
+    poule: {
+      joues: 6,
+      victoires: 2,
+      nuls: 0,
+      defaites: 4,
+      essaisPour: 12,
+      essaisContre: 10,
+      pour: 108,
+      contre: 123,
+      bonusOffensifs: 1,
+      bonusDefensifs: 2,
+      points: 11,
+    },
+    note: "Heineken Cup, poule 1 — troisième, éliminée en poule",
+  },
 };
 
 // =============================================================================
@@ -426,19 +459,30 @@ interface LigneAEcrire {
   redCard: boolean;
 }
 
+/**
+ * Les lignes d'un camp, fiches résolues par `lib/joueurs.ts`.
+ *
+ * **Deux passes, et l'ordre compte.** La première (`creer: false`) ne crée
+ * rien : elle apparie les fiches connues, ce qui suffit au contrôle des
+ * dossards — il ne regarde que celles-là. La seconde crée ce qui manque,
+ * pour les seuls camps retenus. Sans cela, un camp écarté laissait derrière
+ * lui les fiches de ses joueurs, sans aucune feuille : Trévise, le
+ * 10 octobre 2009, en avait semé onze.
+ */
 async function resoudreCamp(
   camp: string,
   isOpponent: boolean,
   equipe: EspnEquipe,
   ecrireRealisations: boolean,
+  creer: boolean,
 ): Promise<LigneAEcrire[]> {
   const lignes: LigneAEcrire[] = [];
-  console.log(`\n  --- ${camp} ---`);
+  if (creer) console.log(`\n  --- ${camp} ---`);
   for (const j of equipe.joueurs) {
     const playerId = await trouverOuCreerJoueur(
       prisma,
       { firstName: j.firstName, lastName: j.lastName, numero: j.numero },
-      { dryRun: DRY_RUN, journal: (m) => console.log(m) },
+      { dryRun: DRY_RUN || !creer, journal: creer ? (m) => console.log(m) : () => {} },
     );
     // Le poste du banc ne se déduit pas du numéro : on reprend celui de la
     // fiche, faute de mieux — et jamais celui qu'ESPN écrit.
@@ -460,7 +504,7 @@ async function resoudreCamp(
           .filter(Boolean)
           .join(" ")
       : "";
-    console.log(
+    if (creer) console.log(
       `    n°${String(j.numero).padStart(2)} ${j.firstName} ${j.lastName}` +
         `${j.isCaptain ? " (cap)" : ""}${poste ? ` [${poste}]` : ""}` +
         `${marques ? ` — ${marques}` : ""}${j.jaunes ? " 🟨" : ""}${j.rouges ? " 🟥" : ""}`,
@@ -532,6 +576,7 @@ async function main() {
 
   // ---- Le garde-fou, avant toute écriture --------------------------------
   const { ecarts, avertissements } = controlerLaPoule(rencontres, campagne.poule);
+  const avertissementsPoule = avertissements.length;
   console.log("");
   for (const a of avertissements) console.log(`  ⚠ ${a}`);
   if (echecs.length > 0 || ecarts.length > 0) {
@@ -555,23 +600,30 @@ async function main() {
       where: { OR: [{ shortName: r.opponentNom }, { name: r.opponentNom }] },
       select: { id: true },
     });
-    if (!opponent) {
-      if (DRY_RUN) {
-        console.log(`\n${r.jour} ${r.opponentNom} : adversaire à créer, compositions non simulées`);
-        continue;
-      }
+    // En simulation, un adversaire encore à créer n'empêche pas de relire les
+    // compositions : c'est précisément le camp catalan qu'on veut relire.
+    if (!opponent && !DRY_RUN) {
       throw new Error(`adversaire « ${r.opponentNom} » introuvable en base`);
     }
 
     console.log(`\n=== ${r.jour} ${r.isHome ? "USAP" : r.opponentNom} – ${r.isHome ? r.opponentNom : "USAP"} ===`);
+    // Première passe, sans création : de quoi contrôler les dossards.
     const lignes = [
-      ...(await resoudreCamp("USAP", false, r.usap, r.realUsap.coherent)),
-      ...(await resoudreCamp(r.opponentNom, true, r.adverse, r.realAdverse.coherent)),
+      ...(await resoudreCamp("USAP", false, r.usap, r.realUsap.coherent, false)),
+      ...(await resoudreCamp(r.opponentNom, true, r.adverse, r.realAdverse.coherent, false)),
     ];
 
     // Le contrôle des dossards, sur les fiches déjà connues : en simulation
     // les fiches à créer n'ont pas d'identifiant et sont laissées de côté.
-    let brouillee = false;
+    //
+    // **Un camp brouillé n'écarte que lui**, à la différence de la LNR, dont
+    // les deux compositions viennent d'une même page. Chez ESPN les deux
+    // listes sont indépendantes, et l'accident l'a montré : à Trévise le
+    // 10 octobre 2009, il manque un pilier à la liste de Benetton et tous
+    // les numéros suivants sont décalés d'un cran — 17 % d'accord —, quand
+    // le camp catalan de la même feuille est à 93 %. La rencontre elle-même
+    // est écrite dans tous les cas : son score est validé par la poule.
+    const campsEcartes = new Set<boolean>();
     for (const [camp, isOpponent] of [
       ["USAP", false],
       [r.opponentNom, true],
@@ -588,13 +640,24 @@ async function main() {
         `  dossards : ${camp} — ${(bilan.taux * 100).toFixed(0)} % d'accord ` +
           `avec le reste de la base, sur ${bilan.compares} titulaires`,
       );
-      if (bilan.fabriques) brouillee = true;
+      if (bilan.fabriques) {
+        campsEcartes.add(isOpponent);
+        avertissements.push(
+          `${r.jour} ${r.opponentNom} : dossards de ${camp} incohérents avec la base — ` +
+            "composition écartée, la rencontre est écrite sans elle",
+        );
+      }
     }
-    if (brouillee) {
-      echecs.push(`${r.jour} ${r.opponentNom} : dossards incohérents avec la base, feuille écartée`);
-      continue;
-    }
-    if (DRY_RUN) continue;
+    // Seconde passe, avec création, pour les seuls camps retenus.
+    const lignesRetenues = [
+      ...(campsEcartes.has(false)
+        ? []
+        : await resoudreCamp("USAP", false, r.usap, r.realUsap.coherent, true)),
+      ...(campsEcartes.has(true)
+        ? []
+        : await resoudreCamp(r.opponentNom, true, r.adverse, r.realAdverse.coherent, true)),
+    ];
+    if (DRY_RUN || !opponent) continue;
 
     const venueId = await terrainDuMatch(prisma, {
       opponentId: opponent.id,
@@ -675,9 +738,9 @@ async function main() {
       crees++;
     }
     await prisma.matchPlayer.createMany({
-      data: lignes.map((l) => ({ ...l, matchId })),
+      data: lignesRetenues.map((l) => ({ ...l, matchId })),
     });
-    lignesEcrites += lignes.length;
+    lignesEcrites += lignesRetenues.length;
   }
 
   console.log(
@@ -685,6 +748,7 @@ async function main() {
       (DRY_RUN ? "" : `, ${crees} créée(s), ${majs} mise(s) à jour, ${lignesEcrites} lignes écrites`) +
       `, ${echecs.length} en échec ===`,
   );
+  for (const a of avertissements.slice(avertissementsPoule)) console.log(`  ⚠ ${a}`);
   for (const e of echecs) console.log(`  ⚠ ${e}`);
   if (DRY_RUN) console.log("\nSimulation — relancer sans --dry pour appliquer.");
   if (!DRY_RUN) {
