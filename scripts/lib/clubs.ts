@@ -81,3 +81,15 @@ export const CLUBS_EPCR: Record<string, string> = {
   "Zebre Parma": "Zebre",
   "Toyota Cheetahs ": "Cheetahs",
 };
+
+/**
+ * Idem pour ESPN, qui nomme les clubs à sa façon — « Benetton Treviso » là
+ * où l'EPCR écrit « Benetton Rugby ». Ne sert qu'aux coupes d'Europe d'avant
+ * 2020-2021, cf. `lib/espn.ts`. L'USAP y est reconnue par son identifiant,
+ * pas par son nom.
+ */
+export const CLUBS_ESPN: Record<string, string> = {
+  "Benetton Treviso": "Benetton",
+  "Leicester Tigers": "Leicester",
+  Ospreys: "Ospreys",
+};

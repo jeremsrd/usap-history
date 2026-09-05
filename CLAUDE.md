@@ -889,6 +889,7 @@ doublons.
 | `seed-calendrier-europe-2026-2027.ts` | le pendant pour la **coupe d'Europe** : les quatre matchs de poule de Challenge Cup depuis le flux de l'EPCR, sans score. Crée l'Ulster, et pose deux terrains à la main avec leur source — Ravenhill à Belfast, Rodney Parade à Newport —, l'USAP n'y ayant jamais joué. `--dry` |
 | `set-arbitre.ts` | pose l'arbitre d'une rencontre quand il vient d'ailleurs que d'une feuille — la désignation de la semaine, donnée par Jérémy. `--match=AAAA-MM-JJ --nom="Prénom Nom"`, `--dry`, `--force` pour remplacer un arbitre déjà posé ; passe par `lib/arbitres.ts`, jamais par un slug refait à la main |
 | `seed-season-2021-2022.ts` | crée les rencontres d'une saison entière — date et heure, compétition, adversaire, lieu, score, réalisations, résultat, bonus, arbitre — puis les agrégats de saison. Premier jalon de la phase 4 |
+| `seed-cup-espn.ts` | **une campagne européenne d'avant 2020-2021, depuis ESPN** — rencontres, compositions des deux camps et réalisations par joueur, par `lib/espn.ts`. Rien ne s'écrit sans le classement de poule de Wikipédia, en dur par saison dans `CAMPAGNES`, et les réalisations d'un camp ne s'écrivent que si leur somme retombe sur son score. Minutes, minutes de carton, arbitre, affluence et chronologie restent à `null` : la source ne les donne pas. `<saison>`, `--dry`, `--match=` |
 | `seed-cup-sheet.ts` | **le pendant pour les coupes d'Europe**, depuis l'EPCR : réalisations, cartons et temps de jeu des **deux camps**, plus l'arbitre, l'affluence et la mi-temps. Sans argument il reprend les dix-huit matchs européens ; `--dry`, `--detail`, `--match=AAAA-MM-JJ` comme le précédent |
 | `audit-opponent-lineups.ts` | confronte les compositions adverses aux feuilles officielles LNR — les deux divisions, phases finales comprises ; lecture seule, à lancer sur une saison ou sur tout. **Zéro anomalie est l'état attendu** ; les variantes d'affichage arbitrées sont tues par sa table `VARIANTES_DAFFICHAGE`, comptées au récapitulatif et listées par `--variantes` |
 | `fix-opponent-lineup.ts` | remet une composition en accord avec la feuille officielle — LNR pour le championnat, EPCR pour les coupes — (identités, dossards, titulaires, capitaine) ; `--usap` traite aussi le camp catalan |
@@ -1564,7 +1565,7 @@ chronologie avant de l'écrire.
 entré en jeu », et non « on ne sait pas » — les remplaçants non utilisés sont
 les seuls concernés.
 
-**SAUF EN 2005-2006, OÙ IL SE LIT « LA SOURCE NE LE DIT PAS ».** La LNR n'y
+**SAUF EN 2005-2006 — ET SUR LES SIX MATCHS DE HEINEKEN CUP 2008-2009 VENUS D'ESPN, cf. `seed-cup-espn.ts` —, OÙ IL SE LIT « LA SOURCE NE LE DIT PAS ».** La LNR n'y
 publie aucun changement, sur aucune des vingt-sept feuilles : les temps de jeu
 ne se reconstituent pas, et `seed-opponent-sheet.ts` les laisse tous à `null`,
 titulaires compris. Sans cela il rendrait 80 minutes à chaque titulaire et
@@ -2237,12 +2238,42 @@ Par ordre de valeur.
    - **Wikipédia** donne les scores et les classements de poule de chaque
      campagne, et sert de garde-fou comme pour 2008-2009.
 
-   **Ce qu'il faudra écrire** : un `lib/espn.ts` sur le modèle de `epcr.ts`,
-   puis un `seed-cup-espn.ts` — scores et bonus d'abord, compositions et
-   réalisations ensuite, sous la même discipline que les feuilles LNR : somme
-   des points par joueur égale au score, quinze titulaires, appariement des
-   noms par `lib/joueurs.ts` et jamais sur le seul patronyme. Le rouge de
-   vingt minutes ne vaut pas pour ces années-là.
+   **La chaîne existe depuis le 5 septembre 2026** : `lib/espn.ts` sur le
+   modèle d'`epcr.ts`, et `seed-cup-espn.ts`, qui écrit en un passage les
+   rencontres, les deux compositions et les réalisations — sous la discipline
+   des feuilles LNR : quinze titulaires, appariement par `lib/joueurs.ts`,
+   contrôle des dossards par `lib/dossards.ts`, et **rien n'est écrit tant que
+   la poule reconstituée ne redonne pas le classement de Wikipédia**.
+
+   **2008-2009 EST LA PREMIÈRE CAMPAGNE ÉCRITE** : Heineken Cup, poule 3,
+   troisième derrière Leicester et les Ospreys — 4 V 2 D, 154 points marqués
+   pour 120, un bonus offensif et un défensif, 18 points, conformes à
+   Wikipédia. Six matchs, 264 lignes de composition, 69 fiches adverses
+   créées, et Leicester entre en base avec Welford Road, posé à la main
+   d'après Wikipédia comme les autres terrains étrangers.
+
+   **Ce qu'ESPN y donne faux, et ce que la base en fait.** Trois camps sur
+   douze ne bouclent pas — l'USAP à Trévise le 10 octobre, 22 points de
+   joueurs pour 27 ; les deux camps à Leicester le 6 décembre, 10 pour 27 et
+   20 pour 38 ; les Ospreys à Aimé-Giral le 17 janvier, 17 pour 15. Leurs
+   compteurs sont à `null`, leurs lignes portent zéro réalisation, et le
+   bonus offensif de l'USAP y est indécidable : c'est le classement qui
+   tranche, un seul BO, celui des huit essais de Trévise. Les dix-sept essais
+   marqués du classement ne se retrouvent donc pas — onze sur les quatre
+   feuilles qui bouclent —, et le script le dit sans le corriger.
+
+   **Et ce qu'elle ne donne pas.** Aucune minute, aucune entrée ni sortie :
+   `minutesPlayed` est à `null` sur les 264 lignes, titulaires compris,
+   comme en 2005-2006 — « la source ne le dit pas ». Les cartons sont posés
+   sans minute. Pas de capitaine sur ces feuilles-là, pas d'arbitre, pas
+   d'affluence, pas de chronologie. Et **`audit-opponent-lineups.ts` ne peut
+   pas les relire** : il route les coupes vers l'EPCR, qui n'en sait rien.
+
+   **Sept campagnes restent à écrire**, chacune avec son classement de poule
+   dans `CAMPAGNES` et ses clubs dans `CLUBS_ESPN` : 2007-2008 et 2010-2011
+   ont une phase finale — quart à Londres, quart et demi en 2011 —, 2012-2013
+   aussi, quart et demi de Challenge. Le rouge de vingt minutes ne vaut pas
+   pour ces années-là.
 3. **Le fond** : affluences (36 matchs sur 573 joués), les 137 fiches joueur
    que Wikipédia ne documente pas, les onze joueurs sans portrait — six
    anciens et cinq recrues que la LNR n'a pas encore photographiées, cf.
@@ -2606,7 +2637,9 @@ d'un siècle, c'est la règle qu'on connaîtra le moins bien.
   5 septembre 2026** : l'USAP va à Newport le 16 octobre, et Rodney Parade a
   été posé à la main, comme Ravenhill pour l'Ulster reçu le 10 janvier — deux
   terrains d'aujourd'hui d'après Wikipédia, avec la réserve habituelle sur
-  l'époque, cf. `seed-calendrier-europe-2026-2027.ts`.
+  l'époque, cf. `seed-calendrier-europe-2026-2027.ts`. Welford Road, pour le
+  Leicester-Perpignan du 6 décembre 2008, vient de la même source par
+  `seed-cup-espn.ts`.
 
   Trois des stades de la liste de `fix-match-venues.ts` ne viennent pas d'une
   donnée officielle : Albert-Domec à Carcassonne et Robert-Diochon à Rouen,
