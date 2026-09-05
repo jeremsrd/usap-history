@@ -87,6 +87,8 @@ const NOMS_DUSAGE: string[][] = [
   // qu'ESPN l'écrit sur ses huit feuilles européennes : « manny » n'est pas
   // un préfixe de « manuel », et la fiche porte l'état civil.
   ["manny", "manuel"],
+  // « Rudi » pour Rudolf Coetzee, centre catalan de 2011-2012, chez ESPN.
+  ["rudi", "rudolf"],
 ];
 
 /**

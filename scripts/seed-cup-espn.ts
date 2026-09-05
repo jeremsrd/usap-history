@@ -232,6 +232,39 @@ const CAMPAGNES: Record<string, Campagne> = {
     ],
     note: "Heineken Cup, poule 5 — première, demi-finaliste",
   },
+  /**
+   * Challenge européen 2011-2012, poule 4 : Exeter, Perpignan, Dragons,
+   * Cavalieri Prato. Deuxième derrière Exeter, à cinq points : pas de phase
+   * finale. Classement d'après la Wikipédia anglophone, « 2011–12 European
+   * Challenge Cup ». Sandy Park et le Stadio Lungobisenzio d'après
+   * Wikipédia ; la capacité de Prato n'est pas donnée, elle reste vide.
+   */
+  "2011-2012": {
+    ligue: "challenge-cup",
+    competition: "Challenge Européen",
+    nouveauxAdversaires: [
+      { name: "Exeter Chiefs", shortName: "Exeter", city: "Exeter", pays: "ENG" },
+      { name: "Cavalieri Prato", shortName: "Cavalieri Prato", city: "Prato", pays: "IT" },
+    ],
+    terrains: [
+      { club: "Exeter", stade: "Sandy Park", ville: "Exeter", capacite: 15600 },
+      { club: "Cavalieri Prato", stade: "Stadio Lungobisenzio", ville: "Prato", capacite: null },
+    ],
+    poule: {
+      joues: 6,
+      victoires: 4,
+      nuls: 0,
+      defaites: 2,
+      essaisPour: 17,
+      essaisContre: 9,
+      pour: 153,
+      contre: 112,
+      bonusOffensifs: 2,
+      bonusDefensifs: 0,
+      points: 18,
+    },
+    note: "Challenge européen, poule 4 — deuxième, éliminée en poule",
+  },
 };
 
 // =============================================================================
@@ -407,6 +440,16 @@ async function lireCampagne(
       ["USAP", usap],
       [opponentNom, adverse],
     ] as const) {
+      // **Une feuille sans composition n'est pas une feuille fausse.** ESPN
+      // n'en publie aucune pour les deux matchs contre Prato de 2011-2012 :
+      // ni joueurs, ni mi-temps — son 0-0 y veut dire « inconnu ». La
+      // rencontre est écrite avec son score, comme les deux matchs de
+      // 2008-2009 dont la LNR corrompt la composition ; le reste attend une
+      // autre source.
+      if (equipe.joueurs.length === 0) {
+        alertes.push(`${camp} : aucune composition chez ESPN`);
+        continue;
+      }
       const titulaires = equipe.joueurs.filter((j) => j.isStarter).length;
       if (titulaires !== 15) {
         echecs.push(`${etiquette} : ${camp} aligne ${titulaires} titulaires`);
@@ -420,12 +463,17 @@ async function lireCampagne(
       }
     }
 
+    if (usap.joueurs.length === 0 && adverse.joueurs.length === 0) {
+      usap.miTemps = null;
+      adverse.miTemps = null;
+    }
     const realUsap = realisations(usap);
     const realAdverse = realisations(adverse);
     for (const [camp, r, equipe] of [
       ["USAP", realUsap, usap],
       [opponentNom, realAdverse, adverse],
     ] as const) {
+      if (equipe.joueurs.length === 0) continue;
       if (!r.coherent) {
         alertes.push(
           `${camp} : ${r.total} points reconstitués pour ${equipe.score} au score — ` +

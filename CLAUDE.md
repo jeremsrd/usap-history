@@ -1579,7 +1579,7 @@ chronologie avant de l'écrire.
 entré en jeu », et non « on ne sait pas » — les remplaçants non utilisés sont
 les seuls concernés.
 
-**SAUF EN 2005-2006 — ET SUR LES VINGT MATCHS DE HEINEKEN CUP 2008-2009 À 2010-2011 VENUS D'ESPN, cf. `seed-cup-espn.ts` —, OÙ IL SE LIT « LA SOURCE NE LE DIT PAS ».** La LNR n'y
+**SAUF EN 2005-2006 — ET SUR LES VINGT-SIX MATCHS DE COUPE D'EUROPE 2008-2009 À 2011-2012 VENUS D'ESPN, cf. `seed-cup-espn.ts` —, OÙ IL SE LIT « LA SOURCE NE LE DIT PAS ».** La LNR n'y
 publie aucun changement, sur aucune des vingt-sept feuilles : les temps de jeu
 ne se reconstituent pas, et `seed-opponent-sheet.ts` les laisse tous à `null`,
 titulaires compris. Sans cela il rendrait 80 minutes à chaque titulaire et
@@ -2345,11 +2345,36 @@ Par ordre de valeur.
    comme Tom Staniforth, et inscrits dans `VARIANTES_DAFFICHAGE` ; les audits
    de 2010-2011 et 2011-2012 rendent zéro anomalie.
 
-   **Cinq campagnes restent à écrire**, chacune avec son classement de poule
+   **2011-2012 EST LA QUATRIÈME** : Challenge européen, poule 4, deuxième
+   derrière Exeter — 4 V 2 D, 153 points marqués pour 112, deux bonus
+   offensifs, 18 points, conformes à Wikipédia. Six matchs, 184 lignes,
+   52 fiches adverses, Exeter et les Cavalieri Prato en base avec Sandy Park
+   et le Stadio Lungobisenzio.
+
+   **Deux rencontres n'y ont aucune composition, et c'est ESPN qui n'en a
+   pas** : les deux matchs contre Prato, 54-20 et 30-13, n'ont ni joueurs ni
+   mi-temps — son 0-0 y veut dire « inconnu », et la base porte `null`. Elles
+   sont écrites avec leur score, comme les deux matchs de 2008-2009 dont la
+   LNR corrompt la composition, et **une feuille sans composition n'est plus
+   un échec** pour `seed-cup-espn.ts`. Leurs deux bonus offensifs viennent du
+   classement, par la règle de 2010-2011 : il en manque deux, et ce sont les
+   deux seules feuilles muettes. Douze des dix-sept essais catalans de la
+   poule sont donc sans détail, et le script le dit.
+
+   **Les Cavalieri Prato n'ont pas d'écusson, et c'est délibéré.** Le club a
+   fusionné en 2015 dans les Cavalieri Union Rugby Prato Sesto, une autre
+   entité : afficher sa marque d'aujourd'hui sur une rencontre de 2011 serait
+   l'anachronisme évité pour Auch, et Wikipédia n'illustre pas le club
+   d'alors. Une absence vaut mieux qu'un écusson faux.
+
+   « Rudi » Coetzee, centre catalan de 2011-2012, rejoint Manny Edmonds dans
+   `NOMS_DUSAGE`.
+
+   **Quatre campagnes restent à écrire**, chacune avec son classement de poule
    dans `CAMPAGNES` et ses clubs dans `CLUBS_ESPN` : 2007-2008 a un quart à
-   Londres, 2012-2013 un quart et une demi de Challenge ; 2011-2012, 2013-2014
-   et 2018-2019 s'arrêtent en poule. Le rouge de vingt minutes ne vaut pas
-   pour ces années-là.
+   Londres, 2012-2013 un quart et une demi de Challenge ; 2013-2014 et
+   2018-2019 s'arrêtent en poule. Le rouge de vingt minutes ne vaut pas pour
+   ces années-là.
 3. **Le fond** : affluences (36 matchs sur 573 joués), les 137 fiches joueur
    que Wikipédia ne documente pas, les onze joueurs sans portrait — six
    anciens et cinq recrues que la LNR n'a pas encore photographiées, cf.
@@ -2721,7 +2746,8 @@ d'un siècle, c'est la règle qu'on connaîtra le moins bien.
   l'époque, cf. `seed-calendrier-europe-2026-2027.ts`. Welford Road, pour le
   Leicester-Perpignan du 6 décembre 2008, Thomond Park et Franklin's Gardens
   pour les déplacements de 2009-2010, Parc y Scarlets pour celui de 2010-2011,
-  viennent de la même source par `seed-cup-espn.ts` — et ses deux terrains
+  Sandy Park et le Stadio Lungobisenzio pour ceux de 2011-2012, viennent de
+  la même source par `seed-cup-espn.ts` — et ses deux terrains
   neutres de 2011, Montjuïc et Milton Keynes, de `TERRAINS_PARTICULIERS`.
 
   Trois des stades de la liste de `fix-match-venues.ts` ne viennent pas d'une

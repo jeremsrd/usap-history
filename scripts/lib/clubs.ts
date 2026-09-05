@@ -67,6 +67,7 @@ export const CLUBS_EPCR: Record<string, string> = {
   "Connacht Rugby": "Connacht",
   "Dragons RFC": "Dragons",
   "Emirates Lions": "Lions",
+  "Exeter Chiefs": "Exeter",
   "Fidelity SecureDrive Lions": "Lions",
   "Glasgow Warriors": "Glasgow",
   "Gloucester Rugby": "Gloucester",
@@ -94,6 +95,9 @@ export const CLUBS_EPCR: Record<string, string> = {
  */
 export const CLUBS_ESPN: Record<string, string> = {
   "Benetton Treviso": "Benetton",
+  "Cavalieri Prato": "Cavalieri Prato",
+  Dragons: "Dragons",
+  "Exeter Chiefs": "Exeter",
   "Leicester Tigers": "Leicester",
   Munster: "Munster",
   "Northampton Saints": "Northampton",
