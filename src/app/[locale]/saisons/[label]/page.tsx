@@ -490,14 +490,14 @@ export default async function SaisonDetailPage({ params }: Props) {
                                     <span className="font-bold">USAP</span>
                                     {" - "}
                                     {match.opponent.logoUrl ? (
-                                      <Image src={match.opponent.logoUrl} alt={oppName} width={20} height={20} className="h-5 w-5 object-contain" />
+                                      <Image src={match.opponent.logoUrl} alt={oppName} width={20} height={20} className="h-5 w-5 logo-club" />
                                     ) : null}
                                     {oppName}
                                   </>
                                 ) : (
                                   <>
                                     {match.opponent.logoUrl ? (
-                                      <Image src={match.opponent.logoUrl} alt={oppName} width={20} height={20} className="h-5 w-5 object-contain" />
+                                      <Image src={match.opponent.logoUrl} alt={oppName} width={20} height={20} className="h-5 w-5 logo-club" />
                                     ) : null}
                                     {oppName}
                                     {" - "}

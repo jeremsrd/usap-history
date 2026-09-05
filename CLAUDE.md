@@ -1014,6 +1014,29 @@ pour lui — plus fin, et moins gros.
 Le passage sur les onze écussons de plus de 1 200 pixels a ramené leur total
 de 3 817 à 1 299 Ko.
 
+**Un écusson est dessiné pour un fond clair, et le thème sombre l'a montré**
+le 6 septembre 2026 : Sale, les Ospreys, Leicester, l'Ulster, Bristol, Agen,
+Toulon, les Dragons se fondaient dans la carte `#211416` — contraste moyen de
+1,0 à 2,8, mesuré sur une planche des 58 écussons posés sur les deux fonds —,
+et Exeter comme le Munster y perdaient leur contour. Ce sont les écussons
+sans fond blanc *dans le dessin* : un tigre vert sombre, un masque noir. Le
+remède n'est pas une plaque claire derrière chacun — ce serait le défaut de
+Clermont étendu au site entier — mais la classe **`logo-club`** de
+`globals.css`, qui trace en thème sombre seulement un fin liseré clair par
+l'ombre portée de la forme, couleur tirée de `--foreground`. Elle remplace
+`object-contain` sur les dix balises d'écusson adverse des pages publiques ;
+une nouvelle balise doit la porter, sans quoi son écusson disparaîtra en
+sombre sans que rien ne le signale. **Un écusson ne se valide pas au journal
+d'exécution** : la planche, comme pour les portraits.
+
+**Et les écussons de l'EPCR font 192 pixels, sans variante plus grande** :
+son CDN (`media-cdn.incrowdsports.com`) n'en sert qu'une taille, vérifié.
+Sur la fiche club, affichés à 160 pixels sur un écran Retina, ils sont
+agrandis et un peu flous ; Sale, les Scarlets et Worcester y ajoutent 75 à
+85 % de marge transparente, qui les rapetisse dans la grille. Le seul remède
+serait une autre source par club — site officiel ou Wikipédia, à arbitrer
+comme pour Auch —, et il n'est pas fait.
+
 Les logos de club sont des marques déposées. Les afficher sur un site
 d'histoire non commercial est l'usage, mais c'est un choix qui appartient au
 propriétaire du site.

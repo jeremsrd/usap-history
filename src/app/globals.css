@@ -162,6 +162,25 @@
   }
 }
 
+/* **Un écusson est dessiné pour un fond clair.** Ceux de l'EPCR n'ont pas de
+   fond blanc dans le dessin — Sale, les Ospreys, Leicester, l'Ulster sont
+   noirs ou vert sombre sur transparence — et se fondent dans la carte du
+   thème sombre : contraste de 1,0 à 2,3 mesuré sur la planche du
+   6 septembre 2026. Plutôt qu'une plaque blanche derrière chacun — le défaut
+   de Clermont, étendu à tout le site —, un fin liseré clair, dessiné par
+   l'ombre portée de la forme elle-même, et seulement en sombre : en clair
+   rien ne change. Deux passes, parce qu'une seule est trop pâle sur un trait
+   d'un pixel ; la couleur suit `--foreground`, sans jeton nouveau. */
+@layer components {
+  .logo-club {
+    object-fit: contain;
+  }
+  .dark .logo-club {
+    filter: drop-shadow(0 0 1px color-mix(in srgb, var(--foreground) 55%, transparent))
+      drop-shadow(0 0 1px color-mix(in srgb, var(--foreground) 55%, transparent));
+  }
+}
+
 /* La voix condensée d'Archivo : titres et repères, comme un dos de maillot. */
 @utility font-display {
   font-stretch: 62.5%;

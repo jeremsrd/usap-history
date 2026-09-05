@@ -177,7 +177,7 @@ export default async function MatchDetailPage({ params }: Props) {
             {match.isHome ? (
               <Image src="/images/usap/logo.png" alt="USAP" width={48} height={48} className="h-12 w-12" />
             ) : match.opponent.logoUrl ? (
-              <Image src={match.opponent.logoUrl} alt={oppName} width={48} height={48} className="h-12 w-12 object-contain" />
+              <Image src={match.opponent.logoUrl} alt={oppName} width={48} height={48} className="h-12 w-12 logo-club" />
             ) : (
               <div className="flex h-12 w-12 items-center justify-center rounded-full bg-muted text-xs font-bold text-muted-foreground">
                 {(match.opponent.shortName || match.opponent.name).slice(0, 3).toUpperCase()}
@@ -218,7 +218,7 @@ export default async function MatchDetailPage({ params }: Props) {
             {!match.isHome ? (
               <Image src="/images/usap/logo.png" alt="USAP" width={48} height={48} className="h-12 w-12" />
             ) : match.opponent.logoUrl ? (
-              <Image src={match.opponent.logoUrl} alt={oppName} width={48} height={48} className="h-12 w-12 object-contain" />
+              <Image src={match.opponent.logoUrl} alt={oppName} width={48} height={48} className="h-12 w-12 logo-club" />
             ) : (
               <div className="flex h-12 w-12 items-center justify-center rounded-full bg-muted text-xs font-bold text-muted-foreground">
                 {(match.opponent.shortName || match.opponent.name).slice(0, 3).toUpperCase()}

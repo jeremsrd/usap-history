@@ -196,7 +196,7 @@ export default async function Home() {
                               alt={lastMatch.opponent.name}
                               width={24}
                               height={24}
-                              className="object-contain"
+                              className="logo-club"
                             />
                           )}
                           <span className="text-lg font-bold text-foreground">
@@ -215,7 +215,7 @@ export default async function Home() {
                               alt={lastMatch.opponent.name}
                               width={24}
                               height={24}
-                              className="object-contain"
+                              className="logo-club"
                             />
                           )}
                           <span className="text-lg font-bold text-foreground">

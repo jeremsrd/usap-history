@@ -128,7 +128,7 @@ export default async function AdversairesPage({
                     alt={opp.name}
                     width={64}
                     height={64}
-                    className="h-16 w-16 object-contain"
+                    className="h-16 w-16 logo-club"
                   />
                 ) : (
                   <div className="flex h-16 w-16 items-center justify-center rounded-full bg-muted">

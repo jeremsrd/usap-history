@@ -279,12 +279,12 @@ export default async function MatchsPage({
                           <>
                             <Image src="/images/usap/logo.png" alt="USAP" width={18} height={18} className="h-[18px] w-[18px]" />
                             <span className="font-bold">USAP</span> -{" "}
-                            {match.opponent.logoUrl && <Image src={match.opponent.logoUrl} alt={oppName} width={18} height={18} className="h-[18px] w-[18px] object-contain" />}
+                            {match.opponent.logoUrl && <Image src={match.opponent.logoUrl} alt={oppName} width={18} height={18} className="h-[18px] w-[18px] logo-club" />}
                             {oppName}
                           </>
                         ) : (
                           <>
-                            {match.opponent.logoUrl && <Image src={match.opponent.logoUrl} alt={oppName} width={18} height={18} className="h-[18px] w-[18px] object-contain" />}
+                            {match.opponent.logoUrl && <Image src={match.opponent.logoUrl} alt={oppName} width={18} height={18} className="h-[18px] w-[18px] logo-club" />}
                             {oppName} -{" "}
                             <Image src="/images/usap/logo.png" alt="USAP" width={18} height={18} className="h-[18px] w-[18px]" />
                             <span className="font-bold">USAP</span>

@@ -189,7 +189,7 @@ export default async function AdversaireDetailPage({ params }: Props) {
                 alt={opponent.name}
                 width={160}
                 height={160}
-                className="h-40 w-40 object-contain"
+                className="h-40 w-40 logo-club"
               />
             ) : (
               <div className="flex h-40 w-40 items-center justify-center rounded-lg bg-muted">
