@@ -118,9 +118,11 @@ const PLACEHOLDER_LNR = "ee0e36cd30739c08c65f23f2a7c01e351d45a33a324ba1cea66b39e
 /**
  * ÉCUSSONS QUE NI LA LNR NI L'EPCR NE SERVENT, ET OÙ LES PRENDRE.
  *
- * Trois clubs, et la même raison : Albi et Bourgoin ont quitté la Pro D2 en
+ * Trois clubs français d'abord, et la même raison : Albi et Bourgoin ont quitté la Pro D2 en
  * 2017, Tarbes en 2016, la LNR n'a plus de page pour eux et son CDN ne rend
- * qu'un bouclier gris (cf. `PLACEHOLDER_LNR`). Leur écusson vient donc du
+ * qu'un bouclier gris (cf. `PLACEHOLDER_LNR`). Puis trois européens — Rovigo,
+ * Gernika, les Cavalieri Prato —, sortis de l'Europe et donc du flux de
+ * l'EPCR, dont le cas est écrit dans la table même. Leur écusson vient donc du
  * **site officiel du club**, ce qui reste la source la plus autorisée qui
  * soit pour une marque de club — simplement pas celle que la chaîne interroge
  * d'office.
@@ -177,7 +179,84 @@ const SOURCES_HORS_LNR: Record<string, string> = {
   Auch: "https://upload.wikimedia.org/wikipedia/fr/0/06/FCAuch.jpg",
   Bourgoin: "https://csbj-rugby.fr/wp-content/uploads/2025/06/csbj-favicon-sombre.webp",
   Tarbes: "https://stado-tpr.fr/wp-content/uploads/2026/06/logo-stado-asso-favicon.png",
+  // Les trois adversaires européens de 2011-2013 que l'EPCR ne sert plus —
+  // ils ne jouent plus l'Europe —, cherchés le 6 septembre 2026 :
+  // - **Rovigo**, `rugbyrovigodelta.it` : l'écusson du site officiel, en SVG,
+  //   rendu ici en PNG. Le club a pris le nom de Rugby Rovigo Delta en 2010
+  //   et l'écusson porte les deux dates, 1935 et 2010 : c'est la même
+  //   entité, et la même marque, que celle rencontrée en 2012-2013 — la
+  //   version que Wikipédia date de 2013 en est identique.
+  // - **Gernika** : le site du club, `gernikarugby.com`, n'affiche plus qu'un
+  //   logo générique de 2024, un bandeau vert sans rapport avec l'écusson
+  //   rond que l'équipe portait en 2013. C'est l'écusson d'époque qu'on veut
+  //   sur une rencontre de 2013, et seule la Wikipédia anglophone le publie,
+  //   315 par 315, sous « marque déposée » — la réserve d'Auch.
+  // - **Cavalieri Prato** : le club a fusionné en 2015 dans les Cavalieri
+  //   Union Rugby Prato Sesto, son domaine est parqué, et l'écusson
+  //   d'aujourd'hui serait un anachronisme. Wikipédia garde celui du club
+  //   d'alors, 303 par 302, en JPEG sur fond blanc, marque déposée : le cas
+  //   d'Auch trait pour trait. Ici le blanc n'est pas dans le dessin — un
+  //   anneau noir fermé cerne l'écusson —, et `DETOURAGES` rend transparent
+  //   le seul blanc extérieur, ce qu'on n'avait pas pu faire pour Tarbes.
+  Rovigo: "https://www.rugbyrovigodelta.it/demo/images/rugby2/logorugby.svg",
+  Gernika: "https://upload.wikimedia.org/wikipedia/en/4/47/Gernika_RT.png",
+  "Cavalieri Prato": "https://upload.wikimedia.org/wikipedia/en/0/0f/Logo_Cavalieri.jpg",
 };
+
+/**
+ * ÉCUSSONS DONT LE FOND BLANC EST HORS DU DESSIN, ET QU'ON DÉTOURE.
+ *
+ * Un JPEG n'a pas de transparence, et un écusson sur fond blanc pose un
+ * rectangle blanc sur la carte du thème sombre. Tarbes et Auch restent ainsi
+ * parce que le blanc y **fait partie du dessin** — l'ours, le blason — et
+ * qu'on ne saurait où s'arrêter. Quand un trait fermé cerne l'écusson, en
+ * revanche, le blanc extérieur se distingue du blanc intérieur sans rien
+ * deviner : un remplissage depuis les quatre bords, pixel à pixel, ne franchit
+ * jamais le trait. C'est `detourer()`, et il ne vaut que pour les clubs
+ * inscrits ici, où l'on a vérifié sur une planche que le trait est fermé.
+ */
+const DETOURAGES = new Set(["Cavalieri Prato"]);
+
+/**
+ * Rend transparent le blanc joignable depuis les bords, et lui seul.
+ * Le seuil est large — 235 sur les trois canaux — parce que le JPEG salit le
+ * blanc près des traits ; il n'entame pas un anneau noir.
+ */
+async function detourer(contenu: Buffer): Promise<Buffer> {
+  const { data, info } = await sharp(contenu).ensureAlpha().raw().toBuffer({ resolveWithObject: true });
+  const { width: W, height: H } = info;
+  const vu = new Uint8Array(W * H);
+  const pile: number[] = [];
+  const blanc = (i: number) => data[i * 4] > 235 && data[i * 4 + 1] > 235 && data[i * 4 + 2] > 235;
+  for (let x = 0; x < W; x++) pile.push(x, (H - 1) * W + x);
+  for (let y = 0; y < H; y++) pile.push(y * W, y * W + W - 1);
+  while (pile.length) {
+    const i = pile.pop()!;
+    if (vu[i] || !blanc(i)) continue;
+    vu[i] = 1;
+    data[i * 4 + 3] = 0;
+    const x = i % W;
+    const y = (i - x) / W;
+    if (x > 0) pile.push(i - 1);
+    if (x < W - 1) pile.push(i + 1);
+    if (y > 0) pile.push(i - W);
+    if (y < H - 1) pile.push(i + W);
+  }
+  return sharp(data, { raw: { width: W, height: H, channels: 4 } })
+    .png({ palette: true, compressionLevel: 9 })
+    .toBuffer();
+}
+
+/**
+ * Un SVG ne passe pas par `next/image` sans qu'on l'y autorise, et le site ne
+ * l'autorise pas : on le rend en PNG à `COTE_MAX`, transparence comprise.
+ */
+async function rasteriser(contenu: Buffer): Promise<Buffer> {
+  return sharp(contenu, { density: 300 })
+    .resize({ width: COTE_MAX, height: COTE_MAX, fit: "inside" })
+    .png({ palette: true, compressionLevel: 9 })
+    .toBuffer();
+}
 
 const DOSSIER = join(process.cwd(), "public", "images", "logos");
 const CHEMIN_PUBLIC = "/images/logos";
@@ -316,7 +395,12 @@ async function main() {
       continue;
     }
 
-    const extension = source.match(/\.(png|jpe?g|webp|svg)(\?|$)/i)?.[1]?.toLowerCase() ?? "png";
+    const estSvg = /\.svg(\?|$)/i.test(source);
+    // Un SVG rendu et un écusson détouré sortent tous deux en PNG, quelle
+    // que soit l'extension de la source.
+    const extension = estSvg || DETOURAGES.has(nomCourt)
+      ? "png"
+      : (source.match(/\.(png|jpe?g|webp)(\?|$)/i)?.[1]?.toLowerCase() ?? "png");
     const fichier = `${slugify(nomCourt)}.${extension}`;
     const chemin = join(DOSSIER, fichier);
     const url = `${CHEMIN_PUBLIC}/${fichier}`;
@@ -345,7 +429,11 @@ async function main() {
       sans.push(`${nomCourt} (bouclier gris — la LNR n'a plus son écusson)`);
       continue;
     }
-    const contenu = await reduire(recu);
+    const contenu = estSvg
+      ? await rasteriser(recu)
+      : DETOURAGES.has(nomCourt)
+        ? await detourer(recu)
+        : await reduire(recu);
     await writeFile(chemin, contenu);
     // Le nouveau fichier peut changer d'extension — le JPEG de Clermont cède
     // la place à un PNG : l'ancien ne doit pas rester derrière.

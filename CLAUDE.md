@@ -922,8 +922,8 @@ par inclusion : trop large pour être lancé sans revue préalable.
 
 ## Logos des clubs
 
-Les 47 adversaires ont leur logo, servi par le site lui-même depuis
-`public/images/logos/{club}.{png|webp}` — 3,2 Mo au total. Ils viennent des sources
+Les 61 adversaires ont leur logo, servi par le site lui-même depuis
+`public/images/logos/{club}.{png|webp}` — 3,7 Mo au total. Ils viennent des sources
 officielles, que les scripts lisent déjà : `cdn.lnr.fr/club/{slug}/photo/logo.
 {empreinte}` pour les clubs français, le champ `imageUrl` du flux de l'EPCR
 pour les européens. `fetch-club-logos.ts` fait la moisson, sur les calendriers
@@ -2385,11 +2385,18 @@ Par ordre de valeur.
    deux seules feuilles muettes. Douze des dix-sept essais catalans de la
    poule sont donc sans détail, et le script le dit.
 
-   **Les Cavalieri Prato n'ont pas d'écusson, et c'est délibéré.** Le club a
-   fusionné en 2015 dans les Cavalieri Union Rugby Prato Sesto, une autre
-   entité : afficher sa marque d'aujourd'hui sur une rencontre de 2011 serait
-   l'anachronisme évité pour Auch, et Wikipédia n'illustre pas le club
-   d'alors. Une absence vaut mieux qu'un écusson faux.
+   **Les Cavalieri Prato ont l'écusson du club d'alors depuis le 6 septembre
+   2026.** Le club a fusionné en 2015 dans les Cavalieri Union Rugby Prato
+   Sesto, une autre entité, et son domaine est parqué : afficher la marque
+   d'aujourd'hui sur une rencontre de 2011 serait l'anachronisme évité pour
+   Auch. Ce fichier a d'abord affirmé que Wikipédia n'illustrait pas le club
+   d'alors, et c'était faux — l'article anglophone « Cavalieri Prato » le
+   porte, 303 par 302, en JPEG sur fond blanc, marque déposée : le cas d'Auch
+   trait pour trait. À une différence près, qui a permis de faire mieux :
+   ici le blanc n'est pas dans le dessin, un anneau noir fermé cerne
+   l'écusson, et `DETOURAGES` de `fetch-club-logos.ts` rend transparent le
+   seul blanc extérieur par remplissage depuis les bords, sans jamais
+   franchir le trait. Vérifié sur la planche, à 160 et à 64 pixels.
 
    « Rudi » Coetzee, centre catalan de 2011-2012, rejoint Manny Edmonds dans
    `NOMS_DUSAGE`.
@@ -2544,10 +2551,17 @@ Par ordre de valeur.
    l'organisateur : c'est le troisième état, « probable, d'après telle
    source », dont « Remonter avant 2006 » dit le manque.
 
-   **Trois écussons manquent, et c'est faute de source** : Rovigo et Gernika
-   ne jouent plus l'Europe et n'ont pas d'entrée EPCR ; avec les Cavalieri
-   Prato, ce sont les trois seuls adversaires sans écusson. Un site de club ou
-   Wikipédia, à arbitrer comme pour Auch. « Yoann » Vivalda, deux lettres
+   **Les trois écussons qui manquaient sont là depuis le 6 septembre 2026**,
+   chacun de sa source, toutes dans `SOURCES_HORS_LNR` avec leur raison :
+   Rovigo par le **SVG de son site officiel** — même entité et même marque
+   qu'en 2012-2013, l'écusson portant 1935 et 2010, et la version que
+   Wikipédia date de 2013 est identique ; le script sait désormais rendre un
+   SVG en PNG, `next/image` ne servant pas les SVG. Gernika par **Wikipédia**,
+   parce que le site du club n'affiche plus qu'un logo générique de 2024, un
+   bandeau vert sans rapport avec l'écusson rond porté en 2013 — la réserve
+   d'Auch, marque déposée, 315 pixels. Et les Cavalieri Prato par Wikipédia
+   aussi, détourés, cf. 2011-2012 plus haut. Plus aucun adversaire n'est sans
+   écusson. « Yoann » Vivalda, deux lettres
    d'écart avec le « Yohan » de la LNR, rejoint `NOMS_DUSAGE` ; et trois
    paires de frères — Thomas, Sidoli, Olaeta —, chacun nommé par sa propre
    feuille, sont entrées dans `DISTINCTS`.
