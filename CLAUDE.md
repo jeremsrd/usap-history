@@ -3080,6 +3080,19 @@ d'un siècle, c'est la règle qu'on connaîtra le moins bien.
   d'usage — son jumeau Rory, présent à ses côtés le 5 février 2022, reste
   bien distinct.
 
+  **Un douzième l'est depuis le 6 septembre 2026 : Tanginoa Halaifonua.** Le
+  détecteur le sortait en FORT après les campagnes ESPN — même patronyme, même
+  club, même n°6, jamais sur une même feuille —, mais la paire ne venait pas
+  d'ESPN : « Tanginoa Halaifonua », cinq feuilles du Stade Français de 2024 à
+  2026, et « Tanginoa Palu Halaifonua », quatre feuilles de Grenoble de 2020 à
+  2023 — deux écritures de la LNR du même deuxième ligne tongien, le second
+  prénom en plus à Grenoble. Les neuf feuilles se suivent sans se chevaucher,
+  les dossards vont de 4 à 6 et de 18 à 19 : un seul homme, un seul poste.
+  Fusion sous le nom court, **poste de référence `DEUXIEME_LIGNE` sur
+  arbitrage de Jérémy** — la fiche conservée portait `NUMERO_HUIT`, qu'aucune
+  de ses feuilles ne justifiait, et une ligne de banc l'avait hérité. Inscrit
+  dans `VARIANTES_DAFFICHAGE`.
+
 **Deux exceptions nommées**
 
 - **La feuille LNR du 22 février 2026 se contredit sur les deux camps.** Côté

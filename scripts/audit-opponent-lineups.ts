@@ -132,6 +132,9 @@ const VARIANTES_DAFFICHAGE: [base: string, feuille: string][] = [
   ["Joe Van Niekerk", "Johann Van Niekerk"],
   ["Rudi Wulf", "Rudolffe Wulf"],
   ["Gaby Lovobalavu", "Gabiriele Lovobalavu"],
+  // Fusionné le 6 septembre 2026 sur arbitrage de Jérémy : Grenoble puis
+  // Stade Français, jamais sur une même feuille, même n°6.
+  ["Tanginoa Halaifonua", "Tanginoa Palu Halaifonua"],
   // Le prénom d'usage reprend la fin du patronyme, que la feuille répète.
   ["Tolu Latu", "Latu Silatolu Latu"],
   // La LNR ampute l'apostrophe et coupe le nom ailleurs.
