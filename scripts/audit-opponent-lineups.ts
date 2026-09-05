@@ -125,6 +125,13 @@ const VARIANTES_DAFFICHAGE: [base: string, feuille: string][] = [
   ["Cobus Reinach", "Jacobus Meyer Reinach"],
   ["Nacho Brex", "Juan Ignacio Brex"],
   ["Nick Champion de Crespigny", "Richard Nicholas Champion De Crespigny"],
+  // Les quatre Toulonnais du quart de finale de Heineken Cup 2011, qu'ESPN
+  // écrit sous leur nom d'usage : les fiches, nées des feuilles LNR sous
+  // l'état civil, ont été fusionnées sous ce nom-là le 5 septembre 2026.
+  ["Jonny Wilkinson", "Jonathan Wilkinson"],
+  ["Joe Van Niekerk", "Johann Van Niekerk"],
+  ["Rudi Wulf", "Rudolffe Wulf"],
+  ["Gaby Lovobalavu", "Gabiriele Lovobalavu"],
   // Le prénom d'usage reprend la fin du patronyme, que la feuille répète.
   ["Tolu Latu", "Latu Silatolu Latu"],
   // La LNR ampute l'apostrophe et coupe le nom ailleurs.

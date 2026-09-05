@@ -83,6 +83,10 @@ const NOMS_DUSAGE: string[][] = [
   ["nayacalevu", "vuidravuwalu"],
   ["paddy", "patrick"],
   ["richie", "richard"],
+  // « Manny » pour Manuel Edmonds, l'ouvreur catalan de 2010-2011, tel
+  // qu'ESPN l'écrit sur ses huit feuilles européennes : « manny » n'est pas
+  // un préfixe de « manuel », et la fiche porte l'état civil.
+  ["manny", "manuel"],
 ];
 
 /**

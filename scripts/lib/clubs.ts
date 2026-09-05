@@ -79,6 +79,7 @@ export const CLUBS_EPCR: Record<string, string> = {
   "Northampton Saints": "Northampton",
   Ospreys: "Ospreys",
   "Racing 92": "Racing 92",
+  Scarlets: "Scarlets",
   "Toyota Cheetahs": "Cheetahs",
   "Ulster Rugby": "Ulster",
   "Zebre Parma": "Zebre",
@@ -97,4 +98,6 @@ export const CLUBS_ESPN: Record<string, string> = {
   Munster: "Munster",
   "Northampton Saints": "Northampton",
   Ospreys: "Ospreys",
+  Scarlets: "Scarlets",
+  Toulon: "Toulon",
 };

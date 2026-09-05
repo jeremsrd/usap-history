@@ -1579,7 +1579,7 @@ chronologie avant de l'écrire.
 entré en jeu », et non « on ne sait pas » — les remplaçants non utilisés sont
 les seuls concernés.
 
-**SAUF EN 2005-2006 — ET SUR LES DOUZE MATCHS DE HEINEKEN CUP 2008-2009 ET 2009-2010 VENUS D'ESPN, cf. `seed-cup-espn.ts` —, OÙ IL SE LIT « LA SOURCE NE LE DIT PAS ».** La LNR n'y
+**SAUF EN 2005-2006 — ET SUR LES VINGT MATCHS DE HEINEKEN CUP 2008-2009 À 2010-2011 VENUS D'ESPN, cf. `seed-cup-espn.ts` —, OÙ IL SE LIT « LA SOURCE NE LE DIT PAS ».** La LNR n'y
 publie aucun changement, sur aucune des vingt-sept feuilles : les temps de jeu
 ne se reconstituent pas, et `seed-opponent-sheet.ts` les laisse tous à `null`,
 titulaires compris. Sans cela il rendrait 80 minutes à chaque titulaire et
@@ -2308,10 +2308,47 @@ Par ordre de valeur.
    `CLUBS_EPCR` sous le nom que l'EPCR leur donne. Un club disparu de
    l'Europe n'aura pas cette chance ; `SOURCES_HORS_LNR` est là pour lui.
 
-   **Six campagnes restent à écrire**, chacune avec son classement de poule
-   dans `CAMPAGNES` et ses clubs dans `CLUBS_ESPN` : 2007-2008 et 2010-2011
-   ont une phase finale — quart à Londres, quart et demi en 2011 —, 2012-2013
-   aussi, quart et demi de Challenge. Le rouge de vingt minutes ne vaut pas
+   **2010-2011 EST LA TROISIÈME, ET LA PLUS BELLE** : Heineken Cup, poule 5,
+   **première** devant Leicester avec quatre bonus offensifs et un nul à
+   Welford Road — 4 V 1 N 1 D, 196 points marqués pour 112, 22 points —, puis
+   un quart de finale gagné 29-25 contre Toulon et une demi-finale perdue 7-23
+   contre Northampton. Huit matchs, 368 lignes, 58 fiches adverses, les
+   Scarlets en base avec Parc y Scarlets. Trois choses nouvelles pour la
+   chaîne :
+
+   - **le classement tranche le bonus offensif d'une feuille muette**, à une
+     condition stricte que `controlerLaPoule` porte : il manque exactement
+     autant de BO que de rencontres où les essais catalans sont inconnus.
+     Ici le classement en compte quatre, trois sont sur des feuilles qui
+     bouclent, et le 35-14 contre Trévise, seul muet — 30 points de joueurs
+     pour 35 —, porte le quatrième. `triesUsap` y reste à `null` : le bonus
+     est attesté, le nombre d'essais non ;
+   - **la phase finale a son propre garde-fou**, `phaseFinale` dans
+     `CAMPAGNES` : tour, adversaire et score d'après Wikipédia, qui donne
+     aussi **l'arbitre et l'affluence** que la base écrit avec cette
+     provenance — Alain Rolland devant 55 000 personnes, George Clancy devant
+     18 231 ;
+   - **deux terrains neutres**, posés dans `TERRAINS_PARTICULIERS` : le
+     Stadium MK de Milton Keynes pour la demi-finale, et pour le quart
+     l'**Estadi Olímpic Lluís Companys** de Montjuïc, où l'USAP recevait
+     Toulon. **ESPN y écrit « Cornella de Llobregat », et se trompe** :
+     Cornellà-El Prat tient 40 000 places, l'affluence le dément.
+
+   **ESPN écrit les noms d'usage, la LNR l'état civil**, et la campagne l'a
+   montré deux fois. « Manny Edmonds » pour Manuel, l'ouvreur catalan, sur
+   huit feuilles : « manny » n'est pas un préfixe de « manuel », et la paire
+   est entrée dans `NOMS_DUSAGE`. Et les quatre Toulonnais du quart — Jonny
+   Wilkinson, Joe Van Niekerk, Rudi Wulf, Gaby Lovobalavu — ont d'abord été
+   créés à côté de leurs fiches LNR, Jonathan, Johann, Rudolffe, Gabiriele :
+   `detect-duplicate-players.ts` les a sortis en FORT, même club, même
+   dossard, une feuille contre six à treize. Fusionnés sous le nom d'usage,
+   comme Tom Staniforth, et inscrits dans `VARIANTES_DAFFICHAGE` ; les audits
+   de 2010-2011 et 2011-2012 rendent zéro anomalie.
+
+   **Cinq campagnes restent à écrire**, chacune avec son classement de poule
+   dans `CAMPAGNES` et ses clubs dans `CLUBS_ESPN` : 2007-2008 a un quart à
+   Londres, 2012-2013 un quart et une demi de Challenge ; 2011-2012, 2013-2014
+   et 2018-2019 s'arrêtent en poule. Le rouge de vingt minutes ne vaut pas
    pour ces années-là.
 3. **Le fond** : affluences (36 matchs sur 573 joués), les 137 fiches joueur
    que Wikipédia ne documente pas, les onze joueurs sans portrait — six
@@ -2683,8 +2720,9 @@ d'un siècle, c'est la règle qu'on connaîtra le moins bien.
   terrains d'aujourd'hui d'après Wikipédia, avec la réserve habituelle sur
   l'époque, cf. `seed-calendrier-europe-2026-2027.ts`. Welford Road, pour le
   Leicester-Perpignan du 6 décembre 2008, Thomond Park et Franklin's Gardens
-  pour les déplacements de 2009-2010, viennent de la même source par
-  `seed-cup-espn.ts`.
+  pour les déplacements de 2009-2010, Parc y Scarlets pour celui de 2010-2011,
+  viennent de la même source par `seed-cup-espn.ts` — et ses deux terrains
+  neutres de 2011, Montjuïc et Milton Keynes, de `TERRAINS_PARTICULIERS`.
 
   Trois des stades de la liste de `fix-match-venues.ts` ne viennent pas d'une
   donnée officielle : Albert-Domec à Carcassonne et Robert-Diochon à Rouen,
@@ -2775,6 +2813,14 @@ d'un siècle, c'est la règle qu'on connaîtra le moins bien.
   à deux** : « Tom Staniforth » ne vaut que pour « Thomas Staniforth », et
   « Joe Powell » ne couvre même pas « Joseph Powell », seulement le « Joseph
   Patrick Powell » de la feuille. L'arbitrage d'identité n'est pas touché.
+
+  **ESPN a rouvert le sujet le 5 septembre 2026**, sur le quart de finale
+  européen de 2011 : il écrit les Toulonnais sous leur nom d'usage — Jonny,
+  Joe, Rudi, Gaby — là où la LNR avait donné Jonathan Wilkinson, Johann Van
+  Niekerk, Rudolffe Wulf et Gabiriele Lovobalavu. Quatre doublons d'une
+  feuille, sortis par le détecteur, fusionnés sous le nom d'usage et inscrits
+  ici. **Après toute campagne venue d'ESPN, relancer le détecteur** : ses
+  diminutifs ne s'apparient pas, et c'est voulu.
 
   Au passage, `lib/noms.ts` affirmait que « l'abréviation ordinaire n'a pas
   besoin de la table : "Tom" couvre déjà "Thomas" par le préfixe ». C'est

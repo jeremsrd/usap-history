@@ -46,6 +46,18 @@ export const TERRAINS_PARTICULIERS: Record<string, string | null> = {
   // des demi-finales, avec la date, le score et l'arbitre qui concordent tous
   // trois avec la feuille officielle.
   "2008-06-21": "Stade Vélodrome",
+  // Quart de finale de Heineken Cup 2011, Perpignan-Toulon du 9 avril 2011,
+  // délocalisé à l'**Estadi Olímpic Lluís Companys** de Montjuïc, à
+  // Barcelone — l'USAP est bien recevante, mais Aimé-Giral était trop petit
+  // pour l'affiche. Source : Wikipédia, qui donne le stade, 55 000
+  // spectateurs et l'arbitre. **ESPN écrit « Cornella de Llobregat »**, et se
+  // trompe : l'Estadi Cornellà-El Prat tient 40 000 places, l'affluence le
+  // dément d'elle-même.
+  "2011-04-09": "Estadi Olímpic Lluís Companys",
+  // Demi-finale de Heineken Cup 2011, Northampton-Perpignan du 1er mai 2011,
+  // au **Stadium MK** de Milton Keynes, terrain neutre choisi par l'ERC.
+  // Sources : Wikipédia et ESPN.
+  "2011-05-01": "Stadium MK",
   // Finale de Pro D2 2018, Perpignan-Grenoble. Source : Jérémy, présent au
   // stade. La feuille de la LNR désigne un recevant et ne nomme aucun lieu.
   "2018-05-06": "Stade Ernest-Wallon",

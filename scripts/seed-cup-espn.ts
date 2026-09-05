@@ -52,6 +52,7 @@ import {
 } from "./lib/espn";
 import { CLUBS_ESPN } from "./lib/clubs";
 import { POSTE_PAR_NUMERO, trouverOuCreerJoueur } from "./lib/joueurs";
+import { trouverOuCreerArbitre } from "./lib/arbitres";
 import { concordanceDesDossards } from "./lib/dossards";
 import { terrainDuMatch } from "./lib/stades";
 import { preserverAnnexes } from "./lib/saison";
@@ -91,7 +92,25 @@ interface Campagne {
   nouveauxAdversaires: Array<{ name: string; shortName: string; city: string; pays: string }>;
   /** Terrains à créer et rattacher, avec leur source dans le commentaire. */
   terrains: Array<{ club: string; stade: string; ville: string; capacite: number | null }>;
+  /**
+   * Terrains neutres à créer sans les rattacher à un club : c'est
+   * `TERRAINS_PARTICULIERS` de `lib/stades.ts` qui les pose sur la date.
+   */
+  terrainsNeutres?: Array<{ stade: string; ville: string; capacite: number | null }>;
   poule: ClassementDePoule;
+  /**
+   * La phase finale telle que Wikipédia la donne, quand il y en a une : le
+   * garde-fou de poule ne la couvre pas, chaque couperet a donc le sien.
+   */
+  phaseFinale?: Array<{
+    tour: string;
+    adversaire: string;
+    scoreUsap: number;
+    scoreOpponent: number;
+    /** Ce que Wikipédia donne et qu'ESPN n'a pas ; écrit avec cette provenance. */
+    arbitre?: string;
+    affluence?: number;
+  }>;
   /** Ce qu'on sait de la campagne, pour le journal et pour la relecture. */
   note: string;
 }
@@ -160,6 +179,59 @@ const CAMPAGNES: Record<string, Campagne> = {
     },
     note: "Heineken Cup, poule 1 — troisième, éliminée en poule",
   },
+  /**
+   * Heineken Cup 2010-2011, poule 5 : Perpignan, Leicester, Scarlets,
+   * Trévise. **Première de poule**, quatre bonus offensifs, un nul à Welford
+   * Road ; quart de finale gagné 29-25 contre Toulon, délocalisé à
+   * l'Estadi Cornellà-El Prat de Barcelone ; demi-finale perdue 7-23 contre
+   * Northampton au Stadium MK de Milton Keynes. C'est la meilleure campagne
+   * européenne de l'USAP depuis la finale de 2003. Classement et phase
+   * finale d'après la Wikipédia anglophone, « 2010–11 Heineken Cup » ;
+   * Parc y Scarlets d'après Wikipédia, les deux terrains neutres d'après
+   * Wikipédia et ESPN, qui concordent.
+   */
+  "2010-2011": {
+    ligue: "champions-cup",
+    competition: "H-Cup",
+    nouveauxAdversaires: [{ name: "Scarlets", shortName: "Scarlets", city: "Llanelli", pays: "WA" }],
+    terrains: [{ club: "Scarlets", stade: "Parc y Scarlets", ville: "Llanelli", capacite: 14870 }],
+    terrainsNeutres: [
+      { stade: "Estadi Olímpic Lluís Companys", ville: "Barcelone", capacite: 55926 },
+      { stade: "Stadium MK", ville: "Milton Keynes", capacite: 30500 },
+    ],
+    poule: {
+      joues: 6,
+      victoires: 4,
+      nuls: 1,
+      defaites: 1,
+      essaisPour: 23,
+      essaisContre: 9,
+      pour: 196,
+      contre: 112,
+      bonusOffensifs: 4,
+      bonusDefensifs: 0,
+      points: 22,
+    },
+    phaseFinale: [
+      {
+        tour: "Quart de finale",
+        adversaire: "Toulon",
+        scoreUsap: 29,
+        scoreOpponent: 25,
+        arbitre: "Alain Rolland",
+        affluence: 55000,
+      },
+      {
+        tour: "Demi-finale",
+        adversaire: "Northampton",
+        scoreUsap: 7,
+        scoreOpponent: 23,
+        arbitre: "George Clancy",
+        affluence: 18231,
+      },
+    ],
+    note: "Heineken Cup, poule 5 — première, demi-finaliste",
+  },
 };
 
 // =============================================================================
@@ -222,6 +294,21 @@ async function assurerAdversaires(campagne: Campagne) {
     }
     await prisma.opponent.update({ where: { id: club.id }, data: { venueId: stade.id } });
     console.log(`  [stade] ${t.club} → ${t.stade}`);
+  }
+  for (const t of campagne.terrainsNeutres ?? []) {
+    if (await prisma.venue.findFirst({ where: { name: t.stade } })) continue;
+    if (DRY_RUN) {
+      console.log(`  [stade] à créer, terrain neutre : ${t.stade}, ${t.ville}`);
+      continue;
+    }
+    const cree = await prisma.venue.create({
+      data: { name: t.stade, city: t.ville, capacity: t.capacite, slug: `temp-${t.ville.toLowerCase()}` },
+    });
+    await prisma.venue.update({
+      where: { id: cree.id },
+      data: { slug: generateVenueSlug(t.stade, t.ville, cree.id) },
+    });
+    console.log(`  [stade] créé, terrain neutre : ${t.stade}, ${t.ville}`);
   }
 }
 
@@ -404,8 +491,29 @@ function controlerLaPoule(
   const d = poule.filter((r) => r.resultat === MatchResult.DEFAITE).length;
   const pour = poule.reduce((s, r) => s + r.usap.score!, 0);
   const contre = poule.reduce((s, r) => s + r.adverse.score!, 0);
-  const bo = poule.filter((r) => r.bonusOffensif).length;
   const bd = poule.filter((r) => r.bonusDefensif).length;
+
+  // **Le classement tranche le bonus offensif d'une feuille muette**, à une
+  // condition stricte : il manque exactement autant de bonus offensifs que de
+  // rencontres où les essais de l'USAP sont inconnus. Chaque feuille muette
+  // en porte alors un, et aucune autre lecture n'est possible — c'est le
+  // raisonnement déjà tenu pour 2008-2009, où un seul BO et un seul match à
+  // huit essais laissaient les deux feuilles muettes sans bonus. En 2010-2011
+  // le classement en compte quatre, trois sont sur des feuilles qui bouclent,
+  // et le 35-14 contre Trévise, seul muet, porte le quatrième. Le nombre
+  // d'essais, lui, reste inconnu : `triesUsap` n'est pas touché.
+  const muets = poule.filter((r) => r.bonusIndecidable && !r.bonusOffensif);
+  const manquants = officiel.bonusOffensifs - poule.filter((r) => r.bonusOffensif).length;
+  if (manquants > 0 && muets.length === manquants) {
+    for (const r of muets) {
+      r.bonusOffensif = true;
+      r.alertes.push(
+        "bonus offensif attribué par le classement : il en manque " +
+          `${manquants} et ${manquants === 1 ? "cette feuille est la seule muette" : "ce sont les seules feuilles muettes"}`,
+      );
+    }
+  }
+  const bo = poule.filter((r) => r.bonusOffensif).length;
   const points = 4 * v + 2 * n + bo + bd;
 
   const ecarts = [
@@ -437,6 +545,36 @@ function controlerLaPoule(
     }
   }
   return { ecarts, avertissements };
+}
+
+/**
+ * La phase finale reconstituée doit redonner celle de Wikipédia, couperet
+ * par couperet : même tour, même adversaire, même score — et ni plus ni
+ * moins de rencontres.
+ */
+function controlerLaPhaseFinale(
+  rencontres: Rencontre[],
+  officiels: NonNullable<Campagne["phaseFinale"]>,
+): string[] {
+  const couperets = rencontres.filter((r) => !r.feuille.tour.startsWith("Poule"));
+  const ecarts: string[] = [];
+  if (couperets.length !== officiels.length) {
+    ecarts.push(`${couperets.length} couperet(s) chez ESPN pour ${officiels.length} attendu(s)`);
+  }
+  for (const o of officiels) {
+    const r = couperets.find((c) => c.feuille.tour === o.tour);
+    if (!r) {
+      ecarts.push(`${o.tour} absent chez ESPN`);
+      continue;
+    }
+    if (r.opponentNom !== o.adversaire || r.usap.score !== o.scoreUsap || r.adverse.score !== o.scoreOpponent) {
+      ecarts.push(
+        `${o.tour} : ${r.opponentNom} ${r.usap.score}-${r.adverse.score} chez ESPN, ` +
+          `${o.adversaire} ${o.scoreUsap}-${o.scoreOpponent} attendu`,
+      );
+    }
+  }
+  return ecarts;
 }
 
 // =============================================================================
@@ -576,6 +714,7 @@ async function main() {
 
   // ---- Le garde-fou, avant toute écriture --------------------------------
   const { ecarts, avertissements } = controlerLaPoule(rencontres, campagne.poule);
+  ecarts.push(...controlerLaPhaseFinale(rencontres, campagne.phaseFinale ?? []));
   const avertissementsPoule = avertissements.length;
   console.log("");
   for (const a of avertissements) console.log(`  ⚠ ${a}`);
@@ -665,6 +804,11 @@ async function main() {
       startYear: saison.startYear,
       jour: r.jour,
     });
+    // Ce que Wikipédia donne d'un couperet et qu'ESPN n'a pas.
+    const officiel = (campagne.phaseFinale ?? []).find((o) => o.tour === r.feuille.tour);
+    const refereeId = officiel?.arbitre
+      ? await trouverOuCreerArbitre(prisma, officiel.arbitre, false)
+      : null;
     const donnees: Prisma.MatchUncheckedCreateInput = {
       slug: generateMatchSlug({
         competitionShortName: competition.shortName,
@@ -692,7 +836,8 @@ async function main() {
       result: r.resultat,
       bonusOffensif: r.bonusOffensif,
       bonusDefensif: r.bonusDefensif,
-      attendance: r.feuille.affluence,
+      attendance: officiel?.affluence ?? r.feuille.affluence,
+      ...(refereeId ? { refereeId } : {}),
       triesUsap: r.realUsap.coherent ? r.realUsap.essais : null,
       conversionsUsap: r.realUsap.coherent ? r.realUsap.transformations : null,
       penaltiesUsap: r.realUsap.coherent ? r.realUsap.penalites : null,
