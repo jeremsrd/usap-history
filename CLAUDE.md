@@ -2591,6 +2591,42 @@ n'aura plus de source à interroger. Il faudra donc « être plus permissif », 
 c'est vrai. Mais le mot recouvre **deux choses opposées**, et l'une des deux ne
 doit pas bouger.
 
+#### Les sources qui restent, inventoriées le 6 septembre 2026
+
+Sondées une à une ce jour-là, à la question de Jérémy « n'a-t-on plus aucune
+source pour remonter ? ». La réponse est non, mais aucune ne ressemble à la
+LNR ou à l'EPCR, et chacune a son prix.
+
+| Source | Ce qu'elle donne | Jusqu'où | Ce qu'il en coûte |
+|---|---|---|---|
+| **L'ancien site de la LNR**, dans la Wayback Machine (`lnr.fr/championnat/resultats.asp`, `resultats2000_d1.shtm`, `clubs/effectifs.asp`, `clubs/joueur.asp`) | les **scores** journée par journée, les **effectifs** de chaque club et des fiches joueur | 2000-2001 à 2003-2004 | aucune feuille de match, aucune composition : la page de résultats ne lie rien. Des scores officiels, et l'effectif pour apparier des noms |
+| **L'ERC**, dans la Wayback Machine (`ercrugby.com/eng/12_NNNN.php`) | des **comptes rendus avec compositions**, comme ceux qui ont fait 2007-2008 | environ 1 200 pages capturées en 2006, 400 en 2007 : les Heineken Cup **2005-2006 et 2006-2007** sont là, 2004-2005 non | la page d'équipe de Perpignan n'est pas archivée et les pages de poule ne lient plus ; il faut **lire les titres un à un** — 1 600 pages à 4 secondes, deux heures de balayage — pour trouver les douze de l'USAP |
+| **ESPN**, Top 14 (ligue 270559) | scores, puis compositions | scores à partir de **2007-2008** (15 matchs seulement), saison entière en 2008-2009 **sans composition**, compositions à partir de **2009-2010** | rien avant, revérifié : 2004-2005 à 2006-2007 rendent zéro match. N'apporte rien que la LNR n'ait déjà |
+| **Gallica** (BnF), texte intégral | **L'Auto**, quotidien, 1900-1944 ; **Midi olympique**, 1929-1931 puis 1932-1946 ; presse régionale | tout l'avant-guerre, la période des six premiers titres | de l'OCR de journal, non des feuilles : compositions dans le corps du récit, à lire. Vérifié sur *L'Auto* du 4 mai 1925, au lendemain de la finale : « Perpignan a gagné parce qu'il avait la balle » — l'API `ContentSearch` retrouve le mot dans le fascicule (`bpt6k4684973p`), `Issues` liste les numéros d'une année. La page d'accueil rend un contrôle de sécurité aux robots ; les API passent |
+| **cybervulcans.net** | des fiches de match complètes — mi-temps, affluence, arbitre, météo, remplaçants, remplacements, marqueurs — pour **les matchs de Clermont** | depuis 1971-1972 | deux rencontres par saison contre l'USAP, et souvent seul le camp clermontois est détaillé (« Détail des points non disponible » côté Narbonne en 1993). Pas de liste par adversaire, les fiches sont sous `/saison-AAAA-AAAA/matchs/…-NNN.html` |
+| **Wikipédia** | classements et scores de chaque saison de championnat depuis 1892, finales avec composition | tout | pas de pages « Saison AAAA de l'USAP » avant 2004 ; c'est un garde-fou, pas une feuille |
+
+**Ce qui est mort ou vide** : `usap.fr` d'avant 2005 n'a laissé qu'un forum
+dans l'archive ; `finalesrugby.com` est un domaine parqué ; `rugbyarchive.net`
+ne répond pas ; `allrugby.com` ne remonte pas avant 2006-2007 (cf. « Où
+trouver les données ») ; le site de la LNR d'aujourd'hui s'arrête à
+2004-2005.
+
+**Ce que cela dessine.** Deux couches, séparées par un trou. **De 2000 à
+2004**, on peut écrire les rencontres — scores officiels par l'ancienne LNR,
+classements par Wikipédia — sans aucune composition, comme 2004-2005 l'est
+déjà à moitié ; et l'ERC peut rendre les compositions des deux campagnes
+européennes de 2005-2007, au prix d'un balayage. **Avant 1944**, la presse
+numérisée porte les compositions des grands matchs — finales, demi-finales —
+dans ses récits, et c'est là que vivent les six premiers titres. Entre
+1944 et 2000, rien de lu par machine n'a été trouvé : c'est le trou, et il
+est large de cinquante-six ans.
+
+C'est exactement la situation que la réflexion ci-dessous anticipait : les
+sources qui restent sont des récits et des tableaux, non des feuilles, et
+c'est le **troisième état** — « probable, d'après telle source » — qu'il
+faudra savoir écrire avant d'y toucher.
+
 #### Ce qui doit se relâcher : l'exigence de complétude
 
 Sans réserve, et le projet sait déjà le faire : une feuille à 22 est acceptée,
