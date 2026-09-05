@@ -2606,6 +2606,37 @@ LNR ou à l'EPCR, et chacune a son prix.
 | **cybervulcans.net** | des fiches de match complètes — mi-temps, affluence, arbitre, météo, remplaçants, remplacements, marqueurs — pour **les matchs de Clermont** | depuis 1971-1972 | deux rencontres par saison contre l'USAP, et souvent seul le camp clermontois est détaillé (« Détail des points non disponible » côté Narbonne en 1993). Pas de liste par adversaire, les fiches sont sous `/saison-AAAA-AAAA/matchs/…-NNN.html` |
 | **Wikipédia** | une page par saison de championnat depuis 1892 : composition des poules, scores des phases finales, et la **finale avec ses deux XV** — en liste pour 1955, en récit pour 1925, sourcé sur *L'Auto* dans Gallica ; une page par Coupe d'Europe avec le classement des poules et les scores des couperets | tout | **aucun score de match de poule** avant l'ère LNR — la poule de 1955 n'est qu'une liste de clubs, la Coupe d'Europe 2005-2006 ne donne à Perpignan qu'un score, celui du quart —, quatre pages de finale seulement (1992, 2005, 2019, 2021), une seule « Saison de l'USAP » (2011-2012), et les `rugbybox` anglophones ne couvrent que les phases finales. C'est un garde-fou et quinze noms par finale, pas une feuille. Son API plafonne vite : espacer les appels |
 
+**Gallica, lu de plus près le 6 septembre 2026, sur les cinq finales gagnées
+d'avant 1946.** Ce qu'un numéro de *L'Auto* du lendemain donne, quand son
+OCR est bon, dépasse ce qu'on espérait d'un journal : le 4 mai 1925, page 5,
+« Les équipes se présentèrent comme suit », **les deux XV par lignes** —
+arrière, trois-quarts, demis, troisième, deuxième, première ligne —, le
+capitaine marqué « (cap.) », l'arbitre M. Vigné, le marqueur et la nature
+de ses points ; le 4 mai 1914, page 3, une **chronologie à l'heure de
+l'horloge** — « 4 h. 40 : essai pour Perpignan, 4 h. 41 : but par Giral » ;
+le 9 mai 1938, la **mi-temps** dans le titre même, « 11 à 6 (5-6) ». Trois
+réserves, toutes vues :
+- **l'OCR abîme les noms propres** — « Raruis » pour Ramis, « Hi.bère » pour
+  Ribère, « 1\Iontade » pour Montade, « Garcassonnaise » —, et 1914 est
+  pire que 1925. Chaque nom devra être relu par un humain sur l'image, et
+  c'est le **troisième état** qui manque à la base : « d'après *L'Auto* du
+  4 mai 1925, relu par Jérémy » ;
+- **l'OCR peut manquer tout à fait** : la page 8 du 9 mai 1938 ne rend que
+  ses titres, le corps est « [texte illisible] » ligne après ligne ;
+- **1944 n'y est pas** : aucun numéro de *L'Auto* autour du 26 mars 1944
+  dans Gallica, et *Midi olympique* saute de 1939 à 1946.
+
+**Par où passer** : l'API `RequestDigitalElement?O={ark}&E=ALTO&Deb={page}`
+rend l'OCR d'une page en ALTO, mots et coordonnées — `texteBrut` est
+derrière un contrôle de sécurité qu'un script ne passe pas ;
+`services/ContentSearch?ark=&query=` dit sur quelles pages un mot figure ;
+`services/Issues?ark=…/date&date=AAAA` liste les numéros d'une année ;
+`ark:/12148/{cb…}/date{AAAAMMJJ}` redirige vers le fascicule du jour.
+*L'Auto* est `cb327071375`, *Midi olympique* `cb34413999x`. **Gallica
+plafonne à quelques requêtes par minute** — 429 « Trop de requêtes » dès la
+cinquième page ALTO rapprochée —, et un balayage se fait à 30 ou
+45 secondes d'intervalle, en arrière-plan.
+
 **Ce qui est mort ou vide** : `usap.fr` d'avant 2005 n'a laissé qu'un forum
 dans l'archive ; `finalesrugby.com` est un domaine parqué ; `rugbyarchive.net`
 ne répond pas ; `allrugby.com` ne remonte pas avant 2006-2007 (cf. « Où
