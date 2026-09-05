@@ -57,7 +57,9 @@ usap-history/
 ├── scripts/                      # ~180 scripts d'import, un par match ou par lot
 │   └── lib/                      # lnr.ts (feuilles de match LNR), noms.ts
 │                                 #   (rapprochement des noms entre sources)
-└── .claude/launch.json           # config du serveur de dev
+├── .claude/launch.json           # config du serveur de dev
+└── .claude/skills/               # frontend-design (Anthropic) et
+                                  #   avoid-ai-design — cf. « Identité visuelle »
 ```
 
 Les routes de détail utilisent `[slug]` (et `[label]` pour les saisons), pas
@@ -1380,6 +1382,33 @@ catalan à venir.
   supporter l'entend.
 
 ## Identité visuelle
+
+**Le rendu actuel est jugé trop « IA »** par Jérémy, le 5 septembre 2026, et
+c'est le chantier qui passe devant le bilingue, reporté à la fin. Deux skills
+existants ont été installés dans `.claude/skills/` pour l'attaquer, plutôt que
+d'en écrire un :
+
+- **`frontend-design`**, le skill officiel d'Anthropic, repris tel quel du
+  dépôt `anthropics/claude-code` (`plugins/frontend-design`). Il oblige à
+  choisir une direction esthétique avant d'écrire du code et interdit les
+  cartes arrondies à ombre douce, les libellés en capitales espacées, les
+  animations éparses. C'est le skill de la page qu'on refait.
+- **`avoid-ai-design`**, communautaire (`funboy322/avoid-ai-design`, MIT), qui
+  travaille sur du code **existant** : audit des tics reconnaissables, puis
+  réécriture à fonctionnalités constantes, ou audit seul si on le lui demande.
+  Le dépôt a été élagué de ses 1,8 Mo de captures et de démos : seuls
+  `SKILL.md`, `references/` et la licence sont conservés.
+
+**Ce qu'aucun des deux ne sait** : les couleurs sémantiques et l'interdit des
+couleurs en dur, ci-dessous. Une réécriture qui réintroduirait un
+`bg-white/5` ou un dégradé codé casserait le thème sombre — à relire après
+chaque passage. Et leur doctrine de retenue vise des pages marketing : la
+densité des tableaux est voulue, il faut le leur dire. Les références
+restent lfchistory.net et cybervulcans.net.
+
+L'ordre d'essai prévu : audit seul sur une liste et une fiche, puis
+`frontend-design` sur une seule page avec les deux références comme brief.
+
 
 - **Couleur principale** : Rouge sang (#C8102E) - couleur dominante USAP
 - **Couleur secondaire** : Or/Jaune (#FFD700 dark, #b8860b light) - accent catalan
