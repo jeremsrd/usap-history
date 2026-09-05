@@ -213,13 +213,21 @@ function separerNom(athlete: any): { firstName: string; lastName: string } {
 }
 
 function versEquipe(brut: any, competitor: any): EspnEquipe {
-  const joueurs: EspnJoueur[] = (brut.roster ?? [])
-    .filter((l: any) => l.jersey != null && l.jersey !== "")
+  const lignes: any[] = (brut.roster ?? []).filter(
+    (l: any) => l.jersey != null && l.jersey !== "",
+  );
+  // **ESPN ne marque plus les titulaires en 2018-2019** : `starter` y est
+  // faux pour les vingt-trois. Le dossard tranche alors, comme à l'EPCR —
+  // 1 à 15 sur le terrain, 16 à 23 sur le banc —, et seulement quand aucune
+  // ligne de la feuille ne porte le drapeau : une feuille qui le porte est
+  // crue sur parole.
+  const sansDrapeau = lignes.length > 0 && lignes.every((l) => !l.starter);
+  const joueurs: EspnJoueur[] = lignes
     .map((l: any) => ({
       id: Number(l.athlete?.id),
       ...separerNom(l.athlete ?? {}),
       numero: Number(l.jersey),
-      isStarter: Boolean(l.starter),
+      isStarter: sansDrapeau ? Number(l.jersey) <= 15 : Boolean(l.starter),
       isCaptain: Boolean(l.captain),
       posteEspn: l.position?.abbreviation ?? null,
       essais: stat(l, "tries"),

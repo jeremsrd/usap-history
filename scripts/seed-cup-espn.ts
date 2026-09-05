@@ -265,6 +265,167 @@ const CAMPAGNES: Record<string, Campagne> = {
     },
     note: "Challenge européen, poule 4 — deuxième, éliminée en poule",
   },
+  /**
+   * Heineken Cup 2007-2008, poule 1 : Perpignan, London Irish, Dragons,
+   * Trévise. **Première de poule** avec 22 points, deux bonus offensifs, une
+   * seule défaite à Reading ; quart de finale perdu 9-20 chez London Irish,
+   * au Madejski Stadium. Classement et quart d'après la Wikipédia anglophone,
+   * « 2007–08 Heineken Cup », qui donne l'arbitre et l'affluence du quart.
+   * Feuilles à 22 joueurs. Le Madejski Stadium d'après Wikipédia.
+   */
+  "2007-2008": {
+    ligue: "champions-cup",
+    competition: "H-Cup",
+    nouveauxAdversaires: [
+      { name: "London Irish", shortName: "London Irish", city: "Reading", pays: "ENG" },
+    ],
+    terrains: [
+      { club: "London Irish", stade: "Madejski Stadium", ville: "Reading", capacite: 24161 },
+    ],
+    poule: {
+      joues: 6,
+      victoires: 5,
+      nuls: 0,
+      defaites: 1,
+      essaisPour: 20,
+      essaisContre: 7,
+      pour: 171,
+      contre: 79,
+      bonusOffensifs: 2,
+      bonusDefensifs: 0,
+      points: 22,
+    },
+    phaseFinale: [
+      {
+        tour: "Quart de finale",
+        adversaire: "London Irish",
+        scoreUsap: 9,
+        scoreOpponent: 20,
+        arbitre: "Alain Rolland",
+        affluence: 16048,
+      },
+    ],
+    note: "Heineken Cup, poule 1 — première, quart de finaliste",
+  },
+  /**
+   * Challenge européen 2012-2013, poule 1 : Perpignan, Worcester, Rovigo,
+   * Gernika. **Première de poule** avec 25 points — 293 marqués, un 79-12 à
+   * Rovigo et un 90-12 contre Gernika —, quatre bonus offensifs et un
+   * défensif au Sixways de Worcester, la seule défaite. Quart gagné 30-19
+   * contre Toulouse et demi-finale perdue 22-25 contre le Stade Français,
+   * tous deux à Aimé-Giral. Classement et phase finale d'après la Wikipédia
+   * anglophone, « 2012–13 European Challenge Cup », qui donne arbitres et
+   * affluences des couperets ; les trois terrains d'après Wikipédia.
+   */
+  "2012-2013": {
+    ligue: "challenge-cup",
+    competition: "Challenge Européen",
+    nouveauxAdversaires: [
+      { name: "Worcester Warriors", shortName: "Worcester", city: "Worcester", pays: "ENG" },
+      { name: "Rugby Rovigo", shortName: "Rovigo", city: "Rovigo", pays: "IT" },
+      { name: "Bizkaia Gernika", shortName: "Gernika", city: "Gernika", pays: "ES" },
+    ],
+    terrains: [
+      { club: "Worcester", stade: "Sixways Stadium", ville: "Worcester", capacite: 11499 },
+      { club: "Rovigo", stade: "Stadio Mario Battaglini", ville: "Rovigo", capacite: null },
+      { club: "Gernika", stade: "Estadio Urbieta", ville: "Gernika", capacite: null },
+    ],
+    poule: {
+      joues: 6,
+      victoires: 5,
+      nuls: 0,
+      defaites: 1,
+      essaisPour: 42,
+      essaisContre: 5,
+      pour: 293,
+      contre: 89,
+      bonusOffensifs: 4,
+      bonusDefensifs: 1,
+      points: 25,
+    },
+    phaseFinale: [
+      {
+        tour: "Quart de finale",
+        adversaire: "Toulouse",
+        scoreUsap: 30,
+        scoreOpponent: 19,
+        arbitre: "Alain Rolland",
+        affluence: 12452,
+      },
+      {
+        tour: "Demi-finale",
+        adversaire: "Stade Français",
+        scoreUsap: 22,
+        scoreOpponent: 25,
+        arbitre: "George Clancy",
+        affluence: 12242,
+      },
+    ],
+    note: "Challenge européen, poule 1 — première, demi-finaliste",
+  },
+  /**
+   * Heineken Cup 2013-2014, poule 3 : Munster, Gloucester, Édimbourg,
+   * Perpignan. Dernière avec 7 points, une seule victoire, contre Édimbourg ;
+   * c'est la dernière campagne européenne avant la relégation. Classement
+   * d'après la Wikipédia anglophone, « 2013–14 Heineken Cup » ; Murrayfield
+   * d'après Wikipédia — Édimbourg y recevait alors.
+   */
+  "2013-2014": {
+    ligue: "champions-cup",
+    competition: "H-Cup",
+    nouveauxAdversaires: [
+      { name: "Edinburgh Rugby", shortName: "Edinburgh", city: "Édimbourg", pays: "SCT" },
+    ],
+    terrains: [
+      { club: "Edinburgh", stade: "Murrayfield Stadium", ville: "Édimbourg", capacite: 67144 },
+    ],
+    poule: {
+      joues: 6,
+      victoires: 1,
+      nuls: 0,
+      defaites: 5,
+      essaisPour: 10,
+      essaisContre: 19,
+      pour: 112,
+      contre: 158,
+      bonusOffensifs: 1,
+      bonusDefensifs: 2,
+      points: 7,
+    },
+    note: "Heineken Cup, poule 3 — dernière, éliminée en poule",
+  },
+  /**
+   * Challenge européen 2018-2019, poule 3 : Sale, Connacht, Bordeaux-Bègles,
+   * Perpignan. Dernière avec 3 points, un nul à Chaban-Delmas et cinq
+   * défaites — la saison de la relégation. Classement d'après la Wikipédia
+   * anglophone, « 2018–19 European Rugby Challenge Cup ». **ESPN ne libelle
+   * pas les tours de cette saison** : ils sont numérotés par la date. L'AJ
+   * Bell Stadium et le Sportsground d'après Wikipédia — Connacht n'avait pas
+   * de terrain en base, l'USAP n'y était jamais allée.
+   */
+  "2018-2019": {
+    ligue: "challenge-cup",
+    competition: "Challenge Européen",
+    nouveauxAdversaires: [{ name: "Sale Sharks", shortName: "Sale", city: "Salford", pays: "ENG" }],
+    terrains: [
+      { club: "Sale", stade: "AJ Bell Stadium", ville: "Salford", capacite: 12000 },
+      { club: "Connacht", stade: "The Sportsground", ville: "Galway", capacite: 8129 },
+    ],
+    poule: {
+      joues: 6,
+      victoires: 0,
+      nuls: 1,
+      defaites: 5,
+      essaisPour: 13,
+      essaisContre: 27,
+      pour: 117,
+      contre: 197,
+      bonusOffensifs: 0,
+      bonusDefensifs: 1,
+      points: 3,
+    },
+    note: "Challenge européen, poule 3 — dernière, éliminée en poule",
+  },
 };
 
 // =============================================================================
@@ -399,6 +560,8 @@ interface Rencontre {
   bonusIndecidable: boolean;
   resultat: MatchResult;
   alertes: string[];
+  /** Camps dont la composition ne s'écrit pas — `false` l'USAP, `true` l'adversaire. */
+  campsSansComposition: Set<boolean>;
 }
 
 async function lireCampagne(
@@ -410,6 +573,14 @@ async function lireCampagne(
   const rencontres: Rencontre[] = [];
   const startYear = Number(saison.slice(0, 4));
 
+  // **ESPN ne libelle plus les tours en 2018-2019** : ses `notes` sont vides.
+  // Quand aucune rencontre de la campagne n'en porte, les journées de poule se
+  // numérotent par la date — une campagne sans phase finale n'a rien d'autre
+  // à distinguer, et le garde-fou de poule vérifie qu'il y en a bien six.
+  if (resumes.length > 0 && resumes.every((r) => !r.tour)) {
+    resumes.forEach((r, i) => (r.tour = `Poule J${i + 1}`));
+    console.log("  tours numérotés par la date : ESPN ne les libelle pas sur cette saison");
+  }
   for (const resume of resumes) {
     const feuille = await lireMatch(campagne.ligue, resume.id);
     // Le tour vient du calendrier, la feuille ne le porte pas toujours.
@@ -435,38 +606,44 @@ async function lireCampagne(
       continue;
     }
 
+    // **Une feuille sans composition n'est pas une feuille fausse.** ESPN
+    // n'en publie aucune pour les deux matchs contre Prato de 2011-2012, ni
+    // pour les sept de 2007-2008 : ni joueurs, ni mi-temps — son 0-0 y veut
+    // dire « inconnu ». La rencontre est écrite avec son score, comme les
+    // deux matchs de 2008-2009 dont la LNR corrompt la composition.
+    //
+    // **Et une composition qui n'aligne pas quinze titulaires est écartée,
+    // elle seule.** Chez la LNR le match entier échoue ; chez ESPN les deux
+    // listes sont indépendantes, les réalisations sont portées par le joueur
+    // et non par le dossard, et le score est validé par la poule. Connacht le
+    // 8 décembre 2018 et l'USAP le 11 janvier 2019 comptent vingt-quatre
+    // noms dont deux sous le même numéro — un n°8, un n°6 —, et ESPN ne dit
+    // pas lequel des deux hommes était sur le terrain.
     const alertes: string[] = [];
-    for (const [camp, equipe] of [
-      ["USAP", usap],
-      [opponentNom, adverse],
+    const campsSansComposition = new Set<boolean>();
+    for (const [camp, equipe, isOpponent] of [
+      ["USAP", usap, false],
+      [opponentNom, adverse, true],
     ] as const) {
-      // **Une feuille sans composition n'est pas une feuille fausse.** ESPN
-      // n'en publie aucune pour les deux matchs contre Prato de 2011-2012 :
-      // ni joueurs, ni mi-temps — son 0-0 y veut dire « inconnu ». La
-      // rencontre est écrite avec son score, comme les deux matchs de
-      // 2008-2009 dont la LNR corrompt la composition ; le reste attend une
-      // autre source.
       if (equipe.joueurs.length === 0) {
         alertes.push(`${camp} : aucune composition chez ESPN`);
+        campsSansComposition.add(isOpponent);
         continue;
       }
       const titulaires = equipe.joueurs.filter((j) => j.isStarter).length;
-      if (titulaires !== 15) {
-        echecs.push(`${etiquette} : ${camp} aligne ${titulaires} titulaires`);
-      }
-      if (equipe.joueurs.length < 22) {
-        alertes.push(`${camp} : ${equipe.joueurs.length} joueurs sur la feuille`);
-      }
       const numeros = new Set(equipe.joueurs.map((j) => j.numero));
-      if (numeros.size !== equipe.joueurs.length) {
-        echecs.push(`${etiquette} : ${camp} porte deux fois le même dossard`);
+      if (titulaires !== 15 || numeros.size !== equipe.joueurs.length) {
+        alertes.push(
+          `${camp} : ${titulaires} titulaires` +
+            (numeros.size !== equipe.joueurs.length ? ", un dossard en double" : "") +
+            " — composition écartée",
+        );
+        campsSansComposition.add(isOpponent);
+      } else if (equipe.joueurs.length < 22) {
+        alertes.push(`${camp} : ${equipe.joueurs.length} joueurs sur la feuille`);
       }
     }
 
-    if (usap.joueurs.length === 0 && adverse.joueurs.length === 0) {
-      usap.miTemps = null;
-      adverse.miTemps = null;
-    }
     const realUsap = realisations(usap);
     const realAdverse = realisations(adverse);
     for (const [camp, r, equipe] of [
@@ -518,6 +695,7 @@ async function lireCampagne(
             ? MatchResult.DEFAITE
             : MatchResult.NUL,
       alertes,
+      campsSansComposition,
     });
   }
   return rencontres;
@@ -583,8 +761,14 @@ function controlerLaPoule(
   ] as const) {
     const bouclent = poule.filter((r) => choix(r).coherent);
     const essais = bouclent.reduce((s, r) => s + choix(r).essais, 0);
+    // Les colonnes d'essais de Wikipédia sont moins sûres que ses points :
+    // en 2012-2013 elle compte cinq essais encaissés quand les trois feuilles
+    // adverses qui bouclent en donnent six, chacune arithmétiquement juste.
+    // Un écart d'essais se signale, il ne bloque pas.
     if (bouclent.length === poule.length) {
-      if (essais !== attendu) ecarts.push(`${essais} essais ${camp} pour ${attendu}`);
+      if (essais !== attendu) {
+        avertissements.push(`essais ${camp} : ${essais} sur les feuilles, ${attendu} au classement`);
+      }
     } else {
       avertissements.push(
         `essais ${camp} : ${essais} sur ${bouclent.length} feuille(s) qui bouclent, ` +
@@ -796,8 +980,12 @@ async function main() {
     console.log(`\n=== ${r.jour} ${r.isHome ? "USAP" : r.opponentNom} – ${r.isHome ? r.opponentNom : "USAP"} ===`);
     // Première passe, sans création : de quoi contrôler les dossards.
     const lignes = [
-      ...(await resoudreCamp("USAP", false, r.usap, r.realUsap.coherent, false)),
-      ...(await resoudreCamp(r.opponentNom, true, r.adverse, r.realAdverse.coherent, false)),
+      ...(r.campsSansComposition.has(false)
+        ? []
+        : await resoudreCamp("USAP", false, r.usap, r.realUsap.coherent, false)),
+      ...(r.campsSansComposition.has(true)
+        ? []
+        : await resoudreCamp(r.opponentNom, true, r.adverse, r.realAdverse.coherent, false)),
     ];
 
     // Le contrôle des dossards, sur les fiches déjà connues : en simulation
@@ -810,11 +998,12 @@ async function main() {
     // les numéros suivants sont décalés d'un cran — 17 % d'accord —, quand
     // le camp catalan de la même feuille est à 93 %. La rencontre elle-même
     // est écrite dans tous les cas : son score est validé par la poule.
-    const campsEcartes = new Set<boolean>();
+    const campsEcartes = new Set<boolean>(r.campsSansComposition);
     for (const [camp, isOpponent] of [
       ["USAP", false],
       [r.opponentNom, true],
     ] as const) {
+      if (campsEcartes.has(isOpponent)) continue;
       const titulaires = lignes
         .filter((l) => l.isOpponent === isOpponent && l.isStarter && l.playerId)
         .map((l) => ({ playerId: l.playerId, numero: l.shirtNumber }));

@@ -89,6 +89,16 @@ const NOMS_DUSAGE: string[][] = [
   ["manny", "manuel"],
   // « Rudi » pour Rudolf Coetzee, centre catalan de 2011-2012, chez ESPN.
   ["rudi", "rudolf"],
+  // « Sona » pour Faka'anaua Ki Alisona Taumalolo, pilier catalan de 2013-2014,
+  // chez ESPN : la fin d'un prénom, non son début.
+  ["sona", "alisona"],
+  // « Tima » pour Lotima Faingaanuku, ailier catalan de 2018-2019, chez ESPN.
+  ["tima", "lotima"],
+  // ESPN écrit « Boutemane » pour Yassin Boutemmani, pilier catalan de 2013 à
+  // 2021, 69 feuilles LNR en base : une faute de la source, pas un nom
+  // d'usage — mais le remède est le même, faute de quoi chaque campagne
+  // européenne lui refabriquerait une fiche.
+  ["boutemane", "boutemmani"],
 ];
 
 /**

@@ -1579,7 +1579,7 @@ chronologie avant de l'écrire.
 entré en jeu », et non « on ne sait pas » — les remplaçants non utilisés sont
 les seuls concernés.
 
-**SAUF EN 2005-2006 — ET SUR LES VINGT-SIX MATCHS DE COUPE D'EUROPE 2008-2009 À 2011-2012 VENUS D'ESPN, cf. `seed-cup-espn.ts` —, OÙ IL SE LIT « LA SOURCE NE LE DIT PAS ».** La LNR n'y
+**SAUF EN 2005-2006 — ET SUR LES TRENTE-HUIT MATCHS DE COUPE D'EUROPE DE 2008-2009 À 2018-2019 VENUS D'ESPN, cf. `seed-cup-espn.ts` —, OÙ IL SE LIT « LA SOURCE NE LE DIT PAS ».** La LNR n'y
 publie aucun changement, sur aucune des vingt-sept feuilles : les temps de jeu
 ne se reconstituent pas, et `seed-opponent-sheet.ts` les laisse tous à `null`,
 titulaires compris. Sans cela il rendrait 80 minutes à chaque titulaire et
@@ -2370,11 +2370,53 @@ Par ordre de valeur.
    « Rudi » Coetzee, centre catalan de 2011-2012, rejoint Manny Edmonds dans
    `NOMS_DUSAGE`.
 
-   **Quatre campagnes restent à écrire**, chacune avec son classement de poule
-   dans `CAMPAGNES` et ses clubs dans `CLUBS_ESPN` : 2007-2008 a un quart à
-   Londres, 2012-2013 un quart et une demi de Challenge ; 2013-2014 et
-   2018-2019 s'arrêtent en poule. Le rouge de vingt minutes ne vaut pas pour
-   ces années-là.
+   **2013-2014 ET 2018-2019 SONT LES CINQUIÈME ET SIXIÈME**, écrites le même
+   jour. 2013-2014, Heineken Cup, poule 3, dernière avec 7 points — 1 V 5 D,
+   112 marqués pour 158, un BO contre Édimbourg, deux BD —, la dernière
+   campagne avant la relégation : six matchs, 276 lignes, Édimbourg en base
+   avec Murrayfield, deux camps du Munster qui ne bouclent pas. 2018-2019,
+   Challenge européen, poule 3, dernière avec 3 points — 0 V 1 N 5 D, 117
+   pour 197, un seul BD, le nul de Chaban-Delmas —, la saison de la
+   relégation : six matchs, 230 lignes, Sale en base avec l'AJ Bell Stadium,
+   et Connacht enfin rattaché au Sportsground de Galway. Tous les camps de
+   2018-2019 bouclent.
+
+   **Trois choses apprises de ces deux-là.** ESPN **ne marque plus les
+   titulaires en 2018-2019** — `starter` est faux pour les vingt-trois — et
+   le dossard tranche alors, comme à l'EPCR, mais seulement quand aucune ligne
+   de la feuille ne porte le drapeau ; il **ne libelle plus les tours** non
+   plus, numérotés par la date quand toute la campagne en est dépourvue. Et
+   deux de ses feuilles comptent **vingt-quatre noms dont deux sous le même
+   numéro** — Connacht le 8 décembre 2018, un n°8 en double ; l'USAP le
+   11 janvier 2019, un n°6 — sans dire lequel des deux hommes a joué :
+   **une composition qui n'aligne pas quinze titulaires est écartée, elle
+   seule**, la rencontre est écrite avec son score, ses compteurs et l'autre
+   camp. Chez la LNR le match entier échouerait, mais ses deux compositions
+   viennent d'une même page ; chez ESPN elles sont indépendantes, et les
+   réalisations sont portées par le joueur, non par le dossard.
+
+   Trois noms d'usage de plus dans `NOMS_DUSAGE`, tous catalans : « Sona »
+   pour Faka'anaua Ki Alisona Taumalolo, « Tima » pour Lotima Faingaanuku, et
+   « Boutemane », qui n'est pas un nom d'usage mais **une faute d'ESPN** sur
+   Yassin Boutemmani, 69 feuilles LNR — le remède est le même, sans quoi
+   chaque campagne lui refabriquerait une fiche.
+
+   **Les colonnes d'essais de Wikipédia ne bloquent plus** : en 2012-2013
+   elle compte cinq essais encaissés quand les trois feuilles adverses qui
+   bouclent en donnent six, chacune arithmétiquement juste. L'écart se
+   signale ; les points, les victoires et les bonus restent le garde-fou.
+
+   **Deux campagnes restent à écrire, et ESPN n'y suffit pas** : 2007-2008,
+   dont il n'a **aucune composition** sur les sept matchs — scores et rien
+   d'autre, deux bonus offensifs à placer parmi six feuilles muettes —, et
+   2012-2013, où trois camps catalans ne bouclent pas pour deux BO à placer.
+   La règle du classement ne tranche que lorsque les muets sont exactement
+   aussi nombreux que les bonus manquants. Il faut une source par match :
+   `allrugby.com`, qui marque le bonus, ou les comptes rendus de l'ERC dans
+   la Wayback Machine — `ercrugby.com/eng/news/*.php` en 2012-2013,
+   `/eng/12_*.php` en 2007-2008, tous à retrouver par leur titre. L'archive
+   a **refusé toute connexion** le 5 septembre 2026 après une centaine de
+   requêtes rapprochées : y aller doucement.
 3. **Le fond** : affluences (36 matchs sur 573 joués), les 137 fiches joueur
    que Wikipédia ne documente pas, les onze joueurs sans portrait — six
    anciens et cinq recrues que la LNR n'a pas encore photographiées, cf.
@@ -2736,18 +2778,20 @@ d'un siècle, c'est la règle qu'on connaîtra le moins bien.
   65000 Tarbes — est bien celle de ce stade. Deux sources concordantes, aucune
   officielle au sens du projet, et la même réserve sur l'époque.
 
-  Trois clubs n'ont toujours pas de terrain rattaché : Connacht, Cardiff et
-  Lions, que l'USAP n'a reçus qu'à Aimé-Giral. Sans déplacement là-bas, rien
-  ne permet de le déduire — mais aucun match n'en souffre, ces trois-là
-  n'ayant jamais reçu l'USAP. **Les Dragons en avaient un quatrième jusqu'au
+  Deux clubs n'ont toujours pas de terrain rattaché : Cardiff et les Lions,
+  que l'USAP n'a reçus qu'à Aimé-Giral. Sans déplacement là-bas, rien ne
+  permet de le déduire — mais aucun match n'en souffre, ces deux-là n'ayant
+  jamais reçu l'USAP. Connacht en était un troisième jusqu'au 5 septembre
+  2026, où le Galway-Perpignan du 8 décembre 2018 lui a valu le Sportsground. **Les Dragons en avaient un quatrième jusqu'au
   5 septembre 2026** : l'USAP va à Newport le 16 octobre, et Rodney Parade a
   été posé à la main, comme Ravenhill pour l'Ulster reçu le 10 janvier — deux
   terrains d'aujourd'hui d'après Wikipédia, avec la réserve habituelle sur
   l'époque, cf. `seed-calendrier-europe-2026-2027.ts`. Welford Road, pour le
   Leicester-Perpignan du 6 décembre 2008, Thomond Park et Franklin's Gardens
   pour les déplacements de 2009-2010, Parc y Scarlets pour celui de 2010-2011,
-  Sandy Park et le Stadio Lungobisenzio pour ceux de 2011-2012, viennent de
-  la même source par `seed-cup-espn.ts` — et ses deux terrains
+  Sandy Park et le Stadio Lungobisenzio pour ceux de 2011-2012, Murrayfield
+  pour 2013-2014, l'AJ Bell Stadium et le Sportsground pour 2018-2019,
+  viennent de la même source par `seed-cup-espn.ts` — et ses deux terrains
   neutres de 2011, Montjuïc et Milton Keynes, de `TERRAINS_PARTICULIERS`.
 
   Trois des stades de la liste de `fix-match-venues.ts` ne viennent pas d'une
