@@ -30,6 +30,38 @@ export const fr = {
     fermer: "Fermer le menu",
     logo: "Logo USAP",
   },
+  joueurs: {
+    titre: "Joueurs",
+    metaTitre: "Joueurs - USAP Historia",
+    metaDescription:
+      "Tous les joueurs de l'USA Perpignan : effectif actuel et anciens, de 2004-2005 à aujourd'hui.",
+    chapeau: {
+      one: "{n} joueur passé par l'USAP depuis la saison 2004-2005, dont {actifs} dans l'effectif actuel.",
+      other:
+        "{n} joueurs passés par l'USAP depuis la saison 2004-2005, dont {actifs} dans l'effectif actuel.",
+    },
+    reserve:
+      "Les feuilles de match ne sont saisies qu'à partir de 2004-2005 : les joueurs des époques antérieures n'y sont pas encore, et les périodes affichées commencent au plus tôt cette saison-là.",
+    rechercher: "Rechercher un nom",
+    lancerRecherche: "Rechercher",
+    tous: "Tous",
+    effectifActuel: "Effectif actuel",
+    tousLesPostes: "Tous les postes",
+    compte: { one: "{n} joueur", other: "{n} joueurs" },
+    pourRecherche: " pour « {q} »",
+    dansEffectif: " dans l'effectif actuel",
+    indexAria: "Aller à la lettre",
+    lettreVide: "Aucun joueur à la lettre {lettre}",
+    aucun: "Aucun joueur ne répond à ces critères.",
+    reinitialiser: "Voir tous les joueurs",
+    entetePortrait: "Portrait",
+    enteteJoueur: "Joueur",
+    entetePoste: "Poste",
+    entetePeriode: "Période",
+    enteteMatchs: "Matchs",
+    actuel: "Actuel",
+    sansMatch: "—",
+  },
   centurions: {
     titre: "Centurions",
     metaTitre: "Centurions - USAP Historia",

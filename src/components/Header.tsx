@@ -57,10 +57,13 @@ export default function Header({ libelles }: { libelles: Record<string, string> 
             height={32}
             className="h-8 w-8"
           />
-          <span className="text-xl font-bold uppercase tracking-wider text-usap-sang">
+          {/* Le nom du site dans la voix condensée d'Archivo, comme les
+              titres : à sa largeur normale il débordait sur le sélecteur de
+              langue en mobile. */}
+          <span className="font-display text-2xl uppercase text-usap-sang">
             USAP
           </span>
-          <span className="text-xl font-bold uppercase tracking-wider text-usap-or">
+          <span className="font-display text-2xl uppercase text-usap-or">
             Historia
           </span>
         </Link>

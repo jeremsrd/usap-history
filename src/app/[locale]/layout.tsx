@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import { Geist, Geist_Mono } from "next/font/google";
+import { Archivo } from "next/font/google";
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
 import { ThemeProvider } from "@/components/ThemeProvider";
@@ -9,14 +9,18 @@ import { NAV_LINKS } from "@/lib/constants";
 import { notFound } from "next/navigation";
 import "../globals.css";
 
-const geistSans = Geist({
-  variable: "--font-geist-sans",
-  subsets: ["latin"],
-});
-
-const geistMono = Geist_Mono({
-  variable: "--font-geist-mono",
-  subsets: ["latin"],
+/**
+ * **Une seule famille, sur son axe de largeur.** Archivo va de 62 à 125 % de
+ * chasse : très condensée et noire, c'est la voix des titres et des repères,
+ * à la manière d'un dos de maillot ; à sa largeur normale, celle du corps et
+ * des tableaux. Deux voix nettement distinctes pour un seul chargement — et
+ * plus de Geist, la police par défaut de Next.js, qui disait « starter jamais
+ * thémé » à qui sait la reconnaître.
+ */
+const archivo = Archivo({
+  variable: "--font-archivo",
+  subsets: ["latin", "latin-ext"],
+  axes: ["wdth"],
 });
 
 export const metadata: Metadata = {
@@ -73,7 +77,7 @@ export default async function RootLayout({
   return (
     <html lang={langue} suppressHydrationWarning>
       <body
-        className={`${geistSans.variable} ${geistMono.variable} antialiased`}
+        className={`${archivo.variable} antialiased`}
       >
         <ThemeProvider
           attribute="class"

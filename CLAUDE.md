@@ -1409,6 +1409,51 @@ restent lfchistory.net et cybervulcans.net.
 L'ordre d'essai prévu : audit seul sur une liste et une fiche, puis
 `frontend-design` sur une seule page avec les deux références comme brief.
 
+**Les deux temps sont faits, le 5 septembre 2026.** L'audit sur `/joueurs` et
+une fiche a rangé les deux défauts les plus visibles **dans la couche
+partagée**, pas dans les pages : Geist, la police par défaut de Next.js, seule
+et sans face de titre ; et la palette slate de shadcn recopiée au code près,
+la couleur primaire passée en rouge et rien d'autre — un site catalan
+gris-bleu, avec en sombre un bleu marine et un hairline blanc à 10 % écrit
+dans le jeton lui-même. Sur les pages : 286 joueurs sur 351 sans portrait,
+chacun sous la même icône Lucide dans un rond gris, une grille de cartes
+centrées, aucun état de focus nulle part, et des couleurs de résultat en
+`green-500` / `red-500` de Tailwind sur la fiche.
+
+**Ce qui a été refait, et vaut pour tout le site** :
+
+- **une seule famille, Archivo, sur son axe de largeur.** Très condensée et
+  noire pour les titres et les repères — l'utilitaire `font-display` de
+  `globals.css`, 62,5 % de chasse —, normale pour le corps et les tableaux,
+  avec `tabular-nums` sur les colonnes de chiffres. Le nom du site dans le
+  Header est passé dans cette voix : à sa largeur normale, Archivo débordait
+  sur le sélecteur de langue en mobile ;
+- **la palette autour du Sang et Or, qui reste imposé.** Encre `#1b1214` et
+  règles `#dccfcf` tirées vers le rouge en clair, fond blanc sans crème ; en
+  sombre un noir tiré vers le sang, `#150b0d`, surfaces `#211416`, règles
+  `#3b2629`. Les noms de jetons n'ont pas bougé, toutes les pages en
+  héritent ; le rayon est descendu de 0,625 rem à 3 px ;
+- **un état de focus global**, anneau d'or à deux pixels sur `:focus-visible`,
+  dans `globals.css`. Aucun lien du site n'en avait.
+
+**Et sur `/joueurs` seule** : une liste dense à la façon des deux références,
+groupée par lettre avec un index en tête. La seule audace de la page est
+cette épine alphabétique, grosses lettres condensées en rouge — c'est la
+structure réelle d'une liste triée par nom. Ni carte, ni pastille, ni
+portrait de remplacement : **la case reste vide** quand la LNR et Commons
+n'ont rien, ce qui est la vérité. Chaque ligne porte poste, période et
+nombre de matchs, comptés comme sur la fiche et sur la page des centurions.
+La colonne de nationalité a été retirée avant d'être livrée : dix joueurs sur
+351 en ont une, et une colonne vide à 97 % se lit comme une erreur. La page
+est passée au dictionnaire par la même occasion, et **sa recherche est
+corrigée** : elle écrasait le `OR` de la condition USAP et rendait aussi les
+adversaires.
+
+**Ce qui reste dans l'ancien rendu** : la fiche joueur et ses cartes, les
+vingt et une autres pages, et `JoueurCellule`, qui porte encore l'icône de
+remplacement dans les classements. À reprendre page par page, en relisant
+chaque fois qu'aucune couleur en dur n'est revenue.
+
 
 - **Couleur principale** : Rouge sang (#C8102E) - couleur dominante USAP
 - **Couleur secondaire** : Or/Jaune (#FFD700 dark, #b8860b light) - accent catalan
