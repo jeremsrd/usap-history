@@ -241,6 +241,22 @@ const CAMPAGNES: Record<string, Campagne> = {
         affluence: 18231,
       },
     ],
+    // Le Match Centre de l'ERC : l'archive n'en garde que 88 pages pour cette
+    // saison, et l'USAP n'y a que sa deuxième journée et son quart de finale
+    // avec une composition. Les autres restent à ESPN.
+    // Le Match Centre de l'ERC, six pages sur huit. Les quatre journées de
+    // décembre et janvier n'ont été archivées qu'en juin 2012, sous des
+    // identifiants qu'aucune fenêtre de dates ne désignait : c'est par plage
+    // d'identifiants qu'on les a retrouvées. La première journée (12438) et
+    // la demi-finale (14340) n'ont que des pages sans composition.
+    erc: {
+      "2010-10-17": { page: "matchcentre/12889.php", instantane: "20101020072253" },
+      "2010-12-11": { page: "matchcentre/13285.php", instantane: "20120609164042" },
+      "2010-12-19": { page: "matchcentre/13406.php", instantane: "20120609165103" },
+      "2011-01-15": { page: "matchcentre/13536.php", instantane: "20120612064140" },
+      "2011-01-23": { page: "matchcentre/13623.php", instantane: "20120614072045" },
+      "2011-04-09": { page: "matchcentre/14168.php", instantane: "20110412073435" },
+    },
     note: "Heineken Cup, poule 5 — première, demi-finaliste",
   },
   /**
@@ -273,6 +289,12 @@ const CAMPAGNES: Record<string, Campagne> = {
       bonusOffensifs: 2,
       bonusDefensifs: 0,
       points: 18,
+    },
+    // Le Match Centre de l'ERC, deux pages sur six : l'archive n'a ni le
+    // déplacement à Newport, ni les deux Prato, ni la réception des Dragons.
+    erc: {
+      "2011-11-11": { page: "matchcentre/14966.php", instantane: "20111112184825" },
+      "2012-01-21": { page: "matchcentre/16062.php", instantane: "20120124114122" },
     },
     note: "Challenge européen, poule 4 — deuxième, éliminée en poule",
   },
@@ -1041,9 +1063,15 @@ function chronologieDeLaBase(
     const { nom, playerId } = retrouver(e.nom, isUsap, isUsap ? r.usap : r.adverse);
     return { minute: e.minute, type: e.type, isUsap, nom, playerId };
   });
+  // Autant d'essais de pénalité que l'écart des points en exige, et pas un
+  // de plus : une transformation orpheline n'en est la trace que si le score
+  // en réclame un.
   for (const [k, minutes] of essaisDePenalite.entries()) {
     const isUsap = (k === 0) === r.isHome;
-    for (const minute of minutes) faits.push({ minute, type: "essai-de-penalite", isUsap, nom: null, playerId: null });
+    const attendus = (isUsap ? r.usap : r.adverse).essaisSansAuteur;
+    for (const minute of minutes.slice(0, attendus)) {
+      faits.push({ minute, type: "essai-de-penalite", isUsap, nom: null, playerId: null });
+    }
   }
   faits.sort((a, b) => a.minute - b.minute || (a.type === "transformation" ? 1 : 0) - (b.type === "transformation" ? 1 : 0));
 

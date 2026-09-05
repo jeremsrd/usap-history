@@ -288,7 +288,16 @@ function lireScorecard(bloc: string, domicile: boolean): ErcEvenement[] {
     const minute = Number(texte(/<div class="mins">([^<]*)/.exec(ev)?.[1] ?? ""));
     if (type && Number.isFinite(minute)) evenements.push({ minute, type, nom, domicile });
   }
-  return evenements;
+  // **Un fait anonyme suivi du même fait nommé, à la minute suivante, est
+  // un doublon** : le Perpignan-Trévise du 17 octobre 2010 porte une
+  // transformation sans nom à la 64ᵉ puis « J Porical » à la 65ᵉ, pour un
+  // seul essai de pénalité. La feuille des joueurs tranche — cinq
+  // transformations, non six.
+  return evenements.filter(
+    (e, i) =>
+      e.nom !== "" ||
+      !evenements.some((a, k) => k !== i && a.type === e.type && a.nom !== "" && Math.abs(a.minute - e.minute) <= 1),
+  );
 }
 
 /**
@@ -309,7 +318,13 @@ export function lireMatchCentre(brut: Buffer): ErcMatchCentre {
   const mt = /Half Time\s*(\d+)\s*-\s*(\d+)/.exec(html);
   const stade = texte(/<div class="venue">Venue:([\s\S]*?)<\/div>/.exec(html)?.[1] ?? "") || null;
   const affluence = Number((/<div class="attendance">Attendance:([\s\S]*?)<\/div>/.exec(html)?.[1] ?? "").replace(/[^\d]/g, "")) || null;
-  const arbitre = texte(/<div class="referee">Referee:([\s\S]*?)<\/div>/.exec(html)?.[1] ?? "") || null;
+  // « John Paul 'JP' Doyle » : le surnom entre guillemets n'est pas un
+  // prénom, et la base porte John Paul Doyle.
+  const arbitre =
+    texte(/<div class="referee">Referee:([\s\S]*?)<\/div>/.exec(html)?.[1] ?? "")
+      .replace(/\s*['"‘’“”][^'"‘’“”]+['"‘’“”]\s*/g, " ")
+      .replace(/\s+/g, " ")
+      .trim() || null;
 
   const lineups = html.slice(html.indexOf('<div class="lineups'));
   const iAway = lineups.indexOf('<div class="away">');
@@ -335,7 +350,8 @@ export function lireMatchCentre(brut: Buffer): ErcMatchCentre {
     const essais = evenements.filter((e) => e.domicile === domicile && e.type === "essai").map((e) => ({ minute: e.minute, pris: false }));
     const sansEssai: number[] = [];
     for (const t of evenements.filter((e) => e.domicile === domicile && e.type === "transformation")) {
-      const essai = essais.find((e) => !e.pris && (e.minute === t.minute || e.minute === t.minute - 1));
+      // Une transformation suit son essai d'une à deux minutes sur ces pages.
+      const essai = essais.find((e) => !e.pris && t.minute - e.minute >= 0 && t.minute - e.minute <= 2);
       if (essai) essai.pris = true;
       else sansEssai.push(t.minute);
     }

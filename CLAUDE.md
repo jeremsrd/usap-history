@@ -2481,12 +2481,45 @@ Par ordre de valeur.
    dit pas ». Et les minutes des joueurs restent à `null` : le Match Centre
    ne date que les réalisations, pas les changements.
 
-   **Et le même chantier attend 2010-2011 et 2011-2012**, dont les pages
-   Match Centre sont archivées — 270 en 2010, 377 en 2011, 526 en 2012 — et
-   qui n'ont aujourd'hui qu'ESPN : un camp muet en 2010-2011, deux
-   rencontres sans composition en 2011-2012, et aucune chronologie. Les
-   identifiants se relèvent par `cdx?url=ercrugby.com/eng/matchcentre/*`
-   sur la fenêtre de la saison, puis page à page autour de chaque journée.
+   **2010-2011 ET 2011-2012 SONT REPRISES À LEUR TOUR**, le même soir. Les
+   pages de 2010-2011 n'étaient pas là où on les attendait : ses quatre
+   journées de décembre et janvier n'ont été archivées qu'en **juin 2012**,
+   sous des identifiants qu'aucune fenêtre de dates ne désignait — c'est par
+   **plage d'identifiants**, calée sur les pages datées voisines, qu'on les a
+   retrouvées, et c'est ainsi qu'il faut chercher. Six pages sur huit :
+   12889, 13285, 13406, 13536, 13623, 14168 ; la première journée aux
+   Scarlets et la demi-finale de Milton Keynes n'ont que des pages sans
+   composition. Cinq chronologies, 68 événements ; le camp catalan du 35-14
+   contre Trévise, muet chez ESPN, boucle — cinq essais dont un de pénalité.
+   Le quart contre Toulon garde sa composition de l'ERC mais **pas sa
+   chronologie** : sa page ne porte que huit faits pour cinquante-quatre
+   points, et le garde-fou l'a refusée. 2011-2012 n'a que deux pages sur
+   six, 14966 et 16062 — ni Newport, ni les deux Prato, ni la réception des
+   Dragons ne sont archivés —, une chronologie écrite, et celle du 15-12
+   contre Exeter refusée : il y manque une pénalité de James Hook.
+
+   **Deux règles de plus, apprises sur ces pages.** Un fait **anonyme suivi
+   du même fait nommé** à la minute suivante est un doublon — une
+   transformation sans nom à la 64ᵉ, puis « J Porical » à la 65ᵉ, pour un
+   seul essai de pénalité à Trévise —, et la feuille des joueurs tranche.
+   Et une transformation suit son essai d'une à **deux** minutes sur ces
+   pages ; un essai de pénalité n'est daté à une transformation orpheline
+   que si l'écart des points en réclame un, et jamais au-delà. Sans ces deux
+   règles, deux chronologies justes finissaient à cinq et sept points
+   au-dessus du score, et étaient refusées.
+
+   Un n°8 des Scarlets diffère entre les deux sources le 23 janvier 2011 —
+   David Lyons à l'ERC, Neil Paterson chez ESPN, deux hommes et non une
+   permutation — et c'est l'organisateur qui est gardé. Le surnom qu'il
+   glisse entre guillemets dans le nom d'un arbitre, « John Paul 'JP'
+   Doyle », est retiré au découpage : la base porte John Paul Doyle.
+
+   **Sur les trois saisons, 14 pages Match Centre sur 22 rencontres**, onze
+   chronologies et 175 événements. Les rencontres sans page — la première et
+   la demi-finale de 2010-2011, quatre de 2011-2012, deux de 2012-2013 —
+   restent à ESPN, et rien ne les distingue en base d'une rencontre venue de
+   l'organisateur : c'est le troisième état, « probable, d'après telle
+   source », dont « Remonter avant 2006 » dit le manque.
 
    **Trois écussons manquent, et c'est faute de source** : Rovigo et Gernika
    ne jouent plus l'Europe et n'ont pas d'entrée EPCR ; avec les Cavalieri
