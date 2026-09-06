@@ -1667,10 +1667,21 @@ de chiffres, les pastilles vertes et rouges aussi. Le nombre de titres est
 écrit en lettres dans le dictionnaire (`accueil.champion`) et se réécrira
 le jour d'un huitième. Dictionnaire `accueil.*`.
 
-**Ce qui reste dans l'ancien rendu** : les dix-sept autres pages. À
-reprendre page par page, en relisant chaque fois qu'aucune couleur en dur
-n'est revenue. La suivante, par ordre de valeur : la liste des saisons,
-puis celle des matchs.
+**La liste des saisons est refaite le même jour**, sur le modèle exact de
+`/joueurs` : **l'épine des décennies**, grosses années condensées en rouge
+avec un index en tête — c'est ainsi qu'on cherche dans cent vingt saisons,
+« les années 50 ». Une ligne par saison : division, classement, victoires,
+nuls, défaites et points du championnat, entraîneur principal lié à sa
+fiche, **le fait marquant en mots** — les titres en or, champion de France,
+de Pro D2, Challenge du Manoir, d'après `PALMARES` ; finaliste, promu,
+relégué en gris —, et **le nombre de rencontres que la base porte**, qui
+montre d'un coup d'œil où la couverture s'arrête. Le trophée et les deux
+flèches vertes et rouges à côté du millésime ont disparu, les V verts et
+les D rouges aussi. Dictionnaire `saisons.*`.
+
+**Ce qui reste dans l'ancien rendu** : les seize autres pages. À reprendre
+page par page, en relisant chaque fois qu'aucune couleur en dur n'est
+revenue. La suivante, par ordre de valeur : la liste des matchs.
 
 
 - **Couleur principale** : Rouge sang (#C8102E) - couleur dominante USAP

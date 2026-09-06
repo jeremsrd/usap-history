@@ -220,6 +220,35 @@ export const fr = {
     compteRenduTitre: "Le compte-rendu",
     legendeMiTemps: "mi-temps",
   },
+  saisons: {
+    // La liste des saisons.
+    titre: "Saisons",
+    metaTitre: "Saisons - USAP Historia",
+    metaDescription:
+      "Toutes les saisons de l'USA Perpignan depuis 1902 : division, classement, bilan, entraîneur, et les rencontres saisies.",
+    chapeau: "{n} saisons depuis 1902, dont {documentees} avec leurs rencontres saisies.",
+    reserve:
+      "Les bilans sont ceux du championnat, comme le classement officiel. Avant 2004-2005, les saisons n'ont pas encore leurs rencontres, hors les finales de 1914 et de 1925 reconstituées depuis la presse.",
+    indexAria: "Aller à la décennie",
+    decennie: "Années {n}",
+    colSaison: "Saison",
+    colDivision: "Division",
+    colClassement: "Class.",
+    colVictoires: "V",
+    colNuls: "N",
+    colDefaites: "D",
+    colPoints: "Pts",
+    colEntraineur: "Entraîneur",
+    colFait: "Fait marquant",
+    colRencontres: "Rencontres",
+    champion: "Champion de France",
+    finaliste: "Finaliste",
+    championProD2: "Champion de Pro D2",
+    manoir: "Challenge du Manoir",
+    finalisteEurope: "Finaliste de la Coupe d'Europe",
+    promu: "promu",
+    relegue: "relégué",
+  },
   saison: {
     // La page d'une saison.
     filAriane: "Saisons",
