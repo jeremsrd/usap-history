@@ -41,6 +41,10 @@
 import { mkdirSync, existsSync, readFileSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
 import type { EspnEquipe, EspnJoueur } from "./espn";
+import { baremeDeMatch, pointsDesRealisations } from "../../src/lib/scoring";
+
+/** Les pages de l'ERC vont de 2007 à 2013 : le barème d'aujourd'hui, écrit une seule fois. */
+const BAREME_ERC = baremeDeMatch(2007);
 
 const RACINE = "http://www.ercrugby.com/eng/";
 const ARCHIVE = "http://web.archive.org/web/";
@@ -169,7 +173,7 @@ export function lireCompteRendu2007(brut: Buffer): ErcMatch {
       transformations: c,
       drops: d,
       penalites: p,
-      points: 5 * t + 2 * c + 3 * d + 3 * p,
+      points: pointsDesRealisations({ essais: t, transformations: c, drops: d, penalites: p }, BAREME_ERC),
       ...cartons(icones),
     });
     if (texte(cellules[6])) {
@@ -272,7 +276,7 @@ function lireListe(bloc: string): EspnJoueur[] {
       transformations: c,
       drops: d,
       penalites: pen,
-      points: 5 * t + 2 * c + 3 * d + 3 * pen,
+      points: pointsDesRealisations({ essais: t, transformations: c, drops: d, penalites: pen }, BAREME_ERC),
       jaunes: (cellules[6].match(/yellowcard/g) ?? []).length,
       rouges: (cellules[6].match(/redcard/g) ?? []).length,
     });

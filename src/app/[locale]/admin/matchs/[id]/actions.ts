@@ -4,6 +4,7 @@ import { redirect } from "next/navigation";
 import { revalidatePath } from "next/cache";
 import { createClient } from "@/lib/supabase/server";
 import { prisma } from "@/lib/prisma";
+import { baremeDeMatch, pointsDesRealisations } from "@/lib/scoring";
 import type { Position, EventType } from "@prisma/client";
 
 // --- Helpers ---
@@ -142,8 +143,16 @@ export async function updateMatchPlayer(
   const subIn = parseOptionalInt(formData.get("subIn") as string);
   const subOut = parseOptionalInt(formData.get("subOut") as string);
 
-  // Calcul des points : essai=5, transfo=2, pénalité=3, drop=3
-  const totalPoints = tries * 5 + conversions * 2 + penalties * 3 + dropGoals * 3;
+  // Les points, sous le barème de la saison — cinq l'essai aujourd'hui,
+  // trois en 1925 : `baremeDeMatch` est le seul endroit où c'est écrit.
+  const ligne = await prisma.matchPlayer.findUniqueOrThrow({
+    where: { id },
+    select: { match: { select: { season: { select: { startYear: true } } } } },
+  });
+  const totalPoints = pointsDesRealisations(
+    { essais: tries, transformations: conversions, penalites: penalties, drops: dropGoals },
+    baremeDeMatch(ligne.match.season.startYear),
+  );
 
   try {
     await prisma.matchPlayer.update({

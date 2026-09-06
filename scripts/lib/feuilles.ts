@@ -20,6 +20,8 @@
  */
 
 /** Un joueur absent de la feuille officielle, rendu à son dossard. */
+import { pointsDesRealisations, type Bareme } from "../../src/lib/scoring";
+import { BAREME_LNR } from "./lnr";
 export interface TitulaireManquant {
   camp: "usap" | "adversaire";
   numero: number;
@@ -234,7 +236,7 @@ export function completerRealisations<
     essaisDePenalite: number;
     total: number;
   },
->(jour: string, camp: "usap" | "adversaire", bilan: T): T {
+>(jour: string, camp: "usap" | "adversaire", bilan: T, bareme: Bareme = BAREME_LNR): T {
   const ajouts = (REALISATIONS_COMPLETEES[jour] ?? []).filter((a) => a.camp === camp);
   if (ajouts.length === 0) return bilan;
   const complete = { ...bilan };
@@ -244,12 +246,7 @@ export function completerRealisations<
     complete.penalites += a.penalites ?? 0;
     complete.drops += a.drops ?? 0;
     complete.essaisDePenalite += a.essaisDePenalite ?? 0;
-    complete.total +=
-      5 * (a.essais ?? 0) +
-      2 * (a.transformations ?? 0) +
-      3 * (a.penalites ?? 0) +
-      3 * (a.drops ?? 0) +
-      7 * (a.essaisDePenalite ?? 0);
+    complete.total += pointsDesRealisations(a, bareme);
   }
   return complete;
 }

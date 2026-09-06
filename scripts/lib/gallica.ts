@@ -387,6 +387,32 @@ export function lireScoreEtMiTemps(lignes: string[]): ScoreDuJournal[] {
   return trouves;
 }
 
+/**
+ * « 2 essais, 1 but », « 1 essai, 1 but sur coup tombé », « 1 but sur
+ * pénalité » : ce que le journal compte, dans les mots de son époque. Un
+ * « but » seul est la transformation d'un essai ; « sur coup tombé » le
+ * drop ; « sur pénalité » la pénalité. Rend `null` devant un mot inconnu —
+ * un « but sur marque », par exemple, que le modèle ne sait pas dire.
+ */
+export function lireDecomposition(detail: string): { essais: number; transformations: number; penalites: number; drops: number } | null {
+  const r = { essais: 0, transformations: 0, penalites: 0, drops: 0 };
+  for (const morceau of detail.split(/,|\bet\b/)) {
+    const m = morceau.trim().match(/^(\d+)\s+(.+)$/);
+    if (!m) {
+      if (morceau.trim()) return null;
+      continue;
+    }
+    const n = Number(m[1]);
+    const quoi = m[2].toLowerCase();
+    if (/^essais?$/.test(quoi)) r.essais += n;
+    else if (/^buts?\s+sur\s+coup\s+tomb/.test(quoi) || /^drops?$/.test(quoi)) r.drops += n;
+    else if (/^buts?\s+sur\s+p[ée]nalit/.test(quoi) || /^p[ée]nalit/.test(quoi)) r.penalites += n;
+    else if (/^buts?$/.test(quoi) || /^transformations?$/.test(quoi)) r.transformations += n;
+    else return null;
+  }
+  return r;
+}
+
 export interface FaitHoraire {
   /** L'heure de l'horloge, telle que le journal l'écrit — « 4 h. 40 ». */
   heure: number;

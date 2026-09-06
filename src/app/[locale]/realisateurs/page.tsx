@@ -1,5 +1,6 @@
 import { prisma } from "@/lib/prisma";
 import { POSITIONS } from "@/lib/constants";
+import { baremeDeMatch } from "@/lib/scoring";
 import { JoueurCellule } from "@/components/JoueurCellule";
 import { Award, Footprints, Target } from "lucide-react";
 import { dictionnaire, type Traduire } from "@/i18n/dictionnaire";
@@ -48,13 +49,18 @@ interface Bilan {
   transformations: number;
   penalites: number;
   drops: number;
+  auPied: number;
   matchs: number;
   premier: Date;
   dernier: Date;
 }
 
-/** Points marqués au pied : la transformation, la pénalité et le drop. */
-const auPied = (b: Bilan) => 2 * b.transformations + 3 * (b.penalites + b.drops);
+/**
+ * Points marqués au pied : la transformation, la pénalité et le drop. Comptés
+ * ligne à ligne sous le barème de la saison — un drop de 1925 vaut quatre —,
+ * et additionnés dans `auPied` au fil des lignes, pas recalculés après coup.
+ */
+const auPied = (b: Bilan) => b.auPied;
 
 export default async function RealisateursPage({
   params,
@@ -79,7 +85,7 @@ export default async function RealisateursPage({
       conversions: true,
       penalties: true,
       dropGoals: true,
-      match: { select: { date: true } },
+      match: { select: { date: true, season: { select: { startYear: true } } } },
     },
   });
 
@@ -91,10 +97,13 @@ export default async function RealisateursPage({
       transformations: 0,
       penalites: 0,
       drops: 0,
+      auPied: 0,
       matchs: 0,
       premier: l.match.date,
       dernier: l.match.date,
     };
+    const bareme = baremeDeMatch(l.match.season.startYear);
+    b.auPied += bareme.transformation * l.conversions + bareme.penalite * l.penalties + bareme.drop * l.dropGoals;
     b.points += l.totalPoints;
     b.essais += l.tries;
     b.transformations += l.conversions;

@@ -171,3 +171,88 @@ export function matchPoints(
     result === "VICTOIRE" ? scale.win : result === "NUL" ? scale.draw : scale.loss;
   return base + (bonusOffensif ? 1 : 0) + (bonusDefensif ? 1 : 0);
 }
+
+// =============================================================================
+// LE BARÈME DU JEU, PAR ÉPOQUE
+// =============================================================================
+
+/** Ce que vaut chaque façon de marquer, une saison donnée. */
+export interface Bareme {
+  essai: number;
+  transformation: number;
+  penalite: number;
+  drop: number;
+  /**
+   * L'essai de pénalité, tel que la base le compte : **toujours transformé**,
+   * essai plus transformation — sept points aujourd'hui, cinq en 1925. Avant
+   * 2017 il fallait encore le transformer, et les feuilles en nomment le
+   * buteur ; la base le garde malgré tout à ce total, transformation comprise
+   * et non comptée, pour que « la somme des joueurs égale le score » vaille
+   * sur toute la base. Un essai de pénalité manqué ne retombe donc pas, et
+   * c'est voulu : les scripts échouent bruyamment.
+   */
+  essaiDePenalite: number;
+}
+
+/**
+ * Le barème du jeu selon la saison, par son année de début.
+ *
+ * Le projet a longtemps écrit cinq, deux, trois et trois en dur à quatre
+ * endroits, et personne ne l'a vu parce que la base ne remontait pas avant
+ * 2004-2005. C'est faux avant 1992-1993, et de plus en plus faux à mesure
+ * qu'on remonte : un essai vaut trois points en 1925, un coup de pied tombé
+ * quatre. *L'Auto* du 4 mai 1914 le vérifie au point près — « 8 points
+ * (2 essais, 1 but) à 7 points (1 essai, 1 but sur coup tombé) » ne se
+ * décompose que sous ce barème.
+ *
+ * Les dates sont celles des lois internationales, d'après la Wikipédia
+ * anglophone (« Laws of rugby union »), appliquées ici à la saison qui
+ * commence l'année du changement :
+ *
+ * | à partir de | essai | transf. | pénalité | drop |
+ * |---|---|---|---|---|
+ * | 1893-1894 | 3 | 2 | 3 | 4 |
+ * | 1948-1949 | 3 | 2 | 3 | 3 |
+ * | 1971-1972 | 4 | 2 | 3 | 3 |
+ * | 1992-1993 | 5 | 2 | 3 | 3 |
+ *
+ * **Deux réserves.** Le championnat de France a pu les appliquer avec
+ * décalage, et rien ici ne l'établit — la première finale de l'USAP, en
+ * 1914, concorde, c'est tout ce qu'on sait. Et deux façons de marquer ont
+ * disparu que le modèle ne sait pas dire : le but après une marque, trois
+ * points jusqu'en 1977, et le but au pied depuis le sol en jeu ouvert,
+ * jusqu'en 1905. Le barème ne les porte pas ; une chronologie qui en
+ * rencontrerait un doit le signaler, pas le ranger dans les drops.
+ *
+ * Avant 1893-1894, la fonction lève : les valeurs de 1886 et de 1891 sont
+ * connues mais aucune rencontre de la base ne peut en relever — l'USAP est
+ * fondée en 1902 —, et un barème qu'on n'a pas vérifié ne s'écrit pas.
+ */
+export function baremeDeMatch(seasonStartYear: number): Bareme {
+  if (seasonStartYear < 1893) {
+    throw new Error(`Pas de barème attesté avant 1893-1894 (saison ${seasonStartYear})`);
+  }
+  const b =
+    seasonStartYear >= 1992
+      ? { essai: 5, transformation: 2, penalite: 3, drop: 3 }
+      : seasonStartYear >= 1971
+        ? { essai: 4, transformation: 2, penalite: 3, drop: 3 }
+        : seasonStartYear >= 1948
+          ? { essai: 3, transformation: 2, penalite: 3, drop: 3 }
+          : { essai: 3, transformation: 2, penalite: 3, drop: 4 };
+  return { ...b, essaiDePenalite: b.essai + b.transformation };
+}
+
+/** Le total de points d'un décompte de réalisations, sous un barème. */
+export function pointsDesRealisations(
+  r: { essais?: number; transformations?: number; penalites?: number; drops?: number; essaisDePenalite?: number },
+  bareme: Bareme,
+): number {
+  return (
+    bareme.essai * (r.essais ?? 0) +
+    bareme.transformation * (r.transformations ?? 0) +
+    bareme.penalite * (r.penalites ?? 0) +
+    bareme.drop * (r.drops ?? 0) +
+    bareme.essaiDePenalite * (r.essaisDePenalite ?? 0)
+  );
+}

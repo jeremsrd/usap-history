@@ -14,8 +14,9 @@
  *     par Jérémy » depuis le 6 septembre 2026 — la table `attestations` —,
  *     mais aucun nom n'a encore été relu, et une composition lue par un OCR
  *     n'est ni affirmée ni inconnue tant qu'elle ne l'est pas ;
- *   - un essai vaut trois points en 1925, et le barème est en dur à quatre
- *     endroits ;
+ *   - un essai vaut trois points en 1925 — `baremeDeMatch` le sait depuis
+ *     le 6 septembre 2026, et la décomposition de 1914 le vérifie ✓ —, mais
+ *     aucun script d'écriture n'a encore été relu sous ce barème ;
  *   - et les noms sortent abîmés — « Raruis » pour Ramis —, chacun devant
  *     être relu sur l'image avant de devenir une fiche.
  * Lancé sans `--dry`, il s'arrête en le disant.
@@ -40,6 +41,7 @@ import {
   fasciculeDuJour,
   lireArbitre,
   lireChronologieHoraire,
+  lireDecomposition,
   lireEquipes,
   lirePage,
   lireScoreEtMiTemps,
@@ -47,6 +49,7 @@ import {
   type Periodique,
 } from "./lib/gallica";
 import { chercherJoueur } from "./lib/joueurs";
+import { baremeDeMatch, pointsDesRealisations } from "../src/lib/scoring";
 
 const prisma = new PrismaClient();
 
@@ -134,8 +137,8 @@ async function main() {
   }
   if (!dry) {
     console.error(
-      "Ce script ne sait pas écrire, et c'est voulu : aucun nom de l'OCR n'a été relu sur l'image, " +
-        "et le barème de 1925 n'est pas porté. Relancer avec --dry ; cf. l'en-tête.",
+      "Ce script ne sait pas écrire, et c'est voulu : aucun nom de l'OCR n'a été relu sur l'image. " +
+        "Relancer avec --dry ; cf. l'en-tête.",
     );
     process.exit(1);
   }
@@ -167,6 +170,24 @@ async function main() {
           (s.miTemps ? `, mi-temps ${s.miTemps[0]}-${s.miTemps[1]}` : "") +
           (s.detail ? `, « ${s.detail[0]} » contre « ${s.detail[1]} »` : ""),
       );
+      // La décomposition du journal, confrontée au barème de l'époque : c'est
+      // le barème qui est vérifié autant que le journal.
+      if (s.detail) {
+        const bareme = baremeDeMatch(Number(jour.slice(0, 4)) - (Number(jour.slice(5, 7)) < 8 ? 1 : 0));
+        s.detail.forEach((d, i) => {
+          const r = lireDecomposition(d);
+          if (!r) {
+            avertissements.push(`décomposition « ${d} » : un mot que le barème ne sait pas dire`);
+            return;
+          }
+          const total = pointsDesRealisations(r, bareme);
+          const ok = total === s.score[i];
+          console.log(
+            `      ${ok ? "✓" : "✗"} « ${d} » = ${r.essais}×${bareme.essai} + ${r.transformations}×${bareme.transformation} + ${r.penalites}×${bareme.penalite} + ${r.drops}×${bareme.drop} = ${total}${ok ? "" : ` ≠ ${s.score[i]}`}`,
+          );
+          if (!ok) avertissements.push(`décomposition « ${d} » : ${total} points sous le barème de ${bareme.essai}/${bareme.transformation}/${bareme.penalite}/${bareme.drop}, pour ${s.score[i]}`);
+        });
+      }
     }
     const arbitre = lireArbitre(lignes);
     if (arbitre) console.log(`    arbitre : M. ${arbitre}`);

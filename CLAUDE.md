@@ -2775,7 +2775,8 @@ les stades, les écussons et les postes autant que pour les rencontres.
   l'incertitude devient lisible.
 
 Ce que la table ne fait pas encore : les compositions de la presse
-d'avant-guerre n'y entrent pas, faute du barème par époque ; et les
+d'avant-guerre n'y entrent pas, aucun nom n'ayant été relu sur l'image —
+le barème par époque, lui, existe depuis le même jour ; et les
 attestations existantes ne portent que les cas documentés ici, non ceux
 qu'un script antérieur aurait posés sans le dire.
 
@@ -2810,25 +2811,45 @@ restait.** Soulevé par Jérémy le 2 septembre 2026 : avant, il n'y avait pas d
 remplacements, les points ne valaient pas la même chose, et l'on pouvait
 marquer d'un coup de pied tombé après une marque.
 
-**LE BARÈME DE MATCH EST EN DUR À QUATRE ENDROITS**, et c'est exactement le
-piège que ce fichier dénonce déjà pour les points de classement — « ne jamais
-recoder un `wins * 4 + draws * 2` en dur : c'est faux avant 2004-2005 ». Le
-même défaut existe pour les points du jeu, et personne ne l'a vu parce que la
-base ne remonte pas avant 2006-2007 :
+**`baremeDeMatch(seasonStartYear)` EXISTE DEPUIS LE 6 SEPTEMBRE 2026**, dans
+`src/lib/scoring.ts`, pendant de `pointsScaleFor()` pour le classement, avec
+`pointsDesRealisations()` pour faire la somme. Le barème était écrit en dur
+à **huit** endroits et non quatre — les quatre nommés ci-dessous, plus
+`lib/feuilles.ts`, `lib/erc.ts`, `seed-cup-espn.ts` et la page des
+réalisateurs —, et personne ne l'avait vu parce que la base ne remontait
+pas avant 2004-2005. Tous appellent désormais la fonction :
 
-| Où | Ce qui est écrit en dur |
-|---|---|
-| `scripts/lib/lnr.ts`, `realisationsDepuisFaits` | essai +5, essai de pénalité +7, pénalité +3, drop +3 |
-| `scripts/seed-opponent-sheet.ts` | `7 * essaisDePenalite`, `5 * essaisCollectifs` |
-| `scripts/seed-cup-sheet.ts` | `7 * essaisDePenalite` |
-| `src/app/admin/matchs/[id]/actions.ts` | `tries * 5 + conversions * 2 + penalties * 3 + dropGoals * 3` |
+| Où | Ce qui était écrit en dur | Ce qui l'appelle |
+|---|---|---|
+| `scripts/lib/lnr.ts`, `realisationsDepuisFaits` | essai +5, essai de pénalité +7, pénalité +3, drop +3 | `BAREME_LNR`, le barème de 2004 — l'archive de la LNR ne remonte pas plus haut, et c'est écrit là |
+| `scripts/lib/feuilles.ts`, `completerRealisations` | 5, 2, 3, 3, 7 | le même, en paramètre |
+| `scripts/lib/erc.ts` | 5, 2, 3, 3 par joueur | `BAREME_ERC`, le barème de 2007 |
+| `scripts/seed-cup-espn.ts` | 5, 2, 3, 3, et `peutPorterQuatreEssais` | `baremeDeMatch(startYear)` de la campagne |
+| `scripts/seed-opponent-sheet.ts` | `7 * essaisDePenalite`, `5 * essaisCollectifs` | `baremeDeMatch(saison.startYear)` |
+| `scripts/seed-cup-sheet.ts` | `7 * essaisDePenalite` | `baremeDeMatch` de la saison du match |
+| `src/app/admin/matchs/[id]/actions.ts` | `tries * 5 + conversions * 2 + …` | la saison du match, lue avant d'écrire |
+| `src/app/[locale]/realisateurs/page.tsx` | `2 * transformations + 3 * (pénalités + drops)` | ligne à ligne, sous le barème de la saison de chaque feuille |
 
-Il faudra un **`baremeDeMatch(seasonStartYear)`**, pendant de
-`pointsScaleFor()` pour le classement, et l'appeler partout plutôt que de
-recopier les valeurs.
+Le barème porte aussi **l'essai de pénalité tel que la base le compte** —
+essai plus transformation, sept aujourd'hui, cinq en 1925 —, pour que la
+règle « la somme des joueurs égale le score » vaille à toute époque.
 
-**Le barème, d'après la Wikipédia anglophone (« Laws of rugby union »), et à
-recouper :**
+**Et il est vérifié au point près par *L'Auto* du 4 mai 1914** : « 8 points
+(2 essais, 1 but) à 7 points (1 essai, 1 but sur coup tombé) » ne se
+décompose que sous le barème de 1893-1948 — essai 3, transformation 2,
+drop 4. `seed-match-gallica.ts` confronte chaque décomposition du journal
+au barème de l'époque et le dit, ✓ ou ✗. Les garde-fous du site n'ont pas
+bougé d'un point : `fix-bonus-points --dry` rend 0 correction, une feuille
+de 2012 et une campagne de 2011-2012 se simulent sans une ligne à
+modifier.
+
+**Avant 1893-1894, la fonction lève** : les valeurs de 1886 et de 1891 sont
+connues mais aucune rencontre de la base ne peut en relever, l'USAP étant
+fondée en 1902, et un barème qu'on n'a pas vérifié ne s'écrit pas.
+
+**Le barème, d'après la Wikipédia anglophone (« Laws of rugby union »), tel
+que `baremeDeMatch` le porte à partir de 1893 — et recoupé, pour 1914, par
+le journal lui-même :**
 
 | Période | Essai | Transf. | Pénalité | Drop |
 |---|---|---|---|---|

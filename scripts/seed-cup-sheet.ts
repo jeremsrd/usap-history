@@ -41,6 +41,7 @@
 
 import { PrismaClient } from "@prisma/client";
 import { memeJoueur } from "./lib/noms";
+import { baremeDeMatch } from "../src/lib/scoring";
 import { trouverOuCreerArbitre } from "./lib/arbitres";
 import { USAP, chercherMatchUsap, lireMatch, type EpcrEquipe, type EpcrJoueur } from "./lib/epcr";
 
@@ -240,7 +241,7 @@ async function main() {
 
       // ---- Contrôles ------------------------------------------------------
       const points = cote.equipe.joueurs.reduce((s, j) => s + j.points, 0);
-      const attendu = cote.score - 7 * cote.equipe.essaisDePenalite;
+      const attendu = cote.score - baremeDeMatch(Number(match.season.label.slice(0, 4))).essaiDePenalite * cote.equipe.essaisDePenalite;
       if (points !== attendu) {
         ennuis.push(
           `${camp} : ${points} points reconstitués pour ${attendu} attendus ` +

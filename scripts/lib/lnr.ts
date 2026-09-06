@@ -34,6 +34,7 @@
  * L'état est global au module, ce qui suffit ici : une saison appartient à une
  * division et une seule, et aucun script n'en traite deux à la fois.
  */
+import { baremeDeMatch, type Bareme } from "../../src/lib/scoring";
 const RACINES = {
   top14: "https://top14.lnr.fr",
   prod2: "https://prod2.lnr.fr",
@@ -1212,10 +1213,19 @@ export interface Realisations {
  * (cf. `corrigerEssaisDePenalite`). Aucun des huit de 2016-2017 n'est dans ce
  * cas.
  */
+/**
+ * L'archive de la LNR s'arrête à 2004-2005 : tout fait qu'elle publie relève
+ * du barème d'aujourd'hui, cinq, deux, trois et trois. Le paramètre existe
+ * pour que la règle soit écrite une seule fois, dans `baremeDeMatch`, et
+ * pour le jour où une autre source passerait par ici.
+ */
+export const BAREME_LNR: Bareme = baremeDeMatch(2004);
+
 export function realisationsDepuisFaits(
   faits: LnrFait[],
   camp: Camp,
   score: number,
+  bareme: Bareme = BAREME_LNR,
 ): Realisations {
   const bilan: Realisations = {
     essais: 0,
@@ -1231,19 +1241,19 @@ export function realisationsDepuisFaits(
     switch (fait.type) {
       case "essai":
         bilan.essais++;
-        bilan.total += 5;
+        bilan.total += bareme.essai;
         break;
       case "essai-de-penalite":
         bilan.essaisDePenalite++;
-        bilan.total += 7;
+        bilan.total += bareme.essaiDePenalite;
         break;
       case "penalite":
         bilan.penalites++;
-        bilan.total += 3;
+        bilan.total += bareme.penalite;
         break;
       case "drop":
         bilan.drops++;
-        bilan.total += 3;
+        bilan.total += bareme.drop;
         break;
     }
   }

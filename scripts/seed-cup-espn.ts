@@ -52,6 +52,7 @@ import {
   type Ligue,
 } from "./lib/espn";
 import { CLUBS_ESPN } from "./lib/clubs";
+import { baremeDeMatch, pointsDesRealisations, type Bareme } from "../src/lib/scoring";
 import { lirePageArchivee, lireCompteRendu2007, lireMatchCentre, type ErcEvenement } from "./lib/erc";
 import { normalize } from "./lib/noms";
 import { POSTE_PAR_NUMERO, trouverOuCreerJoueur } from "./lib/joueurs";
@@ -587,7 +588,7 @@ interface Realisations {
  * marque, mais ce serait une inférence, et le camp est alors simplement tenu
  * pour incohérent.
  */
-function realisations(equipe: EspnEquipe): Realisations {
+function realisations(equipe: EspnEquipe, bareme: Bareme): Realisations {
   const somme = (choix: (j: EspnEquipe["joueurs"][number]) => number) =>
     equipe.joueurs.reduce((s, j) => s + choix(j), 0);
   const r = {
@@ -641,6 +642,7 @@ async function lireCampagne(
   const resumes = await chercherMatchsUsap(saison, campagne.ligue);
   const rencontres: Rencontre[] = [];
   const startYear = Number(saison.slice(0, 4));
+  const bareme = baremeDeMatch(startYear);
 
   // **ESPN ne libelle plus les tours en 2018-2019** : ses `notes` sont vides.
   // Quand aucune rencontre de la campagne n'en porte, les journées de poule se
@@ -765,8 +767,8 @@ async function lireCampagne(
       }
     }
 
-    const realUsap = realisations(usap);
-    const realAdverse = realisations(adverse);
+    const realUsap = realisations(usap, bareme);
+    const realAdverse = realisations(adverse, bareme);
     for (const [camp, r, equipe] of [
       ["USAP", realUsap, usap],
       [opponentNom, realAdverse, adverse],
@@ -891,10 +893,11 @@ function harmoniserPrenoms(erc: EspnJoueur[], espn: EspnJoueur[], etiquette: str
  * drop. On essaie chaque nombre d'essais possible, puis chaque nombre de
  * transformations : le reste doit être un multiple de trois.
  */
-function peutPorterQuatreEssais(score: number): boolean {
-  for (let essais = 4; 5 * essais <= score; essais++) {
-    for (let transfos = 0; transfos <= essais && 5 * essais + 2 * transfos <= score; transfos++) {
-      if ((score - 5 * essais - 2 * transfos) % 3 === 0) return true;
+function peutPorterQuatreEssais(score: number, bareme: Bareme): boolean {
+  for (let essais = 4; bareme.essai * essais <= score; essais++) {
+    for (let transfos = 0; transfos <= essais && bareme.essai * essais + bareme.transformation * transfos <= score; transfos++) {
+      const reste = score - bareme.essai * essais - bareme.transformation * transfos;
+      if (reste % bareme.penalite === 0 || reste % bareme.drop === 0) return true;
     }
   }
   return false;
@@ -909,6 +912,7 @@ function peutPorterQuatreEssais(score: number): boolean {
 function controlerLaPoule(
   rencontres: Rencontre[],
   officiel: ClassementDePoule,
+  bareme: Bareme,
 ): { ecarts: string[]; avertissements: string[] } {
   const poule = rencontres.filter((r) => r.feuille.tour.startsWith("Poule"));
   const v = poule.filter((r) => r.resultat === MatchResult.VICTOIRE).length;
@@ -933,7 +937,7 @@ function controlerLaPoule(
   // de marquer le point restant. Le bonus y est donc exclu par l'arithmétique
   // seule, ce qui laisse deux feuilles muettes pour deux bonus manquants.
   const muets = poule.filter(
-    (r) => r.bonusIndecidable && !r.bonusOffensif && peutPorterQuatreEssais(r.usap.score!),
+    (r) => r.bonusIndecidable && !r.bonusOffensif && peutPorterQuatreEssais(r.usap.score!, bareme),
   );
   const manquants = officiel.bonusOffensifs - poule.filter((r) => r.bonusOffensif).length;
   if (manquants > 0 && muets.length === manquants) {
@@ -1241,7 +1245,7 @@ async function main() {
   }
 
   // ---- Le garde-fou, avant toute écriture --------------------------------
-  const { ecarts, avertissements } = controlerLaPoule(rencontres, campagne.poule);
+  const { ecarts, avertissements } = controlerLaPoule(rencontres, campagne.poule, baremeDeMatch(saison.startYear));
   ecarts.push(...controlerLaPhaseFinale(rencontres, campagne.phaseFinale ?? []));
   const avertissementsPoule = avertissements.length;
   console.log("");

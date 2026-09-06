@@ -57,6 +57,7 @@
 
 import { PrismaClient } from "@prisma/client";
 import { estCouperet } from "../src/lib/matchs";
+import { baremeDeMatch } from "../src/lib/scoring";
 import {
   essaisOmisSansAuteur,
   pointsOmisSansAuteur,
@@ -900,8 +901,9 @@ async function main(cible: "adverse" | "usap") {
     // Ni les essais de pénalité, ni les essais collectifs, ni les points que
     // la feuille marque « n.a. » n'ont d'auteur : ils ne figurent sur aucune
     // ligne de joueur.
+    const bareme = baremeDeMatch(saison.startYear);
     const attendu =
-      score - 7 * essaisDePenalite - 5 * essaisCollectifs - pointsSansAuteur;
+      score - bareme.essaiDePenalite * essaisDePenalite - bareme.essai * essaisCollectifs - pointsSansAuteur;
 
     if (points !== attendu) {
       echecs.push(
