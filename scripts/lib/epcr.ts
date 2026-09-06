@@ -21,15 +21,18 @@
  *   - le type d'événement `Penalty` désigne une pénalité **concédée**, pas un
  *     coup de pied réussi. Les points se lisent dans les `stats` du joueur,
  *     jamais en comptant les événements ;
- *   - `minutesPlayedTotal` retire les dix minutes d'un carton jaune, ce que la
- *     convention du projet refuse (cf. CLAUDE.md). Les minutes sont donc
- *     reconstituées à partir des entrées et sorties, et la valeur d'Opta n'est
- *     gardée que pour contrôle, sous `minutesOpta` ;
+ *   - `minutesPlayedTotal` retire les dix minutes d'un carton jaune — ce que
+ *     le projet refusait jusqu'au 6 septembre 2026, et fait depuis, cf.
+ *     `privationDuJaune` de `lib/feuilles.ts`. Les minutes sont reconstituées
+ *     à partir des entrées et sorties, jaune déduit, et la valeur d'Opta n'est
+ *     gardée que pour contrôle, sous `minutesOpta` : les deux doivent
+ *     désormais concorder à l'arrondi près ;
  *   - un remplacement temporaire s'écrit « sortie puis entrée du **même**
  *     joueur à la même minute », sans que l'on sache qui l'a suppléé. Les deux
  *     s'annulent : le joueur est tenu pour resté sur le terrain.
  */
 
+import { privationDuJaune } from "./feuilles";
 const RACINE = "https://rugby-union-feeds.incrowdsports.com";
 
 /**
@@ -261,10 +264,13 @@ function tempsDeJeu(
   }
 
   for (const j of joueurs.values()) {
-    // Un carton jaune ne se déduit pas des minutes jouées ; le rouge, si —
-    // il a déjà fermé la ligne dans la chronologie.
+    // Le rouge a déjà fermé la ligne dans la chronologie ; le jaune retire
+    // ses dix minutes, ou ce qu'il en reste avant la sortie ou la fin.
     fermer(j.id, DUREE, false);
-    j.minutes = !j.isStarter && j.subIn == null ? null : (total.get(j.id) ?? 0);
+    j.minutes =
+      !j.isStarter && j.subIn == null
+        ? null
+        : (total.get(j.id) ?? 0) - privationDuJaune(j.jaune, j.subOut ?? DUREE);
   }
 }
 

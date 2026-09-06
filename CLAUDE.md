@@ -225,7 +225,7 @@ diffère.
 | `… hors composition` sur un auteur | essai collectif, ou composition fausse | soupçonner la base avant la source |
 | `… hors composition` sur un **carton** | la LNR sanctionne un homme qu'elle n'aligne pas | irrattachable : après démonstration, l'inscrire dans `CARTONS_HORS_COMPOSITION` de `seed-opponent-sheet.ts`, qui l'ignore et écrit le reste |
 | `feuille LNR introuvable` | mauvais segment de phase | `phasesLnr()` ; vérifier le nom du segment sur le calendrier |
-| minutes ≠ 1 200 | carton rouge, ou retour non enregistré | en championnat, un rouge abaisse le total de `80 − minute` ; **en coupe d'Europe, de 20 minutes au plus** (cf. ci-dessus) ; sinon signaler, ne pas inventer |
+| minutes ≠ 1 200 | carton, ou retour non enregistré | un jaune abaisse le total de dix minutes au plus ; en championnat, un rouge de `80 − minute` ; **en coupe d'Europe, de 20 minutes au plus** (cf. ci-dessus) ; sinon signaler, ne pas inventer |
 | points des joueurs < score | essai de pénalité ou essai collectif | légitime, ces essais n'ont pas d'auteur |
 
 ### Quatre pièges qui coûtent du temps
@@ -358,10 +358,21 @@ Ne jamais remplir seulement le côté USAP :
     les intervalles réellement joués, `subIn` et `subOut` gardent la première
     entrée et la première sortie, et `notes` explique le retour. La somme des
     minutes d'une équipe doit alors toujours retomber sur 1 200 (15 × 80).
-  - **Un carton jaune ne se déduit pas** des minutes jouées ; un carton rouge,
-    si : le match du joueur s'arrête à la minute du carton. En **championnat**,
-    où le rouge est définitif, l'équipe finit à quatorze et totalise donc
-    `1200 − (80 − minute du rouge)`.
+  - **Un carton jaune retire dix minutes**, ou ce qu'il en reste avant la
+    sortie du joueur ou la fin du match — `privationDuJaune()` de
+    `lib/feuilles.ts`, que les deux scripts de feuille et `lib/epcr.ts`
+    appellent —, et l'équipe totalise dix minutes de moins par jaune.
+    **C'est la règle depuis le 6 septembre 2026, et c'était l'inverse
+    avant** : « un carton jaune ne se déduit pas des minutes jouées », et un
+    titulaire jauni resté jusqu'au bout comptait 80 — 441 lignes. Jérémy l'a
+    fait tomber sur Mattéo Le Corvec, jauni à la 40ᵉ du Stade Français-USAP
+    du 5 septembre 2026 : un joueur au banc de touche ne joue pas. Opta le
+    retirait déjà, et `minutesOpta` concorde désormais avec les minutes
+    reconstituées. `fix-minutes-cartons-jaunes.ts` a repris la base.
+
+    Un carton rouge, lui, arrête le match du joueur à sa minute. En
+    **championnat**, où le rouge est définitif, l'équipe finit à quatorze et
+    totalise donc `1200 − (80 − minute du rouge)`.
   - **Mais en coupe d'Europe, le rouge ne coûte que vingt minutes.** Le
     **carton rouge de 20 minutes** y sort le joueur pour de bon et repourvoit
     son poste au terme de la sanction : l'équipe ne finit pas à quatorze, elle
@@ -988,6 +999,7 @@ doublons.
 | `fix-match-venues.ts` | met les stades en ordre : fusionne les doublons, crée les manquants, rattache chaque club à son terrain — déduit des déplacements déjà enregistrés — puis complète les matchs sans lieu, par `terrainDuMatch()` |
 | `seed-stades-historiques.ts` | écrit les terrains d'**avant** : les trois clubs qui ont déménagé pendant la période couverte, chacun avec sa source. À relancer après `fix-match-venues.ts` si un stade manquait |
 | `sync-effectif.ts` | met l'effectif professionnel en accord avec la LNR : crée les fiches manquantes, lève `isActive` sur l'effectif et l'abaisse sur les partants, puis **inscrit l'effectif à la saison en cours** (`SeasonPlayer`, en ajout seul) ; refuse d'écrire tant qu'un doublon ou un nom douteux subsiste |
+| `fix-minutes-cartons-jaunes.ts` | **la reprise du 6 septembre 2026** : retire à chaque joueur jauni les minutes de sa sanction, sur toute la base — 843 lignes —, en retrouvant la minute où il a cessé d'être en jeu ; laisse et nomme les cartons sans minute, les lignes sans minutes et celles dont les minutes ne se déduisent plus d'une entrée et d'une sortie, qu'une reprise de leur feuille règle. Déjà appliqué ; `--dry` |
 | `fix-null-penalty-tries.ts` | met à 0 les compteurs `penaltyTries` restés `null`, mais seulement là où les points retombent déjà sur le score |
 | `fix-barrages-access-match.ts` | les deux trous des barrages d'accession — arbitre du 12/06/2022, mi-temps du 03/06/2023 — et la transformation que la chronologie de ce dernier avait perdue |
 | `fix-carton-rouge-dragons-2025.ts` | la minute du carton rouge de Paia'aua, 35ᵉ pour 14ᵉ, dans la chronologie du 7 décembre 2025 ; porte les trois preuves concordantes |
@@ -1785,7 +1797,12 @@ Par ordre de valeur.
 
    Trente-trois anomalies connues **de 2008-2009 à 2021-2022**, toutes
    assumées — celles de 2007-2008 et de 2006-2007 sont avec leur saison, au
-   point suivant :
+   point suivant. **Les totaux de minutes cités ci-dessous datent d'avant le
+   6 septembre 2026** : depuis, un carton jaune retire dix minutes au joueur
+   et à l'attendu de son équipe, et une feuille jaunie affiche donc dix de
+   moins des deux côtés ; l'écart, lui, ne bouge pas. Trois ont été relus
+   après la reprise et sont donnés à jour — Narbonne 2015, Albi 2016 et
+   2017 :
    - **La Rochelle totalise 1 206 minutes le 30 octobre 2021.** Sa feuille se
      contredit — Victor Vito sort *définitivement* à la 25ᵉ sur protocole
      commotion, puis elle le fait sortir encore à la 35ᵉ et rentrer deux fois.
@@ -1802,8 +1819,8 @@ Par ordre de valeur.
      jamais son retour, alors qu'elle fait « entrer » une seconde fois son
      suppléant Lotima Faingaanuku à la 63ᵉ. Même raison qu'à La Rochelle : la
      feuille est démontrablement fausse, la minute du retour ne l'est pas ;
-   - **Albi totalise 1 226 minutes le 16 décembre 2016 et 1 222 le 5 mars
-     2017.** Deux fois la même contradiction, et c'est celle de La Rochelle :
+   - **Albi totalise 1 190 minutes pour 1 164 attendues le 16 décembre 2016,
+     et 1 202 pour 1 180 le 5 mars 2017.** Deux fois la même contradiction, et c'est celle de La Rochelle :
      la feuille fait sortir un joueur déjà sorti. Le 16 décembre, Vlad
      Alexandru Nistor cède sa place à Max Curie à la 46ᵉ, puis la feuille le
      fait sortir encore à la 54ᵉ pour Nomani Tonga — à la 54ᵉ où elle le fait
@@ -1821,7 +1838,8 @@ Par ordre de valeur.
      vingt-trois que la même LNR publie sur ce match. Le second est ignoré —
      cf. `CARTONS_HORS_COMPOSITION` — et Béziers totalise donc 1 160 minutes,
      non 1 120 ;
-   - **l'USAP totalise 1 185 minutes à Narbonne le 6 décembre 2015.** Encore
+   - **l'USAP totalise 1 165 minutes pour 1 180 attendues à Narbonne le
+     6 décembre 2015.** Encore
      une feuille qui se contredit : Enzo Forletta y entre deux fois sans
      jamais sortir, le même changement — Mailau pour André — est inscrit à la
      54ᵉ *et* à la 55ᵉ, et André sort une troisième fois à la 65ᵉ. Rien de

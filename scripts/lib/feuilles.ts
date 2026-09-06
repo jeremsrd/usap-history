@@ -341,3 +341,31 @@ export function effectifMinimalDeFeuille(saison: string): number {
 export function titulairesManquantsAdmis(saison: string): boolean {
   return Number(saison.slice(0, 4)) <= 2005;
 }
+
+// =============================================================================
+// LE CARTON JAUNE ET LES MINUTES
+// =============================================================================
+
+/** Ce qu'un carton jaune coûte : dix minutes hors du terrain. */
+export const PRIVATION_JAUNE = 10;
+
+/**
+ * Minutes qu'un carton jaune retire à un joueur — et à son équipe.
+ *
+ * **Jusqu'au 6 septembre 2026, le projet ne les retirait pas** : « un carton
+ * jaune ne se déduit pas des minutes jouées », et un titulaire jauni resté
+ * jusqu'au bout comptait 80. C'était une convention, pas un fait — Opta, la
+ * seule source qui publie des minutes par joueur, les retire —, et Jérémy
+ * l'a fait tomber sur le Le Corvec du 5 septembre 2026, jauni à la 40ᵉ et
+ * compté 80. `minutesPlayed` se lit depuis « temps effectif sur le
+ * terrain », et une équipe jaunie totalise dix minutes de moins.
+ *
+ * La privation vaut dix minutes, ou ce qu'il reste avant la sortie du joueur
+ * ou la fin du match : un jaune à la 75ᵉ en coûte cinq, un jaune suivi d'une
+ * sortie à la 3ᵉ minute de sanction en coûte trois. `fin` est la minute où
+ * le joueur cesse d'être en jeu — sa sortie, son rouge, ou la durée du match.
+ */
+export function privationDuJaune(carton: number | null | undefined, fin: number): number {
+  if (carton == null) return 0;
+  return Math.max(0, Math.min(PRIVATION_JAUNE, fin - carton));
+}

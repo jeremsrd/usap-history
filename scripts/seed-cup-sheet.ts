@@ -41,6 +41,7 @@
 
 import { PrismaClient } from "@prisma/client";
 import { memeJoueur } from "./lib/noms";
+import { privationDuJaune } from "./lib/feuilles";
 import { baremeDeMatch } from "../src/lib/scoring";
 import { trouverOuCreerArbitre } from "./lib/arbitres";
 import { USAP, chercherMatchUsap, lireMatch, type EpcrEquipe, type EpcrJoueur } from "./lib/epcr";
@@ -94,7 +95,13 @@ function minutesAttendues(joueurs: EpcrJoueur[], duree: number): number {
   const privation = joueurs
     .filter((j) => j.rouge != null)
     .reduce((s, j) => s + Math.min(duree - j.rouge!, PRIVATION_ROUGE), 0);
-  return 15 * duree - privation;
+  // Et dix minutes par carton jaune, ou ce qu'il en reste — la règle du
+  // projet depuis le 6 septembre 2026, qui est aussi celle d'Opta.
+  const jaunes = joueurs.reduce(
+    (s, j) => s + (j.minutes == null ? 0 : privationDuJaune(j.jaune, j.subOut ?? j.rouge ?? duree)),
+    0,
+  );
+  return 15 * duree - privation - jaunes;
 }
 
 interface Ligne {

@@ -59,6 +59,7 @@ import { PrismaClient } from "@prisma/client";
 import { estCouperet } from "../src/lib/matchs";
 import { baremeDeMatch } from "../src/lib/scoring";
 import {
+  privationDuJaune,
   essaisOmisSansAuteur,
   pointsOmisSansAuteur,
   titulairesManquantsAdmis,
@@ -520,8 +521,12 @@ function calculerTempsDeJeu(
     fermer(ligne.id, rouge ?? duree, rouge != null);
     const joue = total.get(ligne.id) ?? 0;
     const bilan = bilans.get(ligne.id)!;
-    // Remplaçant jamais entré : minutes inconnues plutôt que zéro
-    bilan.minutes = !ligne.isStarter && bilan.subIn == null ? null : joue;
+    // Remplaçant jamais entré : minutes inconnues plutôt que zéro. Un carton
+    // jaune retire ses dix minutes, ou ce qu'il en reste — cf. `privationDuJaune`.
+    bilan.minutes =
+      !ligne.isStarter && bilan.subIn == null
+        ? null
+        : joue - privationDuJaune(bilan.jaune, bilan.subOut ?? rouge ?? duree);
   }
 
   // Les sorties sur carton que la feuille passe sous silence, et qu'aucun
@@ -964,7 +969,13 @@ async function main(cible: "adverse" | "usap") {
     const perduesCarton = (PRIVATIONS_SUR_CARTON[jour] ?? [])
       .filter((x) => x.club === campTraite)
       .reduce((s2, x) => s2 + x.minutes, 0);
-    const minutesAttendues = 15 * duree - perduesRouge - perduesCarton;
+    // Et chaque carton jaune laisse l'équipe à quatorze dix minutes, ou ce
+    // qu'il en reste avant la sortie du joueur ou la fin du match.
+    const perduesJaune = lignes.reduce(
+      (s, [, b]) => s + (b.minutes == null ? 0 : privationDuJaune(b.jaune, b.subOut ?? b.rouge ?? duree)),
+      0,
+    );
+    const minutesAttendues = 15 * duree - perduesRouge - perduesCarton - perduesJaune;
     const alerte = sansTempsDeJeu
       ? " ⚠ aucun changement publié — temps de jeu non écrit"
       : minutes !== minutesAttendues
