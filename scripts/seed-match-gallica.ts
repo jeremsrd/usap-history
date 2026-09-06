@@ -46,6 +46,7 @@ import {
   lirePage,
   lireScoreEtMiTemps,
   pagesContenant,
+  type LigneDuXV,
   type Periodique,
 } from "./lib/gallica";
 import { chercherJoueur } from "./lib/joueurs";
@@ -122,6 +123,150 @@ const MATCHS: Record<string, MatchDeJournal> = {
   },
 };
 
+/**
+ * LA RELECTURE SUR L'IMAGE.
+ *
+ * L'OCR abîme les noms, et une composition ne vaut rien tant qu'un humain ne
+ * l'a pas relue sur l'original. Le 6 septembre 2026, les blocs « Les
+ * équipes » des numéros de 1914 et de 1925 ont été découpés dans l'image de
+ * Gallica — par IIIF, aux coordonnées que l'ALTO donne de chaque ligne — et
+ * relus par Claude, puis confrontés aux XV que Wikipédia donne des deux
+ * finales, prénoms compris. Les deux sources concordent à quinze sur quinze
+ * pour les quatre équipes, à l'orthographe près : le journal écrit Sicard,
+ * Seyroux, Couffe, Amillat, Serres, Fournier, Nauté, Galiay, Dufour là où
+ * Wikipédia écrit Sicart, Sayrou, Couffé, Amilhat, Serre, Fournié, Naute,
+ * Gallay, Duffour.
+ *
+ * **Ce que la table affirme** : le nom tel que le journal l'imprime, lu sur
+ * l'image et non sur l'OCR, dans l'ordre du journal, ligne par ligne ; et en
+ * regard, le nom complet de Wikipédia. **Ce qu'elle n'affirme pas** :
+ * laquelle des deux orthographes est la bonne — c'est à Jérémy de trancher,
+ * et `valide` reste `false` tant qu'il ne l'a pas fait. Rien ne s'écrit
+ * avant.
+ */
+interface XVRelu {
+  club: string;
+  lignes: { ligne: LigneDuXV; noms: string[] }[];
+  capitaine: string;
+  /** Les quinze de Wikipédia, prénom et nom, dans l'ordre du journal. */
+  wikipedia: string[];
+}
+
+interface Relecture {
+  reluPar: string;
+  reluLe: string;
+  /** L'image relue, par IIIF : région de la page, aux coordonnées de l'ALTO. */
+  image: string;
+  /** Tranché par Jérémy ? Tant que non, la simulation propose et le script refuse d'écrire. */
+  valide: boolean;
+  equipes: XVRelu[];
+}
+
+const RELECTURES: Record<string, Relecture> = {
+  "1914-05-03": {
+    reluPar: "Claude, sur l'image, confronté à Wikipédia « Championnat de France de rugby à XV 1913-1914 »",
+    reluLe: "2026-09-06",
+    image: "https://gallica.bnf.fr/iiif/ark:/12148/bpt6k4626515t/f1/5522,4780,1080,850/full/0/native.jpg",
+    valide: false,
+    equipes: [
+      {
+        club: "Perpignan",
+        capitaine: "",
+        lignes: [
+          { ligne: "arrière", noms: ["Couffe"] },
+          { ligne: "trois-quarts", noms: ["Amillat", "Courregé", "Barbe", "Serres"] },
+          { ligne: "demis", noms: ["Giral", "Fournier"] },
+          { ligne: "première ligne", noms: ["Joué", "Schuller", "Cutzach"] },
+          { ligne: "deuxième ligne", noms: ["Gravas", "Nauté"] },
+          { ligne: "troisième ligne", noms: ["Lacarra", "Roques", "Lyda"] },
+        ],
+        wikipedia: [
+          "Joseph Couffé", "Joseph Amilhat", "Max Courregé", "Félix Barbe", "Paul Serre", "Aimé Giral", "François Fournié",
+          "Edouard Joué", "Raymond Schuller", "André Cutzach", "Maurice Gravas", "François Naute", "Georges Lacarra", "Jean Roques", "Joseph Lyda",
+        ],
+      },
+      {
+        club: "Tarbes",
+        capitaine: "",
+        lignes: [
+          { ligne: "arrière", noms: ["Caujolle"] },
+          { ligne: "trois-quarts", noms: ["Cazajous", "Gardex", "Sentilles", "Lacoste"] },
+          { ligne: "demis", noms: ["Pourtau", "Laterrade"] },
+          { ligne: "première ligne", noms: ["Lastegaray", "Faure", "Dufour"] },
+          { ligne: "deuxième ligne", noms: ["Labeyrie", "Mousseigne"] },
+          { ligne: "troisième ligne", noms: ["Lavigne", "Vogt", "Galiay"] },
+        ],
+        wikipedia: [
+          "Jean Caujolle", "Albert Cazajous", "Amédée Gardex", "Jean Sentilles", "Robert Lacoste", "Jean Pourtau", "Guillaume Laterrade",
+          "Jean-Marcellin Lastegaray", "Félix Faure", "René Duffour", "Maurice Labeyrie", "Emile Mousseigne", "Roger Lavigne", "Albert Vogt", "Paul Gallay",
+        ],
+      },
+    ],
+  },
+  "1925-05-03": {
+    reluPar: "Claude, sur l'image, confronté à Wikipédia « Championnat de France de rugby à XV 1924-1925 »",
+    reluLe: "2026-09-06",
+    image: "https://gallica.bnf.fr/iiif/ark:/12148/bpt6k4684973p/f5/356,4540,1090,540/full/0/native.jpg",
+    valide: false,
+    equipes: [
+      {
+        club: "Carcassonne",
+        capitaine: "Jean Sebédio",
+        lignes: [
+          { ligne: "arrière", noms: ["Andrieu"] },
+          { ligne: "trois-quarts", noms: ["Gleyzes", "Roux", "Miquel", "Domec"] },
+          { ligne: "demis", noms: ["Marty", "Darsans"] },
+          { ligne: "troisième ligne", noms: ["Jean Sebédio", "Joseph Raynaud", "Siguier"] },
+          { ligne: "deuxième ligne", noms: ["Cadenat", "Germain Raynaud"] },
+          { ligne: "première ligne", noms: ["Castérot", "Mauran", "Aguado"] },
+        ],
+        wikipedia: [
+          "François Andrieu", "Henri Gleyzes", "Jean Roux", "Albert Miquel", "Albert Domec", "Philippe Marty", "Jean Darsans",
+          "Jean Sébédio", "Joseph Raynaud", "Henri Siguier", "Georges Cadenat", "Germain Raynaud", "Jean Castérot", "Roger Mauran", "Étienne Aguado",
+        ],
+      },
+      {
+        club: "Perpignan",
+        capitaine: "Ramis",
+        lignes: [
+          { ligne: "arrière", noms: ["Cayrol"] },
+          { ligne: "trois-quarts", noms: ["Darné", "Ramis", "Baillette", "Tabès"] },
+          { ligne: "demis", noms: ["Pascot", "Carbonne"] },
+          { ligne: "troisième ligne", noms: ["Ribère", "Camo", "Sicard"] },
+          { ligne: "deuxième ligne", noms: ["Rière", "Henric"] },
+          { ligne: "première ligne", noms: ["Montade", "Delort", "Seyroux"] },
+        ],
+        wikipedia: [
+          "Étienne Cayrol", "Marcel Darné", "Roger Ramis", "Marcel Baillette", "René Tabès", "Joseph Pascot", "Jean Carbonne",
+          "Eugène Ribère", "Ernest Camo", "Noël Sicart", "André Rière", "Marcel Henric", "Camille Montade", "Georges Delort", "Joseph Sayrou",
+        ],
+      },
+    ],
+  },
+};
+
+/**
+ * Deux graphies d'un même nom, ou deux hommes ? On compare les patronymes,
+ * accents ôtés, à la distance d'édition : deux lettres au plus font une
+ * variante — Seyroux et Sayrou, Galiay et Gallay, Amillat et Amilhat —, au
+ * delà ce sont deux noms. C'est un tri pour la lecture, pas un verdict :
+ * le verdict est celui de Jérémy.
+ */
+function memeNomDeJournal(journal: string, wikipedia: string): "identique" | "variante" | "différent" {
+  const n = (x: string) => x.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase().replace(/[^a-z]/g, "");
+  const a = n(journal.split(" ").slice(-1)[0]);
+  const b = n(wikipedia.split(" ").slice(-1)[0]);
+  if (a === b) return "identique";
+  const d: number[][] = Array.from({ length: a.length + 1 }, (_, i) => [i, ...Array(b.length).fill(0)]);
+  for (let j = 1; j <= b.length; j++) d[0][j] = j;
+  for (let i = 1; i <= a.length; i++) {
+    for (let j = 1; j <= b.length; j++) {
+      d[i][j] = Math.min(d[i - 1][j] + 1, d[i][j - 1] + 1, d[i - 1][j - 1] + (a[i - 1] === b[j - 1] ? 0 : 1));
+    }
+  }
+  return d[a.length][b.length] <= 2 ? "variante" : "différent";
+}
+
 function argument(nom: string): string | undefined {
   const prefixe = `--${nom}=`;
   return process.argv.find((a) => a.startsWith(prefixe))?.slice(prefixe.length);
@@ -137,8 +282,8 @@ async function main() {
   }
   if (!dry) {
     console.error(
-      "Ce script ne sait pas écrire, et c'est voulu : aucun nom de l'OCR n'a été relu sur l'image. " +
-        "Relancer avec --dry ; cf. l'en-tête.",
+      "Ce script ne sait pas encore écrire : la relecture des noms sur l'image attend la validation de Jérémy " +
+        "(cf. RELECTURES, `valide`). Relancer avec --dry ; cf. l'en-tête.",
     );
     process.exit(1);
   }
@@ -235,9 +380,36 @@ async function main() {
   }
 
   if (!equipesTrouvees) avertissements.push("aucun bloc « Les équipes se présentèrent comme suit » lisible");
+
+  // ---- La relecture sur l'image, en regard de l'OCR et de Wikipédia -------
+  const relecture = RELECTURES[jour];
+  if (relecture) {
+    console.log(`\n  — relecture sur l'image (${relecture.reluLe}, ${relecture.reluPar})${relecture.valide ? ", validée par Jérémy" : " — À VALIDER PAR JÉRÉMY"}`);
+    console.log(`    ${relecture.image}`);
+    for (const xv of relecture.equipes) {
+      const lus = xv.lignes.flatMap((l) => l.noms);
+      console.log(`\n    ${xv.club} — ${lus.length} noms lus${xv.capitaine ? `, capitaine ${xv.capitaine}` : ""}, ${xv.wikipedia.length} chez Wikipédia`);
+      let k = 0;
+      for (const l of xv.lignes) {
+        for (const nom of l.noms) {
+          const w = xv.wikipedia[k++] ?? "—";
+          const verdict = memeNomDeJournal(nom, w);
+          const marque = verdict === "identique" ? " " : verdict === "variante" ? "≈" : "✗";
+          console.log(`      ${marque} ${l.ligne.padEnd(16)} ${nom.padEnd(18)} ${w}`);
+          if (verdict === "différent") avertissements.push(`${xv.club} : « ${nom} » lu sur l'image, « ${w} » chez Wikipédia — ce n'est pas le même homme`);
+        }
+      }
+      if (lus.length !== 15) avertissements.push(`${xv.club} : ${lus.length} noms lus sur l'image pour 15`);
+      if (xv.wikipedia.length !== 15) avertissements.push(`${xv.club} : ${xv.wikipedia.length} noms chez Wikipédia pour 15`);
+    }
+    console.log("\n    ≈ : deux graphies d'un même nom, à trancher ; ✗ : deux hommes.");
+  }
   console.log(`\n=== ${avertissements.length} avertissement(s) ===`);
   for (const a of avertissements) console.log(`  ⚠ ${a}`);
-  console.log("\nSimulation — rien n'est écrit, et rien ne le sera tant que la base ne porte pas la provenance d'une composition (cf. l'en-tête).");
+  console.log(
+    "\nSimulation — rien n'est écrit" +
+      (relecture ? (relecture.valide ? "." : ", et rien ne le sera tant que Jérémy n'a pas validé la relecture (cf. RELECTURES).") : ", et rien ne le sera tant que les noms n'ont pas été relus sur l'image (cf. RELECTURES)."),
+  );
 }
 
 main()

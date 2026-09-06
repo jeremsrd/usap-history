@@ -2662,6 +2662,23 @@ un nom avec elle, et Carbonne se retrouve cinquième trois-quarts. Le
 script le signale et ne complète rien : c'est là qu'un humain doit relire
 l'image. Aucun des vingt-neuf noms n'est en base, ce qui est attendu.
 
+**Les noms de 1914 et de 1925 sont relus sur l'image, le 6 septembre 2026,
+et attendent l'arbitrage de Jérémy.** L'ALTO donne la position de chaque
+ligne sur la page ; IIIF découpe cette région dans l'image de Gallica
+(`/iiif/ark:/12148/{ark}/f{page}/{x},{y},{w},{h}/full/0/native.jpg`, les
+coordonnées de l'ALTO valant pour l'image pleine) ; les deux découpes ont été
+lues par Claude et confrontées aux XV que Wikipédia donne des deux finales,
+prénoms compris. **Quinze sur quinze pour les quatre équipes**, dans l'ordre
+du journal — l'OCR avait perdu « demis : Pascot » en 1925, l'image le rend.
+Seules divergent des graphies : le journal écrit Sicard, Seyroux, Couffe,
+Amillat, Serres, Fournier, Nauté, Galiay, Dufour, Wikipédia Sicart, Sayrou,
+Couffé, Amilhat, Serre, Fournié, Naute, Gallay, Duffour. La table
+`RELECTURES` de `seed-match-gallica.ts` porte les deux, ligne par ligne,
+avec l'adresse de l'image relue, et `valide: false` : la simulation les
+affiche en regard, ≈ pour une variante à trancher, ✗ pour deux hommes, et
+**rien ne s'écrit avant que Jérémy n'ait tranché la graphie** — c'est lui
+qui deviendra `reluPar` dans l'attestation.
+
 **Les trois autres finales, simulées le 6 septembre 2026, ont appris au
 lecteur que *L'Auto* n'écrit pas toujours ses XV de la même façon.** En
 1914, « LES EQUIPES » en titre, chaque club seul sur sa ligne en
