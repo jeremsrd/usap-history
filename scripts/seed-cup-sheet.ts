@@ -269,10 +269,11 @@ async function main() {
         );
       }
 
-      // Les minutes reconstituées se confrontent à celles d'Opta, qui les
-      // calcule autrement : il retire les dix minutes d'un carton jaune et
-      // arrête au coup de sifflet un joueur temporairement sorti. Un écart ne
-      // condamne pas la feuille, il demande un coup d'œil.
+      // Les minutes reconstituées se confrontent à celles d'Opta. Depuis le
+      // 6 septembre 2026 les deux retirent les dix minutes d'un carton jaune,
+      // et ne diffèrent plus que sur un joueur temporairement sorti, qu'Opta
+      // arrête au coup de sifflet. Un écart ne condamne pas la feuille, il
+      // demande un coup d'œil.
       //
       // L'attendu tient compte des cartons rouges, et de la période de
       // sanction de vingt minutes — cf. `minutesAttendues`. Comparer à
