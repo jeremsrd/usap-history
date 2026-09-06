@@ -1628,9 +1628,31 @@ les faits minute par minute en liste. Plus de pastille verte ou rouge, plus
 de badge bleu pour le bonus défensif, plus d'emoji ni d'icône. Page passée
 au dictionnaire (`match.*`), provenance en pied.
 
-**Ce qui reste dans l'ancien rendu** : les dix-neuf autres pages. À reprendre
-page par page, en relisant chaque fois qu'aucune couleur en dur n'est
-revenue. La suivante, par ordre de valeur : la page de saison.
+**La page de saison est refaite le même jour.** Sa seule audace est la
+**frise des résultats** : sous le millésime en rouge condensé, la saison
+entière en une ligne de lettres — V en rouge, N en encre, D en gris —,
+chacune liée à sa rencontre. C'est la structure réelle d'une saison, et
+elle se lit d'un coup d'œil : les quinze défaites d'affilée de 2018-2019 s'y
+voient sans qu'on les nomme. Le titre décidé est une ligne en or — « Champion
+de Pro D2, promu » —, et une relégation seule s'écrit en gris, l'or n'étant
+pas pour elle. Le classement et le bilan du championnat tiennent en une
+phrase, le staff en une autre, le bilan rédigé suit ; les rencontres par
+compétition, phase finale à part, en tableaux serrés sans logos ; trois
+classements courts — réalisateurs, essais, plus utilisés — ; et
+**l'effectif en un seul tableau**, chaque homme avec ses matchs,
+titularisations et brassards, minutes, réalisations et cartons en mots. Les
+onze listes de cartes de l'ancienne page y tiennent en douze colonnes, et
+les onze `groupBy` en une seule lecture des lignes. L'effectif réunit les
+inscrits et ceux qui ont joué sans l'être — avant 2021-2022 il n'y a pas de
+ligne d'effectif, ce sont les feuilles qui disent qui était là. La colonne
+des minutes disparaît quand la source n'en publie aucune, 2004-2005 et
+2005-2006, et la note le dit. Plus de flèche verte ni rouge pour la montée
+et la descente, plus de neuf cases de chiffres centrés. Page passée au
+dictionnaire (`saison.*`), provenance en pied, saisons voisines en tête.
+
+**Ce qui reste dans l'ancien rendu** : les dix-huit autres pages. À
+reprendre page par page, en relisant chaque fois qu'aucune couleur en dur
+n'est revenue. La suivante, par ordre de valeur : l'accueil.
 
 
 - **Couleur principale** : Rouge sang (#C8102E) - couleur dominante USAP

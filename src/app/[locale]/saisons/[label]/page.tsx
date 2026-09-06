@@ -1,531 +1,445 @@
 import Link from "@/components/Lien";
-import { estCouperet, estJoue } from "@/lib/matchs";
+import Provenance from "@/components/Provenance";
+import { JoueurCellule } from "@/components/JoueurCellule";
 import { notFound } from "next/navigation";
 import { prisma } from "@/lib/prisma";
+import { estCouperet, estJoue } from "@/lib/matchs";
 import { DIVISIONS, POSITIONS } from "@/lib/constants";
-import { formatDateFR, formatResult } from "@/lib/utils";
-import Image from "next/image";
-import {
-  Trophy,
-  ArrowUp,
-  ArrowDown,
-  MapPin,
-  Users,
-  Calendar,
-  Target,
-  Award,
-  Crosshair,
-  Repeat,
-  Zap,
-  Clock,
-  AlertTriangle,
-  ShieldOff,
-  ShieldAlert,
-  ShieldCheck,
-} from "lucide-react";
+import { formatDateFR } from "@/lib/utils";
+import { dictionnaire, type Traduire } from "@/i18n/dictionnaire";
+import type { Langue } from "@/i18n/langues";
 import type { Metadata } from "next";
+
+/**
+ * La page d'une saison, refaite le 6 septembre 2026 dans l'identité posée
+ * sur `/joueurs`, la fiche joueur et la fiche de match. Sa seule audace est
+ * la **frise des résultats** : sous le millésime, la saison entière en une
+ * ligne de lettres — V en rouge, N en encre, D en gris —, chacune liée à sa
+ * rencontre. C'est la structure réelle d'une saison, une suite de
+ * rencontres, et elle se lit d'un coup d'œil : la série de quinze défaites
+ * de 2018-2019 s'y voit sans qu'on la nomme.
+ *
+ * Tout le reste est dit en phrases puis en tableaux : le classement et le
+ * bilan du championnat en une phrase, le titre décidé en or, le staff, le
+ * bilan rédigé ; les rencontres par compétition, phase finale à part ; trois
+ * classements courts — réalisateurs, essais, plus utilisés — ; et
+ * **l'effectif en un seul tableau**, chaque homme avec ses matchs, ses
+ * titularisations, ses minutes, ses réalisations et ses cartons, à la
+ * façon d'une page d'effectif de lfchistory.net. Les onze listes de cartes
+ * que la page portait — points, matchs, essais, pénalités,
+ * transformations, drops, minutes, et une par couleur de carton — y tiennent
+ * en douze colonnes.
+ *
+ * Ce que la page ne fait plus : des icônes devant les titres, des flèches
+ * vertes et rouges pour la montée et la descente, neuf cases de chiffres
+ * centrés, des pastilles de score, des logos dans les lignes de match, des
+ * ronds gris pour les joueurs sans portrait.
+ */
 
 export const dynamic = "force-dynamic";
 
 type Props = {
-  params: Promise<{ label: string }>;
+  params: Promise<{ locale: Langue; label: string }>;
 };
 
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
-  const { label } = await params;
+  const { locale, label } = await params;
+  const t = await dictionnaire(locale);
   return {
-    title: `Saison ${label} - USAP Historia`,
-    description: `Détail de la saison ${label} de l'USA Perpignan : matchs, effectif, classement.`,
+    title: t("saison.metaTitre", { label }),
+    description: t("saison.metaDescription", { label }),
   };
 }
 
+const nombre = (n: number) => n.toLocaleString("fr-FR");
+const majuscule = (s: string) => s.charAt(0).toUpperCase() + s.slice(1);
+const ORDRE_POSTES = Object.keys(POSITIONS);
+const rangPoste = (poste: string | null) => (poste ? ORDRE_POSTES.indexOf(poste) : ORDRE_POSTES.length);
+
+/** Ce qu'un joueur a fait sous le maillot sur les rencontres jouées de la saison. */
+type Cumul = {
+  matchs: number;
+  titulaire: number;
+  capitaine: number;
+  points: number;
+  essais: number;
+  transformations: number;
+  penalites: number;
+  drops: number;
+  minutes: number;
+  jaunes: number;
+  oranges: number;
+  rouges: number;
+  blancs: number;
+};
+
+const CUMUL_VIDE: Cumul = {
+  matchs: 0, titulaire: 0, capitaine: 0, points: 0, essais: 0, transformations: 0,
+  penalites: 0, drops: 0, minutes: 0, jaunes: 0, oranges: 0, rouges: 0, blancs: 0,
+};
+
 export default async function SaisonDetailPage({ params }: Props) {
-  const { label } = await params;
+  const { locale, label } = await params;
+  const t = await dictionnaire(locale);
 
   const season = await prisma.season.findFirst({
     where: { label },
     include: {
-      coach: true,
-      president: true,
+      coach: { select: { firstName: true, lastName: true, slug: true } },
+      president: { select: { firstName: true, lastName: true, slug: true } },
       seasonCoaches: {
         orderBy: { displayOrder: "asc" },
-        include: {
-          coach: { select: { firstName: true, lastName: true, slug: true } },
-        },
+        include: { coach: { select: { firstName: true, lastName: true, slug: true } } },
       },
       matches: {
         orderBy: { date: "asc" },
         include: {
-          competition: { select: { name: true, shortName: true, type: true } },
-          opponent: {
-            select: { name: true, shortName: true, logoUrl: true },
-          },
-          venue: { select: { name: true, city: true, slug: true } },
+          competition: { select: { name: true, shortName: true } },
+          opponent: { select: { name: true, shortName: true, slug: true } },
+          venue: { select: { name: true, slug: true } },
         },
       },
       seasonPlayers: {
         include: {
           player: {
-            select: {
-              slug: true,
-              firstName: true,
-              lastName: true,
-              position: true,
-              photoUrl: true,
-            },
+            select: { id: true, slug: true, firstName: true, lastName: true, position: true, photoUrl: true, isActive: true },
           },
         },
-        orderBy: { shirtNumber: "asc" },
       },
     },
   });
-
   if (!season) notFound();
 
-  // IDs des matchs de la saison (pour filtrer les stats)
-  const seasonMatchIds = season.matches.map((m) => m.id);
+  // Les saisons voisines, pour aller de l'une à l'autre sans repasser par la
+  // liste. Requêtes séquentielles : le pool de Supabase est étroit.
+  const precedente = await prisma.season.findFirst({ where: { startYear: season.startYear - 1 }, select: { label: true } });
+  const suivante = await prisma.season.findFirst({ where: { startYear: season.startYear + 1 }, select: { label: true } });
 
-  // ── Statistiques individuelles de la saison ──────────────────────
-  const usapFilter = { matchId: { in: seasonMatchIds }, isOpponent: false, playerId: { not: null } as const };
-  const playerSelect = { id: true, slug: true, firstName: true, lastName: true, position: true, photoUrl: true } as const;
+  // ---- Ce que chaque joueur a fait, sur les rencontres jouées seulement ----
+  // Les compositions d'une rencontre à venir entrent la veille : elles ne
+  // comptent pas encore. Une seule lecture des lignes, cumulées en mémoire,
+  // là où la page faisait onze `groupBy`.
+  const joues = season.matches.filter(estJoue);
+  const lignes = await prisma.matchPlayer.findMany({
+    where: { matchId: { in: joues.map((m) => m.id) }, isOpponent: false, playerId: { not: null } },
+    select: {
+      playerId: true, isStarter: true, isCaptain: true, totalPoints: true, tries: true, conversions: true,
+      penalties: true, dropGoals: true, minutesPlayed: true, yellowCard: true, orangeCard: true, redCard: true, whiteCard: true,
+    },
+  });
+  const cumuls = new Map<string, Cumul>();
+  for (const l of lignes) {
+    const c = cumuls.get(l.playerId!) ?? { ...CUMUL_VIDE };
+    c.matchs += 1;
+    if (l.isStarter) c.titulaire += 1;
+    if (l.isCaptain) c.capitaine += 1;
+    c.points += l.totalPoints;
+    c.essais += l.tries;
+    c.transformations += l.conversions;
+    c.penalites += l.penalties;
+    c.drops += l.dropGoals;
+    c.minutes += l.minutesPlayed ?? 0;
+    if (l.yellowCard) c.jaunes += 1;
+    if (l.orangeCard) c.oranges += 1;
+    if (l.redCard) c.rouges += 1;
+    if (l.whiteCard) c.blancs += 1;
+    cumuls.set(l.playerId!, c);
+  }
+  // Sur 2004-2005 et 2005-2006 la source ne publie aucun temps de jeu : la
+  // colonne serait une colonne de zéros, et un zéro n'est pas un « on ne
+  // sait pas ». Elle disparaît, et la note le dit.
+  const sansMinutes = lignes.length > 0 && lignes.every((l) => l.minutesPlayed == null);
 
-  // Requêtes séquentielles pour respecter la limite du pool Supabase
-  const topScorersAgg = await prisma.matchPlayer.groupBy({
-    by: ["playerId"], where: usapFilter,
-    _sum: { totalPoints: true },
-    orderBy: { _sum: { totalPoints: "desc" } },
-    take: 10, having: { totalPoints: { _sum: { gt: 0 } } },
-  });
-  const topAppsAgg = await prisma.matchPlayer.groupBy({
-    by: ["playerId"], where: usapFilter,
-    _count: { id: true },
-    orderBy: { _count: { id: "desc" } },
-    take: 10,
-  });
-  const topTriesAgg = await prisma.matchPlayer.groupBy({
-    by: ["playerId"], where: usapFilter,
-    _sum: { tries: true },
-    orderBy: { _sum: { tries: "desc" } },
-    take: 10, having: { tries: { _sum: { gt: 0 } } },
-  });
-  const topPenAgg = await prisma.matchPlayer.groupBy({
-    by: ["playerId"], where: usapFilter,
-    _sum: { penalties: true },
-    orderBy: { _sum: { penalties: "desc" } },
-    take: 10, having: { penalties: { _sum: { gt: 0 } } },
-  });
-  const topConvAgg = await prisma.matchPlayer.groupBy({
-    by: ["playerId"], where: usapFilter,
-    _sum: { conversions: true },
-    orderBy: { _sum: { conversions: "desc" } },
-    take: 10, having: { conversions: { _sum: { gt: 0 } } },
-  });
-  const topDropAgg = await prisma.matchPlayer.groupBy({
-    by: ["playerId"], where: usapFilter,
-    _sum: { dropGoals: true },
-    orderBy: { _sum: { dropGoals: "desc" } },
-    take: 10, having: { dropGoals: { _sum: { gt: 0 } } },
-  });
-  const topMinutesAgg = await prisma.matchPlayer.groupBy({
-    by: ["playerId"], where: usapFilter,
-    _sum: { minutesPlayed: true },
-    orderBy: { _sum: { minutesPlayed: "desc" } },
-    take: 10, having: { minutesPlayed: { _sum: { gt: 0 } } },
-  });
-  const yellowCardsAgg = await prisma.matchPlayer.groupBy({
-    by: ["playerId"], where: { ...usapFilter, yellowCard: true },
-    _count: { id: true },
-    orderBy: { _count: { id: "desc" } },
-    take: 10,
-  });
-  const redCardsAgg = await prisma.matchPlayer.groupBy({
-    by: ["playerId"], where: { ...usapFilter, redCard: true },
-    _count: { id: true },
-    orderBy: { _count: { id: "desc" } },
-    take: 10,
-  });
-  const whiteCardsAgg = await prisma.matchPlayer.groupBy({
-    by: ["playerId"], where: { ...usapFilter, whiteCard: true },
-    _count: { id: true },
-    orderBy: { _count: { id: "desc" } },
-    take: 10,
-  });
-  const orangeCardsAgg = await prisma.matchPlayer.groupBy({
-    by: ["playerId"], where: { ...usapFilter, orangeCard: true },
-    _count: { id: true },
-    orderBy: { _count: { id: "desc" } },
-    take: 10,
-  });
-
-  // Récupérer tous les joueurs concernés en une seule requête
-  const allPlayerIds = [
-    ...new Set([
-      ...topScorersAgg.map((s) => s.playerId),
-      ...topAppsAgg.map((a) => a.playerId),
-      ...topTriesAgg.map((t) => t.playerId),
-      ...topPenAgg.map((p) => p.playerId),
-      ...topConvAgg.map((c) => c.playerId),
-      ...topDropAgg.map((d) => d.playerId),
-      ...topMinutesAgg.map((m) => m.playerId),
-      ...yellowCardsAgg.map((y) => y.playerId),
-      ...redCardsAgg.map((r) => r.playerId),
-      ...whiteCardsAgg.map((w) => w.playerId),
-      ...orangeCardsAgg.map((o) => o.playerId),
-    ]),
-  ].filter((id): id is string => id !== null);
-  const allPlayers = await prisma.player.findMany({
-    where: { id: { in: allPlayerIds } },
-    select: playerSelect,
-  });
-  const playerMap = new Map(allPlayers.map((p) => [p.id, p]));
-
-  const topScorers = topScorersAgg.map((agg) => ({
-    ...playerMap.get(agg.playerId!)!, totalPoints: agg._sum.totalPoints ?? 0,
-  }));
-  const topApps = topAppsAgg.map((agg) => ({
-    ...playerMap.get(agg.playerId!)!, appearances: agg._count.id,
-  }));
-  const topTries = topTriesAgg.map((agg) => ({
-    ...playerMap.get(agg.playerId!)!, tries: agg._sum.tries ?? 0,
-  }));
-  const topPenalties = topPenAgg.map((agg) => ({
-    ...playerMap.get(agg.playerId!)!, penalties: agg._sum.penalties ?? 0,
-  }));
-  const topConversions = topConvAgg.map((agg) => ({
-    ...playerMap.get(agg.playerId!)!, conversions: agg._sum.conversions ?? 0,
-  }));
-  const topDrops = topDropAgg.map((agg) => ({
-    ...playerMap.get(agg.playerId!)!, dropGoals: agg._sum.dropGoals ?? 0,
-  }));
-  const topMinutes = topMinutesAgg.map((agg) => ({
-    ...playerMap.get(agg.playerId!)!, minutes: agg._sum.minutesPlayed ?? 0,
-  }));
-  const yellowCards = yellowCardsAgg.map((agg) => ({
-    ...playerMap.get(agg.playerId!)!, count: agg._count.id,
-  }));
-  const redCards = redCardsAgg.map((agg) => ({
-    ...playerMap.get(agg.playerId!)!, count: agg._count.id,
-  }));
-  const whiteCards = whiteCardsAgg.map((agg) => ({
-    ...playerMap.get(agg.playerId!)!, count: agg._count.id,
-  }));
-  const orangeCards = orangeCardsAgg.map((agg) => ({
-    ...playerMap.get(agg.playerId!)!, count: agg._count.id,
-  }));
-
-  // Grouper les matchs par compétition, en détachant la phase finale de la
-  // phase régulière : une demi-finale n'a pas à se perdre au milieu des trente
-  // journées, c'est elle qui fait le titre. La distinction ne vaut que pour
-  // les compétitions qui ont les deux — le barrage d'accession, seul match de
-  // sa compétition, garde son intitulé.
-  const nomCompetition = (match: (typeof season.matches)[number]) =>
-    match.competition.shortName || match.competition.name;
-  const avecJournees = new Set(
-    season.matches.filter((m) => m.matchday != null).map(nomCompetition),
+  // ---- L'effectif : les inscrits, et ceux qui ont joué sans être inscrits ----
+  // Les lignes d'effectif n'existent que depuis 2021-2022 ; avant, ce sont
+  // les feuilles qui disent qui était là.
+  const inscrits = new Set(season.seasonPlayers.map((sp) => sp.playerId));
+  const manquants = [...cumuls.keys()].filter((id) => !inscrits.has(id));
+  const autres = manquants.length
+    ? await prisma.player.findMany({
+        where: { id: { in: manquants } },
+        select: { id: true, slug: true, firstName: true, lastName: true, position: true, photoUrl: true, isActive: true },
+      })
+    : [];
+  const effectif = [
+    ...season.seasonPlayers.map((sp) => ({
+      joueur: sp.player,
+      poste: sp.position ?? sp.player.position,
+      numero: sp.shirtNumber,
+      cumul: cumuls.get(sp.playerId),
+    })),
+    ...autres.map((j) => ({ joueur: j, poste: j.position, numero: null as number | null, cumul: cumuls.get(j.id) })),
+  ].sort(
+    (a, b) =>
+      rangPoste(a.poste) - rangPoste(b.poste) ||
+      a.joueur.lastName.localeCompare(b.joueur.lastName, "fr") ||
+      a.joueur.firstName.localeCompare(b.joueur.firstName, "fr"),
   );
+  const avecNumero = effectif.some((e) => e.numero != null);
+  const avecCapitaine = effectif.some((e) => (e.cumul?.capitaine ?? 0) > 0);
+  const avecCartons = effectif.some((e) => e.cumul && e.cumul.jaunes + e.cumul.oranges + e.cumul.rouges + e.cumul.blancs > 0);
 
-  const matchesByCompetition = new Map<string, typeof season.matches>();
-  for (const match of season.matches) {
-    const compName = nomCompetition(match);
-    const cle =
-      estCouperet(match) && avecJournees.has(compName)
-        ? `${compName} — phase finale`
-        : compName;
-    const existing = matchesByCompetition.get(cle) || [];
-    existing.push(match);
-    matchesByCompetition.set(cle, existing);
+  /** Un classement court : la valeur décroissante, et à égalité le moins de matchs devant. */
+  const classement = (cle: keyof Cumul, n = 10) =>
+    effectif
+      .filter((e): e is typeof e & { cumul: Cumul } => !!e.cumul && e.cumul[cle] > 0)
+      .sort((a, b) => b.cumul[cle] - a.cumul[cle] || a.cumul.matchs - b.cumul.matchs || b.cumul.titulaire - a.cumul.titulaire)
+      .slice(0, n);
+  const realisateurs = classement("points");
+  const marqueurs = classement("essais");
+  const utilises = classement("matchs");
+
+  // ---- Les rencontres par compétition, la phase finale à part ----
+  // Une demi-finale n'a pas à se perdre au milieu des trente journées, c'est
+  // elle qui fait le titre. La distinction ne vaut que pour les compétitions
+  // qui ont les deux — le barrage d'accession, seul match de sa compétition,
+  // garde son intitulé (`estCouperet`).
+  const nomCompetition = (m: (typeof season.matches)[number]) => m.competition.shortName || m.competition.name;
+  const avecJournees = new Set(season.matches.filter((m) => m.matchday != null).map(nomCompetition));
+  const groupes = new Map<string, typeof season.matches>();
+  for (const m of season.matches) {
+    const nom = nomCompetition(m);
+    const cle = estCouperet(m) && avecJournees.has(nom) ? t("saison.phaseFinale", { competition: nom }) : nom;
+    groupes.set(cle, [...(groupes.get(cle) ?? []), m]);
   }
 
-  /**
-   * Bilan d'un groupe de rencontres — celles qui ont été jouées.
-   *
-   * Les agrégats de `Season` ne portent que le championnat, pour coller au
-   * classement officiel : ils ne diraient rien d'une phase finale, ni d'une
-   * campagne européenne. Ceux-ci se recalculent par groupe, et l'en-tête garde
-   * son total officiel.
-   */
-  const bilanDuGroupe = (matches: typeof season.matches) => {
-    const joues = matches.filter(estJoue);
+  /** Le bilan d'un groupe, sur ses rencontres jouées. Les agrégats de `Season`
+   * ne portent que le championnat, pour coller au classement officiel. */
+  const bilanDuGroupe = (matchs: typeof season.matches) => {
+    const j = matchs.filter(estJoue);
     return {
-      joues: joues.length,
-      victoires: joues.filter((m) => m.scoreUsap > m.scoreOpponent).length,
-      nuls: joues.filter((m) => m.scoreUsap === m.scoreOpponent).length,
-      defaites: joues.filter((m) => m.scoreUsap < m.scoreOpponent).length,
-      pour: joues.reduce((total, m) => total + m.scoreUsap, 0),
-      contre: joues.reduce((total, m) => total + m.scoreOpponent, 0),
+      joues: j.length,
+      victoires: j.filter((m) => m.scoreUsap > m.scoreOpponent).length,
+      nuls: j.filter((m) => m.scoreUsap === m.scoreOpponent).length,
+      defaites: j.filter((m) => m.scoreUsap < m.scoreOpponent).length,
+      pour: j.reduce((s, m) => s + m.scoreUsap, 0),
+      contre: j.reduce((s, m) => s + m.scoreOpponent, 0),
     };
   };
+  const phraseResultats = (b: { victoires: number; nuls: number; defaites: number }) =>
+    [t("saison.victoires", { n: b.victoires }), t("saison.nuls", { n: b.nuls }), t("saison.defaites", { n: b.defaites })].join(", ");
+
+  // ---- L'en-tête, en phrases ----
+  const division = DIVISIONS[season.division] ?? season.division;
+  const rang = season.finalRanking == null ? null : season.finalRanking === 1 ? t("saison.premier") : t("saison.rang", { n: season.finalRanking });
+  const titre = majuscule(
+    [
+      season.champion && (season.division === "PRO_D2" ? t("saison.championProD2") : t("saison.champion")),
+      season.promoted && t("saison.promu"),
+      season.relegated && t("saison.relegue"),
+    ]
+      .filter(Boolean)
+      .join(", "),
+  );
+  const bilan: string[] = [rang ? t("saison.classement", { division, rang }) : division];
+  if (season.matchesPlayed != null) {
+    bilan.push(
+      `${t("saison.matchsJoues", { n: season.matchesPlayed })} : ${phraseResultats({
+        victoires: season.wins ?? 0,
+        nuls: season.draws ?? 0,
+        defaites: season.losses ?? 0,
+      })}`,
+    );
+    const chiffres = [
+      season.pointsFor != null && season.pointsAgainst != null && t("saison.pointsMarques", { pour: season.pointsFor, contre: season.pointsAgainst }),
+      season.bonusOffensif != null && season.bonusDefensif != null && `${t("saison.bonusOffensifs", { n: season.bonusOffensif })} et ${t("saison.bonusDefensifs", { n: season.bonusDefensif })}`,
+      season.totalPoints != null && t("saison.pointsClassement", { n: season.totalPoints }),
+    ].filter(Boolean) as string[];
+    if (chiffres.length) bilan.push(majuscule(chiffres.join(", ")));
+  }
+
+  const roles: Record<string, string> = {
+    ENTRAINEUR_PRINCIPAL: t("saison.roleEntraineur"),
+    ENTRAINEUR_ADJOINT: t("saison.roleAdjoint"),
+    ENTRAINEUR_AVANTS: t("saison.roleAvants"),
+    ENTRAINEUR_ARRIERES: t("saison.roleArrieres"),
+    ENTRAINEUR_DEFENSE: t("saison.roleDefense"),
+    PREPARATEUR_PHYSIQUE: t("saison.rolePrepa"),
+    INTERIMAIRE: t("saison.roleInterimaire"),
+  };
+  // Une prise ou une fin de fonction en cours de saison, au mois près : la
+  // source ne donne pas toujours le jour (cf. `seed-cloture-saisons.ts`).
+  const mois = (d: Date) => d.toLocaleDateString("fr-FR", { month: "long" });
+  const periode = (sc: (typeof season.seasonCoaches)[number]) =>
+    sc.startDate && sc.endDate
+      ? t("saison.staffDe", { debut: mois(sc.startDate), fin: mois(sc.endDate) })
+      : sc.startDate
+        ? t("saison.staffDepuis", { mois: mois(sc.startDate) })
+        : sc.endDate
+          ? t("saison.staffJusqua", { mois: mois(sc.endDate) })
+          : null;
+  const staff: { role: string; nom: string; href: string; periode: string | null }[] = [
+    ...(season.seasonCoaches.length
+      ? season.seasonCoaches.map((sc) => ({
+          role: roles[sc.role] ?? sc.role.toLowerCase(),
+          nom: `${sc.coach.firstName} ${sc.coach.lastName}`,
+          href: `/entraineurs/${sc.coach.slug}`,
+          periode: periode(sc),
+        }))
+      : season.coach
+        ? [{ role: roles.ENTRAINEUR_PRINCIPAL, nom: `${season.coach.firstName} ${season.coach.lastName}`, href: `/entraineurs/${season.coach.slug}`, periode: null }]
+        : []),
+    ...(season.president
+      ? [{ role: t("saison.president"), nom: `${season.president.firstName} ${season.president.lastName}`, href: `/presidents/${season.president.slug}`, periode: null }]
+      : []),
+  ];
+
+  const affiche = (m: (typeof season.matches)[number]) => {
+    const opp = m.opponent.shortName || m.opponent.name;
+    return m.isHome ? `USAP – ${opp}` : `${opp} – USAP`;
+  };
+  const lettre = (m: (typeof season.matches)[number]) =>
+    m.result === "VICTOIRE"
+      ? { texte: t("saison.lettreVictoire"), classe: "text-usap-sang" }
+      : m.result === "NUL"
+        ? { texte: t("saison.lettreNul"), classe: "text-foreground" }
+        : m.result === "DEFAITE"
+          ? { texte: t("saison.lettreDefaite"), classe: "text-muted-foreground" }
+          : null;
 
   return (
-    <div className="mx-auto max-w-7xl px-4 py-10">
-      {/* Navigation fil d'Ariane */}
-      <div className="mb-6 text-sm text-muted-foreground">
-        <Link href="/saisons" className="hover:text-usap-sang">
-          Saisons
-        </Link>
-        <span className="mx-2">/</span>
-        <span className="text-foreground">{season.label}</span>
-      </div>
+    <div className="mx-auto max-w-6xl px-4 py-10 sm:py-14">
+      <nav className="mb-8 flex flex-wrap items-baseline justify-between gap-x-6 gap-y-1 text-sm text-muted-foreground">
+        <p>
+          <Link href="/saisons" className="hover:text-usap-sang">
+            {t("saison.filAriane")}
+          </Link>
+          <span className="mx-2">/</span>
+          <span className="text-foreground">{season.label}</span>
+        </p>
+        <p className="flex gap-4">
+          {precedente && (
+            <Link href={`/saisons/${precedente.label}`} className="hover:text-usap-sang">
+              {t("saison.precedente")}, {precedente.label}
+            </Link>
+          )}
+          {suivante && (
+            <Link href={`/saisons/${suivante.label}`} className="hover:text-usap-sang">
+              {t("saison.suivante")}, {suivante.label}
+            </Link>
+          )}
+        </p>
+      </nav>
 
-      {/* En-tête saison */}
-      <div className="mb-10 rounded-lg border border-border bg-usap-carte p-6">
-        <div className="flex flex-wrap items-start justify-between gap-4">
-          <div>
-            <h1 className="flex items-center gap-3 text-3xl font-bold uppercase tracking-wider text-foreground">
-              Saison {season.label}
-              {season.champion && (
-                <Trophy className="h-7 w-7 text-usap-or" />
-              )}
-              {season.promoted && (
-                <ArrowUp className="h-6 w-6 text-green-500" />
-              )}
-              {season.relegated && (
-                <ArrowDown className="h-6 w-6 text-red-500" />
-              )}
-            </h1>
-            <p className="mt-2 text-lg text-muted-foreground">
-              {DIVISIONS[season.division] ?? season.division}
-              {season.finalRanking && (
-                <span>
-                  {" "}
-                  —{" "}
-                  {season.finalRanking === 1
-                    ? "1er"
-                    : `${season.finalRanking}e`}
-                </span>
-              )}
-            </p>
-          </div>
-
-          {/* Staff */}
-          <div className="text-sm text-muted-foreground">
-            {season.seasonCoaches.length > 0 ? (
-              // Affichage multi-entraîneurs via SeasonCoach
-              season.seasonCoaches.map((sc) => {
-                const roleLabels: Record<string, string> = {
-                  ENTRAINEUR_PRINCIPAL: "Entraîneur",
-                  ENTRAINEUR_ADJOINT: "Adjoint",
-                  ENTRAINEUR_AVANTS: "Entr. avants",
-                  ENTRAINEUR_ARRIERES: "Entr. arrières",
-                  ENTRAINEUR_DEFENSE: "Entr. défense",
-                  PREPARATEUR_PHYSIQUE: "Prépa. physique",
-                  INTERIMAIRE: "Intérimaire",
-                };
-                const roleLabel = roleLabels[sc.role] ?? sc.role;
-                // Une prise ou une fin de fonction en cours de saison. Seul
-                // le mois est affiché : la source ne donne pas toujours le
-                // jour (cf. `seed-cloture-saisons.ts`), et le mois suffit à
-                // situer le changement.
-                const mois = (d: Date | string) =>
-                  new Date(d).toLocaleDateString("fr-FR", { month: "short" });
-                const period = sc.startDate
-                  ? sc.endDate
-                    ? ` (${mois(sc.startDate)} → ${mois(sc.endDate)})`
-                    : ` (depuis ${mois(sc.startDate)})`
-                  : sc.endDate
-                    ? ` (jusqu'à ${mois(sc.endDate)})`
-                    : "";
-                return (
-                  <p key={sc.id}>
-                    <span className="font-medium text-foreground">
-                      {roleLabel} :
-                    </span>{" "}
-                    <Link
-                      href={`/entraineurs/${sc.coach.slug}`}
-                      className="hover:text-usap-sang"
-                    >
-                      {sc.coach.firstName} {sc.coach.lastName}
-                    </Link>
-                    {period && (
-                      <span className="text-xs text-muted-foreground">
-                        {period}
-                      </span>
-                    )}
-                  </p>
-                );
-              })
-            ) : (
-              // Fallback legacy
-              season.coach && (
-                <p>
-                  <span className="font-medium text-foreground">
-                    Entraîneur :
-                  </span>{" "}
-                  {season.coach.firstName} {season.coach.lastName}
-                </p>
-              )
-            )}
-            {season.president && (
-              <p>
-                <span className="font-medium text-foreground">
-                  Président :
-                </span>{" "}
-                {season.president.firstName} {season.president.lastName}
-              </p>
-            )}
-          </div>
-        </div>
-
-        {/* Stats agrégées — le championnat seul, comme le classement officiel */}
-        {season.matchesPlayed != null && (
-          <div className="mt-6 grid grid-cols-3 gap-4 border-t border-border pt-6 sm:grid-cols-6 md:grid-cols-9">
-            <StatBox label="Joués" value={season.matchesPlayed} />
-            <StatBox
-              label="Victoires"
-              value={season.wins}
-              className="text-green-600"
-            />
-            <StatBox label="Nuls" value={season.draws} />
-            <StatBox
-              label="Défaites"
-              value={season.losses}
-              className="text-red-500"
-            />
-            <StatBox label="PF" value={season.pointsFor} />
-            <StatBox label="PC" value={season.pointsAgainst} />
-            {season.bonusOffensif != null && (
-              <StatBox label="BO" value={season.bonusOffensif} />
-            )}
-            {season.bonusDefensif != null && (
-              <StatBox label="BD" value={season.bonusDefensif} />
-            )}
-            {season.totalPoints != null && (
-              <StatBox
-                label="Points"
-                value={season.totalPoints}
-                className="font-bold text-usap-or"
-              />
-            )}
-          </div>
+      {/* Le millésime, et la frise des résultats */}
+      <header className="mb-10">
+        <p className="font-display text-3xl leading-none text-foreground sm:text-4xl">{t("saison.surtitre")}</p>
+        <h1 className="font-display text-6xl uppercase leading-[0.9] text-usap-sang tabular-nums sm:text-8xl">{season.label}</h1>
+        {joues.length > 0 && (
+          <ol aria-label={t("saison.friseAria")} className="mt-3 flex flex-wrap gap-x-1.5 font-display text-3xl leading-none sm:text-4xl">
+            {joues.map((m) => {
+              const l = lettre(m)!;
+              return (
+                <li key={m.id}>
+                  <Link
+                    href={`/matchs/${m.slug}`}
+                    title={`${formatDateFR(m.date)}, ${affiche(m)}, ${m.isHome ? m.scoreUsap : m.scoreOpponent}-${m.isHome ? m.scoreOpponent : m.scoreUsap}`}
+                    className={`${l.classe} hover:text-usap-or`}
+                  >
+                    {l.texte}
+                  </Link>
+                </li>
+              );
+            })}
+          </ol>
         )}
-
-        {season.notes && (
-          <p className="mt-4 text-sm italic text-muted-foreground">
-            {season.notes}
+        {titre && (
+          <p className={`mt-4 font-display text-2xl uppercase ${season.champion || season.promoted ? "text-usap-or" : "text-muted-foreground"}`}>
+            {titre}
           </p>
         )}
-      </div>
+        <p className="mt-4 max-w-prose text-lg leading-snug text-foreground">{bilan.join(". ")}.</p>
+        {season.matchesPlayed != null && groupes.size > 1 && (
+          <p className="mt-1 max-w-prose text-sm text-muted-foreground">{t("saison.reserveChampionnat")}</p>
+        )}
+        {staff.length > 0 && (
+          <p className="mt-2 max-w-prose text-sm leading-relaxed text-muted-foreground">
+            {staff.map((s, i) => (
+              <span key={i}>
+                {i === 0 ? majuscule(s.role) : s.role}{" "}
+                <Link href={s.href} className="text-foreground hover:text-usap-sang">
+                  {s.nom}
+                </Link>
+                {s.periode ? ` (${s.periode})` : ""}
+                {i < staff.length - 1 ? ", " : "."}
+              </span>
+            ))}
+          </p>
+        )}
+        {season.notes && <p className="mt-4 max-w-prose text-sm leading-relaxed text-foreground">{season.notes}</p>}
+      </header>
 
-      {/* Matchs de la saison */}
+      {season.matches.length === 0 && effectif.length === 0 && (
+        <p className="text-muted-foreground">{t("saison.aucuneDonnee")}</p>
+      )}
+
+      {/* Les rencontres, par compétition */}
       {season.matches.length > 0 && (
         <section className="mb-10">
-          <h2 className="mb-6 flex items-center gap-2 text-2xl font-bold uppercase tracking-wider text-foreground">
-            <Calendar className="h-6 w-6 text-usap-or" />
-            Matchs ({season.matches.length})
-          </h2>
-
-          {Array.from(matchesByCompetition.entries()).map(
-            ([compName, matches]) => (
-              <div key={compName} className="mb-8">
-                <div className="mb-3 flex flex-wrap items-baseline gap-x-3 gap-y-1">
-                  <h3 className="text-lg font-semibold text-usap-sang">
-                    {compName}
-                  </h3>
-                  {(() => {
-                    const bilan = bilanDuGroupe(matches);
-                    if (bilan.joues === 0) return null;
-                    return (
-                      <span className="text-sm text-muted-foreground">
-                        {bilan.joues} joué{bilan.joues > 1 ? "s" : ""} —{" "}
-                        {bilan.victoires}V {bilan.nuls}N {bilan.defaites}D —{" "}
-                        {bilan.pour} pts pour, {bilan.contre} contre
-                      </span>
-                    );
-                  })()}
-                </div>
-                <div className="overflow-x-auto rounded-lg border border-border">
-                  <table className="w-full text-sm">
+          <Titre>{t("saison.rencontresTitre")}</Titre>
+          {[...groupes.entries()].map(([nom, matchs]) => {
+            const b = bilanDuGroupe(matchs);
+            return (
+              <div key={nom} className="mb-8">
+                <h3 className="font-display text-2xl uppercase leading-none text-foreground">{nom}</h3>
+                {b.joues > 0 && (
+                  <p className="mt-1 text-sm text-muted-foreground">
+                    {t("saison.bilanGroupe", {
+                      resultats: majuscule(phraseResultats(b)),
+                      matchs: t("saison.matchsJoues", { n: b.joues }),
+                      pour: b.pour,
+                      contre: b.contre,
+                    })}
+                  </p>
+                )}
+                <div className="mt-2 overflow-x-auto">
+                  <table className="w-full border-collapse text-sm">
                     <thead>
-                      <tr className="border-b border-border bg-muted/50">
-                        <th className="px-3 py-2 text-left font-semibold text-foreground">
-                          Date
-                        </th>
-                        <th className="px-3 py-2 text-left font-semibold text-foreground">
-                          J.
-                        </th>
-                        <th className="px-3 py-2 text-left font-semibold text-foreground">
-                          Match
-                        </th>
-                        <th className="px-3 py-2 text-center font-semibold text-foreground">
-                          Score
-                        </th>
-                        <th className="hidden px-3 py-2 text-left font-semibold text-foreground sm:table-cell">
-                          Lieu
-                        </th>
+                      <tr className="border-b border-border text-left text-xs text-muted-foreground">
+                        <th scope="col" className="py-2 pr-3 font-medium">{t("saison.colDate")}</th>
+                        <th scope="col" className="py-2 pr-3 font-medium">{t("saison.colJournee")}</th>
+                        <th scope="col" className="py-2 pr-3 font-medium">{t("saison.colRencontre")}</th>
+                        <th scope="col" className="py-2 pr-3 text-right font-medium">{t("saison.colScore")}</th>
+                        <th scope="col" className="py-2 pr-3 text-center font-medium">{t("saison.colResultat")}</th>
+                        <th scope="col" className="hidden py-2 font-medium md:table-cell">{t("saison.colStade")}</th>
                       </tr>
                     </thead>
-                    <tbody>
-                      {matches.map((match) => {
-                        const resultColor =
-                          match.result === "VICTOIRE"
-                            ? "bg-green-500/10 text-green-600"
-                            : match.result === "DEFAITE"
-                              ? "bg-red-500/10 text-red-500"
-                              : "bg-muted text-muted-foreground";
-
-                        const oppName =
-                          match.opponent.shortName || match.opponent.name;
-
+                    <tbody className="tabular-nums">
+                      {matchs.map((m) => {
+                        const joue = estJoue(m);
+                        const l = lettre(m);
+                        const opp = m.opponent.shortName || m.opponent.name;
                         return (
-                          <tr
-                            key={match.id}
-                            className="border-b border-border transition-colors hover:bg-muted/30"
-                          >
-                            <td className="whitespace-nowrap px-3 py-2 text-muted-foreground">
-                              {formatDateFR(match.date)}
-                            </td>
-                            <td className="px-3 py-2 text-muted-foreground">
-                              {match.matchday
-                                ? `J${match.matchday}`
-                                : match.round || "—"}
-                            </td>
-                            <td className="px-3 py-2">
-                              <Link
-                                href={`/matchs/${match.slug}`}
-                                className="flex items-center gap-2 font-medium text-foreground hover:text-usap-sang"
-                              >
-                                {match.isHome ? (
+                          <tr key={m.id} className="border-b border-border hover:bg-muted">
+                            <td className="py-1.5 pr-3 whitespace-nowrap text-muted-foreground">{formatDateFR(m.date)}</td>
+                            <td className="py-1.5 pr-3 whitespace-nowrap text-muted-foreground">{m.matchday ? `J${m.matchday}` : m.round || ""}</td>
+                            <td className="py-1.5 pr-3">
+                              <Link href={`/matchs/${m.slug}`} className="text-foreground hover:text-usap-sang">
+                                {m.isHome ? (
                                   <>
-                                    <Image src="/images/usap/logo.png" alt="USAP" width={20} height={20} className="h-5 w-5" />
-                                    <span className="font-bold">USAP</span>
-                                    {" - "}
-                                    {match.opponent.logoUrl ? (
-                                      <Image src={match.opponent.logoUrl} alt={oppName} width={20} height={20} className="h-5 w-5 logo-club" />
-                                    ) : null}
-                                    {oppName}
+                                    <span className="font-semibold text-usap-sang">USAP</span> – {opp}
                                   </>
                                 ) : (
                                   <>
-                                    {match.opponent.logoUrl ? (
-                                      <Image src={match.opponent.logoUrl} alt={oppName} width={20} height={20} className="h-5 w-5 logo-club" />
-                                    ) : null}
-                                    {oppName}
-                                    {" - "}
-                                    <Image src="/images/usap/logo.png" alt="USAP" width={20} height={20} className="h-5 w-5" />
-                                    <span className="font-bold">USAP</span>
+                                    {opp} – <span className="font-semibold text-usap-sang">USAP</span>
                                   </>
                                 )}
                               </Link>
                             </td>
-                            <td className="px-3 py-2 text-center">
-                              <span
-                                className={`inline-block rounded px-2 py-0.5 text-xs font-bold ${resultColor}`}
-                              >
-                                {!match.result
-                                  ? "à venir"
-                                  : match.isHome
-                                    ? `${match.scoreUsap} - ${match.scoreOpponent}`
-                                    : `${match.scoreOpponent} - ${match.scoreUsap}`}
-                              </span>
+                            <td className="py-1.5 pr-3 text-right whitespace-nowrap">
+                              {joue ? (
+                                <span className="font-semibold text-foreground">
+                                  {m.isHome ? m.scoreUsap : m.scoreOpponent} – {m.isHome ? m.scoreOpponent : m.scoreUsap}
+                                </span>
+                              ) : (
+                                <span className="text-muted-foreground">{t("saison.aVenir")}</span>
+                              )}
                             </td>
-                            <td className="hidden whitespace-nowrap px-3 py-2 text-muted-foreground sm:table-cell">
-                              {match.venue && (
-                                <Link
-                                  href={`/stades/${match.venue.slug}`}
-                                  className="flex items-center gap-1 hover:text-usap-or transition-colors"
-                                >
-                                  <MapPin className="h-3 w-3" />
-                                  {match.venue.name}
+                            <td className={`py-1.5 pr-3 text-center font-bold ${l?.classe ?? ""}`}>{l?.texte ?? ""}</td>
+                            <td className="hidden py-1.5 whitespace-nowrap text-muted-foreground md:table-cell">
+                              {m.venue && (
+                                <Link href={`/stades/${m.venue.slug}`} className="hover:text-usap-sang">
+                                  {m.venue.name}
                                 </Link>
                               )}
                             </td>
@@ -536,416 +450,154 @@ export default async function SaisonDetailPage({ params }: Props) {
                   </table>
                 </div>
               </div>
-            ),
-          )}
+            );
+          })}
         </section>
       )}
 
-      {/* Statistiques individuelles */}
-      {(topScorers.length > 0 || topApps.length > 0 || topTries.length > 0) && (
+      {/* Trois classements courts */}
+      {(realisateurs.length > 0 || utilises.length > 0) && (
+        <section className="mb-10 grid gap-8 lg:grid-cols-3">
+          <Classement titre={t("saison.realisateursTitre")} lignes={realisateurs} valeur={(c) => t("saison.valeurPoints", { n: c.points })} libelleActuel={t("joueurs.actuel")} />
+          <Classement titre={t("saison.essaisTitre")} lignes={marqueurs} valeur={(c) => t("saison.valeurEssais", { n: c.essais })} libelleActuel={t("joueurs.actuel")} />
+          <Classement titre={t("saison.utilisationTitre")} lignes={utilises} valeur={(c) => t("saison.valeurMatchs", { n: c.matchs })} libelleActuel={t("joueurs.actuel")} />
+        </section>
+      )}
+
+      {/* L'effectif, en un seul tableau */}
+      {effectif.length > 0 && (
         <section className="mb-10">
-          <h2 className="mb-6 flex items-center gap-2 text-2xl font-bold uppercase tracking-wider text-foreground">
-            <Target className="h-6 w-6 text-usap-or" />
-            Statistiques individuelles
-          </h2>
-
-          <div className="grid gap-10 lg:grid-cols-3">
-            {/* Meilleurs marqueurs */}
-            {topScorers.length > 0 && (
-              <div>
-                <h3 className="mb-3 flex items-center gap-2 text-lg font-semibold text-foreground">
-                  <Target className="h-4 w-4 text-usap-or" />
-                  Meilleurs marqueurs
-                </h3>
-                <div className="space-y-1">
-                  {topScorers.map((p, i) => (
-                    <PlayerRankRow
-                      key={p.id}
-                      rank={i + 1}
-                      slug={p.slug}
-                      firstName={p.firstName}
-                      lastName={p.lastName}
-                      position={p.position}
-                      photoUrl={p.photoUrl}
-                      stat={`${p.totalPoints} pts`}
-                    />
-                  ))}
-                </div>
-              </div>
-            )}
-
-            {/* Plus capés */}
-            {topApps.length > 0 && (
-              <div>
-                <h3 className="mb-3 flex items-center gap-2 text-lg font-semibold text-foreground">
-                  <Users className="h-4 w-4 text-usap-or" />
-                  Plus capés
-                </h3>
-                <div className="space-y-1">
-                  {topApps.map((p, i) => (
-                    <PlayerRankRow
-                      key={p.id}
-                      rank={i + 1}
-                      slug={p.slug}
-                      firstName={p.firstName}
-                      lastName={p.lastName}
-                      position={p.position}
-                      photoUrl={p.photoUrl}
-                      stat={`${p.appearances} match${p.appearances > 1 ? "s" : ""}`}
-                    />
-                  ))}
-                </div>
-              </div>
-            )}
-
-            {/* Meilleurs marqueurs d'essais */}
-            {topTries.length > 0 && (
-              <div>
-                <h3 className="mb-3 flex items-center gap-2 text-lg font-semibold text-foreground">
-                  <Award className="h-4 w-4 text-usap-or" />
-                  Meilleurs marqueurs d&apos;essais
-                </h3>
-                <div className="space-y-1">
-                  {topTries.map((p, i) => (
-                    <PlayerRankRow
-                      key={p.id}
-                      rank={i + 1}
-                      slug={p.slug}
-                      firstName={p.firstName}
-                      lastName={p.lastName}
-                      position={p.position}
-                      photoUrl={p.photoUrl}
-                      stat={`${p.tries} essai${p.tries > 1 ? "s" : ""}`}
-                    />
-                  ))}
-                </div>
-              </div>
-            )}
-
-            {/* Pénalités */}
-            {topPenalties.length > 0 && (
-              <div>
-                <h3 className="mb-3 flex items-center gap-2 text-lg font-semibold text-foreground">
-                  <Crosshair className="h-4 w-4 text-usap-or" />
-                  Pénalités
-                </h3>
-                <div className="space-y-1">
-                  {topPenalties.map((p, i) => (
-                    <PlayerRankRow
-                      key={p.id}
-                      rank={i + 1}
-                      slug={p.slug}
-                      firstName={p.firstName}
-                      lastName={p.lastName}
-                      position={p.position}
-                      photoUrl={p.photoUrl}
-                      stat={`${p.penalties} pén.`}
-                    />
-                  ))}
-                </div>
-              </div>
-            )}
-
-            {/* Transformations */}
-            {topConversions.length > 0 && (
-              <div>
-                <h3 className="mb-3 flex items-center gap-2 text-lg font-semibold text-foreground">
-                  <Repeat className="h-4 w-4 text-usap-or" />
-                  Transformations
-                </h3>
-                <div className="space-y-1">
-                  {topConversions.map((p, i) => (
-                    <PlayerRankRow
-                      key={p.id}
-                      rank={i + 1}
-                      slug={p.slug}
-                      firstName={p.firstName}
-                      lastName={p.lastName}
-                      position={p.position}
-                      photoUrl={p.photoUrl}
-                      stat={`${p.conversions} transfo${p.conversions > 1 ? "s" : ""}`}
-                    />
-                  ))}
-                </div>
-              </div>
-            )}
-
-            {/* Drops */}
-            {topDrops.length > 0 && (
-              <div>
-                <h3 className="mb-3 flex items-center gap-2 text-lg font-semibold text-foreground">
-                  <Zap className="h-4 w-4 text-usap-or" />
-                  Drops
-                </h3>
-                <div className="space-y-1">
-                  {topDrops.map((p, i) => (
-                    <PlayerRankRow
-                      key={p.id}
-                      rank={i + 1}
-                      slug={p.slug}
-                      firstName={p.firstName}
-                      lastName={p.lastName}
-                      position={p.position}
-                      photoUrl={p.photoUrl}
-                      stat={`${p.dropGoals} drop${p.dropGoals > 1 ? "s" : ""}`}
-                    />
-                  ))}
-                </div>
-              </div>
-            )}
-
-            {/* Minutes jouées */}
-            {topMinutes.length > 0 && (
-              <div>
-                <h3 className="mb-3 flex items-center gap-2 text-lg font-semibold text-foreground">
-                  <Clock className="h-4 w-4 text-usap-or" />
-                  Minutes jouées
-                </h3>
-                <div className="space-y-1">
-                  {topMinutes.map((p, i) => (
-                    <PlayerRankRow
-                      key={p.id}
-                      rank={i + 1}
-                      slug={p.slug}
-                      firstName={p.firstName}
-                      lastName={p.lastName}
-                      position={p.position}
-                      photoUrl={p.photoUrl}
-                      stat={`${p.minutes}'`}
-                    />
-                  ))}
-                </div>
-              </div>
-            )}
-
-            {/* Cartons jaunes */}
-            {yellowCards.length > 0 && (
-              <div>
-                <h3 className="mb-3 flex items-center gap-2 text-lg font-semibold text-foreground">
-                  <AlertTriangle className="h-4 w-4 text-yellow-500" />
-                  Cartons jaunes
-                </h3>
-                <div className="space-y-1">
-                  {yellowCards.map((p, i) => (
-                    <PlayerRankRow
-                      key={p.id}
-                      rank={i + 1}
-                      slug={p.slug}
-                      firstName={p.firstName}
-                      lastName={p.lastName}
-                      position={p.position}
-                      photoUrl={p.photoUrl}
-                      stat={`${p.count} CJ`}
-                      badgeColor="bg-yellow-500/10 text-yellow-600"
-                    />
-                  ))}
-                </div>
-              </div>
-            )}
-
-            {/* Cartons rouges */}
-            {redCards.length > 0 && (
-              <div>
-                <h3 className="mb-3 flex items-center gap-2 text-lg font-semibold text-foreground">
-                  <ShieldOff className="h-4 w-4 text-red-500" />
-                  Cartons rouges
-                </h3>
-                <div className="space-y-1">
-                  {redCards.map((p, i) => (
-                    <PlayerRankRow
-                      key={p.id}
-                      rank={i + 1}
-                      slug={p.slug}
-                      firstName={p.firstName}
-                      lastName={p.lastName}
-                      position={p.position}
-                      photoUrl={p.photoUrl}
-                      stat={`${p.count} CR`}
-                      badgeColor="bg-red-500/10 text-red-500"
-                    />
-                  ))}
-                </div>
-              </div>
-            )}
-
-            {/* Cartons blancs (affiché seulement si des joueurs en ont) */}
-            {whiteCards.length > 0 && (
-              <div>
-                <h3 className="mb-3 flex items-center gap-2 text-lg font-semibold text-foreground">
-                  <ShieldCheck className="h-4 w-4 text-muted-foreground" />
-                  Cartons blancs
-                </h3>
-                <div className="space-y-1">
-                  {whiteCards.map((p, i) => (
-                    <PlayerRankRow
-                      key={p.id}
-                      rank={i + 1}
-                      slug={p.slug}
-                      firstName={p.firstName}
-                      lastName={p.lastName}
-                      position={p.position}
-                      photoUrl={p.photoUrl}
-                      stat={`${p.count} CB`}
-                      badgeColor="bg-muted text-muted-foreground"
-                    />
-                  ))}
-                </div>
-              </div>
-            )}
-
-            {/* Cartons orange (affiché seulement si des joueurs en ont) */}
-            {orangeCards.length > 0 && (
-              <div>
-                <h3 className="mb-3 flex items-center gap-2 text-lg font-semibold text-foreground">
-                  <ShieldAlert className="h-4 w-4 text-orange-500" />
-                  Cartons orange
-                </h3>
-                <div className="space-y-1">
-                  {orangeCards.map((p, i) => (
-                    <PlayerRankRow
-                      key={p.id}
-                      rank={i + 1}
-                      slug={p.slug}
-                      firstName={p.firstName}
-                      lastName={p.lastName}
-                      position={p.position}
-                      photoUrl={p.photoUrl}
-                      stat={`${p.count} CO`}
-                      badgeColor="bg-orange-500/10 text-orange-500"
-                    />
-                  ))}
-                </div>
-              </div>
-            )}
+          <Titre>
+            {t("saison.effectifTitre")}
+            <span className="ml-3 text-xl text-muted-foreground">{t("saison.effectifCompte", { n: effectif.length })}</span>
+          </Titre>
+          <p className="mb-3 max-w-prose text-sm text-muted-foreground">
+            {t("saison.effectifNote")}
+            {sansMinutes ? ` ${t("saison.minutesNote")}` : ""}
+          </p>
+          <div className="overflow-x-auto">
+            <table className="w-full border-collapse text-sm">
+              <thead>
+                <tr className="border-b border-border text-left text-xs text-muted-foreground">
+                  {avecNumero && <th scope="col" className="py-2 pr-2 text-right font-medium">{t("saison.colNumero")}</th>}
+                  <th scope="col" className="py-2 pr-4 font-medium">{t("saison.colJoueur")}</th>
+                  <th scope="col" className="hidden py-2 pr-4 font-medium sm:table-cell">{t("saison.colPoste")}</th>
+                  <th scope="col" className="py-2 pr-3 text-right font-medium">{t("saison.colMatchs")}</th>
+                  <th scope="col" className="py-2 pr-3 text-right font-medium">{t("saison.colTitulaire")}</th>
+                  {!sansMinutes && <th scope="col" className="hidden py-2 pr-3 text-right font-medium sm:table-cell">{t("saison.colMinutes")}</th>}
+                  <th scope="col" className="py-2 pr-3 text-right font-medium">{t("saison.colEssais")}</th>
+                  <th scope="col" className="hidden py-2 pr-3 text-right font-medium md:table-cell">{t("saison.colTransformations")}</th>
+                  <th scope="col" className="hidden py-2 pr-3 text-right font-medium md:table-cell">{t("saison.colPenalites")}</th>
+                  <th scope="col" className="hidden py-2 pr-3 text-right font-medium md:table-cell">{t("saison.colDrops")}</th>
+                  <th scope="col" className="py-2 pr-3 text-right font-medium">{t("saison.colPoints")}</th>
+                  {avecCartons && <th scope="col" className="hidden py-2 font-medium sm:table-cell">{t("saison.colCartons")}</th>}
+                </tr>
+              </thead>
+              <tbody className="tabular-nums">
+                {effectif.map((e) => {
+                  const c = e.cumul;
+                  const cartons = c
+                    ? [
+                        c.jaunes > 0 && t("saison.jaunes", { n: c.jaunes }),
+                        c.oranges > 0 && t("saison.oranges", { n: c.oranges }),
+                        c.rouges > 0 && t("saison.rouges", { n: c.rouges }),
+                        c.blancs > 0 && t("saison.blancs", { n: c.blancs }),
+                      ].filter(Boolean)
+                    : [];
+                  return (
+                    <tr key={e.joueur.id} className="border-b border-border hover:bg-muted">
+                      {avecNumero && <td className="py-1 pr-2 text-right text-muted-foreground">{e.numero ?? ""}</td>}
+                      <td className="py-1 pr-4">
+                        <JoueurCellule
+                          slug={e.joueur.slug}
+                          firstName={e.joueur.firstName}
+                          lastName={e.joueur.lastName}
+                          photoUrl={e.joueur.photoUrl}
+                          isActive={e.joueur.isActive}
+                          libelleActuel={t("joueurs.actuel")}
+                        />
+                      </td>
+                      <td className="hidden py-1 pr-4 text-xs text-muted-foreground sm:table-cell">{e.poste ? (POSITIONS[e.poste]?.label ?? e.poste) : ""}</td>
+                      <td className="py-1 pr-3 text-right font-semibold text-foreground">{c?.matchs || ""}</td>
+                      <td className="py-1 pr-3 text-right text-muted-foreground">
+                        {c?.titulaire || ""}
+                        {avecCapitaine && c && c.capitaine > 0 ? <span className="text-usap-sang"> ({c.capitaine} C)</span> : null}
+                      </td>
+                      {!sansMinutes && <td className="hidden py-1 pr-3 text-right text-muted-foreground sm:table-cell">{c && c.minutes > 0 ? nombre(c.minutes) : ""}</td>}
+                      <td className="py-1 pr-3 text-right text-foreground">{c?.essais || ""}</td>
+                      <td className="hidden py-1 pr-3 text-right text-foreground md:table-cell">{c?.transformations || ""}</td>
+                      <td className="hidden py-1 pr-3 text-right text-foreground md:table-cell">{c?.penalites || ""}</td>
+                      <td className="hidden py-1 pr-3 text-right text-foreground md:table-cell">{c?.drops || ""}</td>
+                      <td className="py-1 pr-3 text-right font-semibold text-foreground">{c?.points || ""}</td>
+                      {avecCartons && <td className="hidden py-1 text-xs text-muted-foreground sm:table-cell">{cartons.join(", ")}</td>}
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </table>
           </div>
         </section>
       )}
 
-      {/* Effectif */}
-      {season.seasonPlayers.length > 0 && (
-        <section>
-          <h2 className="mb-6 flex items-center gap-2 text-2xl font-bold uppercase tracking-wider text-foreground">
-            <Users className="h-6 w-6 text-usap-or" />
-            Effectif ({season.seasonPlayers.length})
-          </h2>
-
-          <div className="grid gap-3 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4">
-            {season.seasonPlayers.map((sp) => (
-              <Link
-                key={sp.id}
-                href={`/joueurs/${sp.player.slug}`}
-                className="flex items-center gap-3 rounded-lg border border-border bg-usap-carte p-3 transition-colors hover:border-usap-or/30"
-              >
-                {/* Numéro de maillot */}
-                {sp.shirtNumber && (
-                  <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded bg-usap-sang/10 text-sm font-bold text-usap-sang">
-                    {sp.shirtNumber}
-                  </span>
-                )}
-                <div className="min-w-0">
-                  <p className="truncate font-medium text-foreground">
-                    {sp.player.firstName} {sp.player.lastName}
-                  </p>
-                  <p className="text-xs text-muted-foreground">
-                    {sp.position
-                      ? (POSITIONS[sp.position]?.label ?? sp.position)
-                      : sp.player.position
-                        ? (POSITIONS[sp.player.position]?.label ??
-                          sp.player.position)
-                        : ""}
-                  </p>
-                </div>
-              </Link>
-            ))}
-          </div>
-        </section>
-      )}
-
-      {/* Message si aucun match ni effectif */}
-      {season.matches.length === 0 && season.seasonPlayers.length === 0 && (
-        <div className="rounded-lg border border-border bg-muted/30 p-10 text-center text-muted-foreground">
-          <p className="text-lg">
-            Aucune donnée disponible pour cette saison.
-          </p>
-          <p className="mt-2 text-sm">
-            Les matchs et effectifs seront ajoutés progressivement.
-          </p>
-        </div>
-      )}
+      <Provenance entite="Season" id={season.id} />
     </div>
   );
 }
 
-function StatBox({
-  label,
-  value,
-  className = "",
-}: {
-  label: string;
-  value: number | null | undefined;
-  className?: string;
-}) {
+/** Le titre d'une section : la voix condensée de la liste, sous un filet. */
+function Titre({ children, encre = false }: { children: React.ReactNode; encre?: boolean }) {
   return (
-    <div className="text-center">
-      <div className={`text-xl font-bold ${className || "text-foreground"}`}>
-        {value ?? "—"}
-      </div>
-      <div className="text-xs text-muted-foreground">{label}</div>
-    </div>
-  );
-}
-
-function PlayerRankRow({
-  rank,
-  slug,
-  firstName,
-  lastName,
-  position,
-  photoUrl,
-  stat,
-  badgeColor,
-}: {
-  rank: number;
-  slug: string;
-  firstName: string;
-  lastName: string;
-  position: string | null;
-  photoUrl: string | null;
-  stat: string;
-  badgeColor?: string;
-}) {
-  return (
-    <Link
-      href={`/joueurs/${slug}`}
-      className="flex items-center gap-2 rounded border border-border bg-background px-3 py-2 text-sm transition-colors hover:border-usap-or/30"
+    <h2
+      className={`mb-3 border-b-2 pb-1 font-display text-3xl uppercase leading-none ${
+        encre ? "border-foreground text-foreground" : "border-usap-sang text-usap-sang"
+      }`}
     >
-      <span className="w-6 shrink-0 text-center font-bold text-muted-foreground">
-        {rank}
-      </span>
-      {photoUrl ? (
-        <Image
-          src={photoUrl}
-          alt={`${firstName} ${lastName}`}
-          width={28}
-          height={28}
-          className="h-7 w-7 shrink-0 rounded-full object-cover"
-        />
-      ) : (
-        <div className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-muted">
-          <Users className="h-3.5 w-3.5 text-muted-foreground" />
-        </div>
-      )}
-      <span className="flex-1 truncate font-medium text-foreground">
-        {firstName} {lastName}
-      </span>
-      {position && (
-        <span className="hidden text-xs text-muted-foreground sm:inline">
-          {POSITIONS[position]?.label ?? position}
-        </span>
-      )}
-      <span className={`shrink-0 rounded px-2 py-0.5 text-xs font-bold ${badgeColor ?? "bg-usap-sang/10 text-usap-sang"}`}>
-        {stat}
-      </span>
-    </Link>
+      {children}
+    </h2>
+  );
+}
+
+type LigneClassement = {
+  joueur: { slug: string; firstName: string; lastName: string; photoUrl: string | null; isActive: boolean };
+  cumul: Cumul;
+};
+
+/** Un classement court : le rang, le joueur, la valeur. */
+function Classement({
+  titre,
+  lignes,
+  valeur,
+  libelleActuel,
+}: {
+  titre: string;
+  lignes: LigneClassement[];
+  valeur: (c: Cumul) => string;
+  libelleActuel: string;
+}) {
+  if (lignes.length === 0) return null;
+  return (
+    <div>
+      <Titre encre>{titre}</Titre>
+      <table className="w-full border-collapse text-sm">
+        <tbody className="tabular-nums">
+          {lignes.map((l, i) => (
+            <tr key={l.joueur.slug} className="border-b border-border hover:bg-muted">
+              <td className="w-6 py-1 pr-2 text-right text-muted-foreground">{i + 1}</td>
+              <td className="py-1 pr-3">
+                <JoueurCellule
+                  slug={l.joueur.slug}
+                  firstName={l.joueur.firstName}
+                  lastName={l.joueur.lastName}
+                  photoUrl={l.joueur.photoUrl}
+                  isActive={l.joueur.isActive}
+                  libelleActuel={libelleActuel}
+                />
+              </td>
+              <td className="py-1 text-right whitespace-nowrap font-semibold text-foreground">{valeur(l.cumul)}</td>
+            </tr>
+          ))}
+        </tbody>
+      </table>
+    </div>
   );
 }
