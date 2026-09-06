@@ -1679,9 +1679,25 @@ montre d'un coup d'œil où la couverture s'arrête. Le trophée et les deux
 flèches vertes et rouges à côté du millésime ont disparu, les V verts et
 les D rouges aussi. Dictionnaire `saisons.*`.
 
-**Ce qui reste dans l'ancien rendu** : les seize autres pages. À reprendre
+**La liste des matchs est refaite le même jour**, sur le même modèle :
+**l'épine des saisons**, le millésime en rouge condensé au-dessus de ses
+rencontres et lié à sa page, cinquante rencontres par page. Ce que la page
+gagne : **le bilan de la sélection** — filtrer sur un adversaire rend ses
+confrontations et leur compte, victoires, nuls, défaites, points pour et
+contre, plus les rencontres à venir —, et le résultat en liens plutôt qu'en
+menu, « À venir » compris. Saison, compétition et adversaire restent des
+menus, cent vingt saisons et soixante adversaires ne tenant pas en liens ;
+les adversaires y sont triés sur le nom affiché, « Béziers » et non « AS
+Béziers ». **Un piège pris au passage** : le bilan se calcule sur
+`{ AND: [where, MATCH_JOUE] }` et non sur un étalement — `MATCH_JOUE` porte
+`result`, qu'un filtre de résultat porte aussi, et le second écrasait le
+premier en silence, le filtre « victoires » annonçant 311 défaites. Plus de
+logos dans les lignes, plus de pastilles. Dictionnaire `matchs.*`.
+
+**Ce qui reste dans l'ancien rendu** : les quinze autres pages. À reprendre
 page par page, en relisant chaque fois qu'aucune couleur en dur n'est
-revenue. La suivante, par ordre de valeur : la liste des matchs.
+revenue. La suivante, par ordre de valeur : la fiche adversaire, puis la
+liste des adversaires.
 
 
 - **Couleur principale** : Rouge sang (#C8102E) - couleur dominante USAP

@@ -1,360 +1,324 @@
 import Link from "@/components/Lien";
-import Image from "next/image";
 import { prisma } from "@/lib/prisma";
+import { MATCH_JOUE, estJoue } from "@/lib/matchs";
 import { formatDateFR } from "@/lib/utils";
-import { MapPin } from "lucide-react";
+import { dictionnaire } from "@/i18n/dictionnaire";
+import type { Langue } from "@/i18n/langues";
 import type { Metadata } from "next";
+import type { Prisma } from "@prisma/client";
+
+/**
+ * La liste des rencontres, refaite le 6 septembre 2026 dans l'identité
+ * posée sur `/joueurs` et `/saisons`. Sa seule audace est la même que
+ * là-bas : **l'épine des saisons**, le millésime en rouge condensé au-dessus
+ * de ses rencontres, lié à sa page. Ce que la page gagne : **le bilan de la
+ * sélection** — filtrer sur un adversaire donne les confrontations et leur
+ * compte, victoires, nuls, défaites, points pour et contre —, et le
+ * résultat comme un filtre en liens plutôt qu'un menu.
+ *
+ * Les filtres de saison, de compétition et d'adversaire restent des menus :
+ * cent vingt saisons et soixante adversaires ne tiennent pas en liens.
+ *
+ * Ce que la page ne fait plus : des logos dans chaque ligne, des pastilles
+ * vertes et rouges pour le score, un cadre arrondi, une colonne de saison
+ * que l'épine remplace.
+ */
 
 export const dynamic = "force-dynamic";
 
-export const metadata: Metadata = {
-  title: "Matchs - USAP Historia",
-  description:
-    "Tous les matchs de l'USA Perpignan. Recherche par saison, compétition et adversaire.",
+const PAR_PAGE = 50;
+
+type Props = {
+  params: Promise<{ locale: Langue }>;
+  searchParams: Promise<{ page?: string; saison?: string; competition?: string; adversaire?: string; resultat?: string }>;
 };
 
-const PAGE_SIZE = 30;
+export async function generateMetadata({ params }: Props): Promise<Metadata> {
+  const { locale } = await params;
+  const t = await dictionnaire(locale);
+  return { title: t("matchs.metaTitre"), description: t("matchs.metaDescription") };
+}
 
-export default async function MatchsPage({
-  searchParams,
-}: {
-  searchParams: Promise<{
-    page?: string;
-    saison?: string;
-    competition?: string;
-    adversaire?: string;
-    resultat?: string;
-  }>;
-}) {
-  const params = await searchParams;
-  const page = Math.max(1, Number(params.page) || 1);
-  const saisonFilter = params.saison || undefined;
-  const competitionFilter = params.competition || undefined;
-  const adversaireFilter = params.adversaire || undefined;
-  const resultatFilter = params.resultat || undefined;
+const nombre = (n: number) => n.toLocaleString("fr-FR");
 
-  // Construire le where
-  const where: Record<string, unknown> = {};
+export default async function MatchsPage({ params, searchParams }: Props) {
+  const { locale } = await params;
+  const t = await dictionnaire(locale);
+  const q = await searchParams;
+  const page = Math.max(1, Number(q.page) || 1);
+  const saison = q.saison || undefined;
+  const competition = q.competition || undefined;
+  const adversaire = q.adversaire || undefined;
+  const resultat = q.resultat || undefined;
 
-  if (saisonFilter) {
-    const season = await prisma.season.findFirst({
-      where: { label: saisonFilter },
-      select: { id: true },
-    });
-    if (season) where.seasonId = season.id;
-  }
+  const where: Prisma.MatchWhereInput = {};
+  if (saison) where.season = { label: saison };
+  if (competition) where.competitionId = competition;
+  if (adversaire) where.opponentId = adversaire;
+  if (resultat === "victoire") where.result = "VICTOIRE";
+  else if (resultat === "defaite") where.result = "DEFAITE";
+  else if (resultat === "nul") where.result = "NUL";
+  else if (resultat === "a-venir") where.result = null;
 
-  if (competitionFilter) {
-    where.competitionId = competitionFilter;
-  }
+  // Requêtes séquentielles : le pool de Supabase est étroit.
+  const matches = await prisma.match.findMany({
+    where,
+    orderBy: { date: "desc" },
+    skip: (page - 1) * PAR_PAGE,
+    take: PAR_PAGE,
+    select: {
+      id: true,
+      slug: true,
+      date: true,
+      scoreUsap: true,
+      scoreOpponent: true,
+      result: true,
+      isHome: true,
+      matchday: true,
+      round: true,
+      competition: { select: { name: true, shortName: true } },
+      opponent: { select: { name: true, shortName: true } },
+      venue: { select: { name: true, slug: true } },
+      season: { select: { label: true } },
+    },
+  });
+  const total = await prisma.match.count({ where });
+  // Le bilan de la sélection, sur ses rencontres jouées. `AND` et non un
+  // étalement : `MATCH_JOUE` porte `result`, qu'un filtre de résultat porte
+  // aussi, et le second écraserait le premier.
+  const jouees: Prisma.MatchWhereInput = { AND: [where, MATCH_JOUE] };
+  const bilan = await prisma.match.aggregate({
+    where: jouees,
+    _count: { id: true },
+    _sum: { scoreUsap: true, scoreOpponent: true },
+  });
+  const parResultat = await prisma.match.groupBy({ by: ["result"], where: jouees, _count: { id: true } });
+  const compte = (r: "VICTOIRE" | "NUL" | "DEFAITE") => parResultat.find((x) => x.result === r)?._count.id ?? 0;
+  const aVenir = total - bilan._count.id;
 
-  if (adversaireFilter) {
-    where.opponentId = adversaireFilter;
-  }
+  // De quand à quand, sur toute la base.
+  const premiere = await prisma.match.findFirst({ orderBy: { date: "asc" }, select: { season: { select: { label: true } } } });
+  const derniere = await prisma.match.findFirst({ where: MATCH_JOUE, orderBy: { date: "desc" }, select: { season: { select: { label: true } } } });
+  const totalBase = await prisma.match.count();
 
-  if (resultatFilter === "victoire") {
-    where.result = "VICTOIRE";
-  } else if (resultatFilter === "defaite") {
-    where.result = "DEFAITE";
-  } else if (resultatFilter === "nul") {
-    where.result = "NUL";
-  }
+  const seasons = await prisma.season.findMany({ where: { matches: { some: {} } }, orderBy: { startYear: "desc" }, select: { label: true } });
+  const competitions = await prisma.competition.findMany({ where: { matches: { some: {} } }, orderBy: { name: "asc" }, select: { id: true, name: true, shortName: true } });
+  // Triés sur le nom affiché : « Béziers » et non « AS Béziers ».
+  const opponents = (await prisma.opponent.findMany({ where: { matches: { some: {} } }, select: { id: true, name: true, shortName: true } })).sort((a, b) =>
+    (a.shortName || a.name).localeCompare(b.shortName || b.name, "fr"),
+  );
 
-  const [matches, total] = await Promise.all([
-    prisma.match.findMany({
-      where,
-      orderBy: { date: "desc" },
-      skip: (page - 1) * PAGE_SIZE,
-      take: PAGE_SIZE,
-      select: {
-        slug: true,
-        date: true,
-        scoreUsap: true,
-        scoreOpponent: true,
-        result: true,
-        isHome: true,
-        matchday: true,
-        round: true,
-        competition: { select: { id: true, name: true, shortName: true } },
-        opponent: {
-          select: { id: true, name: true, shortName: true, logoUrl: true },
-        },
-        venue: { select: { name: true, city: true } },
-        season: { select: { label: true } },
-      },
-    }),
-    prisma.match.count({ where }),
-  ]);
-
-  const totalPages = Math.ceil(total / PAGE_SIZE);
-
-  // Données pour les filtres
-  const [seasons, competitions, opponents] = await Promise.all([
-    prisma.season.findMany({
-      where: { matches: { some: {} } },
-      orderBy: { startYear: "desc" },
-      select: { label: true },
-    }),
-    prisma.competition.findMany({
-      where: { matches: { some: {} } },
-      orderBy: { name: "asc" },
-      select: { id: true, name: true, shortName: true },
-    }),
-    prisma.opponent.findMany({
-      where: { matches: { some: {} } },
-      orderBy: { name: "asc" },
-      select: { id: true, name: true, shortName: true },
-    }),
-  ]);
-
-  // Construire le query string pour la pagination
-  function buildQuery(p: number): string {
+  const lien = (modif: Partial<{ page: number; resultat: string | undefined }> = {}) => {
     const qs = new URLSearchParams();
+    const p = modif.page ?? 1;
     if (p > 1) qs.set("page", String(p));
-    if (saisonFilter) qs.set("saison", saisonFilter);
-    if (competitionFilter) qs.set("competition", competitionFilter);
-    if (adversaireFilter) qs.set("adversaire", adversaireFilter);
-    if (resultatFilter) qs.set("resultat", resultatFilter);
-    const str = qs.toString();
-    return str ? `/matchs?${str}` : "/matchs";
-  }
+    if (saison) qs.set("saison", saison);
+    if (competition) qs.set("competition", competition);
+    if (adversaire) qs.set("adversaire", adversaire);
+    const r = "resultat" in modif ? modif.resultat : resultat;
+    if (r) qs.set("resultat", r);
+    const s = qs.toString();
+    return s ? `/matchs?${s}` : "/matchs";
+  };
+  const filtreActif = !!(saison || competition || adversaire || resultat);
+  const totalPages = Math.max(1, Math.ceil(total / PAR_PAGE));
 
-  const hasFilters =
-    saisonFilter || competitionFilter || adversaireFilter || resultatFilter;
+  // Par saison, la plus récente en tête — l'ordre des rencontres est déjà le bon.
+  const groupes = new Map<string, typeof matches>();
+  for (const m of matches) groupes.set(m.season.label, [...(groupes.get(m.season.label) ?? []), m]);
+
+  const lettre = (result: string | null) =>
+    result === "VICTOIRE"
+      ? { texte: "V", classe: "text-usap-sang" }
+      : result === "NUL"
+        ? { texte: "N", classe: "text-foreground" }
+        : result === "DEFAITE"
+          ? { texte: "D", classe: "text-muted-foreground" }
+          : null;
+  const intitule = (m: (typeof matches)[number]) => {
+    const c = m.competition.shortName || m.competition.name;
+    return m.matchday ? `${c}, J${m.matchday}` : m.round ? `${c}, ${m.round}` : c;
+  };
+  const select = "rounded-sm border border-input bg-background px-3 py-2 text-sm text-foreground";
 
   return (
-    <div className="mx-auto max-w-7xl px-4 py-10">
-      <h1 className="mb-2 text-3xl font-bold uppercase tracking-wider text-foreground">
-        Matchs
-      </h1>
-      <p className="mb-8 text-muted-foreground">
-        {total} match{total > 1 ? "s" : ""}
-        {saisonFilter && ` en ${saisonFilter}`}
-      </p>
+    <div className="mx-auto max-w-6xl px-4 py-10 sm:py-14">
+      <header className="mb-8 sm:mb-12">
+        <h1 className="font-display text-7xl uppercase leading-none text-usap-sang sm:text-8xl">{t("matchs.titre")}</h1>
+        <p className="mt-4 max-w-prose text-lg leading-snug text-foreground">
+          {t("matchs.chapeau", { n: nombre(totalBase), debut: premiere?.season.label ?? "", fin: derniere?.season.label ?? "" })}
+        </p>
+        <p className="mt-2 max-w-prose text-sm leading-relaxed text-muted-foreground">{t("matchs.reserve")}</p>
+      </header>
 
-      {/* Filtres */}
-      <form className="mb-8 flex flex-wrap gap-3">
-        {/* Saison */}
-        <select
-          name="saison"
-          defaultValue={saisonFilter ?? ""}
-          className="rounded-lg border border-border bg-background px-3 py-2 text-sm text-foreground focus:border-usap-or focus:outline-none"
-        >
-          <option value="">Toutes les saisons</option>
-          {seasons.map((s) => (
-            <option key={s.label} value={s.label}>
-              {s.label}
-            </option>
+      {/* Les filtres : trois menus, et le résultat en liens. */}
+      <div className="mb-6 flex flex-wrap items-center gap-x-8 gap-y-4 border-b border-border pb-6">
+        <form className="flex flex-wrap items-stretch gap-2">
+          <select name="saison" defaultValue={saison ?? ""} aria-label={t("matchs.toutesSaisons")} className={select}>
+            <option value="">{t("matchs.toutesSaisons")}</option>
+            {seasons.map((s) => (
+              <option key={s.label} value={s.label}>
+                {s.label}
+              </option>
+            ))}
+          </select>
+          <select name="competition" defaultValue={competition ?? ""} aria-label={t("matchs.toutesCompetitions")} className={select}>
+            <option value="">{t("matchs.toutesCompetitions")}</option>
+            {competitions.map((c) => (
+              <option key={c.id} value={c.id}>
+                {c.shortName || c.name}
+              </option>
+            ))}
+          </select>
+          <select name="adversaire" defaultValue={adversaire ?? ""} aria-label={t("matchs.tousAdversaires")} className={select}>
+            <option value="">{t("matchs.tousAdversaires")}</option>
+            {opponents.map((o) => (
+              <option key={o.id} value={o.id}>
+                {o.shortName || o.name}
+              </option>
+            ))}
+          </select>
+          {resultat && <input type="hidden" name="resultat" value={resultat} />}
+          <button type="submit" className="rounded-sm bg-usap-sang px-4 py-2 text-sm font-semibold text-white hover:bg-foreground">
+            {t("matchs.filtrer")}
+          </button>
+        </form>
+        <nav aria-label={t("matchs.resultatAria")} className="flex flex-wrap gap-x-5 text-sm">
+          {(
+            [
+              [undefined, "matchs.tous"],
+              ["victoire", "matchs.victoires"],
+              ["nul", "matchs.nuls"],
+              ["defaite", "matchs.defaites"],
+              ["a-venir", "matchs.aVenir"],
+            ] as const
+          ).map(([valeur, cle]) => (
+            <Filtre key={cle} href={lien({ resultat: valeur })} actif={resultat === valeur}>
+              {t(cle)}
+            </Filtre>
           ))}
-        </select>
-
-        {/* Compétition */}
-        <select
-          name="competition"
-          defaultValue={competitionFilter ?? ""}
-          className="rounded-lg border border-border bg-background px-3 py-2 text-sm text-foreground focus:border-usap-or focus:outline-none"
-        >
-          <option value="">Toutes les compétitions</option>
-          {competitions.map((c) => (
-            <option key={c.id} value={c.id}>
-              {c.shortName || c.name}
-            </option>
-          ))}
-        </select>
-
-        {/* Adversaire */}
-        <select
-          name="adversaire"
-          defaultValue={adversaireFilter ?? ""}
-          className="rounded-lg border border-border bg-background px-3 py-2 text-sm text-foreground focus:border-usap-or focus:outline-none"
-        >
-          <option value="">Tous les adversaires</option>
-          {opponents.map((o) => (
-            <option key={o.id} value={o.id}>
-              {o.shortName || o.name}
-            </option>
-          ))}
-        </select>
-
-        {/* Résultat */}
-        <select
-          name="resultat"
-          defaultValue={resultatFilter ?? ""}
-          className="rounded-lg border border-border bg-background px-3 py-2 text-sm text-foreground focus:border-usap-or focus:outline-none"
-        >
-          <option value="">Tous les résultats</option>
-          <option value="victoire">Victoires</option>
-          <option value="defaite">Défaites</option>
-          <option value="nul">Nuls</option>
-        </select>
-
-        <button
-          type="submit"
-          className="rounded-lg bg-usap-sang px-4 py-2 text-sm font-medium text-white hover:bg-usap-sang/90"
-        >
-          Filtrer
-        </button>
-
-        {hasFilters && (
-          <Link
-            href="/matchs"
-            className="rounded-lg border border-border px-4 py-2 text-sm font-medium text-muted-foreground hover:text-foreground"
-          >
-            Réinitialiser
+        </nav>
+        {filtreActif && (
+          <Link href="/matchs" className="text-sm text-muted-foreground underline hover:text-usap-sang">
+            {t("matchs.reinitialiser")}
           </Link>
         )}
-      </form>
+      </div>
 
-      {/* Liste des matchs */}
-      {matches.length > 0 ? (
-        <div className="overflow-x-auto rounded-lg border border-border">
-          <table className="w-full text-sm">
+      {/* Le bilan de la sélection */}
+      <p className="mb-6 max-w-prose text-sm text-muted-foreground">
+        {bilan._count.id > 0 &&
+          t(bilan._count.id === 1 ? "matchs.bilanUne" : "matchs.bilan", {
+            n: nombre(bilan._count.id),
+            v: t("saison.victoires", { n: compte("VICTOIRE") }),
+            nu: t("saison.nuls", { n: compte("NUL") }),
+            d: t("saison.defaites", { n: compte("DEFAITE") }),
+            pour: nombre(bilan._sum.scoreUsap ?? 0),
+            contre: nombre(bilan._sum.scoreOpponent ?? 0),
+          })}
+        {aVenir > 0 && ` ${t("matchs.aVenirCompte", { n: aVenir })}`}
+      </p>
+
+      {matches.length === 0 ? (
+        <p className="text-muted-foreground">{t("matchs.aucun")}</p>
+      ) : (
+        <div className="overflow-x-auto">
+          <table className="w-full border-collapse text-sm">
             <thead>
-              <tr className="border-b border-border bg-muted/50">
-                <th className="px-3 py-3 text-left font-semibold text-foreground">
-                  Date
-                </th>
-                <th className="hidden px-3 py-3 text-left font-semibold text-foreground sm:table-cell">
-                  Saison
-                </th>
-                <th className="px-3 py-3 text-left font-semibold text-foreground">
-                  Compét.
-                </th>
-                <th className="px-3 py-3 text-left font-semibold text-foreground">
-                  J.
-                </th>
-                <th className="px-3 py-3 text-left font-semibold text-foreground">
-                  Match
-                </th>
-                <th className="px-3 py-3 text-center font-semibold text-foreground">
-                  Score
-                </th>
-                <th className="hidden px-3 py-3 text-left font-semibold text-foreground md:table-cell">
-                  Lieu
-                </th>
+              <tr className="border-b border-border text-left text-xs text-muted-foreground">
+                <th scope="col" className="py-2 pr-3 font-medium">{t("matchs.colDate")}</th>
+                <th scope="col" className="hidden py-2 pr-3 font-medium sm:table-cell">{t("matchs.colCompetition")}</th>
+                <th scope="col" className="py-2 pr-3 font-medium">{t("matchs.colRencontre")}</th>
+                <th scope="col" className="py-2 pr-3 text-right font-medium">{t("matchs.colScore")}</th>
+                <th scope="col" className="py-2 pr-3 text-center font-medium">{t("matchs.colResultat")}</th>
+                <th scope="col" className="hidden py-2 font-medium md:table-cell">{t("matchs.colStade")}</th>
               </tr>
             </thead>
-            <tbody>
-              {matches.map((match) => {
-                const resultColor =
-                  match.result === "VICTOIRE"
-                    ? "bg-green-500/10 text-green-600"
-                    : match.result === "DEFAITE"
-                      ? "bg-red-500/10 text-red-500"
-                      : "bg-muted text-muted-foreground";
-
-                const oppName =
-                  match.opponent.shortName || match.opponent.name;
-
-                return (
-                  <tr
-                    key={match.slug}
-                    className="border-b border-border transition-colors hover:bg-muted/30"
-                  >
-                    <td className="whitespace-nowrap px-3 py-3 text-muted-foreground">
-                      {formatDateFR(match.date)}
-                    </td>
-                    <td className="hidden whitespace-nowrap px-3 py-3 text-muted-foreground sm:table-cell">
-                      <Link
-                        href={`/saisons/${match.season.label}`}
-                        className="hover:text-usap-sang"
-                      >
-                        {match.season.label}
-                      </Link>
-                    </td>
-                    <td className="whitespace-nowrap px-3 py-3 text-muted-foreground">
-                      {match.competition.shortName || match.competition.name}
-                    </td>
-                    <td className="px-3 py-3 text-muted-foreground">
-                      {match.matchday
-                        ? `J${match.matchday}`
-                        : match.round || "—"}
-                    </td>
-                    <td className="px-3 py-3">
-                      <Link
-                        href={`/matchs/${match.slug}`}
-                        className="flex items-center gap-1.5 font-medium text-foreground hover:text-usap-sang"
-                      >
-                        {match.isHome ? (
-                          <>
-                            <Image src="/images/usap/logo.png" alt="USAP" width={18} height={18} className="h-[18px] w-[18px]" />
-                            <span className="font-bold">USAP</span> -{" "}
-                            {match.opponent.logoUrl && <Image src={match.opponent.logoUrl} alt={oppName} width={18} height={18} className="h-[18px] w-[18px] logo-club" />}
-                            {oppName}
-                          </>
+            {[...groupes.entries()].map(([label, liste]) => (
+              <tbody key={label} className="tabular-nums">
+                <tr>
+                  <th scope="rowgroup" colSpan={6} className="border-b-2 border-usap-sang pt-8 pb-1 text-left font-display text-5xl leading-none text-usap-sang">
+                    <Link href={`/saisons/${label}`} className="hover:text-usap-or">
+                      {label}
+                    </Link>
+                  </th>
+                </tr>
+                {liste.map((m) => {
+                  const joue = estJoue(m);
+                  const l = lettre(m.result);
+                  const opp = m.opponent.shortName || m.opponent.name;
+                  return (
+                    <tr key={m.id} className="border-b border-border hover:bg-muted">
+                      <td className="py-1.5 pr-3 whitespace-nowrap text-muted-foreground">{formatDateFR(m.date)}</td>
+                      <td className="hidden py-1.5 pr-3 whitespace-nowrap text-muted-foreground sm:table-cell">{intitule(m)}</td>
+                      <td className="py-1.5 pr-3">
+                        <Link href={`/matchs/${m.slug}`} className="text-foreground hover:text-usap-sang">
+                          {m.isHome ? (
+                            <>
+                              <span className="font-semibold text-usap-sang">USAP</span> – {opp}
+                            </>
+                          ) : (
+                            <>
+                              {opp} – <span className="font-semibold text-usap-sang">USAP</span>
+                            </>
+                          )}
+                        </Link>
+                      </td>
+                      <td className="py-1.5 pr-3 text-right whitespace-nowrap">
+                        {joue ? (
+                          <span className="font-semibold text-foreground">
+                            {m.isHome ? m.scoreUsap : m.scoreOpponent} – {m.isHome ? m.scoreOpponent : m.scoreUsap}
+                          </span>
                         ) : (
-                          <>
-                            {match.opponent.logoUrl && <Image src={match.opponent.logoUrl} alt={oppName} width={18} height={18} className="h-[18px] w-[18px] logo-club" />}
-                            {oppName} -{" "}
-                            <Image src="/images/usap/logo.png" alt="USAP" width={18} height={18} className="h-[18px] w-[18px]" />
-                            <span className="font-bold">USAP</span>
-                          </>
+                          <span className="text-muted-foreground">{t("saison.aVenir")}</span>
                         )}
-                      </Link>
-                    </td>
-                    <td className="px-3 py-3 text-center">
-                      <span
-                        className={`inline-block rounded px-2 py-0.5 text-xs font-bold ${resultColor}`}
-                      >
-                        {!match.result
-                          ? "à venir"
-                          : match.isHome
-                            ? `${match.scoreUsap} - ${match.scoreOpponent}`
-                            : `${match.scoreOpponent} - ${match.scoreUsap}`}
-                      </span>
-                    </td>
-                    <td className="hidden whitespace-nowrap px-3 py-3 text-muted-foreground md:table-cell">
-                      {match.venue && (
-                        <span className="flex items-center gap-1">
-                          <MapPin className="h-3 w-3" />
-                          {match.venue.name}
-                        </span>
-                      )}
-                    </td>
-                  </tr>
-                );
-              })}
-            </tbody>
+                      </td>
+                      <td className={`py-1.5 pr-3 text-center font-bold ${l?.classe ?? ""}`}>{l?.texte ?? ""}</td>
+                      <td className="hidden py-1.5 whitespace-nowrap text-muted-foreground md:table-cell">
+                        {m.venue && (
+                          <Link href={`/stades/${m.venue.slug}`} className="hover:text-usap-sang">
+                            {m.venue.name}
+                          </Link>
+                        )}
+                      </td>
+                    </tr>
+                  );
+                })}
+              </tbody>
+            ))}
           </table>
-        </div>
-      ) : (
-        <div className="rounded-lg border border-border bg-muted/30 p-10 text-center text-muted-foreground">
-          <p className="text-lg">Aucun match trouvé.</p>
-          {hasFilters && (
-            <Link
-              href="/matchs"
-              className="mt-2 inline-block text-sm text-usap-sang hover:underline"
-            >
-              Réinitialiser les filtres
-            </Link>
-          )}
         </div>
       )}
 
-      {/* Pagination */}
       {totalPages > 1 && (
-        <div className="mt-6 flex items-center justify-center gap-2">
+        <nav className="mt-8 flex flex-wrap items-baseline gap-x-6 text-sm text-muted-foreground">
           {page > 1 && (
-            <Link
-              href={buildQuery(page - 1)}
-              className="rounded-lg border border-border px-3 py-2 text-sm text-muted-foreground hover:text-foreground"
-            >
-              Précédent
+            <Link href={lien({ page: page - 1 })} className="underline hover:text-usap-sang">
+              {t("matchs.precedente")}
             </Link>
           )}
-          <span className="px-3 py-2 text-sm text-muted-foreground">
-            Page {page} / {totalPages}
-          </span>
+          <span>{t("matchs.page", { page, total: totalPages })}</span>
           {page < totalPages && (
-            <Link
-              href={buildQuery(page + 1)}
-              className="rounded-lg border border-border px-3 py-2 text-sm text-muted-foreground hover:text-foreground"
-            >
-              Suivant
+            <Link href={lien({ page: page + 1 })} className="underline hover:text-usap-sang">
+              {t("matchs.suivante")}
             </Link>
           )}
-        </div>
+        </nav>
       )}
     </div>
   );
 }
+
+/** Un filtre est un lien : l'actif en rouge et souligné, les autres en encre. */
+function Filtre({ href, actif, children }: { href: string; actif: boolean; children: React.ReactNode }) {
+  return (
+    <Link
+      href={href}
+      aria-current={actif ? "page" : undefined}
+      className={actif ? "font-semibold text-usap-sang underline underline-offset-4" : "text-foreground hover:text-usap-sang"}
+    >
+      {children}
+    </Link>
+  );
+}
+
