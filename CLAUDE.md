@@ -1694,10 +1694,25 @@ Béziers ». **Un piège pris au passage** : le bilan se calcule sur
 premier en silence, le filtre « victoires » annonçant 311 défaites. Plus de
 logos dans les lignes, plus de pastilles. Dictionnaire `matchs.*`.
 
-**Ce qui reste dans l'ancien rendu** : les quinze autres pages. À reprendre
-page par page, en relisant chaque fois qu'aucune couleur en dur n'est
-revenue. La suivante, par ordre de valeur : la fiche adversaire, puis la
-liste des adversaires.
+**La fiche adversaire est refaite le même jour.** Sa seule audace est la
+**frise des confrontations** sous le nom du club, la même que sur la page
+de saison — c'est le tête-à-tête d'un coup d'œil, et les vingt-sept
+Toulon-USAP se lisent en une ligne. Le bilan tient en une phrase, le plus
+large succès et la plus lourde défaite liés à leur rencontre en une autre ;
+l'écusson garde sa place, à gauche du nom en encre — le rouge est celui de
+l'USAP —, et la case reste vide sans écusson. Les confrontations en
+tableau, les réalisateurs catalans contre ce club en une lecture des
+lignes, et **les joueurs passés par les deux clubs, tous et non les vingt
+premiers**. **Un défaut de fond pris au passage** : cette liste rendait
+tous les joueurs du club adverse, puisque `seed-carrieres.ts` écrit un
+passage par club à chacun ; elle exige désormais aussi le lien avéré avec
+l'USAP, la condition de la liste des joueurs. Plus de sept cases de
+chiffres, plus de cartes verte et rouge pour les records, plus de drapeau
+en emoji. Dictionnaire `adversaire.*`.
+
+**Ce qui reste dans l'ancien rendu** : les quatorze autres pages. À
+reprendre page par page, en relisant chaque fois qu'aucune couleur en dur
+n'est revenue. La suivante, par ordre de valeur : la liste des adversaires.
 
 
 - **Couleur principale** : Rouge sang (#C8102E) - couleur dominante USAP

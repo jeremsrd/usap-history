@@ -1,22 +1,35 @@
 import Link from "@/components/Lien";
 import Provenance from "@/components/Provenance";
+import { JoueurCellule } from "@/components/JoueurCellule";
 import Image from "next/image";
 import { notFound, redirect } from "next/navigation";
 import { prisma } from "@/lib/prisma";
 import { estJoue } from "@/lib/matchs";
-import { formatDateFR, countryCodeToFlag } from "@/lib/utils";
-import {
-  Shield,
-  Calendar,
-  MapPin,
-  Globe,
-  Swords,
-  Trophy,
-  Users,
-  TrendingUp,
-} from "lucide-react";
-import type { Metadata } from "next";
+import { formatDateFR } from "@/lib/utils";
+import { dictionnaire } from "@/i18n/dictionnaire";
 import { cheminLocalise, type Langue } from "@/i18n/langues";
+import type { Metadata } from "next";
+
+/**
+ * La fiche d'un club adverse, refaite le 6 septembre 2026 dans l'identité
+ * posée sur les autres fiches. Sa seule audace est **la frise des
+ * confrontations** sous le nom du club — la même que sur la page de
+ * saison, V en rouge, N en encre, D en gris, chaque lettre liée à sa
+ * rencontre —, qui dit le tête-à-tête d'un coup d'œil, et le bilan en une
+ * phrase avec le plus large succès et la plus lourde défaite liés à leur
+ * rencontre. L'écusson garde sa place, à gauche du nom, en `logo-club`
+ * pour le thème sombre ; le nom du club est en encre, le rouge étant celui
+ * de l'USAP.
+ *
+ * Puis les confrontations en tableau, les réalisateurs catalans contre ce
+ * club, et les joueurs passés par les deux maillots — tous, et non les
+ * vingt premiers —, la provenance en pied.
+ *
+ * Ce que la page ne fait plus : sept cases de chiffres, deux cartes verte
+ * et rouge pour les records, des pastilles pour les scores, des icônes
+ * devant les titres, un drapeau en emoji, un bouclier gris à la place d'un
+ * écusson manquant.
+ */
 
 export const dynamic = "force-dynamic";
 
@@ -29,506 +42,304 @@ function extractIdFromSlug(slug: string): string | null {
   return match ? match[1] : null;
 }
 
+const nombre = (n: number) => n.toLocaleString("fr-FR");
+const majuscule = (s: string) => s.charAt(0).toUpperCase() + s.slice(1);
+
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
-  const { slug } = await params;
+  const { locale, slug } = await params;
+  const t = await dictionnaire(locale);
   const id = extractIdFromSlug(slug);
-  if (!id) return { title: "Adversaire introuvable - USAP Historia" };
-
-  const opponent = await prisma.opponent.findUnique({
-    where: { id },
-    select: { name: true, shortName: true },
-  });
-
-  if (!opponent) return { title: "Adversaire introuvable - USAP Historia" };
-
-  const displayName = opponent.shortName || opponent.name;
-
-  return {
-    title: `${displayName} - Adversaire - USAP Historia`,
-    description: `Bilan USAP vs ${displayName}. Historique complet des confrontations, statistiques head-to-head.`,
-  };
+  const opponent = id ? await prisma.opponent.findUnique({ where: { id }, select: { name: true, shortName: true } }) : null;
+  if (!opponent) return { title: t("adversaire.introuvable") };
+  const nom = opponent.shortName || opponent.name;
+  return { title: t("adversaire.metaTitre", { nom }), description: t("adversaire.metaDescription", { nom }) };
 }
 
 export default async function AdversaireDetailPage({ params }: Props) {
   const { locale, slug } = await params;
-
+  const t = await dictionnaire(locale);
   const id = extractIdFromSlug(slug);
   if (!id) notFound();
 
   const opponent = await prisma.opponent.findUnique({
     where: { id },
     include: {
-      country: true,
-      venue: true,
+      country: { select: { name: true } },
+      venue: { select: { name: true, slug: true } },
       formerNames: { orderBy: { usedFrom: "asc" } },
       matches: {
         orderBy: { date: "desc" },
-        include: {
+        select: {
+          id: true,
+          slug: true,
+          date: true,
+          scoreUsap: true,
+          scoreOpponent: true,
+          result: true,
+          isHome: true,
+          matchday: true,
+          round: true,
           season: { select: { label: true } },
           competition: { select: { shortName: true, name: true } },
-          venue: { select: { name: true, city: true } },
+          venue: { select: { name: true, slug: true } },
         },
       },
     },
   });
-
   if (!opponent) notFound();
+  if (opponent.slug !== slug) redirect(cheminLocalise(`/adversaires/${opponent.slug}`, locale));
 
-  if (opponent.slug !== slug) {
-    redirect(cheminLocalise(`/adversaires/${opponent.slug}`, locale));
+  const nom = opponent.shortName || opponent.name;
+
+  // Le tête-à-tête, sur les rencontres jouées : une rencontre à venir n'a ni
+  // score ni résultat, elle ne compte dans aucun bilan.
+  const jouees = opponent.matches.filter(estJoue);
+  const aVenir = opponent.matches.length - jouees.length;
+  const victoires = jouees.filter((m) => m.result === "VICTOIRE");
+  const defaites = jouees.filter((m) => m.result === "DEFAITE");
+  const nuls = jouees.filter((m) => m.result === "NUL");
+  const pour = jouees.reduce((s, m) => s + m.scoreUsap, 0);
+  const contre = jouees.reduce((s, m) => s + m.scoreOpponent, 0);
+  const plusLarge = victoires.length ? victoires.reduce((a, m) => (m.scoreUsap - m.scoreOpponent > a.scoreUsap - a.scoreOpponent ? m : a)) : null;
+  const plusLourde = defaites.length ? defaites.reduce((a, m) => (m.scoreOpponent - m.scoreUsap > a.scoreOpponent - a.scoreUsap ? m : a)) : null;
+  const premiere = jouees[jouees.length - 1];
+
+  // Les réalisateurs catalans contre ce club, en une lecture des lignes.
+  const lignes = await prisma.matchPlayer.findMany({
+    where: { matchId: { in: jouees.map((m) => m.id) }, isOpponent: false, playerId: { not: null } },
+    select: { playerId: true, totalPoints: true, tries: true },
+  });
+  const cumuls = new Map<string, { matchs: number; points: number; essais: number }>();
+  for (const l of lignes) {
+    const c = cumuls.get(l.playerId!) ?? { matchs: 0, points: 0, essais: 0 };
+    c.matchs += 1;
+    c.points += l.totalPoints;
+    c.essais += l.tries;
+    cumuls.set(l.playerId!, c);
   }
+  const meilleursIds = [...cumuls.entries()]
+    .filter(([, c]) => c.points > 0)
+    .sort(([, a], [, b]) => b.points - a.points || b.essais - a.essais || a.matchs - b.matchs)
+    .slice(0, 10)
+    .map(([id]) => id);
+  const selectionJoueur = { id: true, slug: true, firstName: true, lastName: true, photoUrl: true, isActive: true } as const;
+  const meilleursJoueurs = meilleursIds.length ? await prisma.player.findMany({ where: { id: { in: meilleursIds } }, select: selectionJoueur }) : [];
+  const realisateurs = meilleursIds.map((id) => ({ joueur: meilleursJoueurs.find((j) => j.id === id)!, cumul: cumuls.get(id)! }));
 
-  const displayName = opponent.shortName || opponent.name;
-
-  // Stats head-to-head calculees depuis les matchs deja joues : une rencontre
-  // a venir n'a ni score ni resultat, elle ne compte dans aucun bilan.
-  const played = opponent.matches.filter(estJoue);
-  const totalMatches = played.length;
-  const victories = played.filter((m) => m.result === "VICTOIRE").length;
-  const defeats = played.filter((m) => m.result === "DEFAITE").length;
-  const draws = played.filter((m) => m.result === "NUL").length;
-  const pointsFor = played.reduce((sum, m) => sum + m.scoreUsap, 0);
-  const pointsAgainst = played.reduce((sum, m) => sum + m.scoreOpponent, 0);
-  const winPct =
-    totalMatches > 0 ? Math.round((victories / totalMatches) * 100) : 0;
-
-  // Records : plus grosse victoire et plus lourde defaite
-  const winsOnly = played.filter((m) => m.result === "VICTOIRE");
-  const lossesOnly = played.filter((m) => m.result === "DEFAITE");
-
-  const biggestWin = winsOnly.length > 0
-    ? winsOnly.reduce((best, m) => {
-        const gap = m.scoreUsap - m.scoreOpponent;
-        const bestGap = best.scoreUsap - best.scoreOpponent;
-        return gap > bestGap ? m : best;
-      })
-    : null;
-
-  const biggestLoss = lossesOnly.length > 0
-    ? lossesOnly.reduce((worst, m) => {
-        const gap = m.scoreOpponent - m.scoreUsap;
-        const worstGap = worst.scoreOpponent - worst.scoreUsap;
-        return gap > worstGap ? m : worst;
-      })
-    : null;
-
-  // Top 5 marqueurs USAP contre cet adversaire
-  const topScorersAgg = await prisma.matchPlayer.groupBy({
-    by: ["playerId"],
+  // Passés par les deux clubs, d'après les carrières déduites des feuilles :
+  // un passage chez l'adversaire, **et** un lien avéré avec l'USAP — la même
+  // condition que la liste des joueurs. Sans la seconde, la page listait
+  // tous les joueurs du club adverse, puisque `seed-carrieres.ts` écrit un
+  // passage par club à chacun.
+  const communs = await prisma.player.findMany({
     where: {
-      match: { opponentId: id },
-      isOpponent: false,
-      playerId: { not: null },
+      careerClubs: { some: { opponentId: id } },
+      OR: [
+        { careerClubs: { some: { isUsap: true } } },
+        { matchAppearances: { some: { isOpponent: false } } },
+        { seasonSquads: { some: {} } },
+      ],
     },
-    _sum: { totalPoints: true, tries: true },
-    orderBy: { _sum: { totalPoints: "desc" } },
-    take: 5,
-    having: { totalPoints: { _sum: { gt: 0 } } },
+    select: selectionJoueur,
+    orderBy: [{ lastName: "asc" }, { firstName: "asc" }],
   });
 
-  const topScorerIds = topScorersAgg.map((s) => s.playerId as string);
-  const topScorerPlayers =
-    topScorerIds.length > 0
-      ? await prisma.player.findMany({
-          where: { id: { in: topScorerIds } },
-          select: {
-            id: true,
-            slug: true,
-            firstName: true,
-            lastName: true,
-            position: true,
-          },
-        })
-      : [];
-
-  const topScorers = topScorersAgg.map((agg) => {
-    const player = topScorerPlayers.find((p) => p.id === agg.playerId);
-    return {
-      ...player,
-      totalPoints: agg._sum.totalPoints ?? 0,
-      tries: agg._sum.tries ?? 0,
-    };
-  });
-
-  // Joueurs passes par les deux clubs
-  const sharedPlayers = await prisma.player.findMany({
-    where: {
-      careerClubs: {
-        some: { opponentId: id },
-      },
-    },
-    select: {
-      slug: true,
-      firstName: true,
-      lastName: true,
-      position: true,
-      photoUrl: true,
-    },
-    orderBy: { lastName: "asc" },
-    take: 20,
-  });
+  // L'en-tête, en phrases.
+  const periode = (fn: (typeof opponent.formerNames)[number]) =>
+    fn.usedFrom && fn.usedUntil
+      ? t("adversaire.de", { debut: fn.usedFrom, fin: fn.usedUntil })
+      : fn.usedFrom
+        ? t("adversaire.depuis", { debut: fn.usedFrom })
+        : fn.usedUntil
+          ? t("adversaire.jusqua", { fin: fn.usedUntil })
+          : null;
+  const faits = [
+    [opponent.city, opponent.country?.name].filter(Boolean).join(", "),
+    opponent.foundedYear && t("adversaire.fonde", { annee: opponent.foundedYear }),
+    opponent.venue && (
+      <Link key="stade" href={`/stades/${opponent.venue.slug}`} className="hover:text-usap-sang">
+        {t("adversaire.stade", { stade: opponent.venue.name })}
+      </Link>
+    ),
+  ].filter(Boolean) as (string | React.ReactElement)[];
+  const score = (m: { scoreUsap: number; scoreOpponent: number; date: Date; slug: string }) => (
+    <Link href={`/matchs/${m.slug}`} className="hover:text-usap-sang">
+      {m.scoreUsap}-{m.scoreOpponent} {t("match.le", { date: formatDateFR(m.date) })}
+    </Link>
+  );
+  const lettre = (result: string | null) =>
+    result === "VICTOIRE"
+      ? { texte: "V", classe: "text-usap-sang" }
+      : result === "NUL"
+        ? { texte: "N", classe: "text-foreground" }
+        : result === "DEFAITE"
+          ? { texte: "D", classe: "text-muted-foreground" }
+          : null;
+  const intitule = (m: (typeof opponent.matches)[number]) => {
+    const c = m.competition.shortName || m.competition.name;
+    return m.matchday ? `${c}, J${m.matchday}` : m.round ? `${c}, ${m.round}` : c;
+  };
 
   return (
-    <div className="mx-auto max-w-7xl px-4 py-10">
-      {/* Fil d'Ariane */}
-      <div className="mb-6 text-sm text-muted-foreground">
+    <div className="mx-auto max-w-6xl px-4 py-10 sm:py-14">
+      <nav className="mb-8 text-sm text-muted-foreground">
         <Link href="/adversaires" className="hover:text-usap-sang">
-          Adversaires
+          {t("adversaire.filAriane")}
         </Link>
         <span className="mx-2">/</span>
-        <span className="text-foreground">{displayName}</span>
-      </div>
+        <span className="text-foreground">{nom}</span>
+      </nav>
 
-      {/* En-tete */}
-      <div className="mb-10 rounded-lg border border-border bg-usap-carte p-6">
-        <div className="flex flex-col gap-6 sm:flex-row">
-          {/* Logo */}
-          <div className="flex shrink-0 justify-center sm:justify-start">
-            {opponent.logoUrl ? (
-              <Image
-                src={opponent.logoUrl}
-                alt={opponent.name}
-                width={160}
-                height={160}
-                className="h-40 w-40 logo-club"
-              />
-            ) : (
-              <div className="flex h-40 w-40 items-center justify-center rounded-lg bg-muted">
-                <Shield className="h-16 w-16 text-muted-foreground" />
-              </div>
-            )}
+      {/* L'écusson, le nom, la frise des confrontations */}
+      <header className="mb-10 flex flex-col gap-6 sm:flex-row sm:items-start">
+        {opponent.logoUrl && (
+          <div className="shrink-0">
+            <Image src={opponent.logoUrl} alt={opponent.name} width={160} height={160} className="h-40 w-40 logo-club" priority />
           </div>
-
-          {/* Infos */}
-          <div className="flex-1">
-            <div className="flex flex-wrap items-start gap-3">
-              <h1 className="text-3xl font-bold uppercase tracking-wider text-foreground">
-                {opponent.name}
-              </h1>
-              {!opponent.isActive && (
-                <span className="mt-1 rounded bg-muted px-3 py-1 text-sm font-medium text-muted-foreground">
-                  Club inactif
-                </span>
-              )}
-            </div>
-
-            {opponent.officialName &&
-              opponent.officialName !== opponent.name && (
-                <p className="mt-1 text-sm text-muted-foreground">
-                  {opponent.officialName}
-                </p>
-              )}
-
-            <div className="mt-4 flex flex-wrap gap-x-6 gap-y-2 text-sm text-muted-foreground">
-              {opponent.country && (
-                <span className="flex items-center gap-1.5">
-                  <Globe className="h-4 w-4" />
-                  {countryCodeToFlag(opponent.country.code)}{" "}
-                  {opponent.country.name}
-                </span>
-              )}
-              {opponent.city && (
-                <span className="flex items-center gap-1.5">
-                  <MapPin className="h-4 w-4" />
-                  {opponent.city}
-                </span>
-              )}
-              {opponent.foundedYear && (
-                <span className="flex items-center gap-1.5">
-                  <Calendar className="h-4 w-4" />
-                  Fond&eacute; en {opponent.foundedYear}
-                </span>
-              )}
-              {opponent.venue && (
-                <span className="flex items-center gap-1.5">
-                  <MapPin className="h-4 w-4" />
-                  {opponent.venue.name}
-                </span>
-              )}
-            </div>
-
-            {/* Couleurs du club */}
-            {(opponent.primaryColor || opponent.secondaryColor) && (
-              <div className="mt-3 flex items-center gap-2">
-                {opponent.primaryColor && (
-                  <span
-                    className="inline-block h-5 w-5 rounded-full border border-border"
-                    style={{ backgroundColor: opponent.primaryColor }}
-                    title={`Couleur principale : ${opponent.primaryColor}`}
-                  />
-                )}
-                {opponent.secondaryColor && (
-                  <span
-                    className="inline-block h-5 w-5 rounded-full border border-border"
-                    style={{ backgroundColor: opponent.secondaryColor }}
-                    title={`Couleur secondaire : ${opponent.secondaryColor}`}
-                  />
-                )}
-              </div>
-            )}
-
-            {/* Anciens noms */}
-            {opponent.formerNames.length > 0 && (
-              <div className="mt-3 text-sm text-muted-foreground">
-                <span className="font-medium">Anciens noms :</span>{" "}
-                {opponent.formerNames.map((fn, i) => (
-                  <span key={fn.id}>
-                    {i > 0 && ", "}
-                    {fn.name}
-                    {(fn.usedFrom || fn.usedUntil) && (
-                      <span className="text-xs">
-                        {" "}
-                        ({fn.usedFrom ?? "?"}-{fn.usedUntil ?? "..."})
-                      </span>
-                    )}
-                  </span>
-                ))}
-              </div>
-            )}
-
-            {/* D'où viennent le stade et l'écusson, quand ce n'est pas de la LNR ou de l'EPCR */}
-            <Provenance entite="Opponent" id={opponent.id} />
-
-            {/* Bilan head-to-head */}
-            {totalMatches > 0 && (
-              <div className="mt-6 grid grid-cols-3 gap-4 border-t border-border pt-4 sm:grid-cols-7">
-                <StatBox label="Matchs" value={totalMatches} />
-                <StatBox
-                  label="Victoires"
-                  value={victories}
-                  className="text-green-600"
-                />
-                <StatBox
-                  label="D&eacute;faites"
-                  value={defeats}
-                  className="text-red-500"
-                />
-                <StatBox label="Nuls" value={draws} />
-                <StatBox
-                  label="Pts marqu&eacute;s"
-                  value={pointsFor}
-                  className="text-usap-or"
-                />
-                <StatBox label="Pts encaiss&eacute;s" value={pointsAgainst} />
-                <StatBox label="% victoires" value={`${winPct}%`} />
-              </div>
-            )}
-          </div>
-        </div>
-      </div>
-
-      {/* Records */}
-      {(biggestWin || biggestLoss) && (
-        <section className="mb-10">
-          <h2 className="mb-4 flex items-center gap-2 text-2xl font-bold uppercase tracking-wider text-foreground">
-            <Trophy className="h-6 w-6 text-usap-or" />
-            Records
-          </h2>
-          <div className="grid gap-4 sm:grid-cols-2">
-            {biggestWin && (
-              <Link
-                href={`/matchs/${biggestWin.slug}`}
-                className="rounded-lg border border-border bg-green-500/5 p-4 transition-colors hover:border-green-500/30"
-              >
-                <p className="text-sm font-semibold uppercase text-green-600">
-                  Plus grosse victoire
-                </p>
-                <p className="mt-1 text-2xl font-bold text-foreground">
-                  {biggestWin.scoreUsap} - {biggestWin.scoreOpponent}
-                </p>
-                <p className="mt-1 text-sm text-muted-foreground">
-                  {formatDateFR(biggestWin.date)} &mdash;{" "}
-                  {biggestWin.competition.shortName ||
-                    biggestWin.competition.name}
-                </p>
-              </Link>
-            )}
-            {biggestLoss && (
-              <Link
-                href={`/matchs/${biggestLoss.slug}`}
-                className="rounded-lg border border-border bg-red-500/5 p-4 transition-colors hover:border-red-500/30"
-              >
-                <p className="text-sm font-semibold uppercase text-red-500">
-                  Plus lourde d&eacute;faite
-                </p>
-                <p className="mt-1 text-2xl font-bold text-foreground">
-                  {biggestLoss.scoreUsap} - {biggestLoss.scoreOpponent}
-                </p>
-                <p className="mt-1 text-sm text-muted-foreground">
-                  {formatDateFR(biggestLoss.date)} &mdash;{" "}
-                  {biggestLoss.competition.shortName ||
-                    biggestLoss.competition.name}
-                </p>
-              </Link>
-            )}
-          </div>
-        </section>
-      )}
-
-      <div className="grid gap-10 lg:grid-cols-3">
-        {/* Top marqueurs */}
-        {topScorers.length > 0 && (
-          <section className="lg:col-span-1">
-            <h2 className="mb-4 flex items-center gap-2 text-2xl font-bold uppercase tracking-wider text-foreground">
-              <TrendingUp className="h-6 w-6 text-usap-or" />
-              Top marqueurs
-            </h2>
-            <div className="space-y-2">
-              {topScorers.map((scorer, i) =>
-                scorer.slug ? (
-                  <Link
-                    key={scorer.slug}
-                    href={`/joueurs/${scorer.slug}`}
-                    className="flex items-center gap-2 rounded border border-border bg-background px-3 py-2 text-sm transition-colors hover:border-usap-or/30"
-                  >
-                    <span className="w-6 shrink-0 text-center font-bold text-muted-foreground">
-                      {i + 1}
-                    </span>
-                    <span className="flex-1 truncate font-medium text-foreground">
-                      {scorer.firstName} {scorer.lastName}
-                    </span>
-                    <span className="shrink-0 rounded bg-usap-or/10 px-2 py-0.5 text-xs font-bold text-usap-or">
-                      {scorer.totalPoints} pts
-                    </span>
-                    {scorer.tries > 0 && (
-                      <span className="shrink-0 rounded bg-usap-sang/10 px-2 py-0.5 text-xs font-bold text-usap-sang">
-                        {scorer.tries} E
-                      </span>
-                    )}
-                  </Link>
-                ) : null,
-              )}
-            </div>
-          </section>
         )}
-
-        {/* Joueurs passes par les deux clubs */}
-        {sharedPlayers.length > 0 && (
-          <section className="lg:col-span-2">
-            <h2 className="mb-4 flex items-center gap-2 text-2xl font-bold uppercase tracking-wider text-foreground">
-              <Users className="h-6 w-6 text-usap-or" />
-              Pass&eacute;s par les deux clubs
-            </h2>
-            <div className="grid gap-3 sm:grid-cols-2 md:grid-cols-3">
-              {sharedPlayers.map((p) => (
-                <Link
-                  key={p.slug}
-                  href={`/joueurs/${p.slug}`}
-                  className="flex items-center gap-3 rounded-lg border border-border bg-background p-3 text-sm transition-colors hover:border-usap-or/30"
-                >
-                  {p.photoUrl ? (
-                    <Image
-                      src={p.photoUrl}
-                      alt={`${p.firstName} ${p.lastName}`}
-                      width={32}
-                      height={32}
-                      className="h-8 w-8 shrink-0 rounded-full object-cover"
-                    />
-                  ) : (
-                    <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-muted">
-                      <Users className="h-4 w-4 text-muted-foreground" />
-                    </div>
-                  )}
-                  <div>
-                    <p className="font-medium text-foreground">
-                      {p.firstName} {p.lastName}
-                    </p>
-                  </div>
-                </Link>
+        <div className="min-w-0 flex-1">
+          <h1 className="font-display text-6xl uppercase leading-[0.9] text-foreground sm:text-8xl">{nom}</h1>
+          {(opponent.officialName || opponent.name !== nom) && (
+            <p className="mt-2 text-sm text-muted-foreground">
+              {opponent.officialName && opponent.officialName !== opponent.name ? opponent.officialName : opponent.name}
+              {!opponent.isActive && <span className="ml-3 font-semibold">{t("adversaire.disparu")}</span>}
+            </p>
+          )}
+          {jouees.length > 0 && (
+            <ol aria-label={t("adversaire.friseAria")} className="mt-3 flex flex-wrap gap-x-1.5 font-display text-3xl leading-none sm:text-4xl">
+              {[...jouees].reverse().map((m) => {
+                const l = lettre(m.result)!;
+                return (
+                  <li key={m.id}>
+                    <Link
+                      href={`/matchs/${m.slug}`}
+                      title={`${formatDateFR(m.date)}, ${m.isHome ? `USAP – ${nom}` : `${nom} – USAP`}, ${m.isHome ? m.scoreUsap : m.scoreOpponent}-${m.isHome ? m.scoreOpponent : m.scoreUsap}`}
+                      className={`${l.classe} hover:text-usap-or`}
+                    >
+                      {l.texte}
+                    </Link>
+                  </li>
+                );
+              })}
+            </ol>
+          )}
+          <p className="mt-4 max-w-prose text-lg leading-snug text-foreground">
+            {jouees.length === 0
+              ? t("adversaire.aucune")
+              : t(jouees.length === 1 ? "adversaire.bilanUne" : "adversaire.bilan", {
+                  n: jouees.length,
+                  saison: premiere.season.label,
+                  v: t("saison.victoires", { n: victoires.length }),
+                  nu: t("saison.nuls", { n: nuls.length }),
+                  d: t("saison.defaites", { n: defaites.length }),
+                  pour: nombre(pour),
+                  contre: nombre(contre),
+                })}
+            {aVenir > 0 && ` ${t("adversaire.aVenir", { n: aVenir })}`}
+          </p>
+          {(plusLarge || plusLourde) && (
+            <p className="mt-1 max-w-prose text-sm leading-relaxed text-muted-foreground">
+              {plusLarge && (
+                <>
+                  {t("adversaire.plusLarge", { score: "" }).trim()} {score(plusLarge)}
+                  {plusLourde ? ", " : "."}
+                </>
+              )}
+              {plusLourde && (
+                <>
+                  {plusLarge ? t("adversaire.plusLourde", { score: "" }).trim() : majuscule(t("adversaire.plusLourde", { score: "" }).trim())} {score(plusLourde)}.
+                </>
+              )}
+            </p>
+          )}
+          {faits.length > 0 && (
+            <p className="mt-2 max-w-prose text-sm leading-relaxed text-muted-foreground">
+              {faits.map((f, i) => (
+                <span key={i}>
+                  {i === 0 && typeof f === "string" ? majuscule(f) : f}
+                  {i < faits.length - 1 ? ", " : "."}
+                </span>
               ))}
-            </div>
-          </section>
-        )}
-      </div>
+            </p>
+          )}
+          {opponent.formerNames.length > 0 && (
+            <p className="mt-1 max-w-prose text-sm leading-relaxed text-muted-foreground">
+              {t("adversaire.anciensNoms", {
+                noms: opponent.formerNames.map((fn) => `${fn.name}${periode(fn) ? ` (${periode(fn)})` : ""}`).join(", "),
+              })}
+              .
+            </p>
+          )}
+          {(opponent.primaryColor || opponent.secondaryColor) && (
+            <p className="mt-2 flex items-center gap-1.5" aria-label={t("adversaire.couleurs")}>
+              {/* Les couleurs du club sont une donnée, non un jeton du thème. */}
+              {[opponent.primaryColor, opponent.secondaryColor].filter(Boolean).map((c) => (
+                <span key={c} className="inline-block h-4 w-4 rounded-xs border border-border" style={{ backgroundColor: c! }} title={c!} />
+              ))}
+            </p>
+          )}
+        </div>
+      </header>
 
-      {/* Historique des matchs */}
+      {/* Les confrontations */}
       {opponent.matches.length > 0 && (
-        <section className="mt-10">
-          <h2 className="mb-4 flex items-center gap-2 text-2xl font-bold uppercase tracking-wider text-foreground">
-            <Swords className="h-6 w-6 text-usap-or" />
-            Tous les matchs ({opponent.matches.length})
-          </h2>
-          <div className="overflow-x-auto rounded-lg border border-border">
-            <table className="w-full text-sm">
+        <section className="mb-10">
+          <Titre>{t("adversaire.confrontationsTitre")}</Titre>
+          <div className="overflow-x-auto">
+            <table className="w-full border-collapse text-sm">
               <thead>
-                <tr className="border-b border-border bg-muted/50">
-                  <th className="px-3 py-2 text-left font-semibold text-foreground">
-                    Date
-                  </th>
-                  <th className="hidden px-3 py-2 text-left font-semibold text-foreground sm:table-cell">
-                    Saison
-                  </th>
-                  <th className="hidden px-3 py-2 text-left font-semibold text-foreground sm:table-cell">
-                    Comp&eacute;t.
-                  </th>
-                  <th className="px-3 py-2 text-left font-semibold text-foreground">
-                    Match
-                  </th>
-                  <th className="px-3 py-2 text-center font-semibold text-foreground">
-                    Score
-                  </th>
-                  <th className="hidden px-3 py-2 text-left font-semibold text-foreground md:table-cell">
-                    Stade
-                  </th>
+                <tr className="border-b border-border text-left text-xs text-muted-foreground">
+                  <th scope="col" className="py-2 pr-3 font-medium">{t("adversaire.colDate")}</th>
+                  <th scope="col" className="hidden py-2 pr-3 font-medium sm:table-cell">{t("adversaire.colSaison")}</th>
+                  <th scope="col" className="hidden py-2 pr-3 font-medium sm:table-cell">{t("adversaire.colCompetition")}</th>
+                  <th scope="col" className="py-2 pr-3 font-medium">{t("adversaire.colRencontre")}</th>
+                  <th scope="col" className="py-2 pr-3 text-right font-medium">{t("adversaire.colScore")}</th>
+                  <th scope="col" className="py-2 pr-3 text-center font-medium">{t("adversaire.colResultat")}</th>
+                  <th scope="col" className="hidden py-2 font-medium md:table-cell">{t("adversaire.colStade")}</th>
                 </tr>
               </thead>
-              <tbody>
+              <tbody className="tabular-nums">
                 {opponent.matches.map((m) => {
-                  const resultColor =
-                    m.result === "VICTOIRE"
-                      ? "bg-green-500/10 text-green-600"
-                      : m.result === "DEFAITE"
-                        ? "bg-red-500/10 text-red-500"
-                        : "bg-muted text-muted-foreground";
-
+                  const joue = estJoue(m);
+                  const l = lettre(m.result);
                   return (
-                    <tr
-                      key={m.slug}
-                      className="border-b border-border transition-colors hover:bg-muted/30"
-                    >
-                      <td className="whitespace-nowrap px-3 py-2 text-muted-foreground">
-                        {formatDateFR(m.date)}
-                      </td>
-                      <td className="hidden whitespace-nowrap px-3 py-2 text-muted-foreground sm:table-cell">
-                        <Link
-                          href={`/saisons/${m.season.label}`}
-                          className="hover:text-usap-sang"
-                        >
+                    <tr key={m.id} className="border-b border-border hover:bg-muted">
+                      <td className="py-1.5 pr-3 whitespace-nowrap text-muted-foreground">{formatDateFR(m.date)}</td>
+                      <td className="hidden py-1.5 pr-3 whitespace-nowrap sm:table-cell">
+                        <Link href={`/saisons/${m.season.label}`} className="text-muted-foreground hover:text-usap-sang">
                           {m.season.label}
                         </Link>
                       </td>
-                      <td className="hidden whitespace-nowrap px-3 py-2 text-muted-foreground sm:table-cell">
-                        {m.competition.shortName || m.competition.name}
-                      </td>
-                      <td className="px-3 py-2">
-                        <Link
-                          href={`/matchs/${m.slug}`}
-                          className="font-medium text-foreground hover:text-usap-sang"
-                        >
+                      <td className="hidden py-1.5 pr-3 whitespace-nowrap text-muted-foreground sm:table-cell">{intitule(m)}</td>
+                      <td className="py-1.5 pr-3">
+                        <Link href={`/matchs/${m.slug}`} className="text-foreground hover:text-usap-sang">
                           {m.isHome ? (
                             <>
-                              <span className="font-bold">USAP</span> -{" "}
-                              {displayName}
+                              <span className="font-semibold text-usap-sang">USAP</span> – {nom}
                             </>
                           ) : (
                             <>
-                              {displayName} -{" "}
-                              <span className="font-bold">USAP</span>
+                              {nom} – <span className="font-semibold text-usap-sang">USAP</span>
                             </>
                           )}
                         </Link>
                       </td>
-                      <td className="px-3 py-2 text-center">
-                        <span
-                          className={`inline-block rounded px-2 py-0.5 text-xs font-bold ${resultColor}`}
-                        >
-                          {m.isHome
-                            ? `${m.scoreUsap} - ${m.scoreOpponent}`
-                            : `${m.scoreOpponent} - ${m.scoreUsap}`}
-                        </span>
+                      <td className="py-1.5 pr-3 text-right whitespace-nowrap">
+                        {joue ? (
+                          <span className="font-semibold text-foreground">
+                            {m.isHome ? m.scoreUsap : m.scoreOpponent} – {m.isHome ? m.scoreOpponent : m.scoreUsap}
+                          </span>
+                        ) : (
+                          <span className="text-muted-foreground">{t("saison.aVenir")}</span>
+                        )}
                       </td>
-                      <td className="hidden px-3 py-2 text-muted-foreground md:table-cell">
-                        {m.venue ? m.venue.name : "\u2014"}
+                      <td className={`py-1.5 pr-3 text-center font-bold ${l?.classe ?? ""}`}>{l?.texte ?? ""}</td>
+                      <td className="hidden py-1.5 whitespace-nowrap text-muted-foreground md:table-cell">
+                        {m.venue && (
+                          <Link href={`/stades/${m.venue.slug}`} className="hover:text-usap-sang">
+                            {m.venue.name}
+                          </Link>
+                        )}
                       </td>
                     </tr>
                   );
@@ -538,25 +349,84 @@ export default async function AdversaireDetailPage({ params }: Props) {
           </div>
         </section>
       )}
+
+      <div className="mb-10 grid gap-10 lg:grid-cols-[2fr_3fr]">
+        {realisateurs.length > 0 && (
+          <section>
+            <Titre encre>{t("adversaire.realisateursTitre", { nom })}</Titre>
+            <table className="w-full border-collapse text-sm">
+              <thead>
+                <tr className="border-b border-border text-left text-xs text-muted-foreground">
+                  <th scope="col" className="py-2 pr-2 font-medium" />
+                  <th scope="col" className="py-2 pr-3 font-medium">{t("adversaire.colJoueur")}</th>
+                  <th scope="col" className="py-2 pr-3 text-right font-medium">{t("adversaire.colMatchs")}</th>
+                  <th scope="col" className="py-2 pr-3 text-right font-medium">{t("adversaire.colEssais")}</th>
+                  <th scope="col" className="py-2 text-right font-medium">{t("adversaire.colPoints")}</th>
+                </tr>
+              </thead>
+              <tbody className="tabular-nums">
+                {realisateurs.map((r, i) => (
+                  <tr key={r.joueur.id} className="border-b border-border hover:bg-muted">
+                    <td className="w-6 py-1 pr-2 text-right text-muted-foreground">{i + 1}</td>
+                    <td className="py-1 pr-3">
+                      <JoueurCellule
+                        slug={r.joueur.slug}
+                        firstName={r.joueur.firstName}
+                        lastName={r.joueur.lastName}
+                        photoUrl={r.joueur.photoUrl}
+                        isActive={r.joueur.isActive}
+                        libelleActuel={t("joueurs.actuel")}
+                      />
+                    </td>
+                    <td className="py-1 pr-3 text-right text-muted-foreground">{r.cumul.matchs}</td>
+                    <td className="py-1 pr-3 text-right text-foreground">{r.cumul.essais || ""}</td>
+                    <td className="py-1 text-right font-semibold text-foreground">{r.cumul.points}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </section>
+        )}
+
+        {communs.length > 0 && (
+          <section>
+            <Titre encre>
+              {t("adversaire.communsTitre")}
+              <span className="ml-3 text-xl text-muted-foreground">{communs.length}</span>
+            </Titre>
+            <p className="mb-3 max-w-prose text-sm text-muted-foreground">{t("adversaire.communsNote")}</p>
+            <ul className="grid gap-x-6 gap-y-1 text-sm sm:grid-cols-2">
+              {communs.map((j) => (
+                <li key={j.id} className="border-b border-border py-1">
+                  <JoueurCellule
+                    slug={j.slug}
+                    firstName={j.firstName}
+                    lastName={j.lastName}
+                    photoUrl={j.photoUrl}
+                    isActive={j.isActive}
+                    libelleActuel={t("joueurs.actuel")}
+                  />
+                </li>
+              ))}
+            </ul>
+          </section>
+        )}
+      </div>
+
+      <Provenance entite="Opponent" id={opponent.id} />
     </div>
   );
 }
 
-function StatBox({
-  label,
-  value,
-  className = "",
-}: {
-  label: string;
-  value: number | string;
-  className?: string;
-}) {
+/** Le titre d'une section : la voix condensée de la liste, sous un filet. */
+function Titre({ children, encre = false }: { children: React.ReactNode; encre?: boolean }) {
   return (
-    <div className="text-center">
-      <div className={`text-2xl font-bold ${className || "text-foreground"}`}>
-        {value}
-      </div>
-      <div className="text-xs text-muted-foreground">{label}</div>
-    </div>
+    <h2
+      className={`mb-3 border-b-2 pb-1 font-display text-3xl uppercase leading-none ${
+        encre ? "border-foreground text-foreground" : "border-usap-sang text-usap-sang"
+      }`}
+    >
+      {children}
+    </h2>
   );
 }
