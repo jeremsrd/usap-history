@@ -1,65 +1,78 @@
 import Link from "@/components/Lien";
+import Provenance from "@/components/Provenance";
+import Image from "next/image";
 import { notFound, redirect } from "next/navigation";
 import { prisma } from "@/lib/prisma";
+import { estJoue } from "@/lib/matchs";
 import { formatDateFR } from "@/lib/utils";
-import { Calendar, Filter, MapPin, Users } from "lucide-react";
-import type { Metadata } from "next";
+import { dictionnaire } from "@/i18n/dictionnaire";
 import { cheminLocalise, type Langue } from "@/i18n/langues";
+import type { Metadata } from "next";
+
+/**
+ * La fiche d'un stade, refaite le 6 septembre 2026 dans l'identité posée
+ * sur les autres fiches. Sa seule audace est **la frise des rencontres**
+ * jouées là, sous le nom du stade — la même que sur la page de saison ; à
+ * Aimé-Giral elle fait un mur de trois cents lettres, et c'est bien
+ * l'histoire du lieu. Le bilan tient en une phrase, l'affluence en une
+ * autre — moyenne, nombre de rencontres où elle est connue, record lié à sa
+ * rencontre —, et qui reçoit là, aujourd'hui et avant, d'après
+ * `OpponentVenue`, en une troisième. Le nom du stade est en encre, le
+ * rouge étant celui de l'USAP.
+ *
+ * Puis les rencontres en tableau, avec l'arbitre et l'affluence ; les
+ * filtres de saison et de compétition en menus, le résultat en liens, et
+ * le compte de la sélection ; la provenance en pied.
+ *
+ * Ce que la page ne fait plus : quatre cases de chiffres vertes et rouges,
+ * des icônes devant chaque fait, une épingle grise à la place d'une photo,
+ * des pastilles pour les scores.
+ */
 
 export const dynamic = "force-dynamic";
 
 type Props = {
   params: Promise<{ locale: Langue; slug: string }>;
-  searchParams: Promise<{
-    saison?: string;
-    competition?: string;
-    resultat?: string;
-  }>;
+  searchParams: Promise<{ saison?: string; competition?: string; resultat?: string }>;
 };
 
-/**
- * Extrait le CUID de la fin du slug stade.
- */
 function extractIdFromSlug(slug: string): string | null {
   const match = slug.match(/([a-z0-9]{25,})$/);
   return match ? match[1] : null;
 }
 
+const nombre = (n: number) => n.toLocaleString("fr-FR");
+const majuscule = (s: string) => s.charAt(0).toUpperCase() + s.slice(1);
+
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
-  const { slug } = await params;
+  const { locale, slug } = await params;
+  const t = await dictionnaire(locale);
   const id = extractIdFromSlug(slug);
-  if (!id) return { title: "Stade introuvable - USAP Historia" };
-
-  const venue = await prisma.venue.findUnique({
-    where: { id },
-    select: { name: true, city: true },
-  });
-
-  if (!venue) return { title: "Stade introuvable - USAP Historia" };
-
-  return {
-    title: `${venue.name} (${venue.city}) - USAP Historia`,
-    description: `Fiche du ${venue.name} à ${venue.city}. Liste des matchs de l'USAP disputés dans ce stade.`,
-  };
+  const venue = id ? await prisma.venue.findUnique({ where: { id }, select: { name: true, city: true } }) : null;
+  if (!venue) return { title: t("stade.introuvable") };
+  return { title: t("stade.metaTitre", { nom: venue.name, ville: venue.city }), description: t("stade.metaDescription", { nom: venue.name, ville: venue.city }) };
 }
 
 export default async function StadeDetailPage({ params, searchParams }: Props) {
   const { locale, slug } = await params;
-  const sp = await searchParams;
-  const saisonFilter = sp.saison || undefined;
-  const competitionFilter = sp.competition || undefined;
-  const resultatFilter = sp.resultat || undefined;
-
+  const t = await dictionnaire(locale);
+  const q = await searchParams;
   const id = extractIdFromSlug(slug);
   if (!id) notFound();
 
   const venue = await prisma.venue.findUnique({
     where: { id },
     include: {
-      country: { select: { name: true, flagUrl: true } },
+      country: { select: { name: true } },
+      opponents: { select: { name: true, shortName: true, slug: true } },
+      opponentStints: {
+        orderBy: { untilSeason: "desc" },
+        select: { fromSeason: true, untilSeason: true, opponent: { select: { name: true, shortName: true, slug: true } } },
+      },
       matches: {
         orderBy: { date: "desc" },
         select: {
+          id: true,
           slug: true,
           date: true,
           scoreUsap: true,
@@ -69,362 +82,331 @@ export default async function StadeDetailPage({ params, searchParams }: Props) {
           matchday: true,
           round: true,
           attendance: true,
-          seasonId: true,
-          competitionId: true,
           competition: { select: { id: true, shortName: true, name: true } },
           opponent: { select: { shortName: true, name: true } },
-          season: { select: { id: true, label: true } },
+          season: { select: { label: true } },
           referee: { select: { firstName: true, lastName: true, slug: true } },
         },
       },
     },
   });
-
   if (!venue) notFound();
+  if (venue.slug !== slug) redirect(cheminLocalise(`/stades/${venue.slug}`, locale));
 
-  // Rediriger si le slug a changé
-  if (venue.slug !== slug) {
-    redirect(cheminLocalise(`/stades/${venue.slug}`, locale));
-  }
+  // Le bilan de l'USAP ici, sur les rencontres jouées.
+  const jouees = venue.matches.filter(estJoue);
+  const aVenir = venue.matches.length - jouees.length;
+  const compte = (r: string) => jouees.filter((m) => m.result === r).length;
+  const pour = jouees.reduce((s, m) => s + m.scoreUsap, 0);
+  const contre = jouees.reduce((s, m) => s + m.scoreOpponent, 0);
+  const premiere = jouees[jouees.length - 1];
+  const avecAffluence = jouees.filter((m) => m.attendance != null && m.attendance > 0);
+  const record = avecAffluence.length ? avecAffluence.reduce((a, m) => (m.attendance! > a.attendance! ? m : a)) : null;
+  const moyenne = avecAffluence.length ? Math.round(avecAffluence.reduce((s, m) => s + m.attendance!, 0) / avecAffluence.length) : null;
 
-  // Saisons disponibles pour ce stade (pour le filtre)
-  const seasonsInVenue = Array.from(
-    new Map(
-      venue.matches.map((m) => [m.season.id, m.season]),
-    ).values(),
-  ).sort((a, b) => b.label.localeCompare(a.label)); // Plus récentes en premier
-
-  // Compétitions disponibles pour ce stade (pour le filtre)
-  const competitionsInVenue = Array.from(
-    new Map(
-      venue.matches.map((m) => [m.competition.id, m.competition]),
-    ).values(),
-  ).sort((a, b) => (a.shortName || a.name).localeCompare(b.shortName || b.name));
-
-  // Filtrage des matchs
-  const filteredMatches = venue.matches.filter((m) => {
-    if (saisonFilter && m.seasonId !== saisonFilter) return false;
-    if (competitionFilter && m.competitionId !== competitionFilter) return false;
-    if (resultatFilter === "victoire" && m.result !== "VICTOIRE") return false;
-    if (resultatFilter === "defaite" && m.result !== "DEFAITE") return false;
-    if (resultatFilter === "nul" && m.result !== "NUL") return false;
+  // Les filtres, sur les rencontres déjà lues.
+  const saison = q.saison || undefined;
+  const competition = q.competition || undefined;
+  const resultat = q.resultat || undefined;
+  const saisons = [...new Set(venue.matches.map((m) => m.season.label))].sort((a, b) => b.localeCompare(a));
+  const competitions = [...new Map(venue.matches.map((m) => [m.competition.id, m.competition])).values()].sort((a, b) =>
+    (a.shortName || a.name).localeCompare(b.shortName || b.name, "fr"),
+  );
+  const selection = venue.matches.filter((m) => {
+    if (saison && m.season.label !== saison) return false;
+    if (competition && m.competition.id !== competition) return false;
+    if (resultat === "victoire" && m.result !== "VICTOIRE") return false;
+    if (resultat === "defaite" && m.result !== "DEFAITE") return false;
+    if (resultat === "nul" && m.result !== "NUL") return false;
+    if (resultat === "a-venir" && m.result !== null) return false;
     return true;
   });
-
-  const hasFilters = saisonFilter || competitionFilter || resultatFilter;
-
-  // Stats agrégées (sur les matchs filtrés)
-  const totalMatches = filteredMatches.length;
-  const victories = filteredMatches.filter(
-    (m) => m.result === "VICTOIRE",
-  ).length;
-  const defeats = filteredMatches.filter(
-    (m) => m.result === "DEFAITE",
-  ).length;
-  const draws = filteredMatches.filter((m) => m.result === "NUL").length;
-
-  // Construire le query string pour les filtres
-  function buildFilterUrl(overrides: Record<string, string | undefined>): string {
+  const filtreActif = !!(saison || competition || resultat);
+  const lien = (r: string | undefined) => {
     const qs = new URLSearchParams();
-    const comp = overrides.competition !== undefined ? overrides.competition : competitionFilter;
-    const res = overrides.resultat !== undefined ? overrides.resultat : resultatFilter;
-    if (comp) qs.set("competition", comp);
-    if (res) qs.set("resultat", res);
-    const str = qs.toString();
-    return str ? `/stades/${slug}?${str}` : `/stades/${slug}`;
-  }
+    if (saison) qs.set("saison", saison);
+    if (competition) qs.set("competition", competition);
+    if (r) qs.set("resultat", r);
+    const s = qs.toString();
+    return s ? `/stades/${venue.slug}?${s}` : `/stades/${venue.slug}`;
+  };
+
+  // L'en-tête, en phrases.
+  const faits = [
+    [venue.city, venue.country?.name].filter(Boolean).join(", "),
+    venue.capacity && t("stade.places", { n: nombre(venue.capacity) }),
+    venue.yearOpened && t("stade.ouvert", { annee: venue.yearOpened }),
+  ].filter(Boolean) as string[];
+  const nomClub = (o: { name: string; shortName: string | null }) => o.shortName || o.name;
+  const libelleSaison = (annee: number) => `${annee}-${annee + 1}`;
+  const occupants = [
+    venue.isHomeGround && t("stade.domicile"),
+    ...venue.opponents.map((o) => (
+      <Link key={o.slug} href={`/adversaires/${o.slug}`} className="hover:text-usap-sang">
+        {t("stade.terrainDe", { club: nomClub(o) })}
+      </Link>
+    )),
+    ...venue.opponentStints.map((s) => (
+      <Link key={`${s.opponent.slug}-${s.untilSeason}`} href={`/adversaires/${s.opponent.slug}`} className="hover:text-usap-sang">
+        {s.fromSeason && s.untilSeason
+          ? t("stade.terrainDeEntre", { club: nomClub(s.opponent), debut: libelleSaison(s.fromSeason), fin: libelleSaison(s.untilSeason) })
+          : s.untilSeason
+            ? t("stade.terrainDeJusqua", { club: nomClub(s.opponent), saison: libelleSaison(s.untilSeason) })
+            : s.fromSeason
+              ? t("stade.terrainDeDepuis", { club: nomClub(s.opponent), saison: libelleSaison(s.fromSeason) })
+              : t("stade.terrainDe", { club: nomClub(s.opponent) })}
+      </Link>
+    )),
+  ].filter(Boolean) as (string | React.ReactElement)[];
+
+  const lettre = (result: string | null) =>
+    result === "VICTOIRE"
+      ? { texte: "V", classe: "text-usap-sang" }
+      : result === "NUL"
+        ? { texte: "N", classe: "text-foreground" }
+        : result === "DEFAITE"
+          ? { texte: "D", classe: "text-muted-foreground" }
+          : null;
+  const affiche = (m: { isHome: boolean; opponent: { name: string; shortName: string | null } }) =>
+    m.isHome ? `USAP – ${nomClub(m.opponent)}` : `${nomClub(m.opponent)} – USAP`;
+  const intitule = (m: (typeof venue.matches)[number]) => {
+    const c = m.competition.shortName || m.competition.name;
+    return m.matchday ? `${c}, J${m.matchday}` : m.round ? `${c}, ${m.round}` : c;
+  };
+  const select = "rounded-sm border border-input bg-background px-3 py-2 text-sm text-foreground";
 
   return (
-    <div className="mx-auto max-w-7xl px-4 py-10">
-      {/* Fil d'Ariane */}
-      <div className="mb-6 text-sm text-muted-foreground">
+    <div className="mx-auto max-w-6xl px-4 py-10 sm:py-14">
+      <nav className="mb-8 text-sm text-muted-foreground">
         <Link href="/stades" className="hover:text-usap-sang">
-          Stades
+          {t("stade.filAriane")}
         </Link>
         <span className="mx-2">/</span>
         <span className="text-foreground">{venue.name}</span>
-      </div>
+      </nav>
 
-      {/* En-tête stade */}
-      <div className="mb-10 rounded-lg border border-border bg-usap-carte p-6">
-        <div className="flex flex-col gap-6 sm:flex-row">
-          {/* Photo */}
-          <div className="flex shrink-0 justify-center sm:justify-start">
-            {venue.photoUrl ? (
-              <img
-                src={venue.photoUrl}
-                alt={venue.name}
-                className="h-40 w-40 rounded-lg object-cover"
-              />
-            ) : (
-              <div className="flex h-40 w-40 items-center justify-center rounded-lg bg-muted">
-                <MapPin className="h-16 w-16 text-muted-foreground" />
-              </div>
-            )}
+      <header className="mb-10 flex flex-col gap-6 sm:flex-row sm:items-start">
+        {venue.photoUrl && (
+          <div className="shrink-0">
+            <Image src={venue.photoUrl} alt={venue.name} width={160} height={160} className="h-40 w-40 rounded-xs object-cover" priority />
           </div>
-
-          {/* Infos principales */}
-          <div className="flex-1">
-            <h1 className="text-3xl font-bold uppercase tracking-wider text-foreground">
-              {venue.name}
-            </h1>
-            <p className="mt-1 text-lg text-usap-or">
-              {venue.city}
-              {venue.country && `, ${venue.country.name}`}
+        )}
+        <div className="min-w-0 flex-1">
+          <h1 className="font-display text-5xl uppercase leading-[0.9] text-foreground sm:text-7xl">{venue.name}</h1>
+          {faits.length > 0 && <p className="mt-2 text-lg text-muted-foreground">{faits.join(", ")}.</p>}
+          {jouees.length > 0 && (
+            <ol aria-label={t("stade.friseAria")} className="mt-3 flex flex-wrap gap-x-1.5 font-display text-3xl leading-none sm:text-4xl">
+              {[...jouees].reverse().map((m) => {
+                const l = lettre(m.result)!;
+                return (
+                  <li key={m.id}>
+                    <Link
+                      href={`/matchs/${m.slug}`}
+                      title={`${formatDateFR(m.date)}, ${affiche(m)}, ${m.isHome ? m.scoreUsap : m.scoreOpponent}-${m.isHome ? m.scoreOpponent : m.scoreUsap}`}
+                      className={`${l.classe} hover:text-usap-or`}
+                    >
+                      {l.texte}
+                    </Link>
+                  </li>
+                );
+              })}
+            </ol>
+          )}
+          <p className="mt-4 max-w-prose text-lg leading-snug text-foreground">
+            {jouees.length === 0
+              ? t("stade.aucune")
+              : t(jouees.length === 1 ? "stade.bilanUne" : "stade.bilan", {
+                  n: jouees.length,
+                  saison: premiere.season.label,
+                  v: t("saison.victoires", { n: compte("VICTOIRE") }),
+                  nu: t("saison.nuls", { n: compte("NUL") }),
+                  d: t("saison.defaites", { n: compte("DEFAITE") }),
+                  pour: nombre(pour),
+                  contre: nombre(contre),
+                })}
+            {aVenir > 0 && ` ${t("stade.aVenir", { n: aVenir })}`}
+          </p>
+          {record && moyenne != null && (
+            <p className="mt-1 max-w-prose text-sm leading-relaxed text-muted-foreground">
+              {avecAffluence.length === 1
+                ? t("stade.affluenceUne", { record: nombre(record.attendance!) })
+                : t("stade.affluence", { moyenne: nombre(moyenne), n: avecAffluence.length, record: nombre(record.attendance!) })}{" "}
+              <Link href={`/matchs/${record.slug}`} className="hover:text-usap-sang">
+                le {formatDateFR(record.date)}, {affiche(record)}
+              </Link>
+              .
             </p>
-
-            {/* Détails */}
-            <div className="mt-3 flex flex-wrap gap-x-6 gap-y-1 text-sm text-muted-foreground">
-              {venue.capacity && (
-                <span className="flex items-center gap-1.5">
-                  <Users className="h-4 w-4" />
-                  {venue.capacity.toLocaleString("fr-FR")} places
+          )}
+          {occupants.length > 0 && (
+            <p className="mt-2 max-w-prose text-sm leading-relaxed text-muted-foreground">
+              {occupants.map((o, i) => (
+                <span key={i}>
+                  {typeof o === "string" ? majuscule(o) : o}
+                  {i < occupants.length - 1 ? ". " : "."}
                 </span>
-              )}
-              {venue.yearOpened && (
-                <span className="flex items-center gap-1.5">
-                  <Calendar className="h-4 w-4" />
-                  Ouvert en {venue.yearOpened}
-                </span>
-              )}
-              {venue.isHomeGround && (
-                <span className="rounded bg-usap-sang/10 px-2 py-0.5 text-xs font-medium text-usap-sang">
-                  Domicile USAP
-                </span>
-              )}
-            </div>
-
-            {/* Notes */}
-            {venue.notes && (
-              <p className="mt-3 text-sm text-muted-foreground">
-                {venue.notes}
-              </p>
-            )}
-
-            {/* Stats */}
-            {totalMatches > 0 && (
-              <div className="mt-6 grid grid-cols-2 gap-4 border-t border-border pt-4 sm:grid-cols-4">
-                <StatBox label="Matchs joués" value={totalMatches} />
-                <StatBox
-                  label="Victoires USAP"
-                  value={victories}
-                  className="text-green-600"
-                />
-                <StatBox
-                  label="Défaites USAP"
-                  value={defeats}
-                  className="text-red-500"
-                />
-                <StatBox label="Nuls" value={draws} />
-              </div>
-            )}
-          </div>
+              ))}
+            </p>
+          )}
+          {venue.notes && <p className="mt-4 max-w-prose text-sm leading-relaxed text-foreground">{venue.notes}</p>}
         </div>
-      </div>
+      </header>
 
-      {/* Historique des matchs */}
       {venue.matches.length > 0 && (
-        <section>
-          <h2 className="mb-4 flex items-center gap-2 text-2xl font-bold uppercase tracking-wider text-foreground">
-            <Calendar className="h-6 w-6 text-usap-or" />
-            Matchs disputés ({totalMatches}{hasFilters ? ` / ${venue.matches.length}` : ""})
-          </h2>
-
-          {/* Filtres */}
-          <form className="mb-4 flex flex-wrap items-center gap-3">
-            <Filter className="h-4 w-4 text-muted-foreground" />
-
-            {/* Saison */}
-            <select
-              name="saison"
-              defaultValue={saisonFilter ?? ""}
-              className="rounded-lg border border-border bg-background px-3 py-2 text-sm text-foreground focus:border-usap-or focus:outline-none"
-            >
-              <option value="">Toutes les saisons</option>
-              {seasonsInVenue.map((s) => (
-                <option key={s.id} value={s.id}>
-                  {s.label}
-                </option>
+        <section className="mb-10">
+          <Titre>{t("stade.rencontresTitre")}</Titre>
+          <div className="mb-4 flex flex-wrap items-center gap-x-8 gap-y-4">
+            <form className="flex flex-wrap items-stretch gap-2">
+              <select name="saison" defaultValue={saison ?? ""} aria-label={t("stade.toutesSaisons")} className={select}>
+                <option value="">{t("stade.toutesSaisons")}</option>
+                {saisons.map((s) => (
+                  <option key={s} value={s}>
+                    {s}
+                  </option>
+                ))}
+              </select>
+              <select name="competition" defaultValue={competition ?? ""} aria-label={t("stade.toutesCompetitions")} className={select}>
+                <option value="">{t("stade.toutesCompetitions")}</option>
+                {competitions.map((c) => (
+                  <option key={c.id} value={c.id}>
+                    {c.shortName || c.name}
+                  </option>
+                ))}
+              </select>
+              {resultat && <input type="hidden" name="resultat" value={resultat} />}
+              <button type="submit" className="rounded-sm bg-usap-sang px-4 py-2 text-sm font-semibold text-white hover:bg-foreground">
+                {t("stade.filtrer")}
+              </button>
+            </form>
+            <nav aria-label={t("stade.resultatAria")} className="flex flex-wrap gap-x-5 text-sm">
+              {(
+                [
+                  [undefined, "matchs.tous"],
+                  ["victoire", "matchs.victoires"],
+                  ["nul", "matchs.nuls"],
+                  ["defaite", "matchs.defaites"],
+                  ["a-venir", "matchs.aVenir"],
+                ] as const
+              ).map(([valeur, cle]) => (
+                <Filtre key={cle} href={lien(valeur)} actif={resultat === valeur}>
+                  {t(cle)}
+                </Filtre>
               ))}
-            </select>
-
-            {/* Compétition */}
-            <select
-              name="competition"
-              defaultValue={competitionFilter ?? ""}
-              className="rounded-lg border border-border bg-background px-3 py-2 text-sm text-foreground focus:border-usap-or focus:outline-none"
-            >
-              <option value="">Toutes les compétitions</option>
-              {competitionsInVenue.map((c) => (
-                <option key={c.id} value={c.id}>
-                  {c.shortName || c.name}
-                </option>
-              ))}
-            </select>
-
-            {/* Résultat */}
-            <select
-              name="resultat"
-              defaultValue={resultatFilter ?? ""}
-              className="rounded-lg border border-border bg-background px-3 py-2 text-sm text-foreground focus:border-usap-or focus:outline-none"
-            >
-              <option value="">Tous les résultats</option>
-              <option value="victoire">Victoires</option>
-              <option value="defaite">Défaites</option>
-              <option value="nul">Nuls</option>
-            </select>
-
-            <button
-              type="submit"
-              className="rounded-lg bg-usap-sang px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-usap-sang/80"
-            >
-              Filtrer
-            </button>
-
-            {hasFilters && (
-              <Link
-                href={`/stades/${slug}`}
-                className="text-sm text-muted-foreground hover:text-usap-sang"
-              >
-                Réinitialiser
+            </nav>
+            {filtreActif && (
+              <Link href={`/stades/${venue.slug}`} className="text-sm text-muted-foreground underline hover:text-usap-sang">
+                {t("stade.reinitialiser")}
               </Link>
             )}
-          </form>
-
-          <div className="overflow-x-auto rounded-lg border border-border">
-            <table className="w-full text-sm">
-              <thead>
-                <tr className="border-b border-border bg-muted/50">
-                  <th className="px-3 py-2 text-left font-semibold text-foreground">
-                    Date
-                  </th>
-                  <th className="hidden px-3 py-2 text-left font-semibold text-foreground sm:table-cell">
-                    Saison
-                  </th>
-                  <th className="hidden px-3 py-2 text-left font-semibold text-foreground sm:table-cell">
-                    Compét.
-                  </th>
-                  <th className="px-3 py-2 text-left font-semibold text-foreground">
-                    Match
-                  </th>
-                  <th className="px-3 py-2 text-center font-semibold text-foreground">
-                    Score
-                  </th>
-                  <th className="hidden px-3 py-2 text-left font-semibold text-foreground md:table-cell">
-                    Arbitre
-                  </th>
-                  <th className="hidden px-3 py-2 text-center font-semibold text-foreground md:table-cell">
-                    Affluence
-                  </th>
-                </tr>
-              </thead>
-              <tbody>
-                {filteredMatches.length === 0 && (
-                  <tr>
-                    <td colSpan={7} className="px-3 py-8 text-center text-muted-foreground">
-                      Aucun match ne correspond aux filtres sélectionnés.
-                    </td>
-                  </tr>
-                )}
-                {filteredMatches.map((m) => {
-                  const resultColor =
-                    m.result === "VICTOIRE"
-                      ? "bg-green-500/10 text-green-600"
-                      : m.result === "DEFAITE"
-                        ? "bg-red-500/10 text-red-500"
-                        : "bg-muted text-muted-foreground";
-                  const oppName = m.opponent.shortName || m.opponent.name;
-
-                  return (
-                    <tr
-                      key={m.slug}
-                      className="border-b border-border transition-colors hover:bg-muted/30"
-                    >
-                      <td className="whitespace-nowrap px-3 py-2 text-muted-foreground">
-                        {formatDateFR(m.date)}
-                      </td>
-                      <td className="hidden whitespace-nowrap px-3 py-2 text-muted-foreground sm:table-cell">
-                        <Link
-                          href={`/saisons/${m.season.label}`}
-                          className="hover:text-usap-sang"
-                        >
-                          {m.season.label}
-                        </Link>
-                      </td>
-                      <td className="hidden whitespace-nowrap px-3 py-2 text-muted-foreground sm:table-cell">
-                        {m.competition.shortName || m.competition.name}
-                      </td>
-                      <td className="px-3 py-2">
-                        <Link
-                          href={`/matchs/${m.slug}`}
-                          className="font-medium text-foreground hover:text-usap-sang"
-                        >
-                          {m.isHome ? (
-                            <>
-                              <span className="font-bold">USAP</span> -{" "}
-                              {oppName}
-                            </>
-                          ) : (
-                            <>
-                              {oppName} -{" "}
-                              <span className="font-bold">USAP</span>
-                            </>
-                          )}
-                        </Link>
-                      </td>
-                      <td className="px-3 py-2 text-center">
-                        <span
-                          className={`inline-block rounded px-2 py-0.5 text-xs font-bold ${resultColor}`}
-                        >
-                          {m.isHome
-                            ? `${m.scoreUsap} - ${m.scoreOpponent}`
-                            : `${m.scoreOpponent} - ${m.scoreUsap}`}
-                        </span>
-                      </td>
-                      <td className="hidden px-3 py-2 text-muted-foreground md:table-cell">
-                        {m.referee ? (
-                          <Link
-                            href={`/arbitres/${m.referee.slug}`}
-                            className="hover:text-usap-sang"
-                          >
-                            {m.referee.firstName} {m.referee.lastName}
-                          </Link>
-                        ) : (
-                          "—"
-                        )}
-                      </td>
-                      <td className="hidden px-3 py-2 text-center text-muted-foreground md:table-cell">
-                        {m.attendance
-                          ? m.attendance.toLocaleString("fr-FR")
-                          : "—"}
-                      </td>
-                    </tr>
-                  );
-                })}
-              </tbody>
-            </table>
           </div>
+          {filtreActif && (
+            <p className="mb-3 text-sm text-muted-foreground">
+              {selection.length === 0
+                ? t("stade.aucuneSelection")
+                : t(selection.length === 1 ? "stade.selectionUne" : "stade.selection", {
+                    n: selection.length,
+                    v: t("saison.victoires", { n: selection.filter((m) => m.result === "VICTOIRE").length }),
+                    nu: t("saison.nuls", { n: selection.filter((m) => m.result === "NUL").length }),
+                    d: t("saison.defaites", { n: selection.filter((m) => m.result === "DEFAITE").length }),
+                  })}
+            </p>
+          )}
+          {selection.length > 0 && (
+            <div className="overflow-x-auto">
+              <table className="w-full border-collapse text-sm">
+                <thead>
+                  <tr className="border-b border-border text-left text-xs text-muted-foreground">
+                    <th scope="col" className="py-2 pr-3 font-medium">{t("stade.colDate")}</th>
+                    <th scope="col" className="hidden py-2 pr-3 font-medium sm:table-cell">{t("stade.colSaison")}</th>
+                    <th scope="col" className="hidden py-2 pr-3 font-medium sm:table-cell">{t("stade.colCompetition")}</th>
+                    <th scope="col" className="py-2 pr-3 font-medium">{t("stade.colRencontre")}</th>
+                    <th scope="col" className="py-2 pr-3 text-right font-medium">{t("stade.colScore")}</th>
+                    <th scope="col" className="py-2 pr-3 text-center font-medium">{t("stade.colResultat")}</th>
+                    <th scope="col" className="hidden py-2 pr-3 font-medium lg:table-cell">{t("stade.colArbitre")}</th>
+                    <th scope="col" className="hidden py-2 text-right font-medium md:table-cell">{t("stade.colAffluence")}</th>
+                  </tr>
+                </thead>
+                <tbody className="tabular-nums">
+                  {selection.map((m) => {
+                    const joue = estJoue(m);
+                    const l = lettre(m.result);
+                    const opp = nomClub(m.opponent);
+                    return (
+                      <tr key={m.id} className="border-b border-border hover:bg-muted">
+                        <td className="py-1.5 pr-3 whitespace-nowrap text-muted-foreground">{formatDateFR(m.date)}</td>
+                        <td className="hidden py-1.5 pr-3 whitespace-nowrap sm:table-cell">
+                          <Link href={`/saisons/${m.season.label}`} className="text-muted-foreground hover:text-usap-sang">
+                            {m.season.label}
+                          </Link>
+                        </td>
+                        <td className="hidden py-1.5 pr-3 whitespace-nowrap text-muted-foreground sm:table-cell">{intitule(m)}</td>
+                        <td className="py-1.5 pr-3">
+                          <Link href={`/matchs/${m.slug}`} className="text-foreground hover:text-usap-sang">
+                            {m.isHome ? (
+                              <>
+                                <span className="font-semibold text-usap-sang">USAP</span> – {opp}
+                              </>
+                            ) : (
+                              <>
+                                {opp} – <span className="font-semibold text-usap-sang">USAP</span>
+                              </>
+                            )}
+                          </Link>
+                        </td>
+                        <td className="py-1.5 pr-3 text-right whitespace-nowrap">
+                          {joue ? (
+                            <span className="font-semibold text-foreground">
+                              {m.isHome ? m.scoreUsap : m.scoreOpponent} – {m.isHome ? m.scoreOpponent : m.scoreUsap}
+                            </span>
+                          ) : (
+                            <span className="text-muted-foreground">{t("saison.aVenir")}</span>
+                          )}
+                        </td>
+                        <td className={`py-1.5 pr-3 text-center font-bold ${l?.classe ?? ""}`}>{l?.texte ?? ""}</td>
+                        <td className="hidden py-1.5 pr-3 whitespace-nowrap text-muted-foreground lg:table-cell">
+                          {m.referee && (
+                            <Link href={`/arbitres/${m.referee.slug}`} className="hover:text-usap-sang">
+                              {m.referee.firstName} {m.referee.lastName}
+                            </Link>
+                          )}
+                        </td>
+                        <td className="hidden py-1.5 text-right text-muted-foreground md:table-cell">{m.attendance ? nombre(m.attendance) : ""}</td>
+                      </tr>
+                    );
+                  })}
+                </tbody>
+              </table>
+            </div>
+          )}
         </section>
       )}
+
+      <Provenance entite="Venue" id={venue.id} />
     </div>
   );
 }
 
-function StatBox({
-  label,
-  value,
-  className = "",
-}: {
-  label: string;
-  value: number;
-  className?: string;
-}) {
+/** Le titre d'une section : la voix condensée de la liste, sous un filet. */
+function Titre({ children, encre = false }: { children: React.ReactNode; encre?: boolean }) {
   return (
-    <div className="text-center">
-      <div className={`text-2xl font-bold ${className || "text-foreground"}`}>
-        {value}
-      </div>
-      <div className="text-xs text-muted-foreground">{label}</div>
-    </div>
+    <h2
+      className={`mb-3 border-b-2 pb-1 font-display text-3xl uppercase leading-none ${
+        encre ? "border-foreground text-foreground" : "border-usap-sang text-usap-sang"
+      }`}
+    >
+      {children}
+    </h2>
+  );
+}
+
+/** Un filtre est un lien : l'actif en rouge et souligné, les autres en encre. */
+function Filtre({ href, actif, children }: { href: string; actif: boolean; children: React.ReactNode }) {
+  return (
+    <Link
+      href={href}
+      aria-current={actif ? "page" : undefined}
+      className={actif ? "font-semibold text-usap-sang underline underline-offset-4" : "text-foreground hover:text-usap-sang"}
+    >
+      {children}
+    </Link>
   );
 }

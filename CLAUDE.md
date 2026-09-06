@@ -1723,10 +1723,21 @@ plus petit qu'ailleurs en mobile, onze lettres ne tenant pas en `text-7xl`
 condensé sur 375 pixels. Plus de cartes centrées, plus de bouclier gris,
 plus de drapeau en emoji, plus de pastilles. Dictionnaire `adversaires.*`.
 
-**Ce qui reste dans l'ancien rendu** : les treize autres pages. À reprendre
+**La fiche stade est refaite le même jour.** Sa seule audace est la
+**frise des rencontres jouées là**, sous le nom du stade — à Aimé-Giral un
+mur de trois cent trente-quatre lettres, et c'est bien l'histoire du lieu.
+Le bilan en une phrase ; **l'affluence en une autre**, moyenne sur les
+rencontres où elle est connue et record lié à sa rencontre, ce que la page
+ne calculait pas ; et qui reçoit là, aujourd'hui et avant, d'après
+`OpponentVenue`, lié à la fiche du club — « le Stade Français y recevait
+jusqu'en 2012-2013 ». Les rencontres en tableau avec l'arbitre et
+l'affluence, le résultat en liens, le compte de la sélection, la
+provenance en pied. Plus de quatre cases vertes et rouges, plus d'épingle
+grise à la place d'une photo qu'aucun stade n'a. Dictionnaire `stade.*`.
+
+**Ce qui reste dans l'ancien rendu** : les douze autres pages. À reprendre
 page par page, en relisant chaque fois qu'aucune couleur en dur n'est
-revenue. La suivante, par ordre de valeur : la fiche stade, puis la liste
-des stades.
+revenue. La suivante, par ordre de valeur : la liste des stades.
 
 
 - **Couleur principale** : Rouge sang (#C8102E) - couleur dominante USAP
