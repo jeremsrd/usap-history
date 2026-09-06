@@ -1650,9 +1650,27 @@ des minutes disparaît quand la source n'en publie aucune, 2004-2005 et
 et la descente, plus de neuf cases de chiffres centrés. Page passée au
 dictionnaire (`saison.*`), provenance en pied, saisons voisines en tête.
 
-**Ce qui reste dans l'ancien rendu** : les dix-huit autres pages. À
+**L'accueil est refait le même jour.** Sa seule audace est le **palmarès
+écrit en grand** : sous le titre, « Sept fois champion de France » en rouge
+et les sept années du Bouclier en or condensé, chacune liée à sa saison —
+c'est ce qui fait ce club, et un site d'histoire n'a pas de meilleure
+ouverture qu'une date. Les finales, la Pro D2, le Manoir et l'Europe
+suivent en une phrase, puis la présentation dit la source et l'étendue de
+la base en chiffres lus dans la base, avec la réserve de couverture. Puis,
+dans l'ordre où un supporter les cherche : le dernier match et **le
+prochain**, qui n'y était pas, en une ligne chacun ; la saison en cours
+avec la même frise que sur sa page ; ce jour dans l'histoire en tableau ;
+et six entrées pour explorer, en texte, la grille de cartes à icône
+doublant le Header. La section « palmarès » à badges a disparu, absorbée
+par l'en-tête ; le slogan centré sur dégradé, le bouton rouge, les cartes
+de chiffres, les pastilles vertes et rouges aussi. Le nombre de titres est
+écrit en lettres dans le dictionnaire (`accueil.champion`) et se réécrira
+le jour d'un huitième. Dictionnaire `accueil.*`.
+
+**Ce qui reste dans l'ancien rendu** : les dix-sept autres pages. À
 reprendre page par page, en relisant chaque fois qu'aucune couleur en dur
-n'est revenue. La suivante, par ordre de valeur : l'accueil.
+n'est revenue. La suivante, par ordre de valeur : la liste des saisons,
+puis celle des matchs.
 
 
 - **Couleur principale** : Rouge sang (#C8102E) - couleur dominante USAP

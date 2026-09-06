@@ -30,6 +30,36 @@ export const fr = {
     fermer: "Fermer le menu",
     logo: "Logo USAP",
   },
+  accueil: {
+    // La page d'accueil.
+    titre: "L'histoire de l'USAP depuis 1902",
+    // Le nombre de titres est dans `PALMARES` ; la phrase est écrite en
+    // lettres, et se réécrit le jour d'un huitième Bouclier.
+    champion: "Sept fois champion de France",
+    finaliste: "Finaliste en {annees}",
+    proD2: "champion de Pro D2 en {annees}",
+    manoir: "Challenge Yves-du-Manoir en {annees}",
+    europe: "finaliste de la Coupe d'Europe en {annees}",
+    palmares: "Le palmarès",
+    chapeau:
+      "Chaque rencontre, chaque joueur et chaque saison de l'USA Perpignan, d'après les feuilles de match officielles et la presse d'époque.",
+    chiffres: "{matchs} matchs, {joueurs} joueurs, {saisons} saisons documentées sur {total}.",
+    reserve:
+      "Les feuilles de match sont saisies depuis 2004-2005 ; avant, seules les finales de 1914 et de 1925 le sont, reconstituées depuis la presse.",
+    dernierTitre: "Le dernier match",
+    prochainTitre: "Le prochain match",
+    saisonTitre: "La saison {label}",
+    saisonEntiere: "La saison entière",
+    ceJourTitre: "Ce jour dans l'histoire",
+    ceJourAucun: "Aucune rencontre de l'USAP un {date} dans la base.",
+    explorerTitre: "Explorer",
+    explorerSaisons: "toutes les saisons, de 1902 à aujourd'hui",
+    explorerMatchs: "toutes les rencontres, par saison et par adversaire",
+    explorerJoueurs: "tous les joueurs passés par le club",
+    explorerStatistiques: "les classements et les bilans",
+    explorerAdversaires: "les clubs rencontrés",
+    explorerStades: "les terrains où l'USAP a joué",
+  },
   joueurs: {
     titre: "Joueurs",
     metaTitre: "Joueurs - USAP Historia",
