@@ -1710,9 +1710,23 @@ l'USAP, la condition de la liste des joueurs. Plus de sept cases de
 chiffres, plus de cartes verte et rouge pour les records, plus de drapeau
 en emoji. Dictionnaire `adversaire.*`.
 
-**Ce qui reste dans l'ancien rendu** : les quatorze autres pages. À
-reprendre page par page, en relisant chaque fois qu'aucune couleur en dur
-n'est revenue. La suivante, par ordre de valeur : la liste des adversaires.
+**La liste des adversaires est refaite le même jour**, sur le modèle de
+`/joueurs` : **l'épine des pays**, la France en tête puis les autres par
+ordre alphabétique, chaque pays en rouge condensé au-dessus de ses clubs.
+Une ligne par club : l'écusson à la taille d'un portrait, le nom lié, la
+ville, la période des confrontations, et **le tête-à-tête** — matchs,
+victoires, nuls, défaites, points pour et contre —, que la grille de cartes
+ne disait pas ; deux `groupBy` sur les rencontres jouées le donnent pour
+tous les clubs d'un coup. Les filtres sont des liens, Tous, Rencontrés,
+Clubs disparus, avec leur compte ; la recherche reste. Le titre est un cran
+plus petit qu'ailleurs en mobile, onze lettres ne tenant pas en `text-7xl`
+condensé sur 375 pixels. Plus de cartes centrées, plus de bouclier gris,
+plus de drapeau en emoji, plus de pastilles. Dictionnaire `adversaires.*`.
+
+**Ce qui reste dans l'ancien rendu** : les treize autres pages. À reprendre
+page par page, en relisant chaque fois qu'aucune couleur en dur n'est
+revenue. La suivante, par ordre de valeur : la fiche stade, puis la liste
+des stades.
 
 
 - **Couleur principale** : Rouge sang (#C8102E) - couleur dominante USAP

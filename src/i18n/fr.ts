@@ -254,6 +254,38 @@ export const fr = {
     precedente: "Page précédente",
     suivante: "Page suivante",
   },
+  adversaires: {
+    // La liste des clubs adverses.
+    titre: "Adversaires",
+    metaTitre: "Adversaires - USAP Historia",
+    metaDescription:
+      "Tous les clubs rencontrés par l'USA Perpignan, pays par pays, avec le bilan de chaque tête-à-tête.",
+    chapeau: { one: "{n} club en base, dont {rencontres} rencontré.", other: "{n} clubs en base, dont {rencontres} rencontrés." },
+    reserve:
+      "Les bilans portent sur les rencontres saisies, depuis 2004-2005 et les deux finales d'avant-guerre ; un club rencontré avant n'a pas encore ses confrontations.",
+    rechercher: "Rechercher un club",
+    lancerRecherche: "Rechercher",
+    tous: "Tous",
+    rencontres: "Rencontrés",
+    disparus: "Clubs disparus",
+    compte: { one: "{n} club", other: "{n} clubs" },
+    pourRecherche: " pour « {q} »",
+    aucun: "Aucun club ne répond à ces critères.",
+    reinitialiser: "Tous les clubs",
+    filtreAria: "Filtrer les clubs",
+    sansPays: "Pays inconnu",
+    colEcusson: "Écusson",
+    colClub: "Club",
+    colVille: "Ville",
+    colPeriode: "Rencontré",
+    colMatchs: "M",
+    colVictoires: "V",
+    colNuls: "N",
+    colDefaites: "D",
+    colPour: "Pour",
+    colContre: "Contre",
+    disparu: "disparu",
+  },
   adversaire: {
     // La fiche d'un club adverse.
     filAriane: "Adversaires",
