@@ -163,6 +163,40 @@ compositions écrites — `npx tsx scripts/seed-opponent-sheet.ts AAAA-AAAA
 --usap` —, ce qui est bien plus rapide que match par match. Pour une coupe
 d'Europe, c'est `seed-cup-sheet.ts --match=AAAA-MM-JJ` à la place.
 
+### Le lendemain d'un match de la saison en cours
+
+La saison en cours est déjà en base, sans score (cf. « Rencontres à
+venir ») ; ses compositions y entrent la veille, dès que la LNR les publie.
+Le lendemain, dans cet ordre — chaque étape exige la précédente, et
+`seed-opponent-sheet` comme `seed-chronologie` refusent une rencontre sans
+score :
+
+```bash
+npx tsx scripts/set-score.ts --match=AAAA-MM-JJ --dry              # le score du calendrier LNR
+npx tsx scripts/set-score.ts --match=AAAA-MM-JJ
+npx tsx scripts/seed-lineup.ts AAAA-MM-JJ --dry                    # sauf si les 46 lignes sont déjà là
+npx tsx scripts/seed-opponent-sheet.ts AAAA-AAAA --match=AAAA-MM-JJ --usap --dry
+npx tsx scripts/seed-opponent-sheet.ts AAAA-AAAA --match=AAAA-MM-JJ --usap
+npx tsx scripts/seed-chronologie.ts AAAA-MM-JJ --dry
+npx tsx scripts/seed-chronologie.ts AAAA-MM-JJ
+npx tsx scripts/fix-bonus-points.ts --dry                          # le bonus, une fois les essais connus
+npx tsx scripts/fix-bonus-points.ts
+npx tsx scripts/set-annexe.ts --match=AAAA-MM-JJ --affluence=N --mi-temps=U-A \
+  --source="L'Indépendant du …" --dry                              # ce que la LNR ne donne pas
+npx tsx scripts/audit-opponent-lineups.ts AAAA-AAAA                # 0 anomalie attendue
+npx tsx scripts/detect-duplicate-players.ts                        # 0 / 0 / 0 attendu
+```
+
+**La presse complète, elle ne remplace pas.** *L'Indépendant* du lendemain
+donne l'affluence et la mi-temps, que la LNR n'a pas ; `set-annexe.ts` les
+écrit avec leur attestation, et **confronte la mi-temps à la chronologie**
+avant de l'accepter — en sachant que la LNR additionne les arrêts de jeu à
+la minute du fait, l'essai de Ward à « 40+2 » selon le journal étant à 42'
+chez elle. Quand le journal et la feuille divergent sur un buteur — le
+6 septembre 2026, deux pénalités à Garbisi selon l'un, une selon l'autre,
+pour le même total —, **la feuille fait foi** et l'écart va dans une
+attestation `realisations`, noté, pas tranché.
+
 ### 3. Les contrôles, et ils ne sont pas facultatifs
 
 ```bash
@@ -936,6 +970,8 @@ doublons.
 | `seed-chronologie.ts` | écrit la **ligne de temps** d'un match depuis la LNR : essais, transformations déduites du score courant, pénalités, drops et cartons, avec les noms tels que la base les écrit. Troisième temps ; `--dry` |
 | `seed-calendrier-2026-2027.ts` | crée une saison et son calendrier de championnat **avant** qu'elle ne commence : date, heure, journée, adversaire, lieu, sans score ni résultat. Une relance met à jour les dates au fur et à mesure que la LNR les cale |
 | `seed-calendrier-europe-2026-2027.ts` | le pendant pour la **coupe d'Europe** : les quatre matchs de poule de Challenge Cup depuis le flux de l'EPCR, sans score. Crée l'Ulster, et pose deux terrains à la main avec leur source — Ravenhill à Belfast, Rodney Parade à Newport —, l'USAP n'y ayant jamais joué. `--dry` |
+| `set-score.ts` | pose le **score et le résultat** d'une rencontre du calendrier en cours, depuis le calendrier de la LNR — le premier temps du lendemain de match, sans lequel la feuille et la chronologie refusent d'écrire. `--match=AAAA-MM-JJ`, `--dry`, `--force` ; les bonus viennent ensuite de `fix-bonus-points.ts` |
+| `set-annexe.ts` | pose l'**affluence** et la **mi-temps**, que la LNR ne donne pas, depuis une source nommée — *L'Indépendant* du lendemain — avec leur attestation ; refuse une mi-temps par laquelle la chronologie ne passe pas avant la 50ᵉ, arrêts de jeu compris. `--match=`, `--affluence=`, `--mi-temps=U-A`, `--source=`, `--dry`, `--force` |
 | `set-arbitre.ts` | pose l'arbitre d'une rencontre quand il vient d'ailleurs que d'une feuille — la désignation de la semaine, donnée par Jérémy. `--match=AAAA-MM-JJ --nom="Prénom Nom"`, `--dry`, `--force` pour remplacer un arbitre déjà posé ; passe par `lib/arbitres.ts`, jamais par un slug refait à la main |
 | `seed-season-2021-2022.ts` | crée les rencontres d'une saison entière — date et heure, compétition, adversaire, lieu, score, réalisations, résultat, bonus, arbitre — puis les agrégats de saison. Premier jalon de la phase 4 |
 | `lib/erc.ts` | **les pages de l'ERC dans la Wayback Machine**, source officielle des coupes d'Europe d'avant l'EPCR. Deux lecteurs : les comptes rendus de 2007-2008 (`eng/12_NNNN.php`, en latin-1) — compositions à 22 numérotées, capitaines, cartons, réalisations par joueur, essais de pénalité, affluence, stade — et le **Match Centre** de 2010-2013 (`eng/matchcentre/NNNNN.php`), qui ajoute la mi-temps, l'arbitre et une **chronologie minutée**. Quatre secondes entre deux pages et un cache sur disque : l'archive refuse tout après une centaine de requêtes rapprochées |
@@ -1669,8 +1705,11 @@ disparu, et l'Albi-Perpignan du 3 novembre 2007, dont la feuille LNR ne porte
 aucun fait. `fix-bonus-points` les reconnaît et laisse leur bonus offensif en
 l'état.
 
-**2026-2027 n'est qu'un calendrier** : ses 26 journées ont leur date, leur
-adversaire et leur terrain, sans score. Seules les premières ont un horaire —
+**2026-2027 a joué sa première journée** — Stade Français 28-26 USAP le
+5 septembre 2026, bonus défensif, feuille des deux camps, chronologie,
+12 065 spectateurs et mi-temps 6-28 d'après *L'Indépendant*, par la marche
+du « lendemain d'un match » —, **et n'est qu'un calendrier pour le reste** :
+ses 26 journées ont leur date, leur adversaire et leur terrain, sans score. Seules les premières ont un horaire —
 la LNR ne cale les coups d'envoi qu'au fil des désignations télévisées et pose
 d'ici là une date de référence, que `seed-calendrier-2026-2027.ts` rafraîchit
 à chaque relance. **Et ses quatre matchs de poule de Challenge Cup** depuis le
