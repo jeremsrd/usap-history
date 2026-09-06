@@ -19,6 +19,8 @@ type Props = {
   isHome: boolean;
   /** Le barème de la saison — un essai vaut trois points en 1914, un drop quatre. */
   bareme: Bareme;
+  /** « mi-temps », passé par la page qui seule tient le dictionnaire. */
+  libelleMiTemps: string;
 };
 
 /** Ce que chaque fait vaut, sous le barème reçu : la valeur n'est écrite qu'une fois, dans `baremeDeMatch`. */
@@ -54,6 +56,7 @@ export default function ScoreEvolution({
   opponentName,
   isHome,
   bareme,
+  libelleMiTemps,
 }: Props) {
   const scoringEvents = useMemo(() => {
     const POINTS = pointsDe(bareme);
@@ -149,26 +152,21 @@ export default function ScoreEvolution({
 
   return (
     <div className="w-full">
-      {/* Légende */}
-      <div className="mb-3 flex items-center gap-6 text-sm">
-        <div className="flex items-center gap-2">
-          <div className="h-3 w-6 rounded-sm bg-usap-sang" />
-          <span className="font-medium text-foreground">USAP</span>
-        </div>
-        <div className="flex items-center gap-2">
-          <div className="h-3 w-6 rounded-sm bg-slate-500" />
-          <span className="font-medium text-foreground">{opponentName}</span>
-        </div>
-      </div>
+      {/* Deux traits, deux noms : la légende tient en une ligne de texte. */}
+      <p className="mb-2 text-sm">
+        <span className="font-semibold text-usap-sang">USAP</span>
+        <span className="mx-2 text-muted-foreground">et</span>
+        <span className="font-semibold text-foreground">{opponentName}</span>
+      </p>
 
-      {/* Graphique SVG responsive */}
-      <div className="overflow-x-auto rounded-lg border border-border bg-background">
+      <div className="overflow-x-auto">
         <svg
           viewBox={`0 0 ${W} ${H}`}
           className="h-auto w-full min-w-[500px]"
           preserveAspectRatio="xMidYMid meet"
+          role="img"
+          aria-label={`${homeLabel} ${isHome ? finalScoreUsap : finalScoreOpponent} – ${isHome ? finalScoreOpponent : finalScoreUsap} ${awayLabel}`}
         >
-          {/* Grille horizontale */}
           {yTicks.map((v) => (
             <g key={v}>
               <line
@@ -180,152 +178,50 @@ export default function ScoreEvolution({
                 strokeWidth={v === 0 ? 1.5 : 0.5}
                 strokeDasharray={v === 0 ? undefined : "4 4"}
               />
-              <text
-                x={PAD_LEFT - 8}
-                y={y(v) + 4}
-                textAnchor="end"
-                className="fill-muted-foreground"
-                fontSize={11}
-              >
+              <text x={PAD_LEFT - 8} y={y(v) + 4} textAnchor="end" className="fill-muted-foreground" fontSize={11}>
                 {v}
               </text>
             </g>
           ))}
 
-          {/* Ligne mi-temps */}
-          <line
-            x1={x(40)}
-            y1={PAD_TOP}
-            x2={x(40)}
-            y2={PAD_TOP + chartH}
-            className="stroke-border"
-            strokeWidth={1}
-            strokeDasharray="6 3"
-          />
-          <text
-            x={x(40)}
-            y={PAD_TOP + chartH + 25}
-            textAnchor="middle"
-            className="fill-muted-foreground"
-            fontSize={10}
-          >
-            MT
+          <line x1={x(40)} y1={PAD_TOP} x2={x(40)} y2={PAD_TOP + chartH} className="stroke-border" strokeWidth={1} strokeDasharray="6 3" />
+          <text x={x(40)} y={PAD_TOP + chartH + 26} textAnchor="middle" className="fill-muted-foreground" fontSize={10}>
+            {libelleMiTemps}
           </text>
 
-          {/* Graduations X */}
           {[0, 10, 20, 30, 40, 50, 60, 70, 80].map((m) => (
-            <text
-              key={m}
-              x={x(m)}
-              y={PAD_TOP + chartH + 15}
-              textAnchor="middle"
-              className="fill-muted-foreground"
-              fontSize={10}
-            >
-              {m}&apos;
+            <text key={m} x={x(m)} y={PAD_TOP + chartH + 15} textAnchor="middle" className="fill-muted-foreground" fontSize={10}>
+              {m}
             </text>
           ))}
 
-          {/* Courbe USAP */}
-          <path
-            d={pathUsap}
-            fill="none"
-            stroke="#C8102E"
-            strokeWidth={2.5}
-            strokeLinejoin="round"
-          />
+          <path d={pathUsap} fill="none" className="stroke-usap-sang" strokeWidth={2.5} strokeLinejoin="round" />
+          <path d={pathOpp} fill="none" className="stroke-foreground" strokeWidth={2.5} strokeLinejoin="round" />
 
-          {/* Courbe adversaire */}
-          <path
-            d={pathOpp}
-            fill="none"
-            stroke="#64748b"
-            strokeWidth={2.5}
-            strokeLinejoin="round"
-          />
-
-          {/* Points USAP. Le <title> d'un point tient en UNE chaîne : sous
-              React 19, un <title> à plusieurs enfants — texte, accolade,
-              texte — est servi vide côté serveur et plein côté client, et
-              c'était l'erreur d'hydratation de la finale de 1914. */}
-          {dots.map((pt, i) => {
-            if (!pt.event.isUsap) return null;
-            return (
+          {/* Le <title> d'un point tient en UNE chaîne : sous React 19, un
+              <title> à plusieurs enfants est servi vide côté serveur et plein
+              côté client — c'était l'erreur d'hydratation de la finale de 1914. */}
+          {dots.map((pt, i) =>
+            pt.event.isUsap ? (
               <g key={`u-${i}`}>
-                <circle
-                  cx={x(pt.minute)}
-                  cy={y(pt.scoreUsap)}
-                  r={4}
-                  fill="#C8102E"
-                  stroke="white"
-                  strokeWidth={1.5}
-                />
+                <circle cx={x(pt.minute)} cy={y(pt.scoreUsap)} r={4} className="fill-usap-sang stroke-background" strokeWidth={1.5} />
                 <title>{`${pt.minute}' — ${EVENT_LABELS[pt.event.type] ?? pt.event.type} USAP — ${pt.scoreUsap}-${pt.scoreOpp}`}</title>
               </g>
-            );
-          })}
-
-          {/* Points adversaire */}
-          {dots.map((pt, i) => {
-            if (pt.event.isUsap) return null;
-            return (
+            ) : (
               <g key={`o-${i}`}>
-                <circle
-                  cx={x(pt.minute)}
-                  cy={y(pt.scoreOpp)}
-                  r={4}
-                  fill="#64748b"
-                  stroke="white"
-                  strokeWidth={1.5}
-                />
+                <circle cx={x(pt.minute)} cy={y(pt.scoreOpp)} r={4} className="fill-foreground stroke-background" strokeWidth={1.5} />
                 <title>{`${pt.minute}' — ${EVENT_LABELS[pt.event.type] ?? pt.event.type} ${opponentName} — ${pt.scoreUsap}-${pt.scoreOpp}`}</title>
               </g>
-            );
-          })}
+            ),
+          )}
 
-          {/* Score final */}
-          <text
-            x={x(80) + 2}
-            y={y(finalScoreUsap) - 6}
-            className="fill-usap-sang"
-            fontSize={12}
-            fontWeight="bold"
-            textAnchor="end"
-          >
+          <text x={W - PAD_RIGHT} y={y(finalScoreUsap) - 6} className="fill-usap-sang" fontSize={12} fontWeight="bold" textAnchor="end">
             {finalScoreUsap}
           </text>
-          <text
-            x={x(80) + 2}
-            y={y(finalScoreOpponent) - 6}
-            fill="#64748b"
-            fontSize={12}
-            fontWeight="bold"
-            textAnchor="end"
-          >
+          <text x={W - PAD_RIGHT} y={y(finalScoreOpponent) - 6} className="fill-foreground" fontSize={12} fontWeight="bold" textAnchor="end">
             {finalScoreOpponent}
           </text>
         </svg>
-      </div>
-
-      {/* Détail textuel en dessous */}
-      <div className="mt-3 flex flex-wrap gap-2 text-xs text-muted-foreground">
-        {scoringEvents
-          .filter((p) => p.event.type !== "START" && p.event.type !== "END")
-          .map((pt, i) => (
-            <span
-              key={i}
-              className={`rounded px-2 py-1 ${
-                pt.event.isUsap
-                  ? "bg-usap-sang/10 text-usap-sang"
-                  : "bg-muted text-muted-foreground"
-              }`}
-            >
-              {pt.minute}&apos;{" "}
-              {EVENT_LABELS[pt.event.type] ?? pt.event.type}{" "}
-              {!pt.event.isUsap && `(${opponentName})`}{" "}
-              — {pt.scoreUsap}-{pt.scoreOpp}
-            </span>
-          ))}
       </div>
     </div>
   );

@@ -1,33 +1,39 @@
 import Link from "@/components/Lien";
 import Provenance from "@/components/Provenance";
-import Image from "next/image";
 import { notFound } from "next/navigation";
 import { prisma } from "@/lib/prisma";
 import { estJoue } from "@/lib/matchs";
 import { baremeDeMatch } from "@/lib/scoring";
 import { POSITIONS } from "@/lib/constants";
 import { formatDateFR } from "@/lib/utils";
-import {
-  MapPin,
-  Calendar,
-  Users,
-  Clock,
-  Award,
-  User,
-} from "lucide-react";
 import type { Metadata } from "next";
 import VideoEmbed from "@/components/VideoEmbed";
 import ScoreEvolution from "@/components/ScoreEvolution";
+import { dictionnaire, type Traduire } from "@/i18n/dictionnaire";
+import type { Langue } from "@/i18n/langues";
+
+/**
+ * La fiche d'une rencontre, refaite le 6 septembre 2026 dans l'identité posée
+ * sur `/joueurs` et la fiche joueur. Sa seule audace est le **tableau
+ * d'affichage** : l'affiche en Archivo condensée, l'USAP en rouge,
+ * l'adversaire en encre, et le score énorme entre les deux — sans logos,
+ * qui sont ailleurs sur le site. Tout ce qui l'entoure est dit en phrases
+ * puis en tableaux : le résultat et ses bonus, la mi-temps, le stade,
+ * l'affluence, l'arbitre ; le graphe du score ; les deux XV ; les faits.
+ *
+ * Ce que la page ne fait plus : une pastille verte ou rouge pour le
+ * résultat, un badge bleu pour le bonus défensif, des emojis pour les faits
+ * et les cartons, des chips sous le graphe, des icônes devant les titres.
+ */
 
 export const dynamic = "force-dynamic";
 
 type Props = {
-  params: Promise<{ slug: string }>;
+  params: Promise<{ locale: Langue; slug: string }>;
 };
 
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const { slug } = await params;
-
   const match = await prisma.match.findUnique({
     where: { slug },
     select: {
@@ -39,7 +45,6 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
       competition: { select: { shortName: true, name: true } },
     },
   });
-
   if (!match) return { title: "Match introuvable - USAP Historia" };
 
   const opp = match.opponent.shortName || match.opponent.name;
@@ -58,478 +63,238 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   };
 }
 
+const nombre = (n: number) => n.toLocaleString("fr-FR");
+
 export default async function MatchDetailPage({ params }: Props) {
-  const { slug } = await params;
+  const { locale, slug } = await params;
+  const t = await dictionnaire(locale);
 
   const match = await prisma.match.findUnique({
     where: { slug },
     include: {
       season: { select: { label: true, startYear: true } },
       competition: true,
-      opponent: {
-        select: { name: true, shortName: true, logoUrl: true, city: true, slug: true },
-      },
+      opponent: { select: { name: true, shortName: true, logoUrl: true, city: true, slug: true } },
       venue: { select: { name: true, slug: true, city: true } },
       referee: true,
       players: {
-        include: {
-          player: {
-            select: {
-              slug: true,
-              firstName: true,
-              lastName: true,
-              photoUrl: true,
-            },
-          },
-        },
+        include: { player: { select: { slug: true, firstName: true, lastName: true } } },
         orderBy: [{ isStarter: "desc" }, { shirtNumber: "asc" }],
       },
-      matchEvents: {
-        orderBy: { minute: "asc" },
-      },
+      matchEvents: { orderBy: { minute: "asc" } },
     },
   });
-
   if (!match) notFound();
 
   // Le titre que ce match a décidé, s'il en a décidé un. Le rapprochement se
   // fait sur l'année de fin de saison et la compétition : une finale et son
   // trophée ne peuvent pas se confondre avec autre chose. « Demi-finale » est
-  // exclue — d'où l'ancrage de l'expression au début du libellé.
+  // exclue — d'où l'ancrage de l'expression au début du libellé de tour.
   const anneeDuTitre = Number(match.season.label.slice(5));
   const trophee = /^finale/i.test(match.round ?? "")
     ? await prisma.trophy.findFirst({
         where: {
           year: anneeDuTitre,
-          competition: {
-            in: [
-              match.competition.name,
-              match.competition.shortName ?? match.competition.name,
-            ],
-          },
+          competition: { in: [match.competition.name, match.competition.shortName ?? match.competition.name] },
         },
       })
     : null;
 
   const oppName = match.opponent.shortName || match.opponent.name;
-  const usapPlayers = match.players.filter((p) => !p.isOpponent);
-  const oppPlayers = match.players.filter((p) => p.isOpponent);
-  const usapStarters = usapPlayers.filter((p) => p.isStarter);
-  const usapSubstitutes = usapPlayers.filter((p) => !p.isStarter);
-  const oppStarters = oppPlayers.filter((p) => p.isStarter);
-  const oppSubstitutes = oppPlayers.filter((p) => !p.isStarter);
+  const competition = match.competition.shortName || match.competition.name;
+  const joue = estJoue(match);
+  const usap = match.players.filter((p) => !p.isOpponent);
+  const adverse = match.players.filter((p) => p.isOpponent);
+  const affiche = match.isHome ? `USAP – ${oppName}` : `${oppName} – USAP`;
+
+  // L'intitulé : compétition, journée ou tour, date, coup d'envoi.
+  const intitule = match.matchday
+    ? t(match.matchday === 1 ? "match.journee" : "match.journeeN", { competition, n: match.matchday })
+    : match.round
+      ? t("match.tour", { competition, tour: match.round })
+      : competition;
+  const quand = `${t("match.le", { date: formatDateFR(match.date) })}${match.kickoffTime ? ` ${t("match.a", { heure: match.kickoffTime })}` : ""}`;
+
+  // Le résultat et ses bonus, en une phrase.
+  const resultat =
+    match.result === "VICTOIRE" ? t("match.victoire") : match.result === "NUL" ? t("match.nul") : match.result === "DEFAITE" ? t("match.defaite") : null;
+  const bonus =
+    match.bonusOffensif && match.bonusDefensif
+      ? t("match.bonusLesDeux")
+      : match.bonusOffensif
+        ? t("match.bonusOffensif")
+        : match.bonusDefensif
+          ? t("match.bonusDefensif")
+          : null;
+  const faits = [
+    resultat && `${resultat}${bonus ? `, ${bonus}` : ""}`,
+    match.halfTimeUsap != null && match.halfTimeOpponent != null && t("match.miTemps", { usap: match.halfTimeUsap, adversaire: match.halfTimeOpponent }),
+  ].filter(Boolean) as string[];
+
+  const scoringEvents = match.matchEvents.filter((e) => ["ESSAI", "TRANSFORMATION", "PENALITE", "DROP", "ESSAI_PENALITE"].includes(e.type));
+  const detailScore = match.triesUsap != null || match.triesOpponent != null;
 
   return (
-    <div className="mx-auto max-w-7xl px-4 py-10">
-      {/* Fil d'Ariane */}
-      <div className="mb-6 flex flex-wrap gap-1 text-sm text-muted-foreground">
+    <div className="mx-auto max-w-6xl px-4 py-10 sm:py-14">
+      <nav className="mb-8 flex flex-wrap gap-1 text-sm text-muted-foreground">
         <Link href="/matchs" className="hover:text-usap-sang">
-          Matchs
+          {t("match.filAriane")}
         </Link>
         <span className="mx-1">/</span>
-        <Link
-          href={`/saisons/${match.season.label}`}
-          className="hover:text-usap-sang"
-        >
+        <Link href={`/saisons/${match.season.label}`} className="hover:text-usap-sang">
           {match.season.label}
         </Link>
         <span className="mx-1">/</span>
-        <span className="text-foreground">
-          {match.isHome ? `USAP - ${oppName}` : `${oppName} - USAP`}
-        </span>
-      </div>
+        <span className="text-foreground">{affiche}</span>
+      </nav>
 
-      {/* Le titre décidé par ce match */}
-      {trophee && (
-        <div className="mb-4 rounded-lg border border-usap-or/40 bg-usap-or/10 px-4 py-3">
-          <span className="font-bold uppercase tracking-wide text-usap-or">
-            {trophee.achievement === "CHAMPION"
-              ? `Champion — ${trophee.competition} ${trophee.year}`
-              : `Finaliste — ${trophee.competition} ${trophee.year}`}
-          </span>
-          <Link
-            href="/palmares"
-            className="ml-3 text-sm text-muted-foreground underline hover:text-usap-sang"
-          >
-            voir le palmarès
-          </Link>
-        </div>
-      )}
-
-      {/* Score principal */}
-      <div className="mb-10 rounded-lg border border-border bg-usap-carte p-6">
-        {/* Compétition et date */}
-        <div className="mb-6 flex flex-wrap items-center justify-between gap-2 text-sm text-muted-foreground">
-          <span className="font-medium text-usap-sang">
-            {match.competition.shortName || match.competition.name}
-            {match.matchday && ` — Journée ${match.matchday}`}
-            {match.round && !match.matchday && ` — ${match.round}`}
-          </span>
-          <span className="flex items-center gap-1.5">
-            <Calendar className="h-4 w-4" />
-            {formatDateFR(match.date)}
-            {match.kickoffTime && ` à ${match.kickoffTime}`}
-          </span>
-        </div>
-
-        {/* Affichage score */}
-        <div className="flex items-center justify-center gap-4 sm:gap-8">
-          {/* Équipe domicile */}
-          <div className="flex flex-col items-center gap-2">
-            {match.isHome ? (
-              <Image src="/images/usap/logo.png" alt="USAP" width={48} height={48} className="h-12 w-12" />
-            ) : match.opponent.logoUrl ? (
-              <Image src={match.opponent.logoUrl} alt={oppName} width={48} height={48} className="h-12 w-12 logo-club" />
-            ) : (
-              <div className="flex h-12 w-12 items-center justify-center rounded-full bg-muted text-xs font-bold text-muted-foreground">
-                {(match.opponent.shortName || match.opponent.name).slice(0, 3).toUpperCase()}
-              </div>
-            )}
-            <p className={`text-lg font-bold uppercase ${match.isHome ? "text-usap-sang" : "text-foreground"}`}>
-              {match.isHome ? (
-                "USAP"
-              ) : (
-                <Link href={`/adversaires/${match.opponent.slug}`} className="hover:underline">
-                  {oppName}
-                </Link>
-              )}
-            </p>
-          </div>
-
-          {/* Score, ou l'affiche si la rencontre reste à jouer */}
-          <div className="flex items-center gap-3">
-            {estJoue(match) ? (
+      {/* Le tableau d'affichage */}
+      <header className="mb-10">
+        <p className="text-sm text-muted-foreground">
+          {intitule}, {quand}.
+        </p>
+        <div className="mt-2 grid grid-cols-[1fr_auto_1fr] items-center gap-x-4 sm:gap-x-8">
+          <Equipe usap={match.isHome} nom={oppName} slug={match.opponent.slug} align="right" />
+          <p className="font-display text-7xl leading-none text-foreground tabular-nums sm:text-9xl">
+            {joue ? (
               <>
-                <span className="text-4xl font-bold text-foreground sm:text-5xl">
-                  {match.isHome ? match.scoreUsap : match.scoreOpponent}
-                </span>
-                <span className="text-2xl text-muted-foreground">-</span>
-                <span className="text-4xl font-bold text-foreground sm:text-5xl">
-                  {match.isHome ? match.scoreOpponent : match.scoreUsap}
-                </span>
+                {match.isHome ? match.scoreUsap : match.scoreOpponent}
+                <span className="mx-2 text-muted-foreground sm:mx-4">–</span>
+                {match.isHome ? match.scoreOpponent : match.scoreUsap}
               </>
             ) : (
-              <span className="text-2xl font-bold uppercase tracking-wider text-muted-foreground">
-                à venir
-              </span>
+              <span className="text-3xl text-muted-foreground sm:text-5xl">{t("match.aVenir")}</span>
             )}
-          </div>
-
-          {/* Équipe extérieur */}
-          <div className="flex flex-col items-center gap-2">
-            {!match.isHome ? (
-              <Image src="/images/usap/logo.png" alt="USAP" width={48} height={48} className="h-12 w-12" />
-            ) : match.opponent.logoUrl ? (
-              <Image src={match.opponent.logoUrl} alt={oppName} width={48} height={48} className="h-12 w-12 logo-club" />
-            ) : (
-              <div className="flex h-12 w-12 items-center justify-center rounded-full bg-muted text-xs font-bold text-muted-foreground">
-                {(match.opponent.shortName || match.opponent.name).slice(0, 3).toUpperCase()}
-              </div>
-            )}
-            <p className={`text-lg font-bold uppercase ${!match.isHome ? "text-usap-sang" : "text-foreground"}`}>
-              {match.isHome ? (
-                <Link href={`/adversaires/${match.opponent.slug}`} className="hover:underline">
-                  {oppName}
-                </Link>
-              ) : (
-                "USAP"
-              )}
-            </p>
-          </div>
+          </p>
+          <Equipe usap={!match.isHome} nom={oppName} slug={match.opponent.slug} align="left" />
         </div>
-
-        {/* Mi-temps */}
-        {match.halfTimeUsap != null && match.halfTimeOpponent != null && (
-          <p className="mt-3 text-center text-sm text-muted-foreground">
-            Mi-temps :{" "}
-            {match.isHome
-              ? `${match.halfTimeUsap} - ${match.halfTimeOpponent}`
-              : `${match.halfTimeOpponent} - ${match.halfTimeUsap}`}
+        {trophee && (
+          <p className="mt-4 font-display text-2xl uppercase text-usap-or">
+            {t(trophee.achievement === "CHAMPION" ? "match.champion" : "match.finaliste", { competition: trophee.competition, annee: trophee.year })}
+            <Link href="/palmares" className="ml-3 text-base normal-case text-muted-foreground underline hover:text-usap-sang">
+              {t("match.palmares")}
+            </Link>
           </p>
         )}
+        {faits.length > 0 && <p className="mt-4 max-w-prose text-lg leading-snug text-foreground">{faits.join(". ")}.</p>}
+        <p className="mt-1 max-w-prose text-sm leading-relaxed text-muted-foreground">
+          {[
+            match.venue && (
+              <Link key="stade" href={`/stades/${match.venue.slug}`} className="hover:text-usap-sang">
+                {match.venue.name}, {match.venue.city}
+              </Link>
+            ),
+            match.attendance != null && t("match.spectateurs", { n: nombre(match.attendance) }),
+            match.referee && (
+              <Link key="arbitre" href={`/arbitres/${match.referee.slug}`} className="hover:text-usap-sang">
+                {t("match.arbitre", { nom: `${match.referee.firstName} ${match.referee.lastName}` })}
+              </Link>
+            ),
+            match.manOfTheMatch && t("match.hommeDuMatch", { nom: match.manOfTheMatch }),
+          ]
+            .filter(Boolean)
+            .map((x, i, tous) => (
+              <span key={i}>
+                {x}
+                {i < tous.length - 1 ? ", " : "."}
+              </span>
+            ))}
+        </p>
+      </header>
 
-        {/* Résultat badge */}
-        <div className="mt-4 flex justify-center">
-          <span
-            className={`rounded px-3 py-1 text-sm font-bold ${
-              match.result === "VICTOIRE"
-                ? "bg-green-500/10 text-green-600"
-                : match.result === "DEFAITE"
-                  ? "bg-red-500/10 text-red-500"
-                  : "bg-muted text-muted-foreground"
-            }`}
-          >
-            {match.result === "VICTOIRE"
-              ? "Victoire"
-              : match.result === "DEFAITE"
-                ? "Défaite"
-                : match.result === "NUL"
-                  ? "Match nul"
-                  : "À venir"}
-          </span>
-          {match.bonusOffensif && (
-            <span className="ml-2 rounded bg-usap-or/10 px-2 py-1 text-xs font-medium text-usap-or">
-              BO
-            </span>
-          )}
-          {match.bonusDefensif && (
-            <span className="ml-2 rounded bg-blue-500/10 px-2 py-1 text-xs font-medium text-blue-500">
-              BD
-            </span>
-          )}
-        </div>
-
-        {/* Infos match */}
-        <div className="mt-6 flex flex-wrap justify-center gap-x-6 gap-y-2 border-t border-border pt-4 text-sm text-muted-foreground">
-          {match.venue && (
-            <Link
-              href={`/stades/${match.venue.slug}`}
-              className="flex items-center gap-1.5 hover:text-usap-sang"
-            >
-              <MapPin className="h-4 w-4" />
-              {match.venue.name}, {match.venue.city}
-            </Link>
-          )}
-          {match.attendance && (
-            <span className="flex items-center gap-1.5">
-              <Users className="h-4 w-4" />
-              {match.attendance.toLocaleString("fr-FR")} spectateurs
-            </span>
-          )}
-          {match.referee && (
-            <Link
-              href={`/arbitres/${match.referee.slug}`}
-              className="flex items-center gap-1.5 hover:text-usap-sang"
-            >
-              <User className="h-4 w-4" />
-              {match.referee.firstName} {match.referee.lastName}
-            </Link>
-          )}
-          {match.manOfTheMatch && (
-            <span className="flex items-center gap-1.5">
-              <Award className="h-4 w-4 text-usap-or" />
-              {match.manOfTheMatch}
-            </span>
-          )}
-        </div>
-      </div>
-
-      {/* Détail scoring */}
-      {(match.triesUsap != null || match.triesOpponent != null) && (
-        <section className="mb-10">
-          <h2 className="mb-4 text-2xl font-bold uppercase tracking-wider text-foreground">
-            Détail du score
-          </h2>
-          <div className="overflow-x-auto rounded-lg border border-border">
-            <table className="w-full text-sm">
-              <thead>
-                <tr className="border-b border-border bg-muted/50">
-                  <th className="px-4 py-3 text-left font-semibold text-foreground">
-                    &nbsp;
-                  </th>
-                  <th className="px-4 py-3 text-center font-semibold text-usap-sang">
-                    USAP
-                  </th>
-                  <th className="px-4 py-3 text-center font-semibold text-foreground">
-                    {oppName}
-                  </th>
-                </tr>
-              </thead>
-              <tbody>
-                <ScoreRow
-                  label="Essais"
-                  usap={match.triesUsap}
-                  opp={match.triesOpponent}
-                />
-                <ScoreRow
-                  label="Transformations"
-                  usap={match.conversionsUsap}
-                  opp={match.conversionsOpponent}
-                />
-                <ScoreRow
-                  label="Pénalités"
-                  usap={match.penaltiesUsap}
-                  opp={match.penaltiesOpponent}
-                />
-                <ScoreRow
-                  label="Drops"
-                  usap={match.dropGoalsUsap}
-                  opp={match.dropGoalsOpponent}
-                />
-                {(match.penaltyTriesUsap !== 0 || match.penaltyTriesOpponent !== 0) && (
-                  <ScoreRow
-                    label="Essais de pénalité"
-                    usap={match.penaltyTriesUsap}
-                    opp={match.penaltyTriesOpponent}
-                  />
-                )}
-              </tbody>
-            </table>
-          </div>
-        </section>
-      )}
-
-      {/* Évolution du score */}
-      {estJoue(match) &&
-        match.matchEvents.filter((e) => ["ESSAI", "TRANSFORMATION", "PENALITE", "DROP", "ESSAI_PENALITE"].includes(e.type)).length > 0 && (
-        <section className="mb-10">
-          <h2 className="mb-4 text-2xl font-bold uppercase tracking-wider text-foreground">
-            Évolution du score
-          </h2>
-          <ScoreEvolution
-            events={match.matchEvents}
-            finalScoreUsap={match.scoreUsap}
-            finalScoreOpponent={match.scoreOpponent}
-            opponentName={oppName}
-            isHome={match.isHome}
-            bareme={baremeDeMatch(match.season.startYear)}
-          />
-        </section>
-      )}
-
-      <div className="grid gap-10 lg:grid-cols-2">
-        {/* Composition USAP */}
-        {usapPlayers.length > 0 && (
-          <section>
-            <h2 className="mb-4 flex items-center gap-2 text-2xl font-bold uppercase tracking-wider text-foreground">
-              <Users className="h-6 w-6 text-usap-or" />
-              Composition USAP
-            </h2>
-
-            {usapStarters.length > 0 && (
-              <div className="mb-4">
-                <h3 className="mb-2 text-sm font-semibold uppercase text-muted-foreground">
-                  Titulaires ({usapStarters.length})
-                </h3>
-                <div className="space-y-1">
-                  {usapStarters.map((mp) => (
-                    <PlayerRow key={mp.id} mp={mp} />
-                  ))}
-                </div>
-              </div>
-            )}
-
-            {usapSubstitutes.length > 0 && (
-              <div>
-                <h3 className="mb-2 text-sm font-semibold uppercase text-muted-foreground">
-                  Remplaçants ({usapSubstitutes.length})
-                </h3>
-                <div className="space-y-1">
-                  {usapSubstitutes.map((mp) => (
-                    <PlayerRow key={mp.id} mp={mp} />
-                  ))}
-                </div>
-              </div>
-            )}
-          </section>
-        )}
-
-        {/* Composition adversaire */}
-        {oppPlayers.length > 0 && (
-          <section>
-            <h2 className="mb-4 flex items-center gap-2 text-2xl font-bold uppercase tracking-wider text-foreground">
-              <Users className="h-6 w-6 text-muted-foreground" />
-              Composition {oppName}
-            </h2>
-
-            {oppStarters.length > 0 && (
-              <div className="mb-4">
-                <h3 className="mb-2 text-sm font-semibold uppercase text-muted-foreground">
-                  Titulaires ({oppStarters.length})
-                </h3>
-                <div className="space-y-1">
-                  {oppStarters.map((mp) => (
-                    <PlayerRow key={mp.id} mp={mp} isOpponentRow />
-                  ))}
-                </div>
-              </div>
-            )}
-
-            {oppSubstitutes.length > 0 && (
-              <div>
-                <h3 className="mb-2 text-sm font-semibold uppercase text-muted-foreground">
-                  Remplaçants ({oppSubstitutes.length})
-                </h3>
-                <div className="space-y-1">
-                  {oppSubstitutes.map((mp) => (
-                    <PlayerRow key={mp.id} mp={mp} isOpponentRow />
-                  ))}
-                </div>
-              </div>
-            )}
-          </section>
-        )}
-
-        {/* Événements */}
-        {match.matchEvents.length > 0 && (
-          <section>
-            <h2 className="mb-4 flex items-center gap-2 text-2xl font-bold uppercase tracking-wider text-foreground">
-              <Clock className="h-6 w-6 text-usap-or" />
-              Événements
-            </h2>
-            <div className="space-y-2">
-              {match.matchEvents.map((event) => {
-                const eventIcons: Record<string, string> = {
-                  ESSAI: "🏉",
-                  TRANSFORMATION: "✅",
-                  PENALITE: "🎯",
-                  DROP: "🦶",
-                  ESSAI_PENALITE: "🏉",
-                  CARTON_JAUNE: "🟨",
-                  CARTON_ROUGE: "🟥",
-                  REMPLACEMENT_ENTREE: "🔄",
-                  REMPLACEMENT_SORTIE: "🔄",
-                };
-
-                return (
-                  <div
-                    key={event.id}
-                    className={`flex items-center gap-3 rounded border border-border p-2 text-sm ${
-                      event.isUsap ? "bg-usap-sang/5" : "bg-muted/30"
-                    }`}
-                  >
-                    <span className="w-10 shrink-0 text-center font-bold text-muted-foreground">
-                      {event.minute}&apos;
-                    </span>
-                    <span>{eventIcons[event.type] ?? "⚡"}</span>
-                    <span className="text-foreground">
-                      {event.description || event.type.replace(/_/g, " ")}
-                    </span>
-                    {!event.isUsap && (
-                      <span className="text-xs text-muted-foreground">
-                        ({oppName})
-                      </span>
-                    )}
-                  </div>
-                );
-              })}
+      {/* Le score minute par minute, et son détail */}
+      {(scoringEvents.length > 0 || detailScore) && joue && (
+        <section className="mb-10 grid gap-8 lg:grid-cols-[2fr_1fr]">
+          {scoringEvents.length > 0 && (
+            <div>
+              <Titre>{t("match.evolutionTitre")}</Titre>
+              <ScoreEvolution
+                events={match.matchEvents}
+                finalScoreUsap={match.scoreUsap!}
+                finalScoreOpponent={match.scoreOpponent!}
+                opponentName={oppName}
+                isHome={match.isHome}
+                bareme={baremeDeMatch(match.season.startYear)}
+                libelleMiTemps={t("match.legendeMiTemps")}
+              />
             </div>
-          </section>
-        )}
-      </div>
-
-      {/* Résumé vidéo */}
-      {match.videoUrl && (
-        <section className="mt-10">
-          <h2 className="mb-4 text-2xl font-bold uppercase tracking-wider text-foreground">
-            📺 Résumé vidéo
-          </h2>
-          <VideoEmbed
-            url={match.videoUrl}
-            title={`Résumé ${match.isHome ? "USAP" : oppName} - ${match.isHome ? oppName : "USAP"}`}
-          />
+          )}
+          {detailScore && (
+            <div>
+              <Titre>{t("match.detailTitre")}</Titre>
+              <table className="w-full border-collapse text-sm tabular-nums">
+                <thead>
+                  <tr className="border-b border-border text-xs text-muted-foreground">
+                    <th scope="col" className="py-2 pr-3 text-left font-medium" />
+                    <th scope="col" className="py-2 pr-3 text-right font-semibold text-usap-sang">USAP</th>
+                    <th scope="col" className="py-2 text-right font-semibold text-foreground">{oppName}</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <ScoreRow label={t("match.essais")} usap={match.triesUsap} opp={match.triesOpponent} />
+                  <ScoreRow label={t("match.transformations")} usap={match.conversionsUsap} opp={match.conversionsOpponent} />
+                  <ScoreRow label={t("match.penalites")} usap={match.penaltiesUsap} opp={match.penaltiesOpponent} />
+                  <ScoreRow label={t("match.drops")} usap={match.dropGoalsUsap} opp={match.dropGoalsOpponent} />
+                  {(match.penaltyTriesUsap || match.penaltyTriesOpponent) ? (
+                    <ScoreRow label={t("match.essaisDePenalite")} usap={match.penaltyTriesUsap} opp={match.penaltyTriesOpponent} />
+                  ) : null}
+                </tbody>
+              </table>
+            </div>
+          )}
         </section>
       )}
 
-      {/* Compte-rendu */}
+      {/* Les deux XV */}
+      {(usap.length > 0 || adverse.length > 0) && (
+        <section className="mb-10 grid gap-10 lg:grid-cols-2">
+          {usap.length > 0 && (
+            <div>
+              <Titre>USAP</Titre>
+              <Composition lignes={usap} t={t} />
+            </div>
+          )}
+          {adverse.length > 0 && (
+            <div>
+              <Titre encre>
+                <Link href={`/adversaires/${match.opponent.slug}`} className="hover:text-usap-sang">
+                  {oppName}
+                </Link>
+              </Titre>
+              <Composition lignes={adverse} t={t} adverse />
+            </div>
+          )}
+        </section>
+      )}
+
+      {/* Les faits, minute par minute */}
+      {match.matchEvents.length > 0 && (
+        <section className="mb-10">
+          <Titre>{t("match.faitsTitre")}</Titre>
+          <ol className="max-w-3xl text-sm">
+            {match.matchEvents.map((event) => (
+              <li key={event.id} className="flex gap-4 border-b border-border py-1.5">
+                <span className="w-10 shrink-0 text-right text-muted-foreground tabular-nums">{event.minute}&apos;</span>
+                <span className={event.isUsap ? "text-foreground" : "text-muted-foreground"}>
+                  {event.description || event.type.replace(/_/g, " ").toLowerCase()}
+                </span>
+              </li>
+            ))}
+          </ol>
+        </section>
+      )}
+
+      {match.videoUrl && (
+        <section className="mb-10">
+          <Titre>{t("match.videoTitre")}</Titre>
+          <VideoEmbed url={match.videoUrl} title={t("match.videoLibelle", { affiche })} />
+        </section>
+      )}
+
       {match.report && (
-        <section className="mt-10">
-          <h2 className="mb-4 text-2xl font-bold uppercase tracking-wider text-foreground">
-            Compte-rendu
-          </h2>
-          <div className="rounded-lg border border-border bg-usap-carte p-6 text-sm leading-relaxed text-muted-foreground">
-            {match.report}
-          </div>
+        <section className="mb-10">
+          <Titre>{t("match.compteRenduTitre")}</Titre>
+          <p className="max-w-prose text-sm leading-relaxed text-foreground">{match.report}</p>
         </section>
       )}
 
@@ -539,130 +304,136 @@ export default async function MatchDetailPage({ params }: Props) {
   );
 }
 
-function ScoreRow({
-  label,
-  usap,
-  opp,
-}: {
-  label: string;
-  usap: number | null | undefined;
-  opp: number | null | undefined;
-}) {
+/** Une équipe du tableau d'affichage : l'USAP en rouge, l'adversaire en encre et lié à sa fiche. */
+function Equipe({ usap, nom, slug, align }: { usap: boolean; nom: string; slug: string; align: "left" | "right" }) {
+  const classes = `font-display text-3xl uppercase leading-none sm:text-5xl ${align === "right" ? "text-right" : "text-left"}`;
+  return usap ? (
+    <p className={`${classes} text-usap-sang`}>USAP</p>
+  ) : (
+    <p className={`${classes} text-foreground`}>
+      <Link href={`/adversaires/${slug}`} className="hover:text-usap-sang">
+        {nom}
+      </Link>
+    </p>
+  );
+}
+
+/** Le titre d'une section : la voix condensée de la liste, sous un filet. */
+function Titre({ children, encre = false }: { children: React.ReactNode; encre?: boolean }) {
+  return (
+    <h2
+      className={`mb-3 border-b-2 pb-1 font-display text-3xl uppercase leading-none ${
+        encre ? "border-foreground text-foreground" : "border-usap-sang text-usap-sang"
+      }`}
+    >
+      {children}
+    </h2>
+  );
+}
+
+function ScoreRow({ label, usap, opp }: { label: string; usap: number | null | undefined; opp: number | null | undefined }) {
   if (usap == null && opp == null) return null;
   return (
     <tr className="border-b border-border">
-      <td className="px-4 py-2 text-muted-foreground">{label}</td>
-      <td className="px-4 py-2 text-center font-medium text-foreground">
-        {usap ?? "—"}
-      </td>
-      <td className="px-4 py-2 text-center font-medium text-foreground">
-        {opp ?? "—"}
-      </td>
+      <td className="py-1.5 pr-3 text-muted-foreground">{label}</td>
+      <td className="py-1.5 pr-3 text-right text-foreground">{usap ?? "—"}</td>
+      <td className="py-1.5 text-right text-foreground">{opp ?? "—"}</td>
     </tr>
   );
 }
 
-function PlayerRow({
-  mp,
-  isOpponentRow = false,
-}: {
-  mp: {
-    id: string;
-    shirtNumber: number | null;
-    isStarter: boolean;
-    isCaptain: boolean;
-    positionPlayed: string | null;
-    minutesPlayed: number | null;
-    subIn: number | null;
-    subOut: number | null;
-    tries: number;
-    totalPoints: number;
-    yellowCard: boolean;
-    orangeCard: boolean;
-    redCard: boolean;
-    opponentPlayerName: string | null;
-    player: {
-      slug: string;
-      firstName: string;
-      lastName: string;
-    } | null;
-  };
-  isOpponentRow?: boolean;
-}) {
-  const playerName = mp.player
-    ? `${mp.player.firstName} ${mp.player.lastName}`
-    : mp.opponentPlayerName ?? "Inconnu";
+type Ligne = {
+  id: string;
+  shirtNumber: number | null;
+  isStarter: boolean;
+  isCaptain: boolean;
+  positionPlayed: string | null;
+  minutesPlayed: number | null;
+  subIn: number | null;
+  subOut: number | null;
+  tries: number;
+  totalPoints: number;
+  yellowCard: boolean;
+  orangeCard: boolean;
+  redCard: boolean;
+  opponentPlayerName: string | null;
+  player: { slug: string; firstName: string; lastName: string } | null;
+};
 
+/**
+ * Une composition : les titulaires, puis les remplaçants, en un tableau
+ * serré. Les minutes disent l'entrée et la sortie ; un joueur peut sortir
+ * puis revenir (sang, protocole commotion), les deux minutes sont alors
+ * données dans l'ordre du match. Les cartons sont des mots, pas des emojis.
+ */
+function Composition({ lignes, t, adverse = false }: { lignes: Ligne[]; t: Traduire; adverse?: boolean }) {
+  const titulaires = lignes.filter((l) => l.isStarter);
+  const remplacants = lignes.filter((l) => !l.isStarter);
+  const groupe = (libelle: string, l: Ligne[]) =>
+    l.length > 0 && (
+      <tbody className="tabular-nums">
+        <tr>
+          <th scope="rowgroup" colSpan={7} className="pt-3 pb-1 text-left text-xs font-medium text-muted-foreground">
+            {libelle} ({l.length})
+          </th>
+        </tr>
+        {l.map((mp) => {
+          const nom = mp.player ? `${mp.player.firstName} ${mp.player.lastName}` : (mp.opponentPlayerName ?? "?");
+          const mouvements = [
+            mp.subOut != null && mp.isStarter ? t("match.sorti", { minute: mp.subOut }) : null,
+            mp.subIn != null ? t("match.entre", { minute: mp.subIn }) : null,
+            mp.subOut != null && !mp.isStarter ? t("match.sorti", { minute: mp.subOut }) : null,
+          ].filter(Boolean);
+          const cartons = [
+            mp.yellowCard && t("match.cartonJaune"),
+            mp.orangeCard && t("match.cartonOrange"),
+            mp.redCard && t("match.cartonRouge"),
+          ].filter(Boolean);
+          return (
+            <tr key={mp.id} className="border-b border-border hover:bg-muted">
+              <td className={`w-8 py-1 pr-2 text-right font-semibold ${adverse ? "text-foreground" : "text-usap-sang"}`}>{mp.shirtNumber ?? ""}</td>
+              <td className="py-1 pr-3">
+                {mp.player ? (
+                  <Link href={`/joueurs/${mp.player.slug}`} className="text-foreground hover:text-usap-sang">
+                    {nom}
+                  </Link>
+                ) : (
+                  <span className="text-foreground">{nom}</span>
+                )}
+                {mp.isCaptain && <span className="ml-1.5 text-xs text-usap-or">{t("match.capitaine")}</span>}
+              </td>
+              <td className="hidden py-1 pr-3 text-xs text-muted-foreground md:table-cell">
+                {mp.positionPlayed ? (POSITIONS[mp.positionPlayed]?.label ?? mp.positionPlayed) : ""}
+              </td>
+              <td className="py-1 pr-3 text-right text-muted-foreground whitespace-nowrap">
+                {mp.minutesPlayed != null && mp.minutesPlayed}
+                {mouvements.length > 0 && <span className="ml-1 text-xs">({mouvements.join(", ")})</span>}
+              </td>
+              <td className="py-1 pr-3 text-right text-foreground">{mp.tries || ""}</td>
+              <td className="py-1 pr-3 text-right font-semibold text-foreground">{mp.totalPoints || ""}</td>
+              <td className="py-1 text-xs text-muted-foreground">{cartons.join(", ")}</td>
+            </tr>
+          );
+        })}
+      </tbody>
+    );
   return (
-    <div className="flex items-center gap-2 rounded border border-border bg-background px-3 py-2 text-sm">
-      {/* Numéro */}
-      <span className={`w-7 shrink-0 text-center font-bold ${isOpponentRow ? "text-muted-foreground" : "text-usap-sang"}`}>
-        {mp.shirtNumber ?? "—"}
-      </span>
-
-      {/* Nom */}
-      {mp.player ? (
-        <Link
-          href={`/joueurs/${mp.player.slug}`}
-          className="flex-1 font-medium text-foreground hover:text-usap-sang"
-        >
-          {playerName}
-          {mp.isCaptain && (
-            <span className="ml-1 text-xs text-usap-or">(C)</span>
-          )}
-        </Link>
-      ) : (
-        <span className="flex-1 font-medium text-foreground">
-          {playerName}
-          {mp.isCaptain && (
-            <span className="ml-1 text-xs text-usap-or">(C)</span>
-          )}
-        </span>
-      )}
-
-      {/* Poste */}
-      {mp.positionPlayed && (
-        <span className="hidden text-xs text-muted-foreground sm:inline">
-          {POSITIONS[mp.positionPlayed]?.label ?? mp.positionPlayed}
-        </span>
-      )}
-
-      {/* Minutes jouées */}
-      {mp.minutesPlayed != null && (
-        <span className="text-xs text-muted-foreground" title="Minutes jouées">
-          {mp.minutesPlayed}&apos;
-          {/* Un joueur peut sortir puis revenir (sang, protocole commotion) :
-              les deux minutes sont alors affichées dans l'ordre du match. */}
-          {(mp.subIn != null || mp.subOut != null) && (
-            <span className="ml-0.5">
-              (
-              {[
-                mp.subOut != null && mp.isStarter ? `→${mp.subOut}'` : null,
-                mp.subIn != null ? `${mp.subIn}'→` : null,
-                mp.subOut != null && !mp.isStarter ? `→${mp.subOut}'` : null,
-              ]
-                .filter(Boolean)
-                .join(", ")}
-              )
-            </span>
-          )}
-        </span>
-      )}
-
-      {/* Stats */}
-      {mp.tries > 0 && (
-        <span className="rounded bg-usap-sang/10 px-1.5 py-0.5 text-xs font-medium text-usap-sang">
-          {mp.tries}E
-        </span>
-      )}
-      {mp.totalPoints > 0 && (
-        <span className="rounded bg-usap-or/10 px-1.5 py-0.5 text-xs font-medium text-usap-or">
-          {mp.totalPoints}pts
-        </span>
-      )}
-      {mp.yellowCard && <span title="Carton jaune">🟨</span>}
-      {mp.orangeCard && <span title="Carton orange">🟧</span>}
-      {mp.redCard && <span title="Carton rouge">🟥</span>}
+    <div className="overflow-x-auto">
+      <table className="w-full border-collapse text-sm">
+        <thead>
+          <tr className="border-b border-border text-xs text-muted-foreground">
+            <th scope="col" className="py-2 pr-2 text-right font-medium">{t("match.colNumero")}</th>
+            <th scope="col" className="py-2 pr-3 text-left font-medium">{t("match.colJoueur")}</th>
+            <th scope="col" className="hidden py-2 pr-3 text-left font-medium md:table-cell">{t("match.colPoste")}</th>
+            <th scope="col" className="py-2 pr-3 text-right font-medium">{t("match.colMinutes")}</th>
+            <th scope="col" className="py-2 pr-3 text-right font-medium">{t("match.colEssais")}</th>
+            <th scope="col" className="py-2 pr-3 text-right font-medium">{t("match.colPoints")}</th>
+            <th scope="col" className="py-2 text-left font-medium">{t("match.colCartons")}</th>
+          </tr>
+        </thead>
+        {groupe(t("match.compositionTitulaires"), titulaires)}
+        {groupe(t("match.compositionRemplacants"), remplacants)}
+      </table>
     </div>
   );
 }

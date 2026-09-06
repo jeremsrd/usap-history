@@ -172,8 +172,8 @@ Le lendemain, dans cet ordre — chaque étape exige la précédente, et
 score :
 
 ```bash
-npx tsx scripts/set-score.ts --match=AAAA-MM-JJ --dry              # le score du calendrier LNR
-npx tsx scripts/set-score.ts --match=AAAA-MM-JJ
+npx tsx scripts/set-score.ts --match=AAAA-MM-JJ --dry              # le score du calendrier LNR, et les compteurs
+npx tsx scripts/set-score.ts --match=AAAA-MM-JJ                    #   de réalisations des deux camps
 npx tsx scripts/seed-lineup.ts AAAA-MM-JJ --dry                    # sauf si les 46 lignes sont déjà là
 npx tsx scripts/seed-opponent-sheet.ts AAAA-AAAA --match=AAAA-MM-JJ --usap --dry
 npx tsx scripts/seed-opponent-sheet.ts AAAA-AAAA --match=AAAA-MM-JJ --usap
@@ -186,6 +186,17 @@ npx tsx scripts/set-annexe.ts --match=AAAA-MM-JJ --affluence=N --mi-temps=U-A \
 npx tsx scripts/audit-opponent-lineups.ts AAAA-AAAA                # 0 anomalie attendue
 npx tsx scripts/detect-duplicate-players.ts                        # 0 / 0 / 0 attendu
 ```
+
+**`set-score.ts` écrit aussi les compteurs de réalisations** — `triesUsap`,
+`conversionsUsap` et les leurs, des deux camps —, lus sur les faits de la
+feuille comme le font les scripts de saison, et seulement quand ils
+retombent sur le score du camp ; sinon `null`, et il le dit. Il ne les
+écrivait pas jusqu'au 6 septembre 2026, et rien dans la chaîne ne le faisait
+à sa place : la première journée 2026-2027 a été écrite avec ses compteurs à
+`null`, ce qui laissait `fix-bonus-points.ts` sans essais pour décider du
+bonus offensif, et la fiche de match sans détail du score. Découvert en
+refaisant la fiche, pas par un contrôle — un `null` sur ces compteurs se lit
+« la source ne le dit pas » et ne fait échouer personne.
 
 **La presse complète, elle ne remplace pas.** *L'Indépendant* du lendemain
 donne l'affluence et la mi-temps, que la LNR n'a pas ; `set-annexe.ts` les
@@ -981,7 +992,7 @@ doublons.
 | `seed-chronologie.ts` | écrit la **ligne de temps** d'un match depuis la LNR : essais, transformations déduites du score courant, pénalités, drops et cartons, avec les noms tels que la base les écrit. Troisième temps ; `--dry` |
 | `seed-calendrier-2026-2027.ts` | crée une saison et son calendrier de championnat **avant** qu'elle ne commence : date, heure, journée, adversaire, lieu, sans score ni résultat. Une relance met à jour les dates au fur et à mesure que la LNR les cale |
 | `seed-calendrier-europe-2026-2027.ts` | le pendant pour la **coupe d'Europe** : les quatre matchs de poule de Challenge Cup depuis le flux de l'EPCR, sans score. Crée l'Ulster, et pose deux terrains à la main avec leur source — Ravenhill à Belfast, Rodney Parade à Newport —, l'USAP n'y ayant jamais joué. `--dry` |
-| `set-score.ts` | pose le **score et le résultat** d'une rencontre du calendrier en cours, depuis le calendrier de la LNR — le premier temps du lendemain de match, sans lequel la feuille et la chronologie refusent d'écrire. `--match=AAAA-MM-JJ`, `--dry`, `--force` ; les bonus viennent ensuite de `fix-bonus-points.ts` |
+| `set-score.ts` | pose le **score, le résultat et les compteurs de réalisations des deux camps** d'une rencontre du calendrier en cours, depuis le calendrier et la feuille de la LNR — le premier temps du lendemain de match, sans lequel la feuille et la chronologie refusent d'écrire. Un camp dont les faits ne retombent pas sur le score garde ses compteurs à `null`. `--match=AAAA-MM-JJ`, `--dry`, `--force` ; les bonus viennent ensuite de `fix-bonus-points.ts` |
 | `set-annexe.ts` | pose l'**affluence** et la **mi-temps**, que la LNR ne donne pas, depuis une source nommée — *L'Indépendant* du lendemain — avec leur attestation ; refuse une mi-temps par laquelle la chronologie ne passe pas avant la 50ᵉ, arrêts de jeu compris. `--match=`, `--affluence=`, `--mi-temps=U-A`, `--source=`, `--dry`, `--force` |
 | `set-arbitre.ts` | pose l'arbitre d'une rencontre quand il vient d'ailleurs que d'une feuille — la désignation de la semaine, donnée par Jérémy. `--match=AAAA-MM-JJ --nom="Prénom Nom"`, `--dry`, `--force` pour remplacer un arbitre déjà posé ; passe par `lib/arbitres.ts`, jamais par un slug refait à la main |
 | `seed-season-2021-2022.ts` | crée les rencontres d'une saison entière — date et heure, compétition, adversaire, lieu, score, réalisations, résultat, bonus, arbitre — puis les agrégats de saison. Premier jalon de la phase 4 |
@@ -1603,9 +1614,23 @@ devant les titres ont disparu ; la case du portrait reste vide sans
 portrait, ici comme dans les classements. La page est passée au
 dictionnaire (`fiche.*`), et la provenance de ce qu'elle affirme la clôt.
 
-**Ce qui reste dans l'ancien rendu** : les vingt autres pages. À reprendre
+**La fiche de match est refaite le même jour.** Sa seule audace est le
+**tableau d'affichage** : l'affiche en Archivo condensée, l'USAP en rouge,
+l'adversaire en encre et lié à sa fiche, le score énorme entre les deux, et
+pas de logos — ils sont ailleurs sur le site. Le titre décidé par le match
+est une ligne en or sous l'affiche. Tout le reste est dit en phrases puis en
+tableaux : « Défaite, avec le bonus défensif. Mi-temps 6-28. Stade
+Jean-Bouin, Paris, 12 065 spectateurs, arbitre Kévin Bralley. » ; le graphe
+du score aux jetons du thème, sans boîte, sans puces de légende ni chips ;
+le détail du score à côté ; les deux XV en deux tableaux serrés, numéro,
+nom, poste, minutes avec entrée et sortie, essais, points, cartons en mots ;
+les faits minute par minute en liste. Plus de pastille verte ou rouge, plus
+de badge bleu pour le bonus défensif, plus d'emoji ni d'icône. Page passée
+au dictionnaire (`match.*`), provenance en pied.
+
+**Ce qui reste dans l'ancien rendu** : les dix-neuf autres pages. À reprendre
 page par page, en relisant chaque fois qu'aucune couleur en dur n'est
-revenue. La suivante, par ordre de valeur : la fiche de match.
+revenue. La suivante, par ordre de valeur : la page de saison.
 
 
 - **Couleur principale** : Rouge sang (#C8102E) - couleur dominante USAP

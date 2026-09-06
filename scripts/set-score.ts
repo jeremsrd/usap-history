@@ -9,9 +9,18 @@
  * main. Ce script est le premier temps du lendemain de match : le score du
  * calendrier officiel, qui fait foi, puis le résultat.
  *
- * Il ne touche ni aux bonus — `fix-bonus-points.ts` les recalcule une fois
- * les essais connus, après la feuille —, ni à la mi-temps ni à l'affluence,
- * que la LNR ne donne pas (cf. `set-annexe.ts`).
+ * **Et les compteurs de réalisations de chaque camp** — essais,
+ * transformations, pénalités, drops, essais de pénalité —, lus sur les faits
+ * de la feuille par `realisationsDepuisFaits`, comme le font les scripts de
+ * saison. Sans eux, `fix-bonus-points.ts` ne peut pas décider du bonus
+ * offensif, et la fiche de match n'a pas de détail du score : la première
+ * journée 2026-2027 a été écrite sans, le 6 septembre 2026, avant qu'on s'en
+ * aperçoive. Un camp dont les faits ne retombent pas sur le score reste à
+ * `null`, et le script le dit.
+ *
+ * Il ne touche ni aux bonus — `fix-bonus-points.ts` les recalcule ensuite —,
+ * ni à la mi-temps ni à l'affluence, que la LNR ne donne pas (cf.
+ * `set-annexe.ts`).
  *
  * Usage :
  *   npx tsx scripts/set-score.ts --match=2026-09-05 --dry
@@ -20,7 +29,7 @@
  */
 
 import { PrismaClient, MatchResult } from "@prisma/client";
-import { lireCalendrier, utiliserDivision } from "./lib/lnr";
+import { lireCalendrier, lireFeuille, realisationsDepuisFaits, utiliserDivision, type Camp } from "./lib/lnr";
 
 const prisma = new PrismaClient();
 
@@ -69,9 +78,33 @@ async function main() {
   const result = scoreUsap > scoreOpponent ? MatchResult.VICTOIRE : scoreUsap < scoreOpponent ? MatchResult.DEFAITE : MatchResult.NUL;
 
   console.log(`${dry ? "[dry] " : ""}${jour} ${affiche} : ${scoreUsap}-${scoreOpponent}, ${result} — ${rencontre.url}`);
+
+  // Les compteurs, camp par camp, et seulement s'ils retombent sur le score.
+  const feuille = await lireFeuille(rencontre.url);
+  const campUsap: Camp = match.isHome ? "home" : "away";
+  const campAdverse: Camp = match.isHome ? "away" : "home";
+  const usap = realisationsDepuisFaits(feuille.faits, campUsap, scoreUsap);
+  const adverse = realisationsDepuisFaits(feuille.faits, campAdverse, scoreOpponent);
+  const compteurs: Record<string, number | null> = {};
+  for (const [camp, r, score, suffixe] of [
+    ["USAP", usap, scoreUsap, "Usap"],
+    [match.opponent.shortName ?? match.opponent.name, adverse, scoreOpponent, "Opponent"],
+  ] as const) {
+    if (r.total === score) {
+      compteurs[`tries${suffixe}`] = r.essais;
+      compteurs[`conversions${suffixe}`] = r.transformations;
+      compteurs[`penalties${suffixe}`] = r.penalites;
+      compteurs[`dropGoals${suffixe}`] = r.drops;
+      compteurs[`penaltyTries${suffixe}`] = r.essaisDePenalite;
+      console.log(`  ${camp} : ${r.essais} E, ${r.transformations} T, ${r.penalites} P, ${r.drops} D${r.essaisDePenalite ? `, ${r.essaisDePenalite} EP` : ""} — ${r.total} points, conforme`);
+    } else {
+      console.log(`  ⚠ ${camp} : ${r.total} points reconstitués pour ${score} au score — compteurs laissés à null`);
+    }
+  }
+
   if (dry) return;
-  await prisma.match.update({ where: { id: match.id }, data: { scoreUsap, scoreOpponent, result } });
-  console.log("✔ score posé ; enchaîner seed-opponent-sheet --usap, seed-chronologie, puis fix-bonus-points.");
+  await prisma.match.update({ where: { id: match.id }, data: { scoreUsap, scoreOpponent, result, ...compteurs } });
+  console.log("✔ score et compteurs posés ; enchaîner seed-opponent-sheet --usap, seed-chronologie, puis fix-bonus-points.");
 }
 
 main()
