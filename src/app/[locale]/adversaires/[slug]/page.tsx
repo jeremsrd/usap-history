@@ -1,4 +1,5 @@
 import Link from "@/components/Lien";
+import Provenance from "@/components/Provenance";
 import Image from "next/image";
 import { notFound, redirect } from "next/navigation";
 import { prisma } from "@/lib/prisma";
@@ -284,6 +285,9 @@ export default async function AdversaireDetailPage({ params }: Props) {
                 ))}
               </div>
             )}
+
+            {/* D'où viennent le stade et l'écusson, quand ce n'est pas de la LNR ou de l'EPCR */}
+            <Provenance entite="Opponent" id={opponent.id} />
 
             {/* Bilan head-to-head */}
             {totalMatches > 0 && (

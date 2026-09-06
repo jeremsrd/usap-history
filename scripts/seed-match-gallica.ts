@@ -10,9 +10,10 @@
  *
  * Ce qu'il ne fait pas, et refuse de faire : **écrire**. Trois raisons,
  * toutes dans CLAUDE.md, « Remonter avant 2006 » :
- *   - la base ne sait pas dire « probable, d'après *L'Auto* du 4 mai 1925,
- *     relu par Jérémy » — elle n'a que l'affirmé et l'inconnu, et une
- *     composition lue par un OCR n'est ni l'un ni l'autre ;
+ *   - la base sait dire « probable, d'après *L'Auto* du 4 mai 1925, relu
+ *     par Jérémy » depuis le 6 septembre 2026 — la table `attestations` —,
+ *     mais aucun nom n'a encore été relu, et une composition lue par un OCR
+ *     n'est ni affirmée ni inconnue tant qu'elle ne l'est pas ;
  *   - un essai vaut trois points en 1925, et le barème est en dur à quatre
  *     endroits ;
  *   - et les noms sortent abîmés — « Raruis » pour Ramis —, chacun devant
@@ -133,8 +134,8 @@ async function main() {
   }
   if (!dry) {
     console.error(
-      "Ce script ne sait pas écrire, et c'est voulu : la base n'a pas d'état de provenance pour une composition lue " +
-        "dans un journal, et le barème de 1925 n'est pas porté. Relancer avec --dry ; cf. l'en-tête.",
+      "Ce script ne sait pas écrire, et c'est voulu : aucun nom de l'OCR n'a été relu sur l'image, " +
+        "et le barème de 1925 n'est pas porté. Relancer avec --dry ; cf. l'en-tête.",
     );
     process.exit(1);
   }

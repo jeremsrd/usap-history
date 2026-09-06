@@ -813,3 +813,62 @@ model President {
 
   @@map("presidents")
 }
+
+// =============================================================================
+// ATTESTATIONS — LE TROISIÈME ÉTAT
+// =============================================================================
+
+/// D'où vient un fait, et ce qu'il vaut.
+///
+/// La base ne savait dire que deux choses d'un fait : affirmé, ou `null`.
+/// Elle ne savait pas dire « probable, d'après telle source, tranché par
+/// telle personne » — et c'est l'état de tout ce qui vient d'un journal
+/// numérisé, d'un classement de Wikipédia ou d'une décision de Jérémy.
+/// Ces arbitrages vivaient dans CLAUDE.md et les messages de commit ; ici
+/// ils deviennent affichables, et donc honnêtes vis-à-vis du lecteur.
+///
+/// Une ligne désigne une entité par son nom de modèle et son identifiant,
+/// et un champ — ou l'entité entière quand `champ` est vide : une
+/// composition, une rencontre. Pas de clé étrangère : la table vaut pour
+/// tout modèle, et c'est ce qu'on lui demande.
+///
+/// L'absence de ligne se lit « source officielle de la chaîne » — LNR,
+/// EPCR —, ce qui est le cas de l'immense majorité des faits.
+model Attestation {
+  id       String @id @default(cuid())
+  /// Le modèle Prisma : « Match », « MatchPlayer », « Player », « Venue », « Opponent », « Season », « Referee ».
+  entite   String
+  entiteId String @map("entite_id")
+  /// Le champ concerné — `venueId`, `position`, `attendance`… — ou vide pour l'entité entière.
+  champ    String @default("")
+
+  degre DegreAttestation
+  /// La source, en toutes lettres : « L'Auto du 4 mai 1925, page 5 », « Wikipédia, Championnat de France 1924-1925 », « Jérémy ».
+  source    String
+  sourceUrl String? @map("source_url")
+  /// Ce qu'il faut savoir pour juger : la démonstration, la réserve.
+  note      String?
+  /// Qui a tranché, quand une personne l'a fait.
+  decidePar String? @map("decide_par")
+  /// Qui a relu sur l'original — l'image du journal — et quand.
+  reluPar   String?   @map("relu_par")
+  reluLe    DateTime? @map("relu_le")
+
+  createdAt DateTime @default(now()) @map("created_at")
+
+  @@unique([entite, entiteId, champ])
+  @@index([entite, entiteId])
+  @@map("attestations")
+}
+
+/// Ce qu'un fait vaut, du plus sûr au moins sûr.
+enum DegreAttestation {
+  /// Publication de l'organisateur, même hors de la chaîne : l'ERC par la Wayback Machine, une désignation d'arbitre.
+  OFFICIEL
+  /// Source secondaire vérifiée par recoupement : un classement de Wikipédia qui retombe, ESPN validé par la poule, allrugby concordant.
+  CONCORDANT
+  /// Un récit — la presse numérisée, un OCR — relu ou non ; ou une donnée d'aujourd'hui posée sur une rencontre d'hier, comme un stade.
+  PROBABLE
+  /// Tranché par une personne, sans source lue par machine.
+  ARBITRE
+}

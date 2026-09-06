@@ -904,6 +904,8 @@ doublons.
 | `set-arbitre.ts` | pose l'arbitre d'une rencontre quand il vient d'ailleurs que d'une feuille — la désignation de la semaine, donnée par Jérémy. `--match=AAAA-MM-JJ --nom="Prénom Nom"`, `--dry`, `--force` pour remplacer un arbitre déjà posé ; passe par `lib/arbitres.ts`, jamais par un slug refait à la main |
 | `seed-season-2021-2022.ts` | crée les rencontres d'une saison entière — date et heure, compétition, adversaire, lieu, score, réalisations, résultat, bonus, arbitre — puis les agrégats de saison. Premier jalon de la phase 4 |
 | `lib/erc.ts` | **les pages de l'ERC dans la Wayback Machine**, source officielle des coupes d'Europe d'avant l'EPCR. Deux lecteurs : les comptes rendus de 2007-2008 (`eng/12_NNNN.php`, en latin-1) — compositions à 22 numérotées, capitaines, cartons, réalisations par joueur, essais de pénalité, affluence, stade — et le **Match Centre** de 2010-2013 (`eng/matchcentre/NNNNN.php`), qui ajoute la mi-temps, l'arbitre et une **chronologie minutée**. Quatre secondes entre deux pages et un cache sur disque : l'archive refuse tout après une centaine de requêtes rapprochées |
+| `lib/attestations.ts` | **le troisième état** : `attester()` pose ou remplace la provenance d'un fait — entité, champ, degré, source, qui a tranché, qui a relu —, `attestationsDe()` la lit. À appeler par tout script qui écrit une valeur venue d'ailleurs que de la feuille officielle |
+| `seed-attestations.ts` | verse dans `attestations` les arbitrages que CLAUDE.md portait : postes tranchés, faits donnés par Jérémy, terrains d'aujourd'hui et terrains neutres, écussons hors LNR et EPCR, scores corrigés, couperets renseignés par Wikipédia, campagnes européennes d'ESPN et de l'ERC, saisons dont le garde-fou n'est pas la LNR. 126 lignes, idempotent. `--dry` |
 | `lib/gallica.ts` | **la presse numérisée de Gallica**, pour l'avant-guerre : le fascicule d'un jour, les pages où un mot figure, l'OCR d'une page en ALTO — césures recousues —, et ce qu'un article dit d'un match : les deux XV par lignes (« Les équipes se présentèrent comme suit »), le capitaine, l'arbitre, le score et la mi-temps d'un titre. Trente secondes entre deux requêtes, cache sur disque : Gallica rend 429 dès la cinquième page rapprochée |
 | `seed-match-gallica.ts` | **une rencontre d'avant-guerre depuis *L'Auto*, en simulation seulement** — les finales de 1914, 1921, 1925 et 1938 sont dans `MATCHS` : retrouve le numéro du lendemain, imprime XV, capitaines, arbitre, score et mi-temps avec les écarts — une ligne qui ne compte pas ses hommes, un club à quatorze —, et confronte chaque nom à la base. Refuse d'écrire tant que la base ne sait pas porter la provenance d'une composition ni le barème de 1925. `--match=AAAA-MM-JJ --dry` ; les rencontres connues sont dans `MATCHS` |
 | `seed-cup-espn.ts` | **une campagne européenne d'avant 2020-2021, depuis ESPN** — rencontres, compositions des deux camps et réalisations par joueur, par `lib/espn.ts`. Rien ne s'écrit sans le classement de poule de Wikipédia, en dur par saison dans `CAMPAGNES`, et les réalisations d'un camp ne s'écrivent que si leur somme retombe sur son score. Minutes, minutes de carton, arbitre, affluence et chronologie restent à `null` : la source ne les donne pas. `<saison>`, `--dry`, `--match=` |
@@ -1294,6 +1296,16 @@ chronologique paraîtrait aussi arbitraire que l'ordre alphabétique.
 paraît de 2004-2005 à 2006-2007 parce que l'archive de la LNR ne remonte pas
 plus haut, non parce qu'il aurait pris ses fonctions cette année-là. Le mandat
 reste affiché quand la fiche le porte — « Depuis 2013 », « 2007–2012 ».
+
+**Fiche de match, fiche joueur, fiche adversaire — d'où vient ce qu'elles
+affirment.** Depuis le 6 septembre 2026, chacune se clôt d'une section
+« Sources et arbitrages », rendue par `Provenance`, qui liste les
+attestations de l'entité — champ, degré, source, qui a tranché, qui a relu —
+et **ne s'affiche pas quand il n'y en a aucune** : l'absence se lit
+« feuille officielle », et c'est le cas ordinaire. Le quart de finale de
+2011 y dit que son stade vient de Wikipédia contre ESPN, la fiche
+d'Amituanai que son poste est tranché par Jérémy, celle de Dax que son
+terrain est celui d'aujourd'hui.
 
 **Fiche de match — le titre qu'elle a décidé.** Une finale affiche une
 bannière « Champion » ou « Finaliste » avec un lien vers le palmarès. Le
@@ -2726,8 +2738,49 @@ lui qui a démasqué les 22 faux hommes du 30 août 2026.
 
 #### Le vrai manque n'est pas la permissivité, c'est un troisième état
 
-La base ne sait dire que deux choses : le fait est **affirmé**, ou il est
-`null`, c'est-à-dire inconnu. Elle ne sait pas dire « **probable, d'après
+**Il existe depuis le 6 septembre 2026 : la table `attestations`.** Ce qui
+suit décrit le manque tel qu'il se posait, et la forme retenue est la
+première des deux proposées plus bas — la table, parce qu'elle vaut pour
+les stades, les écussons et les postes autant que pour les rencontres.
+
+- **Le modèle** : `Attestation` désigne une entité par son nom de modèle et
+  son identifiant, sans clé étrangère, et un champ — `venueId`,
+  `refereeId`, `position`, `score`… — ou l'entité entière quand le champ
+  est vide. Elle porte un **degré** — `OFFICIEL` (publication de
+  l'organisateur, même hors chaîne : l'ERC archivé, une désignation
+  d'arbitre), `CONCORDANT` (source secondaire recoupée : un classement de
+  Wikipédia qui retombe, ESPN validé par la poule), `PROBABLE` (un récit, un
+  OCR, un terrain d'aujourd'hui posé sur hier), `ARBITRE` (tranché par une
+  personne) —, la source en toutes lettres, une adresse, une note, qui a
+  tranché, qui a relu l'original et quand. Une ligne par entité et par
+  champ. **L'absence de ligne se lit « feuille officielle de la chaîne »**,
+  ce qui reste le cas ordinaire.
+- **La migration** est posée à la main comme `opponent_venues`,
+  `prisma/migrations/20260906090000_attestations`, purement additive.
+- **`lib/attestations.ts`** écrit — `attester()`, qui remplace — et lit.
+  **Tout script qui écrit une valeur venue d'ailleurs que de la feuille
+  officielle doit désormais poser son attestation** ; c'est la règle qui
+  remplace « le consigner ici ».
+- **`seed-attestations.ts`** a versé dans la table ce que ce fichier
+  portait à sa place : 126 lignes le 6 septembre 2026 — les postes tranchés,
+  ce que Jérémy a donné à la main, les terrains d'aujourd'hui posés sur des
+  rencontres d'hier, les terrains neutres, les écussons hors LNR et EPCR,
+  les scores corrigés contre la LNR, ce que Wikipédia donne des couperets,
+  les 53 rencontres européennes d'ESPN et de l'ERC, les saisons dont le
+  garde-fou n'est pas la LNR. Chaque ligne y est accompagnée de sa
+  démonstration, et le script est idempotent.
+- **Les pages l'affichent** : le composant `Provenance` clôt la fiche de
+  match, la fiche joueur et la fiche adversaire d'une section « Sources et
+  arbitrages », et se tait quand il n'y a rien. C'est le point de tout ceci :
+  l'incertitude devient lisible.
+
+Ce que la table ne fait pas encore : les compositions de la presse
+d'avant-guerre n'y entrent pas, faute du barème par époque ; et les
+attestations existantes ne portent que les cas documentés ici, non ceux
+qu'un script antérieur aurait posés sans le dire.
+
+La base ne savait dire que deux choses : le fait est **affirmé**, ou il est
+`null`, c'est-à-dire inconnu. Elle ne savait pas dire « **probable, d'après
 telle source** ».
 
 **Le symptôme est déjà visible**, et il ne demande pas d'attendre 1927 : le
@@ -3016,8 +3069,9 @@ d'un siècle, c'est la règle qu'on connaîtra le moins bien.
   Sa demi-finale, elle, garde Aimé-Giral : en Pro D2 le mieux classé reçoit,
   et l'USAP a fini première.
 
-  **Quatre lieux de 2017-2018 et deux de 2016-2017 viennent de Jérémy**, et
-  d'aucune source lue par machine : le stade de la finale, où il était, les
+  **Quatre lieux de 2017-2018 et deux de 2016-2017 viennent de Jérémy** —
+  et la table `attestations` le dit désormais sur chaque fiche de club —,
+  et d'aucune source lue par machine : le stade de la finale, où il était, les
   terrains de Dax (Maurice-Boyau), Massy (Jules-Ladoumègue) et Narbonne (Parc
   des Sports et de l'Amitié), et ceux d'Albi (Stadium municipal) et de
   Bourgoin (Pierre-Rajon) — cinq clubs sortis de Pro D2, dont les pages LNR ne

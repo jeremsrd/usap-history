@@ -1,4 +1,5 @@
 import Link from "@/components/Lien";
+import Provenance from "@/components/Provenance";
 import Image from "next/image";
 import { notFound } from "next/navigation";
 import { prisma } from "@/lib/prisma";
@@ -529,6 +530,9 @@ export default async function MatchDetailPage({ params }: Props) {
           </div>
         </section>
       )}
+
+      {/* D'où vient ce que la page affirme, quand ce n'est pas de la feuille */}
+      <Provenance entite="Match" id={match.id} />
     </div>
   );
 }
