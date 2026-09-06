@@ -182,11 +182,16 @@ export async function lirePage(ark: string, page: number): Promise<string[]> {
 // CE QU'UN ARTICLE DIT D'UN MATCH
 // =============================================================================
 
-/** Les lignes d'un XV, telles que *L'Auto* les nomme en 1925. */
+/**
+ * Les lignes d'un XV, telles que *L'Auto* les nomme. En 1925 les avants sont
+ * donnés ligne par ligne ; en 1921 ils forment un seul bloc de huit, sans
+ * ligne — « avants » est alors une ligne à part entière.
+ */
 export type LigneDuXV =
   | "arrière"
   | "trois-quarts"
   | "demis"
+  | "avants"
   | "troisième ligne"
   | "deuxième ligne"
   | "première ligne";
@@ -196,6 +201,7 @@ export const EFFECTIF_DES_LIGNES: Record<LigneDuXV, number> = {
   "arrière": 1,
   "trois-quarts": 4,
   "demis": 2,
+  "avants": 8,
   "troisième ligne": 3,
   "deuxième ligne": 2,
   "première ligne": 3,
@@ -204,7 +210,12 @@ export const EFFECTIF_DES_LIGNES: Record<LigneDuXV, number> = {
 export interface XVDuJournal {
   /** Le club tel que le journal l'écrit — « U.S. Perpignanaise ». */
   club: string;
-  lignes: { ligne: LigneDuXV; noms: string[] }[];
+  /**
+   * « ? » : des noms que l'OCR a laissés sans en-tête lisible — en 1921,
+   * « Arrière » et « trois-quarts » sont rendus « AITIÙIO » et
+   * « txrM?-qua-rte », et les cinq premiers Catalans n'ont plus de ligne.
+   */
+  lignes: { ligne: LigneDuXV | "?"; noms: string[] }[];
   capitaine: string | null;
 }
 
@@ -215,7 +226,10 @@ export interface XVDuJournal {
  */
 export function nettoyerNom(brut: string): string {
   return brut
-    .replace(/\(cap\.?\)/i, "")
+    // « (cap.) », « (ouverture) », « (mêlée) » : des annotations, pas le
+    // nom — et l'OCR de 1914 ouvre la parenthèse par un « < ».
+    .replace(/[(<][^)>]*[)>]?/g, "")
+    .replace(/\b(cap|ouverture|m[êe]l[ée]e)\b\.?/gi, "")
     .replace(/[^\p{L}' -]/gu, "")
     .replace(/\s+/g, " ")
     .trim();
@@ -223,59 +237,101 @@ export function nettoyerNom(brut: string): string {
 
 const ENTETES: [RegExp, LigneDuXV][] = [
   [/arri[èeé]re\s*:/i, "arrière"],
-  [/trois[- ]?['’]?\s*quarts?\s*:/i, "trois-quarts"],
+  // « Trois-quai,ts » en 1914 : l'OCR casse le mot, on tolère quatre signes
+  // entre « qua » et « ts ».
+  [/trois[- ]?['’]?\s*qua[^:\n]{0,4}ts?\s*:/i, "trois-quarts"],
   [/demis?\s*:/i, "demis"],
-  [/3[e®°"]?\s*ligne\s*:/i, "troisième ligne"],
-  [/2[e®°"]?\s*ligne\s*:/i, "deuxième ligne"],
-  [/[1lj]re?\s*ligne\s*:/i, "première ligne"],
+  // Les lignes d'avants : « 1re », « 1" », « l1' », « 2' », « 3® »… l'OCR
+  // rend l'exposant comme il peut.
+  [/3\s*[e®°"'’]*\s*ligne\s*:?/i, "troisième ligne"],
+  [/2\s*[e®°"'’]*\s*ligne\s*:?/i, "deuxième ligne"],
+  [/[1lj]\s*[1lre®°"'’]*\s*ligne\s*:?/i, "première ligne"],
+  // « avants : » ouvre soit les trois lignes qui suivent, soit — en 1921 —
+  // un bloc de huit sans ligne. On l'inscrit toujours, et on le retire après
+  // coup s'il ne porte aucun nom en propre.
+  [/avants?\s*:/i, "avants"],
 ];
 
 /**
- * Les deux XV d'un article, à partir de « Les équipes se présentèrent comme
- * suit » et jusqu'au premier titre qui suit. Chaque club ouvre par son nom
- * suivi d'un tiret, puis viennent les lignes dans l'ordre du journal —
- * arrière, trois-quarts, demis, avants par ligne.
+ * Les deux XV d'un article. Trois tournures vues : « Les équipes se
+ * présentèrent comme suit » (1925), « … dans l'ordre suivant » (1921), et
+ * « LES EQUIPES » en titre, chaque club sur sa ligne en capitales (1914).
+ * Un club ouvre par son nom — suivi d'un tiret, ou seul sur sa ligne —,
+ * puis viennent les lignes dans l'ordre du journal.
+ *
+ * Chaque liste de noms s'arrête au point qui la clôt en fin de ligne :
+ * c'est ce qui sépare « Galiay. » de « Les Tarbais sont en blanc », la
+ * phrase qui suit le XV de 1914.
  *
  * Rend une liste vide quand le bloc manque : c'est le cas d'une page dont
  * l'OCR a rendu « [texte illisible] », et c'est au script de le dire.
  */
-export function lireEquipes(lignes: string[]): XVDuJournal[] {
+export function lireEquipes(lignes: string[], indices: string[] = []): XVDuJournal[] {
   const texte = lignes.join("\n");
-  const debut = texte.search(/[ÉE]quipes se pr[ée]sent[èe]rent comme suit/i);
+  const debut = texte.search(/[ÉE]quipes se pr[ée]sent[èe]rent|\nLES [ÉE]QUIPES\n/i);
   if (debut < 0) return [];
-  const suite = texte.slice(debut);
-  // Le bloc s'arrête au premier titre en capitales sur sa ligne.
-  const fin = suite.search(/\n[A-ZÉÈÀ][A-ZÉÈÀ' ]{8,}\n/);
-  const bloc = (fin > 0 ? suite.slice(0, fin) : suite).replace(/\n/g, " ");
+  const bloc = texte.slice(debut, debut + 4000);
 
-  // Chaque club : un nom, un tiret long ou court, puis « Arrière : ». Le nom
-  // commence après « comme suit : » ou après le point qui clôt le XV
-  // précédent — sans cette ancre, le dernier avant de Carcassonne,
-  // « Aguado. », passait dans le nom de l'U.S. Perpignanaise.
-  const clubs = [
-    ...bloc.matchAll(/(?:comme suit\s*:?\s*|\.\s+)([A-Z][\p{L}.' -]{3,60}?)\.?\s*[—–-]{1,2}\s*(?=Arri[èeé]re\s*:)/giu),
-  ];
+  // Chaque club : un nom, puis « Arrière : » — après un tiret, ou au début
+  // de la ligne suivante. Le nom commence en début de ligne ou après le
+  // point qui clôt le XV précédent — sans cette ancre, le dernier avant de
+  // Carcassonne, « Aguado. », passait dans le nom de l'U.S. Perpignanaise.
+  // Quand l'OCR a défiguré « Arrière », un nom de club qu'on attend — les
+  // `indices` — suffit, pourvu qu'un tiret le suive.
+  const motif = /(?:^|\n|\.\s+|:\s*)([A-Z][^\n]{2,60}?)\.?\s*(?:[—–-]{1,2}\s*|\n\s*)(?=Arri[èeé]re\s*:)/gu;
+  const clubs = [...bloc.matchAll(motif)];
+  if (indices.length) {
+    // Un tiret long seulement — un trait d'union prend « Tarbes av- » dans le
+    // récit —, et un deux-points dans les cent signes qui suivent : ce qui
+    // reste d'un en-tête de ligne.
+    for (const m of bloc.matchAll(/(?:^|\n|\.\s+)([A-Z][^\n]{2,40}?\p{L})\.?\s*[—–]\s*(?=[^\n]{0,100}:)/gu)) {
+      const nom = m[1];
+      if (indices.some((i) => nom.toLowerCase().includes(i.toLowerCase())) && !clubs.some((c) => c.index === m.index)) {
+        clubs.push(m);
+      }
+    }
+    clubs.sort((x, y) => x.index! - y.index!);
+  }
+  const retenus = clubs.filter((m) => !/^les\s+[ée]quipes/i.test(m[1]));
   const equipes: XVDuJournal[] = [];
-  for (let i = 0; i < clubs.length; i++) {
-    const de = clubs[i].index! + clubs[i][0].length;
-    const a = i + 1 < clubs.length ? clubs[i + 1].index! : bloc.length;
+  for (let i = 0; i < retenus.length; i++) {
+    const de = retenus[i].index! + retenus[i][0].length;
+    const a = i + 1 < retenus.length ? retenus[i + 1].index! : bloc.length;
     const corps = bloc.slice(de, a);
     const marques = ENTETES.flatMap(([re, ligne]) =>
-      [...corps.matchAll(new RegExp(re.source, "gi"))].map((m) => ({ ligne, de: m.index!, a: m.index! + m[0].length })),
+      [...corps.matchAll(new RegExp(re.source, "gi"))].map((m) => ({ ligne: ligne as LigneDuXV | "?", de: m.index!, a: m.index! + m[0].length })),
     ).sort((x, y) => x.de - y.de);
-    const xv: XVDuJournal = { club: clubs[i][1].replace(/\s+/g, " ").trim(), lignes: [], capitaine: null };
+    // Ce qui précède le premier en-tête est une ligne sans nom : « ? ».
+    if (marques.length === 0 || marques[0].de > 0) marques.unshift({ ligne: "?", de: 0, a: 0 });
+    const xv: XVDuJournal = { club: retenus[i][1].replace(/\s+/g, " ").trim(), lignes: [], capitaine: null };
     for (let j = 0; j < marques.length; j++) {
-      const brut = corps.slice(marques[j].a, j + 1 < marques.length ? marques[j + 1].de : corps.length)
-        // « avants : » n'est pas une ligne, c'est le titre des trois qui suivent.
-        .replace(/avants?\s*:/i, "");
+      let brut = corps.slice(marques[j].a, j + 1 < marques.length ? marques[j + 1].de : corps.length);
+      // La liste s'arrête au point de fin de ligne ; ce qui suit est du récit
+      // — sauf si l'en-tête suivant vient presque aussitôt, comme
+      // « Couffe. » avant « Trois-quarts » en 1914, ou « Laterraif. »
+      // avant « (mêlée). » puis « Avants » : le point clôt la ligne, pas le
+      // XV. Vingt signes de reste au plus, sans quoi c'est le récit.
+      const point = brut.search(/\.\s*(\n|$)/);
+      let clos = false;
+      if (point >= 0) {
+        const reste = brut.slice(point + 1).replace(/[\s()<>.,;:'"-]/g, "");
+        clos = !(j + 1 < marques.length && reste.length <= 20);
+        brut = brut.slice(0, point);
+      }
       const noms = brut
+        .replace(/\n/g, " ")
         .split(/[,;/]/)
         .map((n) => {
-          if (/\(cap\.?\)/i.test(n)) xv.capitaine = nettoyerNom(n);
+          if (/\(cap\b/i.test(n)) xv.capitaine = nettoyerNom(n);
           return nettoyerNom(n);
         })
         .filter((n) => n.length >= 2);
+      if ((marques[j].ligne === "avants" || marques[j].ligne === "?") && noms.length === 0) {
+        if (clos) break;
+        continue;
+      }
       xv.lignes.push({ ligne: marques[j].ligne, noms });
+      if (clos) break;
     }
     if (xv.lignes.length) equipes.push(xv);
   }
@@ -291,12 +347,64 @@ export function lireArbitre(lignes: string[]): string | null {
   return m ? m[1] : null;
 }
 
-/** « 11 à 6 (5-6) » : score et mi-temps, quand un titre les porte. */
-export function lireScoreEtMiTemps(lignes: string[]): { score: [number, number]; miTemps: [number, number] | null }[] {
-  const trouves: { score: [number, number]; miTemps: [number, number] | null }[] = [];
+export interface ScoreDuJournal {
+  score: [number, number];
+  miTemps: [number, number] | null;
+  /** « 2 essais, 1 but » à « 1 essai, 1 but sur coup tombé », quand l'article décompose. */
+  detail: [string, string] | null;
+}
+
+/**
+ * Le score, et la mi-temps quand elle est dite. Trois tournures vues :
+ * « 11 à 6 (5-6) » dans un titre de 1938 ; « par 8 points (2 essais, 1 but)
+ * à 7 points (1 essai, 1 but sur coup tombé) » en 1914 ; et, la même année,
+ * « Première mi-temps. — PERPIGNAN : 0 ; TARBES : 0 » puis « Deuxième
+ * mi-temps. — PERPIGNAN : 8 ; TARBES : 7 » — le second étant le total.
+ */
+export function lireScoreEtMiTemps(lignes: string[]): ScoreDuJournal[] {
+  const trouves: ScoreDuJournal[] = [];
+  const texte = lignes.join("\n");
+  for (const m of texte.matchAll(/(\d{1,2})\s*points?\s*\(([^)]{3,60})\)\s*à\s*(\d{1,2})\s*points?\s*\(([^)]{3,60})\)/g)) {
+    trouves.push({
+      score: [Number(m[1]), Number(m[3])],
+      miTemps: null,
+      detail: [m[2].replace(/\s+/g, " ").trim(), m[4].replace(/\s+/g, " ").trim()],
+    });
+  }
+  const premiere = texte.match(/Premi[èe]re mi-temps[^\d\n]{0,40}(\d{1,2})[^\d\n]{1,20}(\d{1,2})/);
+  const seconde = texte.match(/Deuxi[èe]me mi-temps[^\d\n]{0,40}(\d{1,2})[^\d\n]{1,20}(\d{1,2})/);
+  if (seconde) {
+    trouves.push({
+      score: [Number(seconde[1]), Number(seconde[2])],
+      miTemps: premiere ? [Number(premiere[1]), Number(premiere[2])] : null,
+      detail: null,
+    });
+  }
   for (const l of lignes) {
     const m = l.match(/\b(\d{1,2})\s*à\s*(\d{1,2})\b(?:\s*\((\d{1,2})\s*[-–]\s*(\d{1,2})\))?/);
-    if (m) trouves.push({ score: [Number(m[1]), Number(m[2])], miTemps: m[3] ? [Number(m[3]), Number(m[4])] : null });
+    if (m) trouves.push({ score: [Number(m[1]), Number(m[2])], miTemps: m[3] ? [Number(m[3]), Number(m[4])] : null, detail: null });
   }
   return trouves;
+}
+
+export interface FaitHoraire {
+  /** L'heure de l'horloge, telle que le journal l'écrit — « 4 h. 40 ». */
+  heure: number;
+  minute: number;
+  texte: string;
+}
+
+/**
+ * La chronologie à l'heure de l'horloge, comme *L'Auto* la tient en 1914 :
+ * « 4 h. 10 : essai de Lastegaray pour Tarbes ». Il faut l'heure du coup
+ * d'envoi pour en faire des minutes de jeu, et l'article la donne aussi.
+ * Les faits sont rendus dans l'ordre du texte, sans rien en déduire.
+ */
+export function lireChronologieHoraire(lignes: string[]): FaitHoraire[] {
+  const faits: FaitHoraire[] = [];
+  for (const l of lignes) {
+    const m = l.match(/^\s*(\d)\s*[hb]\.?\s*(\d{1,2})?\s*:\s*(.{3,120})$/);
+    if (m) faits.push({ heure: Number(m[1]), minute: m[2] ? Number(m[2]) : 0, texte: m[3].trim() });
+  }
+  return faits;
 }
