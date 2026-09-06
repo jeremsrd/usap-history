@@ -1758,11 +1758,26 @@ France » et « … Top 14 ». Les constantes de `PALMARES` restent le repli si
 la table était vide. Plus de quatre cases à trophée, plus de badges
 d'années, plus de frise à pastilles. Dictionnaire `palmares.*`.
 
-**Ce qui reste dans l'ancien rendu** : les dix autres pages — arbitres,
-entraîneurs et présidents, listes et fiches, statistiques, centurions,
-réalisateurs et records, ces trois derniers déjà passés au dictionnaire. À
-reprendre page par page, en relisant chaque fois qu'aucune couleur en dur
-n'est revenue. La suivante, par ordre de valeur : les statistiques.
+**La page des statistiques est refaite le même jour.** C'est un
+carrefour, et sa seule audace est **les trois scores de record en tableau
+d'affichage** — le plus large succès, la plus lourde défaite, le plus gros
+score, chacun en grand caractère condensé comme sur la fiche de match,
+les quatre suivants en lignes dessous : un record est un score et se lit
+comme tel. Le bilan tient en une phrase puis en un tableau à trois lignes,
+toutes rencontres, domicile, extérieur, avec les points et le taux de
+victoires ; les classements courts mènent aux classements complets ; les
+réalisateurs adverses ont leur section ; les adversaires les plus
+rencontrés leur tableau, lié aux fiches. **Un défaut pris au passage** : ce
+tableau comptait les rencontres à venir, son `groupBy` n'ayant pas de
+filtre. Plus de quatre cases à icône, plus de V verts ni de D rouges,
+plus de cartes de joueur ni de record. Dictionnaire `statistiques.*`.
+
+**Ce qui reste dans l'ancien rendu** : les neuf autres pages — arbitres,
+entraîneurs et présidents, listes et fiches, centurions, réalisateurs et
+records, ces trois derniers déjà passés au dictionnaire. À reprendre page
+par page, en relisant chaque fois qu'aucune couleur en dur n'est revenue.
+Les suivantes, par ordre de valeur : les arbitres, fiche et liste, puis
+les entraîneurs et les présidents, puis les trois classements.
 
 
 - **Couleur principale** : Rouge sang (#C8102E) - couleur dominante USAP

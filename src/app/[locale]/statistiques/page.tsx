@@ -1,854 +1,428 @@
 import Link from "@/components/Lien";
-import Image from "next/image";
+import { JoueurCellule } from "@/components/JoueurCellule";
 import { prisma } from "@/lib/prisma";
 import { MATCH_JOUE, estJoue } from "@/lib/matchs";
-import { POSITIONS } from "@/lib/constants";
 import { formatDateFR } from "@/lib/utils";
-import {
-  Trophy,
-  Users,
-  Target,
-  TrendingUp,
-  MapPin,
-  BarChart3,
-  Award,
-  Swords,
-} from "lucide-react";
+import { dictionnaire } from "@/i18n/dictionnaire";
+import type { Langue } from "@/i18n/langues";
 import type { Metadata } from "next";
+
+/**
+ * La page des statistiques, refaite le 6 septembre 2026 dans l'identité
+ * posée sur les autres pages. C'est un carrefour : le bilan, les
+ * classements courts qui mènent aux classements complets, les records, les
+ * adversaires les plus rencontrés. Sa seule audace est **les trois scores
+ * de record écrits en tableau d'affichage** — le plus large succès, la
+ * plus lourde défaite, le plus gros score, chacun en grand caractère
+ * condensé comme sur la fiche de match, avec sous chacun les quatre
+ * suivants en lignes. Un record est un score, et il se lit comme tel.
+ *
+ * Ce que la page ne fait plus : quatre cases de chiffres à icône, des V
+ * verts et des D rouges, des lignes de joueur en cartes, des cartes de
+ * record, des flèches au bout des liens. **Et elle ne compte plus les
+ * rencontres à venir** dans le tableau des adversaires, ce que faisait
+ * l'ancien `groupBy` sans filtre.
+ */
 
 export const dynamic = "force-dynamic";
 
-export const metadata: Metadata = {
-  title: "Statistiques - USAP Historia",
-  description:
-    "Statistiques historiques de l'USA Perpignan : meilleurs marqueurs, plus capés, records et bilans.",
-};
+type Props = { params: Promise<{ locale: Langue }> };
 
-export default async function StatistiquesPage() {
-  // ── Compteurs globaux ──────────────────────────────────────────────
-  // Nombre de joueurs USAP = joueurs ayant au moins 1 apparition non-adversaire
-  const [totalMatches, totalSeasons] = await Promise.all([
-    // Les rencontres à venir ne comptent pas : elles n'ont pas de résultat.
-    prisma.match.count({ where: MATCH_JOUE }),
-    prisma.season.count(),
-  ]);
+export async function generateMetadata({ params }: Props): Promise<Metadata> {
+  const { locale } = await params;
+  const t = await dictionnaire(locale);
+  return { title: t("statistiques.metaTitre"), description: t("statistiques.metaDescription") };
+}
 
-  const usapPlayerIds = await prisma.matchPlayer.findMany({
-    where: { isOpponent: false, playerId: { not: null } },
-    select: { playerId: true },
-    distinct: ["playerId"],
-  });
-  const totalPlayers = usapPlayerIds.length;
+const nombre = (n: number) => n.toLocaleString("fr-FR");
+const pourcent = (v: number, j: number) => (j > 0 ? `${Math.round((v / j) * 100)} %` : "");
 
-  // ── Bilan global V/N/D ─────────────────────────────────────────────
-  const [wins, draws, losses] = await Promise.all([
-    prisma.match.count({ where: { result: "VICTOIRE" } }),
-    prisma.match.count({ where: { result: "NUL" } }),
-    prisma.match.count({ where: { result: "DEFAITE" } }),
-  ]);
+const selectionJoueur = { id: true, slug: true, firstName: true, lastName: true, photoUrl: true, isActive: true } as const;
+const selectionMatch = {
+  slug: true,
+  date: true,
+  scoreUsap: true,
+  scoreOpponent: true,
+  isHome: true,
+  opponent: { select: { name: true, shortName: true } },
+  competition: { select: { shortName: true, name: true } },
+} as const;
 
-  // ── Bilan domicile / extérieur ─────────────────────────────────────
-  const [homeWins, homeDraws, homeLosses, awayWins, awayDraws, awayLosses] =
-    await Promise.all([
-      prisma.match.count({ where: { isHome: true, result: "VICTOIRE" } }),
-      prisma.match.count({ where: { isHome: true, result: "NUL" } }),
-      prisma.match.count({ where: { isHome: true, result: "DEFAITE" } }),
-      prisma.match.count({ where: { isHome: false, result: "VICTOIRE" } }),
-      prisma.match.count({ where: { isHome: false, result: "NUL" } }),
-      prisma.match.count({ where: { isHome: false, result: "DEFAITE" } }),
-    ]);
+export default async function StatistiquesPage({ params }: Props) {
+  const { locale } = await params;
+  const t = await dictionnaire(locale);
 
-  const homeTotal = homeWins + homeDraws + homeLosses;
-  const awayTotal = awayWins + awayDraws + awayLosses;
-
-  // ── Points totaux marqués/encaissés ────────────────────────────────
-  const pointsAgg = await prisma.match.aggregate({
-    where: MATCH_JOUE,
-    _sum: { scoreUsap: true, scoreOpponent: true },
-  });
-  const totalPointsFor = pointsAgg._sum.scoreUsap ?? 0;
-  const totalPointsAgainst = pointsAgg._sum.scoreOpponent ?? 0;
-
-  // ── Meilleurs marqueurs USAP (top 10 par points) ───────────────────
-  const topScorersAgg = await prisma.matchPlayer.groupBy({
-    by: ["playerId"],
-    where: { isOpponent: false, playerId: { not: null } },
-    _sum: { totalPoints: true },
-    orderBy: { _sum: { totalPoints: "desc" } },
-    take: 10,
-    having: { totalPoints: { _sum: { gt: 0 } } },
-  });
-
-  const topScorerIds = topScorersAgg.map((s) => s.playerId as string);
-  const topScorerPlayers = await prisma.player.findMany({
-    where: { id: { in: topScorerIds } },
-    select: {
-      id: true,
-      slug: true,
-      firstName: true,
-      lastName: true,
-      position: true,
-      photoUrl: true,
-    },
-  });
-
-  const topScorers = topScorersAgg.map((agg) => {
-    const player = topScorerPlayers.find((p) => p.id === agg.playerId)!;
-    return { ...player, totalPoints: agg._sum.totalPoints ?? 0 };
-  });
-
-  // ── Plus capés USAP (top 10 par nombre de matchs) ──────────────────
-  const topAppsAgg = await prisma.matchPlayer.groupBy({
-    by: ["playerId"],
-    where: { isOpponent: false, playerId: { not: null } },
-    _count: { id: true },
-    orderBy: { _count: { id: "desc" } },
-    take: 10,
-  });
-
-  const topAppIds = topAppsAgg.map((a) => a.playerId as string);
-  const topAppPlayers = await prisma.player.findMany({
-    where: { id: { in: topAppIds } },
-    select: {
-      id: true,
-      slug: true,
-      firstName: true,
-      lastName: true,
-      position: true,
-      photoUrl: true,
-    },
-  });
-
-  const topApps = topAppsAgg.map((agg) => {
-    const player = topAppPlayers.find((p) => p.id === agg.playerId)!;
-    return { ...player, appearances: agg._count.id };
-  });
-
-  // ── Meilleurs essayeurs USAP (top 10) ──────────────────────────────
-  const topTriesAgg = await prisma.matchPlayer.groupBy({
-    by: ["playerId"],
-    where: { isOpponent: false, playerId: { not: null } },
-    _sum: { tries: true },
-    orderBy: { _sum: { tries: "desc" } },
-    take: 10,
-    having: { tries: { _sum: { gt: 0 } } },
-  });
-
-  const topTryIds = topTriesAgg.map((t) => t.playerId as string);
-  const topTryPlayers = await prisma.player.findMany({
-    where: { id: { in: topTryIds } },
-    select: {
-      id: true,
-      slug: true,
-      firstName: true,
-      lastName: true,
-      position: true,
-      photoUrl: true,
-    },
-  });
-
-  const topTries = topTriesAgg.map((agg) => {
-    const player = topTryPlayers.find((p) => p.id === agg.playerId)!;
-    return { ...player, tries: agg._sum.tries ?? 0 };
-  });
-
-  // ── Statistiques adverses (joueurs adverses contre l'USAP) ─────────
-  const oppScorersAgg = await prisma.matchPlayer.groupBy({
-    by: ["playerId"],
-    where: { isOpponent: true, playerId: { not: null } },
-    _sum: { totalPoints: true },
-    orderBy: { _sum: { totalPoints: "desc" } },
-    take: 10,
-    having: { totalPoints: { _sum: { gt: 0 } } },
-  });
-
-  const oppScorerIds = oppScorersAgg.map((s) => s.playerId as string);
-  const oppScorerPlayers = await prisma.player.findMany({
-    where: { id: { in: oppScorerIds } },
-    select: {
-      id: true,
-      slug: true,
-      firstName: true,
-      lastName: true,
-      position: true,
-      photoUrl: true,
-    },
-  });
-  const oppScorers = oppScorersAgg.map((agg) => {
-    const player = oppScorerPlayers.find((p) => p.id === agg.playerId)!;
-    return { ...player, totalPoints: agg._sum.totalPoints ?? 0 };
-  });
-
-  const oppTriesAgg = await prisma.matchPlayer.groupBy({
-    by: ["playerId"],
-    where: { isOpponent: true, playerId: { not: null } },
-    _sum: { tries: true },
-    orderBy: { _sum: { tries: "desc" } },
-    take: 10,
-    having: { tries: { _sum: { gt: 0 } } },
-  });
-
-  const oppTryIds = oppTriesAgg.map((t) => t.playerId as string);
-  const oppTryPlayers = await prisma.player.findMany({
-    where: { id: { in: oppTryIds } },
-    select: {
-      id: true,
-      slug: true,
-      firstName: true,
-      lastName: true,
-      position: true,
-      photoUrl: true,
-    },
-  });
-  const oppTries = oppTriesAgg.map((agg) => {
-    const player = oppTryPlayers.find((p) => p.id === agg.playerId)!;
-    return { ...player, tries: agg._sum.tries ?? 0 };
-  });
-
-  // ── Records de matchs ──────────────────────────────────────────────
-  const matchSelect = {
-    slug: true,
-    date: true,
-    scoreUsap: true,
-    scoreOpponent: true,
-    isHome: true,
-    opponent: { select: { name: true, shortName: true } },
-    competition: { select: { shortName: true, name: true } },
-    venue: { select: { name: true } },
-  } as const;
-
-  // Plus grosse victoire (écart max)
-  const biggestWins = (
-    await prisma.match.findMany({
-      where: { result: "VICTOIRE" },
-      orderBy: { scoreUsap: "desc" },
-      take: 20,
-      select: matchSelect,
-    })
-  ).filter(estJoue);
-  // Trier par écart côté JS (Prisma ne supporte pas les colonnes calculées dans orderBy)
-  const biggestWin = biggestWins
-    .sort(
-      (a, b) =>
-        b.scoreUsap - b.scoreOpponent - (a.scoreUsap - a.scoreOpponent),
-    )
-    .slice(0, 5);
-
-  // Plus grosse défaite (écart max)
-  const biggestLosses = (
-    await prisma.match.findMany({
-      where: { result: "DEFAITE" },
-      orderBy: { scoreOpponent: "desc" },
-      take: 20,
-      select: matchSelect,
-    })
-  ).filter(estJoue);
-  const biggestLoss = biggestLosses
-    .sort(
-      (a, b) =>
-        b.scoreOpponent - b.scoreUsap - (a.scoreOpponent - a.scoreUsap),
-    )
-    .slice(0, 5);
-
-  // Plus gros score total
-  const highestScoring = (
-    await prisma.match.findMany({
-      where: MATCH_JOUE,
-      orderBy: [{ scoreUsap: "desc" }],
-      take: 50,
-      select: matchSelect,
-    })
-  ).filter(estJoue);
-  const topHighScoring = highestScoring
-    .sort(
-      (a, b) =>
-        b.scoreUsap + b.scoreOpponent - (a.scoreUsap + a.scoreOpponent),
-    )
-    .slice(0, 5);
-
-  // ── Top adversaires (les plus affrontés) ───────────────────────────
-  const opponentStats = await prisma.match.groupBy({
-    by: ["opponentId"],
-    _count: { id: true },
-    orderBy: { _count: { id: "desc" } },
-    take: 10,
-  });
-
-  const oppIds = opponentStats.map((o) => o.opponentId);
-  const opponents = await prisma.opponent.findMany({
-    where: { id: { in: oppIds } },
-    select: { id: true, name: true, shortName: true, logoUrl: true },
-  });
-
-  // Récupérer le bilan V/N/D par adversaire
-  const oppResultCounts = await prisma.match.groupBy({
-    by: ["opponentId", "result"],
-    where: { opponentId: { in: oppIds } },
-    _count: { id: true },
-  });
-
-  const topOpponents = opponentStats.map((stat) => {
-    const opp = opponents.find((o) => o.id === stat.opponentId)!;
-    const w =
-      oppResultCounts.find(
-        (r) => r.opponentId === stat.opponentId && r.result === "VICTOIRE",
-      )?._count.id ?? 0;
-    const d =
-      oppResultCounts.find(
-        (r) => r.opponentId === stat.opponentId && r.result === "NUL",
-      )?._count.id ?? 0;
-    const l =
-      oppResultCounts.find(
-        (r) => r.opponentId === stat.opponentId && r.result === "DEFAITE",
-      )?._count.id ?? 0;
+  // ---- Le bilan, par camp -------------------------------------------------
+  // Requêtes séquentielles : le pool de Supabase est étroit.
+  const parCamp = await prisma.match.groupBy({ by: ["isHome", "result"], where: MATCH_JOUE, _count: { id: true } });
+  const pointsParCamp = await prisma.match.groupBy({ by: ["isHome"], where: MATCH_JOUE, _sum: { scoreUsap: true, scoreOpponent: true } });
+  const bilan = (camp?: boolean) => {
+    const lignes = parCamp.filter((x) => camp === undefined || x.isHome === camp);
+    const compte = (r: string) => lignes.filter((x) => x.result === r).reduce((s, x) => s + x._count.id, 0);
+    const points = pointsParCamp.filter((x) => camp === undefined || x.isHome === camp);
     return {
-      ...opp,
-      total: stat._count.id,
-      wins: w,
-      draws: d,
-      losses: l,
+      joues: lignes.reduce((s, x) => s + x._count.id, 0),
+      victoires: compte("VICTOIRE"),
+      nuls: compte("NUL"),
+      defaites: compte("DEFAITE"),
+      pour: points.reduce((s, x) => s + (x._sum.scoreUsap ?? 0), 0),
+      contre: points.reduce((s, x) => s + (x._sum.scoreOpponent ?? 0), 0),
+    };
+  };
+  const total = bilan();
+  const premiere = await prisma.match.findFirst({ where: MATCH_JOUE, orderBy: { date: "asc" }, select: { season: { select: { label: true } } } });
+
+  // ---- Les classements courts ---------------------------------------------
+  // Prisma type ses `groupBy` clé par clé : trois branches écrites en clair
+  // valent mieux qu'une clé calculée qu'il refuse.
+  const classement = async (camp: boolean, cle: "totalPoints" | "tries" | "matchs") => {
+    const where = { isOpponent: camp, playerId: { not: null } };
+    const lignes: { playerId: string | null; valeur: number }[] =
+      cle === "matchs"
+        ? (await prisma.matchPlayer.groupBy({ by: ["playerId"], where, _count: { id: true }, orderBy: { _count: { id: "desc" } }, take: 10 })).map((a) => ({
+            playerId: a.playerId,
+            valeur: a._count.id,
+          }))
+        : cle === "totalPoints"
+          ? (
+              await prisma.matchPlayer.groupBy({
+                by: ["playerId"],
+                where,
+                _sum: { totalPoints: true },
+                orderBy: { _sum: { totalPoints: "desc" } },
+                take: 10,
+                having: { totalPoints: { _sum: { gt: 0 } } },
+              })
+            ).map((a) => ({ playerId: a.playerId, valeur: a._sum.totalPoints ?? 0 }))
+          : (
+              await prisma.matchPlayer.groupBy({
+                by: ["playerId"],
+                where,
+                _sum: { tries: true },
+                orderBy: { _sum: { tries: "desc" } },
+                take: 10,
+                having: { tries: { _sum: { gt: 0 } } },
+              })
+            ).map((a) => ({ playerId: a.playerId, valeur: a._sum.tries ?? 0 }));
+    const joueurs = await prisma.player.findMany({ where: { id: { in: lignes.map((l) => l.playerId!) } }, select: selectionJoueur });
+    return lignes.map((l) => ({ joueur: joueurs.find((j) => j.id === l.playerId)!, valeur: l.valeur }));
+  };
+  const realisateurs = await classement(false, "totalPoints");
+  const capes = await classement(false, "matchs");
+  const essais = await classement(false, "tries");
+  const contreRealisateurs = await classement(true, "totalPoints");
+  const contreEssais = await classement(true, "tries");
+
+  // ---- Les records --------------------------------------------------------
+  // Prisma ne trie pas sur un écart : on lit large, on trie en mémoire.
+  const ecart = (m: { scoreUsap: number; scoreOpponent: number }) => m.scoreUsap - m.scoreOpponent;
+  const plusLarges = (await prisma.match.findMany({ where: { result: "VICTOIRE" }, orderBy: { scoreUsap: "desc" }, take: 30, select: selectionMatch }))
+    .filter(estJoue)
+    .sort((a, b) => ecart(b) - ecart(a))
+    .slice(0, 5);
+  const plusLourdes = (await prisma.match.findMany({ where: { result: "DEFAITE" }, orderBy: { scoreOpponent: "desc" }, take: 30, select: selectionMatch }))
+    .filter(estJoue)
+    .sort((a, b) => ecart(a) - ecart(b))
+    .slice(0, 5);
+  const plusGros = (await prisma.match.findMany({ where: MATCH_JOUE, orderBy: { scoreUsap: "desc" }, take: 60, select: selectionMatch }))
+    .filter(estJoue)
+    .sort((a, b) => b.scoreUsap + b.scoreOpponent - (a.scoreUsap + a.scoreOpponent))
+    .slice(0, 5);
+
+  // ---- Les adversaires les plus rencontrés --------------------------------
+  const parAdversaire = await prisma.match.groupBy({
+    by: ["opponentId"],
+    where: MATCH_JOUE,
+    _count: { id: true },
+    _sum: { scoreUsap: true, scoreOpponent: true },
+    orderBy: { _count: { id: "desc" } },
+    take: 10,
+  });
+  const ids = parAdversaire.map((o) => o.opponentId);
+  const opponents = await prisma.opponent.findMany({ where: { id: { in: ids } }, select: { id: true, name: true, shortName: true, slug: true } });
+  const resultatsAdversaires = await prisma.match.groupBy({ by: ["opponentId", "result"], where: { ...MATCH_JOUE, opponentId: { in: ids } }, _count: { id: true } });
+  const adversaires = parAdversaire.map((o) => {
+    const compte = (r: string) => resultatsAdversaires.find((x) => x.opponentId === o.opponentId && x.result === r)?._count.id ?? 0;
+    return {
+      ...opponents.find((x) => x.id === o.opponentId)!,
+      matchs: o._count.id,
+      victoires: compte("VICTOIRE"),
+      nuls: compte("NUL"),
+      defaites: compte("DEFAITE"),
+      pour: o._sum.scoreUsap ?? 0,
+      contre: o._sum.scoreOpponent ?? 0,
     };
   });
 
+  const nomClub = (o: { name: string; shortName: string | null }) => o.shortName || o.name;
+
   return (
-    <div className="mx-auto max-w-7xl px-4 py-10">
-      <h1 className="mb-2 text-3xl font-bold uppercase tracking-wider text-foreground">
-        Statistiques
-      </h1>
-      <p className="mb-10 text-muted-foreground">
-        Les chiffres clés de l&apos;USAP depuis 1902.
-      </p>
+    <div className="mx-auto max-w-6xl px-4 py-10 sm:py-14">
+      <header className="mb-8 sm:mb-12">
+        <h1 className="font-display text-6xl uppercase leading-none text-usap-sang sm:text-8xl">{t("statistiques.titre")}</h1>
+        <p className="mt-4 max-w-prose text-lg leading-snug text-foreground">
+          {t("statistiques.chapeau", {
+            n: nombre(total.joues),
+            saison: premiere?.season.label ?? "",
+            v: t("saison.victoires", { n: total.victoires }),
+            nu: t("saison.nuls", { n: total.nuls }),
+            d: t("saison.defaites", { n: total.defaites }),
+            pour: nombre(total.pour),
+            contre: nombre(total.contre),
+          })}
+        </p>
+        <p className="mt-2 max-w-prose text-sm leading-relaxed text-muted-foreground">{t("statistiques.reserve")}</p>
+      </header>
 
-      {/* ── Compteurs globaux ─────────────────────────────── */}
-      <div className="mb-10 grid grid-cols-2 gap-4 md:grid-cols-4">
-        <StatCard
-          icon={<Swords className="h-6 w-6 text-usap-or" />}
-          value={totalMatches.toLocaleString("fr-FR")}
-          label="Matchs joués"
-        />
-        <StatCard
-          icon={<Users className="h-6 w-6 text-usap-or" />}
-          value={totalPlayers.toLocaleString("fr-FR")}
-          label="Joueurs USAP"
-        />
-        <StatCard
-          icon={<BarChart3 className="h-6 w-6 text-usap-or" />}
-          value={totalSeasons.toLocaleString("fr-FR")}
-          label="Saisons"
-        />
-        <StatCard
-          icon={<Target className="h-6 w-6 text-usap-or" />}
-          value={totalPointsFor.toLocaleString("fr-FR")}
-          label="Points marqués"
-        />
-      </div>
-
-      {/* ── Bilan global ──────────────────────────────────── */}
+      {/* Le bilan */}
       <section className="mb-10">
-        <h2 className="mb-4 flex items-center gap-2 text-2xl font-bold uppercase tracking-wider text-foreground">
-          <TrendingUp className="h-6 w-6 text-usap-or" />
-          Bilan global
-        </h2>
-        <div className="overflow-x-auto rounded-lg border border-border">
-          <table className="w-full text-sm">
+        <Titre>{t("statistiques.bilanTitre")}</Titre>
+        <table className="w-full max-w-3xl border-collapse text-sm">
+          <thead>
+            <tr className="border-b border-border text-left text-xs text-muted-foreground">
+              <th scope="col" className="py-2 pr-4 font-medium" />
+              <th scope="col" className="py-2 pr-3 text-right font-medium">{t("statistiques.colJoues")}</th>
+              <th scope="col" className="py-2 pr-3 text-right font-medium">{t("statistiques.colVictoires")}</th>
+              <th scope="col" className="py-2 pr-3 text-right font-medium">{t("statistiques.colNuls")}</th>
+              <th scope="col" className="py-2 pr-3 text-right font-medium">{t("statistiques.colDefaites")}</th>
+              <th scope="col" className="hidden py-2 pr-3 text-right font-medium sm:table-cell">{t("statistiques.colPour")}</th>
+              <th scope="col" className="hidden py-2 pr-3 text-right font-medium sm:table-cell">{t("statistiques.colContre")}</th>
+              <th scope="col" className="py-2 text-right font-medium">{t("statistiques.colTaux")}</th>
+            </tr>
+          </thead>
+          <tbody className="tabular-nums">
+            {(
+              [
+                ["statistiques.total", total, true],
+                ["statistiques.domicile", bilan(true), false],
+                ["statistiques.exterieur", bilan(false), false],
+              ] as const
+            ).map(([cle, b, gras]) => (
+              <tr key={cle} className={`border-b border-border ${gras ? "font-semibold" : ""}`}>
+                <td className="py-1.5 pr-4 text-foreground">{t(cle)}</td>
+                <td className="py-1.5 pr-3 text-right text-foreground">{nombre(b.joues)}</td>
+                <td className="py-1.5 pr-3 text-right text-usap-sang">{b.victoires}</td>
+                <td className="py-1.5 pr-3 text-right text-foreground">{b.nuls}</td>
+                <td className="py-1.5 pr-3 text-right text-muted-foreground">{b.defaites}</td>
+                <td className="hidden py-1.5 pr-3 text-right text-foreground sm:table-cell">{nombre(b.pour)}</td>
+                <td className="hidden py-1.5 pr-3 text-right text-muted-foreground sm:table-cell">{nombre(b.contre)}</td>
+                <td className="py-1.5 text-right text-foreground">{pourcent(b.victoires, b.joues)}</td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </section>
+
+      {/* Les joueurs */}
+      <section className="mb-10 grid gap-8 lg:grid-cols-3">
+        <Classement titre={t("statistiques.realisateursTitre")} lignes={realisateurs} valeur={(n) => t("saison.valeurPoints", { n })} lien="/realisateurs#points" libelleLien={t("statistiques.classementComplet")} libelleActuel={t("joueurs.actuel")} />
+        <Classement titre={t("statistiques.capesTitre")} lignes={capes} valeur={(n) => t("saison.valeurMatchs", { n })} lien="/centurions" libelleLien={t("statistiques.classementComplet")} libelleActuel={t("joueurs.actuel")} />
+        <Classement titre={t("statistiques.essaisTitre")} lignes={essais} valeur={(n) => t("saison.valeurEssais", { n })} lien="/realisateurs#essais" libelleLien={t("statistiques.classementComplet")} libelleActuel={t("joueurs.actuel")} />
+      </section>
+
+      {/* Contre l'USAP */}
+      {(contreRealisateurs.length > 0 || contreEssais.length > 0) && (
+        <section className="mb-10">
+          <Titre encre>{t("statistiques.contreTitre")}</Titre>
+          <p className="mb-4 max-w-prose text-sm text-muted-foreground">{t("statistiques.contreNote")}</p>
+          <div className="grid gap-8 lg:grid-cols-2">
+            <Classement titre={t("statistiques.contreRealisateurs")} lignes={contreRealisateurs} valeur={(n) => t("saison.valeurPoints", { n })} libelleActuel={t("joueurs.actuel")} sous />
+            <Classement titre={t("statistiques.contreEssais")} lignes={contreEssais} valeur={(n) => t("saison.valeurEssais", { n })} libelleActuel={t("joueurs.actuel")} sous />
+          </div>
+        </section>
+      )}
+
+      {/* Les records, en tableau d'affichage */}
+      <section className="mb-10">
+        <Titre>
+          {t("statistiques.recordsTitre")}
+          <Link href="/records" className="ml-3 text-base normal-case text-muted-foreground underline hover:text-usap-sang">
+            {t("statistiques.tousLesRecords")}
+          </Link>
+        </Titre>
+        <div className="grid gap-8 lg:grid-cols-3">
+          {(
+            [
+              ["statistiques.plusLarges", plusLarges],
+              ["statistiques.plusLourdes", plusLourdes],
+              ["statistiques.plusGros", plusGros],
+            ] as const
+          ).map(([cle, liste]) => {
+            const [tete, ...suite] = liste;
+            if (!tete) return null;
+            return (
+              <div key={cle}>
+                <h3 className="font-display text-2xl uppercase leading-none text-foreground">{t(cle)}</h3>
+                <p className="mt-2 font-display text-5xl leading-none text-foreground tabular-nums">
+                  <Link href={`/matchs/${tete.slug}`} className="hover:text-usap-sang">
+                    {tete.isHome ? tete.scoreUsap : tete.scoreOpponent}
+                    <span className="mx-2 text-muted-foreground">–</span>
+                    {tete.isHome ? tete.scoreOpponent : tete.scoreUsap}
+                  </Link>
+                </p>
+                <p className="mt-1 text-sm text-foreground">
+                  {tete.isHome ? (
+                    <>
+                      <span className="font-semibold text-usap-sang">USAP</span> – {nomClub(tete.opponent)}
+                    </>
+                  ) : (
+                    <>
+                      {nomClub(tete.opponent)} – <span className="font-semibold text-usap-sang">USAP</span>
+                    </>
+                  )}
+                  <span className="text-muted-foreground">
+                    , {tete.competition.shortName || tete.competition.name}, {formatDateFR(tete.date)}
+                  </span>
+                </p>
+                <table className="mt-3 w-full border-collapse text-sm">
+                  <tbody className="tabular-nums">
+                    {suite.map((m) => (
+                      <tr key={m.slug} className="border-b border-border hover:bg-muted">
+                        <td className="py-1 pr-3 whitespace-nowrap text-muted-foreground">{formatDateFR(m.date)}</td>
+                        <td className="py-1 pr-3">
+                          <Link href={`/matchs/${m.slug}`} className="text-foreground hover:text-usap-sang">
+                            {m.isHome ? (
+                              <>
+                                <span className="font-semibold text-usap-sang">USAP</span> – {nomClub(m.opponent)}
+                              </>
+                            ) : (
+                              <>
+                                {nomClub(m.opponent)} – <span className="font-semibold text-usap-sang">USAP</span>
+                              </>
+                            )}
+                          </Link>
+                        </td>
+                        <td className="py-1 text-right whitespace-nowrap font-semibold text-foreground">
+                          {m.isHome ? m.scoreUsap : m.scoreOpponent} – {m.isHome ? m.scoreOpponent : m.scoreUsap}
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            );
+          })}
+        </div>
+      </section>
+
+      {/* Les adversaires les plus rencontrés */}
+      {adversaires.length > 0 && (
+        <section className="mb-10">
+          <Titre encre>
+            {t("statistiques.adversairesTitre")}
+            <Link href="/adversaires" className="ml-3 text-base normal-case text-muted-foreground underline hover:text-usap-sang">
+              {t("statistiques.tousLesAdversaires")}
+            </Link>
+          </Titre>
+          <table className="w-full max-w-3xl border-collapse text-sm">
             <thead>
-              <tr className="border-b border-border bg-muted/50">
-                <th className="px-4 py-3 text-left font-semibold text-foreground">
-                  &nbsp;
-                </th>
-                <th className="px-4 py-3 text-center font-semibold text-foreground">
-                  J
-                </th>
-                <th className="px-4 py-3 text-center font-semibold text-green-600">
-                  V
-                </th>
-                <th className="px-4 py-3 text-center font-semibold text-muted-foreground">
-                  N
-                </th>
-                <th className="px-4 py-3 text-center font-semibold text-red-500">
-                  D
-                </th>
-                <th className="px-4 py-3 text-center font-semibold text-foreground">
-                  % Victoires
-                </th>
+              <tr className="border-b border-border text-left text-xs text-muted-foreground">
+                <th scope="col" className="py-2 pr-4 font-medium">{t("statistiques.colAdversaire")}</th>
+                <th scope="col" className="py-2 pr-3 text-right font-medium">{t("statistiques.colMatchs")}</th>
+                <th scope="col" className="py-2 pr-3 text-right font-medium">{t("statistiques.colVictoires")}</th>
+                <th scope="col" className="py-2 pr-3 text-right font-medium">{t("statistiques.colNuls")}</th>
+                <th scope="col" className="py-2 pr-3 text-right font-medium">{t("statistiques.colDefaites")}</th>
+                <th scope="col" className="hidden py-2 pr-3 text-right font-medium sm:table-cell">{t("statistiques.colPour")}</th>
+                <th scope="col" className="hidden py-2 pr-3 text-right font-medium sm:table-cell">{t("statistiques.colContre")}</th>
+                <th scope="col" className="py-2 text-right font-medium">{t("statistiques.colTaux")}</th>
               </tr>
             </thead>
-            <tbody>
-              <BilanRow
-                label="Total"
-                bold
-                j={totalMatches}
-                v={wins}
-                n={draws}
-                d={losses}
-              />
-              <BilanRow
-                label="Domicile"
-                j={homeTotal}
-                v={homeWins}
-                n={homeDraws}
-                d={homeLosses}
-              />
-              <BilanRow
-                label="Extérieur"
-                j={awayTotal}
-                v={awayWins}
-                n={awayDraws}
-                d={awayLosses}
-              />
+            <tbody className="tabular-nums">
+              {adversaires.map((o) => (
+                <tr key={o.id} className="border-b border-border hover:bg-muted">
+                  <td className="py-1.5 pr-4">
+                    <Link href={`/adversaires/${o.slug}`} className="font-semibold text-foreground hover:text-usap-sang">
+                      {nomClub(o)}
+                    </Link>
+                  </td>
+                  <td className="py-1.5 pr-3 text-right font-semibold text-foreground">{o.matchs}</td>
+                  <td className="py-1.5 pr-3 text-right text-usap-sang">{o.victoires || ""}</td>
+                  <td className="py-1.5 pr-3 text-right text-foreground">{o.nuls || ""}</td>
+                  <td className="py-1.5 pr-3 text-right text-muted-foreground">{o.defaites || ""}</td>
+                  <td className="hidden py-1.5 pr-3 text-right text-foreground sm:table-cell">{o.pour}</td>
+                  <td className="hidden py-1.5 pr-3 text-right text-muted-foreground sm:table-cell">{o.contre}</td>
+                  <td className="py-1.5 text-right text-foreground">{pourcent(o.victoires, o.matchs)}</td>
+                </tr>
+              ))}
             </tbody>
           </table>
-        </div>
-        <div className="mt-3 flex flex-wrap gap-4 text-sm text-muted-foreground">
-          <span>
-            Points marqués :{" "}
-            <strong className="text-foreground">
-              {totalPointsFor.toLocaleString("fr-FR")}
-            </strong>
-          </span>
-          <span>
-            Points encaissés :{" "}
-            <strong className="text-foreground">
-              {totalPointsAgainst.toLocaleString("fr-FR")}
-            </strong>
-          </span>
-          <span>
-            Différence :{" "}
-            <strong
-              className={
-                totalPointsFor - totalPointsAgainst >= 0
-                  ? "text-green-600"
-                  : "text-red-500"
-              }
-            >
-              {totalPointsFor - totalPointsAgainst >= 0 ? "+" : ""}
-              {(totalPointsFor - totalPointsAgainst).toLocaleString("fr-FR")}
-            </strong>
-          </span>
-        </div>
-      </section>
-
-      {/* ── Classements joueurs ────────────────────────────── */}
-      <div className="mb-10 grid gap-10 lg:grid-cols-3">
-        {/* Meilleurs marqueurs */}
-        <section>
-          <h2 className="mb-4 flex items-center gap-2 text-xl font-bold uppercase tracking-wider text-foreground">
-            <Target className="h-5 w-5 text-usap-or" />
-            Meilleurs marqueurs
-          </h2>
-          <div className="space-y-1">
-            {topScorers.map((p, i) => (
-              <PlayerRankRow
-                key={p.id}
-                rank={i + 1}
-                slug={p.slug}
-                firstName={p.firstName}
-                lastName={p.lastName}
-                position={p.position}
-                photoUrl={p.photoUrl}
-                stat={`${p.totalPoints} pts`}
-              />
-            ))}
-          </div>
-          <Link
-            href="/realisateurs#points"
-            className="mt-3 inline-block text-sm font-medium text-usap-sang hover:underline"
-          >
-            Voir le classement complet →
-          </Link>
-        </section>
-
-        {/* Plus capés */}
-        <section>
-          <h2 className="mb-4 flex items-center gap-2 text-xl font-bold uppercase tracking-wider text-foreground">
-            <Users className="h-5 w-5 text-usap-or" />
-            Plus capés
-          </h2>
-          <div className="space-y-1">
-            {topApps.map((p, i) => (
-              <PlayerRankRow
-                key={p.id}
-                rank={i + 1}
-                slug={p.slug}
-                firstName={p.firstName}
-                lastName={p.lastName}
-                position={p.position}
-                photoUrl={p.photoUrl}
-                stat={`${p.appearances} matchs`}
-              />
-            ))}
-          </div>
-          <Link
-            href="/centurions"
-            className="mt-3 inline-block text-sm font-medium text-usap-sang hover:underline"
-          >
-            Voir le classement complet →
-          </Link>
-        </section>
-
-        {/* Meilleurs essayeurs */}
-        <section>
-          <h2 className="mb-4 flex items-center gap-2 text-xl font-bold uppercase tracking-wider text-foreground">
-            <Award className="h-5 w-5 text-usap-or" />
-            Meilleurs marqueurs d&apos;essais
-          </h2>
-          <div className="space-y-1">
-            {topTries.map((p, i) => (
-              <PlayerRankRow
-                key={p.id}
-                rank={i + 1}
-                slug={p.slug}
-                firstName={p.firstName}
-                lastName={p.lastName}
-                position={p.position}
-                photoUrl={p.photoUrl}
-                stat={`${p.tries} essais`}
-              />
-            ))}
-          </div>
-          <Link
-            href="/realisateurs#essais"
-            className="mt-3 inline-block text-sm font-medium text-usap-sang hover:underline"
-          >
-            Voir le classement complet →
-          </Link>
-        </section>
-      </div>
-
-      {/* ── Statistiques adverses (contre l'USAP) ───────────── */}
-      {(oppScorers.length > 0 || oppTries.length > 0) && (
-        <div className="mb-10">
-          <h2 className="mb-4 flex items-center gap-2 text-2xl font-bold uppercase tracking-wider text-foreground">
-            <Swords className="h-6 w-6 text-muted-foreground" />
-            Contre l&apos;USAP
-          </h2>
-          <p className="mb-6 text-sm text-muted-foreground">
-            Statistiques individuelles des joueurs adverses face à l&apos;USAP.
-          </p>
-          <div className="grid gap-10 lg:grid-cols-2">
-            {/* Meilleurs marqueurs adverses */}
-            {oppScorers.length > 0 && (
-              <section>
-                <h3 className="mb-4 flex items-center gap-2 text-xl font-bold uppercase tracking-wider text-foreground">
-                  <Target className="h-5 w-5 text-muted-foreground" />
-                  Meilleurs marqueurs adverses
-                </h3>
-                <div className="space-y-1">
-                  {oppScorers.map((p, i) => (
-                    <PlayerRankRow
-                      key={p.id}
-                      rank={i + 1}
-                      slug={p.slug}
-                      firstName={p.firstName}
-                      lastName={p.lastName}
-                      position={p.position}
-                      photoUrl={p.photoUrl}
-                      stat={`${p.totalPoints} pts`}
-                      variant="opponent"
-                    />
-                  ))}
-                </div>
-              </section>
-            )}
-
-            {/* Meilleurs essayeurs adverses */}
-            {oppTries.length > 0 && (
-              <section>
-                <h3 className="mb-4 flex items-center gap-2 text-xl font-bold uppercase tracking-wider text-foreground">
-                  <Award className="h-5 w-5 text-muted-foreground" />
-                  Meilleurs marqueurs d&apos;essais adverses
-                </h3>
-                <div className="space-y-1">
-                  {oppTries.map((p, i) => (
-                    <PlayerRankRow
-                      key={p.id}
-                      rank={i + 1}
-                      slug={p.slug}
-                      firstName={p.firstName}
-                      lastName={p.lastName}
-                      position={p.position}
-                      photoUrl={p.photoUrl}
-                      stat={`${p.tries} essais`}
-                      variant="opponent"
-                    />
-                  ))}
-                </div>
-              </section>
-            )}
-          </div>
-        </div>
-      )}
-
-      {/* ── Records de matchs ─────────────────────────────── */}
-      <section className="mb-10">
-        <h2 className="mb-4 flex items-center gap-2 text-2xl font-bold uppercase tracking-wider text-foreground">
-          <Trophy className="h-6 w-6 text-usap-or" />
-          Records
-        </h2>
-        <div className="grid gap-6 lg:grid-cols-3">
-          {/* Plus grosses victoires */}
-          <div>
-            <h3 className="mb-3 text-sm font-semibold uppercase text-green-600">
-              Plus grosses victoires
-            </h3>
-            <div className="space-y-2">
-              {biggestWin.map((m) => (
-                <MatchRecordCard key={m.slug} match={m} />
-              ))}
-            </div>
-          </div>
-
-          {/* Plus grosses défaites */}
-          <div>
-            <h3 className="mb-3 text-sm font-semibold uppercase text-red-500">
-              Plus grosses défaites
-            </h3>
-            <div className="space-y-2">
-              {biggestLoss.map((m) => (
-                <MatchRecordCard key={m.slug} match={m} />
-              ))}
-            </div>
-          </div>
-
-          {/* Plus gros scores */}
-          <div>
-            <h3 className="mb-3 text-sm font-semibold uppercase text-muted-foreground">
-              Plus gros scores cumulés
-            </h3>
-            <div className="space-y-2">
-              {topHighScoring.map((m) => (
-                <MatchRecordCard key={m.slug} match={m} />
-              ))}
-            </div>
-          </div>
-        </div>
-      </section>
-
-      {/* ── Top adversaires ───────────────────────────────── */}
-      {topOpponents.length > 0 && (
-        <section className="mb-10">
-          <h2 className="mb-4 flex items-center gap-2 text-2xl font-bold uppercase tracking-wider text-foreground">
-            <Swords className="h-6 w-6 text-usap-or" />
-            Adversaires les plus affrontés
-          </h2>
-          <div className="overflow-x-auto rounded-lg border border-border">
-            <table className="w-full text-sm">
-              <thead>
-                <tr className="border-b border-border bg-muted/50">
-                  <th className="px-4 py-3 text-left font-semibold text-foreground">
-                    Adversaire
-                  </th>
-                  <th className="px-4 py-3 text-center font-semibold text-foreground">
-                    J
-                  </th>
-                  <th className="px-4 py-3 text-center font-semibold text-green-600">
-                    V
-                  </th>
-                  <th className="px-4 py-3 text-center font-semibold text-muted-foreground">
-                    N
-                  </th>
-                  <th className="px-4 py-3 text-center font-semibold text-red-500">
-                    D
-                  </th>
-                  <th className="px-4 py-3 text-center font-semibold text-foreground">
-                    %V
-                  </th>
-                </tr>
-              </thead>
-              <tbody>
-                {topOpponents.map((opp) => (
-                  <tr
-                    key={opp.id}
-                    className="border-b border-border transition-colors hover:bg-muted/30"
-                  >
-                    <td className="px-4 py-2 font-medium text-foreground">
-                      {opp.shortName || opp.name}
-                    </td>
-                    <td className="px-4 py-2 text-center font-medium text-foreground">
-                      {opp.total}
-                    </td>
-                    <td className="px-4 py-2 text-center text-green-600">
-                      {opp.wins}
-                    </td>
-                    <td className="px-4 py-2 text-center text-muted-foreground">
-                      {opp.draws}
-                    </td>
-                    <td className="px-4 py-2 text-center text-red-500">
-                      {opp.losses}
-                    </td>
-                    <td className="px-4 py-2 text-center font-medium text-foreground">
-                      {opp.total > 0
-                        ? `${Math.round((opp.wins / opp.total) * 100)}%`
-                        : "—"}
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
         </section>
       )}
     </div>
   );
 }
 
-// ── Composants locaux ────────────────────────────────────────────────
-
-function StatCard({
-  icon,
-  value,
-  label,
-}: {
-  icon: React.ReactNode;
-  value: string;
-  label: string;
-}) {
+/** Le titre d'une section : la voix condensée de la liste, sous un filet. */
+function Titre({ children, encre = false }: { children: React.ReactNode; encre?: boolean }) {
   return (
-    <div className="rounded-lg border border-border bg-usap-carte p-4 text-center">
-      <div className="mb-2 flex justify-center">{icon}</div>
-      <div className="text-2xl font-bold text-usap-or sm:text-3xl">
-        {value}
-      </div>
-      <div className="mt-1 text-sm text-muted-foreground">{label}</div>
-    </div>
-  );
-}
-
-function BilanRow({
-  label,
-  bold,
-  j,
-  v,
-  n,
-  d,
-}: {
-  label: string;
-  bold?: boolean;
-  j: number;
-  v: number;
-  n: number;
-  d: number;
-}) {
-  const pct = j > 0 ? Math.round((v / j) * 100) : 0;
-  return (
-    <tr className="border-b border-border">
-      <td
-        className={`px-4 py-2 ${bold ? "font-bold text-foreground" : "text-muted-foreground"}`}
-      >
-        {label}
-      </td>
-      <td
-        className={`px-4 py-2 text-center ${bold ? "font-bold text-foreground" : "text-foreground"}`}
-      >
-        {j}
-      </td>
-      <td className="px-4 py-2 text-center text-green-600">{v}</td>
-      <td className="px-4 py-2 text-center text-muted-foreground">{n}</td>
-      <td className="px-4 py-2 text-center text-red-500">{d}</td>
-      <td className="px-4 py-2 text-center font-medium text-foreground">
-        {pct}%
-      </td>
-    </tr>
-  );
-}
-
-function PlayerRankRow({
-  rank,
-  slug,
-  firstName,
-  lastName,
-  position,
-  photoUrl,
-  stat,
-  variant = "usap",
-}: {
-  rank: number;
-  slug: string;
-  firstName: string;
-  lastName: string;
-  position: string | null;
-  photoUrl: string | null;
-  stat: string;
-  variant?: "usap" | "opponent";
-}) {
-  const statStyle =
-    variant === "opponent"
-      ? "bg-muted text-muted-foreground"
-      : "bg-usap-sang/10 text-usap-sang";
-
-  return (
-    <Link
-      href={`/joueurs/${slug}`}
-      className="flex items-center gap-2 rounded border border-border bg-background px-3 py-2 text-sm transition-colors hover:border-usap-or/30"
+    <h2
+      className={`mb-3 border-b-2 pb-1 font-display text-3xl uppercase leading-none ${
+        encre ? "border-foreground text-foreground" : "border-usap-sang text-usap-sang"
+      }`}
     >
-      <span className="w-6 shrink-0 text-center font-bold text-muted-foreground">
-        {rank}
-      </span>
-      {photoUrl ? (
-        <Image
-          src={photoUrl}
-          alt={`${firstName} ${lastName}`}
-          width={28}
-          height={28}
-          className="h-7 w-7 shrink-0 rounded-full object-cover"
-        />
+      {children}
+    </h2>
+  );
+}
+
+type LigneClassement = {
+  joueur: { slug: string; firstName: string; lastName: string; photoUrl: string | null; isActive: boolean };
+  valeur: number;
+};
+
+/** Un classement court : le rang, le joueur, la valeur, et le lien vers le classement complet. */
+function Classement({
+  titre,
+  lignes,
+  valeur,
+  lien,
+  libelleLien,
+  libelleActuel,
+  sous = false,
+}: {
+  titre: string;
+  lignes: LigneClassement[];
+  valeur: (n: number) => string;
+  lien?: string;
+  libelleLien?: string;
+  libelleActuel: string;
+  sous?: boolean;
+}) {
+  if (lignes.length === 0) return null;
+  return (
+    <div>
+      {sous ? (
+        <h3 className="mb-2 font-display text-2xl uppercase leading-none text-foreground">{titre}</h3>
       ) : (
-        <div className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-muted">
-          <Users className="h-3.5 w-3.5 text-muted-foreground" />
-        </div>
+        <Titre encre>{titre}</Titre>
       )}
-      <span className="flex-1 truncate font-medium text-foreground">
-        {firstName} {lastName}
-      </span>
-      {position && (
-        <span className="hidden text-xs text-muted-foreground sm:inline">
-          {POSITIONS[position]?.label ?? position}
-        </span>
+      <table className="w-full border-collapse text-sm">
+        <tbody className="tabular-nums">
+          {lignes.map((l, i) => (
+            <tr key={l.joueur.slug} className="border-b border-border hover:bg-muted">
+              <td className="w-6 py-1 pr-2 text-right text-muted-foreground">{i + 1}</td>
+              <td className="py-1 pr-3">
+                <JoueurCellule
+                  slug={l.joueur.slug}
+                  firstName={l.joueur.firstName}
+                  lastName={l.joueur.lastName}
+                  photoUrl={l.joueur.photoUrl}
+                  isActive={l.joueur.isActive}
+                  libelleActuel={libelleActuel}
+                />
+              </td>
+              <td className="py-1 text-right whitespace-nowrap font-semibold text-foreground">{valeur(l.valeur)}</td>
+            </tr>
+          ))}
+        </tbody>
+      </table>
+      {lien && libelleLien && (
+        <p className="mt-2 text-sm">
+          <Link href={lien} className="text-muted-foreground underline hover:text-usap-sang">
+            {libelleLien}
+          </Link>
+        </p>
       )}
-      <span
-        className={`shrink-0 rounded px-2 py-0.5 text-xs font-bold ${statStyle}`}
-      >
-        {stat}
-      </span>
-    </Link>
-  );
-}
-
-function MatchRecordCard({
-  match,
-}: {
-  match: {
-    slug: string;
-    date: Date;
-    scoreUsap: number;
-    scoreOpponent: number;
-    isHome: boolean;
-    opponent: { name: string; shortName: string | null };
-    competition: { shortName: string | null; name: string };
-    venue: { name: string } | null;
-  };
-}) {
-  const oppName = match.opponent.shortName || match.opponent.name;
-  const scoreLine = match.isHome
-    ? `USAP ${match.scoreUsap} - ${match.scoreOpponent} ${oppName}`
-    : `${oppName} ${match.scoreOpponent} - ${match.scoreUsap} USAP`;
-
-  return (
-    <Link
-      href={`/matchs/${match.slug}`}
-      className="block rounded border border-border bg-background p-3 text-sm transition-colors hover:border-usap-or/30"
-    >
-      <div className="font-medium text-foreground">{scoreLine}</div>
-      <div className="mt-1 flex flex-wrap gap-x-3 text-xs text-muted-foreground">
-        <span>{formatDateFR(match.date)}</span>
-        <span>{match.competition.shortName || match.competition.name}</span>
-        {match.venue && (
-          <span className="flex items-center gap-0.5">
-            <MapPin className="h-3 w-3" />
-            {match.venue.name}
-          </span>
-        )}
-      </div>
-    </Link>
+    </div>
   );
 }
