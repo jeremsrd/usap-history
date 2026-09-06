@@ -34,14 +34,14 @@ export const fr = {
     titre: "Joueurs",
     metaTitre: "Joueurs - USAP Historia",
     metaDescription:
-      "Tous les joueurs de l'USA Perpignan : effectif actuel et anciens, de 2004-2005 à aujourd'hui.",
+      "Tous les joueurs de l'USA Perpignan : effectif actuel et anciens, de 2004-2005 à aujourd'hui, et les finales d'avant-guerre reconstituées depuis la presse.",
     chapeau: {
-      one: "{n} joueur passé par l'USAP depuis la saison 2004-2005, dont {actifs} dans l'effectif actuel.",
+      one: "{n} joueur passé par l'USAP, dont {actifs} dans l'effectif actuel.",
       other:
-        "{n} joueurs passés par l'USAP depuis la saison 2004-2005, dont {actifs} dans l'effectif actuel.",
+        "{n} joueurs passés par l'USAP, dont {actifs} dans l'effectif actuel.",
     },
     reserve:
-      "Les feuilles de match ne sont saisies qu'à partir de 2004-2005 : les joueurs des époques antérieures n'y sont pas encore, et les périodes affichées commencent au plus tôt cette saison-là.",
+      "Les feuilles de match ne sont saisies qu'à partir de 2004-2005, hors les finales de 1914 et de 1925 reconstituées depuis la presse : les autres joueurs des époques antérieures n'y sont pas encore, et les périodes affichées tiennent à ce que la base couvre.",
     rechercher: "Rechercher un nom",
     lancerRecherche: "Rechercher",
     tous: "Tous",
@@ -74,7 +74,7 @@ export const fr = {
     dontActifs: { one: " — dont {n} encore à l'effectif", other: " — dont {n} encore à l'effectif" },
     reserveTitre: "Ce tableau ne couvre pas toute l'histoire du club.",
     reserveTexte:
-      "Les feuilles de match ne sont disponibles qu'à partir de la saison 2004-2005 : les centurions des époques antérieures n'y figurent pas, et ceux qui étaient déjà là en 2004 ont joué davantage de matchs que le compte affiché.",
+      "Les feuilles de match ne sont disponibles qu'à partir de la saison 2004-2005, deux finales d'avant-guerre exceptées : les centurions des époques antérieures n'y figurent pas, et ceux qui étaient déjà là en 2004 ont joué davantage de matchs que le compte affiché.",
     reserveCompte:
       "Un match se compte comme sur la fiche du joueur : une feuille de match sur une rencontre jouée, toutes compétitions confondues.",
   },
@@ -112,7 +112,7 @@ export const fr = {
     chapeau: "Ce que l'USAP a fait de mieux et de pire, sur une rencontre et sur une saison.",
     reserveTitre: "Ce sont les records de la période couverte, pas ceux du club.",
     reserveTexte:
-      "La base commence en 2004-2005 pour les rencontres, en 2005-2006 pour les bilans de saison : un siècle d'histoire lui échappe encore.",
+      "La base commence en 2004-2005 pour les rencontres — deux finales d'avant-guerre exceptées, reconstituées depuis la presse —, en 2005-2006 pour les bilans de saison : un siècle d'histoire lui échappe encore.",
     reserveSaisons:
       "Les bilans de saison portent sur le championnat seul, phases finales exclues, et les saisons ne se comparent pas à armes égales : une saison de Pro D2 compte trente journées quand le Top 14 en compte vingt-six. Le nombre de matchs est rappelé à chaque ligne.",
     surUnMatch: "Sur un match",

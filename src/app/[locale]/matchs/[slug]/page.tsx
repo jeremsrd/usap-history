@@ -4,6 +4,7 @@ import Image from "next/image";
 import { notFound } from "next/navigation";
 import { prisma } from "@/lib/prisma";
 import { estJoue } from "@/lib/matchs";
+import { baremeDeMatch } from "@/lib/scoring";
 import { POSITIONS } from "@/lib/constants";
 import { formatDateFR } from "@/lib/utils";
 import {
@@ -63,7 +64,7 @@ export default async function MatchDetailPage({ params }: Props) {
   const match = await prisma.match.findUnique({
     where: { slug },
     include: {
-      season: { select: { label: true } },
+      season: { select: { label: true, startYear: true } },
       competition: true,
       opponent: {
         select: { name: true, shortName: true, logoUrl: true, city: true, slug: true },
@@ -381,6 +382,7 @@ export default async function MatchDetailPage({ params }: Props) {
             finalScoreOpponent={match.scoreOpponent}
             opponentName={oppName}
             isHome={match.isHome}
+            bareme={baremeDeMatch(match.season.startYear)}
           />
         </section>
       )}

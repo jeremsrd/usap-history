@@ -1,6 +1,7 @@
 "use client";
 
 import { useMemo } from "react";
+import type { Bareme } from "@/lib/scoring";
 
 type MatchEvent = {
   id: string;
@@ -16,15 +17,20 @@ type Props = {
   finalScoreOpponent: number;
   opponentName: string;
   isHome: boolean;
+  /** Le barème de la saison — un essai vaut trois points en 1914, un drop quatre. */
+  bareme: Bareme;
 };
 
-const POINTS: Record<string, number> = {
-  ESSAI: 5,
-  TRANSFORMATION: 2,
-  PENALITE: 3,
-  DROP: 3,
-  ESSAI_PENALITE: 7,
-};
+/** Ce que chaque fait vaut, sous le barème reçu : la valeur n'est écrite qu'une fois, dans `baremeDeMatch`. */
+function pointsDe(bareme: Bareme): Record<string, number> {
+  return {
+    ESSAI: bareme.essai,
+    TRANSFORMATION: bareme.transformation,
+    PENALITE: bareme.penalite,
+    DROP: bareme.drop,
+    ESSAI_PENALITE: bareme.essaiDePenalite,
+  };
+}
 
 const EVENT_LABELS: Record<string, string> = {
   ESSAI: "Essai",
@@ -47,8 +53,10 @@ export default function ScoreEvolution({
   finalScoreOpponent,
   opponentName,
   isHome,
+  bareme,
 }: Props) {
   const scoringEvents = useMemo(() => {
+    const POINTS = pointsDe(bareme);
     const scoring = events.filter((e) => POINTS[e.type]);
     let usap = 0;
     let opp = 0;
@@ -64,16 +72,18 @@ export default function ScoreEvolution({
       points.push({ minute: ev.minute, scoreUsap: usap, scoreOpp: opp, event: ev });
     }
 
-    // Point final à 80'
+    // Point final à 80' — ou plus tard, quand un fait est daté au-delà : la
+    // transformation de Giral, à 4 h 41 à l'horloge de 1914, tombe à la 81ᵉ.
+    const fin = Math.max(80, ...scoring.map((e) => e.minute));
     points.push({
-      minute: 80,
+      minute: fin,
       scoreUsap: finalScoreUsap,
       scoreOpp: finalScoreOpponent,
-      event: { id: "end", minute: 80, type: "END", isUsap: true, description: null },
+      event: { id: "end", minute: fin, type: "END", isUsap: true, description: null },
     });
 
     return points;
-  }, [events, finalScoreUsap, finalScoreOpponent]);
+  }, [events, finalScoreUsap, finalScoreOpponent, bareme]);
 
   const maxScore = Math.max(finalScoreUsap, finalScoreOpponent, 10);
 
@@ -234,7 +244,10 @@ export default function ScoreEvolution({
             strokeLinejoin="round"
           />
 
-          {/* Points USAP */}
+          {/* Points USAP. Le <title> d'un point tient en UNE chaîne : sous
+              React 19, un <title> à plusieurs enfants — texte, accolade,
+              texte — est servi vide côté serveur et plein côté client, et
+              c'était l'erreur d'hydratation de la finale de 1914. */}
           {dots.map((pt, i) => {
             if (!pt.event.isUsap) return null;
             return (
@@ -247,9 +260,7 @@ export default function ScoreEvolution({
                   stroke="white"
                   strokeWidth={1.5}
                 />
-                <title>
-                  {pt.minute}&apos; — {EVENT_LABELS[pt.event.type] ?? pt.event.type} USAP — {pt.scoreUsap}-{pt.scoreOpp}
-                </title>
+                <title>{`${pt.minute}' — ${EVENT_LABELS[pt.event.type] ?? pt.event.type} USAP — ${pt.scoreUsap}-${pt.scoreOpp}`}</title>
               </g>
             );
           })}
@@ -267,9 +278,7 @@ export default function ScoreEvolution({
                   stroke="white"
                   strokeWidth={1.5}
                 />
-                <title>
-                  {pt.minute}&apos; — {EVENT_LABELS[pt.event.type] ?? pt.event.type} {opponentName} — {pt.scoreUsap}-{pt.scoreOpp}
-                </title>
+                <title>{`${pt.minute}' — ${EVENT_LABELS[pt.event.type] ?? pt.event.type} ${opponentName} — ${pt.scoreUsap}-${pt.scoreOpp}`}</title>
               </g>
             );
           })}

@@ -907,7 +907,7 @@ doublons.
 | `lib/attestations.ts` | **le troisième état** : `attester()` pose ou remplace la provenance d'un fait — entité, champ, degré, source, qui a tranché, qui a relu —, `attestationsDe()` la lit. À appeler par tout script qui écrit une valeur venue d'ailleurs que de la feuille officielle |
 | `seed-attestations.ts` | verse dans `attestations` les arbitrages que CLAUDE.md portait : postes tranchés, faits donnés par Jérémy, terrains d'aujourd'hui et terrains neutres, écussons hors LNR et EPCR, scores corrigés, couperets renseignés par Wikipédia, campagnes européennes d'ESPN et de l'ERC, saisons dont le garde-fou n'est pas la LNR. 126 lignes, idempotent. `--dry` |
 | `lib/gallica.ts` | **la presse numérisée de Gallica**, pour l'avant-guerre : le fascicule d'un jour, les pages où un mot figure, l'OCR d'une page en ALTO — césures recousues —, et ce qu'un article dit d'un match : les deux XV par lignes (« Les équipes se présentèrent comme suit »), le capitaine, l'arbitre, le score et la mi-temps d'un titre. Trente secondes entre deux requêtes, cache sur disque : Gallica rend 429 dès la cinquième page rapprochée |
-| `seed-match-gallica.ts` | **une rencontre d'avant-guerre depuis *L'Auto*, en simulation seulement** — les finales de 1914, 1921, 1925 et 1938 sont dans `MATCHS` : retrouve le numéro du lendemain, imprime XV, capitaines, arbitre, score et mi-temps avec les écarts — une ligne qui ne compte pas ses hommes, un club à quatorze —, et confronte chaque nom à la base. Refuse d'écrire tant que la base ne sait pas porter la provenance d'une composition ni le barème de 1925. `--match=AAAA-MM-JJ --dry` ; les rencontres connues sont dans `MATCHS` |
+| `seed-match-gallica.ts` | **une rencontre d'avant-guerre depuis *L'Auto*** — les finales de 1914, 1921, 1925 et 1938 sont dans `MATCHS`, **1914 et 1925 sont écrites**, relues sur l'image et validées par Jérémy (`RELECTURES`, `valide`) ; le script crée la rencontre, les deux XV sans numéro, les réalisations sous le barème de l'époque, la chronologie de 1914 à l'horloge, et une attestation sur chaque fait : retrouve le numéro du lendemain, imprime XV, capitaines, arbitre, score et mi-temps avec les écarts — une ligne qui ne compte pas ses hommes, un club à quatorze —, et confronte chaque nom à la base. Refuse d'écrire tant que la base ne sait pas porter la provenance d'une composition ni le barème de 1925. `--match=AAAA-MM-JJ --dry` ; les rencontres connues sont dans `MATCHS` |
 | `seed-cup-espn.ts` | **une campagne européenne d'avant 2020-2021, depuis ESPN** — rencontres, compositions des deux camps et réalisations par joueur, par `lib/espn.ts`. Rien ne s'écrit sans le classement de poule de Wikipédia, en dur par saison dans `CAMPAGNES`, et les réalisations d'un camp ne s'écrivent que si leur somme retombe sur son score. Minutes, minutes de carton, arbitre, affluence et chronologie restent à `null` : la source ne les donne pas. `<saison>`, `--dry`, `--match=` |
 | `seed-cup-sheet.ts` | **le pendant pour les coupes d'Europe**, depuis l'EPCR : réalisations, cartons et temps de jeu des **deux camps**, plus l'arbitre, l'affluence et la mi-temps. Sans argument il reprend les dix-huit matchs européens ; `--dry`, `--detail`, `--match=AAAA-MM-JJ` comme le précédent |
 | `audit-opponent-lineups.ts` | confronte les compositions adverses aux feuilles officielles LNR — les deux divisions, phases finales comprises ; lecture seule, à lancer sur une saison ou sur tout. **Zéro anomalie est l'état attendu** ; les variantes d'affichage arbitrées sont tues par sa table `VARIANTES_DAFFICHAGE`, comptées au récapitulatif et listées par `--variantes` |
@@ -2685,6 +2685,33 @@ affiche en regard, ≈ pour une variante à trancher, ✗ pour deux hommes, et
 **rien ne s'écrit avant que Jérémy n'ait tranché la graphie** — c'est lui
 qui deviendra `reluPar` dans l'attestation.
 
+**LES FINALES DE 1914 ET DE 1925 SONT EN BASE**, écrites le 6 septembre
+2026 par `seed-match-gallica.ts` après que Jérémy a tranché les graphies —
+celles de Wikipédia, avec le prénom, celle du journal en note de chaque
+ligne. Ce sont les deux premières rencontres d'avant 2004, et les seules :
+elles portent chacune une attestation `PROBABLE` sur l'ensemble et sur la
+composition, l'image relue pour adresse, `CONCORDANT` sur le stade,
+l'arbitre, la mi-temps et l'affluence quand journal et Wikipédia les
+donnent tous deux ; 59 fiches créées, chacune attestée de même, et Aimé
+Giral — figure citée pour mémoire jusque-là — retrouvé sur sa finale, deux
+points au pied.
+
+Ce que la base en dit, et ne dit pas : les XV dans l'ordre du journal,
+ligne par ligne, **sans numéro de maillot** ; le poste réellement tenu
+n'est porté que là où la ligne le dit sans ambiguïté — arrière, deuxième
+ligne, et les demis de 1914 que le journal annote « (ouverture) » et
+« (mêlée) » —, un trois-quarts, un troisième ligne ou un pilier restant
+sans poste plutôt que d'en recevoir un deviné, la ligne étant en note ;
+aucune minute de jeu ; et pour 1914 une **chronologie en minutes déduites
+de l'horloge** — reprise à 4 h 00, la minute de jeu vaut 40 plus les
+minutes écoulées, ce qui suppose que l'horloge ne s'arrête pas —, chaque
+fait gardant son heure en clair, la transformation de Giral tombant ainsi
+à la 81ᵉ. Deux stades créés, les Ponts-Jumeaux à Toulouse et Maraussan à
+Narbonne. Le barème est celui de l'époque, et c'est lui qui a mis au jour
+un **neuvième endroit** où il était en dur : `ScoreEvolution`, qui
+recomptait la finale de 1914 en 12-8 — il reçoit désormais le barème de
+la saison.
+
 **Les trois autres finales, simulées le 6 septembre 2026, ont appris au
 lecteur que *L'Auto* n'écrit pas toujours ses XV de la même façon.** En
 1914, « LES EQUIPES » en titre, chaque club seul sur sa ligne en
@@ -2837,7 +2864,7 @@ marquer d'un coup de pied tombé après une marque.
 **`baremeDeMatch(seasonStartYear)` EXISTE DEPUIS LE 6 SEPTEMBRE 2026**, dans
 `src/lib/scoring.ts`, pendant de `pointsScaleFor()` pour le classement, avec
 `pointsDesRealisations()` pour faire la somme. Le barème était écrit en dur
-à **huit** endroits et non quatre — les quatre nommés ci-dessous, plus
+à **neuf** endroits et non quatre — les quatre nommés ci-dessous, plus
 `lib/feuilles.ts`, `lib/erc.ts`, `seed-cup-espn.ts` et la page des
 réalisateurs —, et personne ne l'avait vu parce que la base ne remontait
 pas avant 2004-2005. Tous appellent désormais la fonction :
@@ -2852,6 +2879,7 @@ pas avant 2004-2005. Tous appellent désormais la fonction :
 | `scripts/seed-cup-sheet.ts` | `7 * essaisDePenalite` | `baremeDeMatch` de la saison du match |
 | `src/app/admin/matchs/[id]/actions.ts` | `tries * 5 + conversions * 2 + …` | la saison du match, lue avant d'écrire |
 | `src/app/[locale]/realisateurs/page.tsx` | `2 * transformations + 3 * (pénalités + drops)` | ligne à ligne, sous le barème de la saison de chaque feuille |
+| `src/components/ScoreEvolution.tsx` | 5, 2, 3, 3, 7 | le barème de la saison, reçu en prop — découvert le jour où la finale de 1914 s'y est affichée en 12-8 |
 
 Le barème porte aussi **l'essai de pénalité tel que la base le compte** —
 essai plus transformation, sept aujourd'hui, cinq en 1925 —, pour que la
@@ -3014,7 +3042,17 @@ d'un siècle, c'est la règle qu'on connaîtra le moins bien.
   l'hydratation, React trouve un arbre qu'il n'a pas produit. Le cas ordinaire
   est couvert par le `suppressHydrationWarning` posé sur `<html>`.
 
-  **Il n'y a donc rien à corriger dans le code.** Retirer `enableSystem`
+  **Il y avait pourtant une vraie erreur d'hydratation, trouvée le
+  6 septembre 2026 sur la finale de 1914** — et elle n'avait rien de
+  `next-themes` : les `<title>` des points du graphe `ScoreEvolution`
+  étaient écrits en plusieurs enfants JSX, `{minute}&apos; — {label}…`, et
+  **React 19 sert vide un `<title>` à plusieurs enfants** — le serveur
+  rendait `<title></title>`, le client le texte, et l'arbre était refait.
+  Une seule chaîne par `<title>` règle le cas. Le diagnostic est venu de
+  l'overlay de Next, ouvert par son bouton « Issue » et lu dans son shadow
+  DOM : il donne l'arbre jusqu'au nœud fautif, `<circle> <title> + 66`.
+
+  **Pour le reste, il n'y a rien à corriger dans le code.** Retirer `enableSystem`
   supprimerait la course résiduelle, mais aussi la faculté de suivre le
   réglage du système : c'est un arbitrage de produit, pas un correctif.
 
