@@ -1587,10 +1587,25 @@ est passée au dictionnaire par la même occasion, et **sa recherche est
 corrigée** : elle écrasait le `OR` de la condition USAP et rendait aussi les
 adversaires.
 
-**Ce qui reste dans l'ancien rendu** : la fiche joueur et ses cartes, les
-vingt et une autres pages, et `JoueurCellule`, qui porte encore l'icône de
-remplacement dans les classements. À reprendre page par page, en relisant
-chaque fois qu'aucune couleur en dur n'est revenue.
+**La fiche joueur est refaite le 6 septembre 2026**, dans la même voix, et
+`JoueurCellule` avec elle. Sa seule audace est le **dos de maillot** : le
+prénom au-dessus, le nom condensé en rouge, et à sa droite, en or, **le
+numéro que l'homme a le plus porté** — une donnée de la base, comptée sur
+ses feuilles, pas un ornement ; il ne s'affiche que s'il en a porté un. Le
+cœur de la page n'est plus quatre gros chiffres centrés mais le **bilan
+saison par saison**, à la manière de lfchistory.net : matchs, titularisations,
+brassards quand il y en a eu, essais, points, minutes — un tiret quand la
+source ne les publie pas —, et la ligne de total sous un filet rouge. Les
+résultats des rencontres sont une lettre, V, N ou D, en gras rouge quand
+elle est favorable au joueur, à la place du vert et du rouge de Tailwind ;
+les sélections et distinctions sont des lignes, plus des cartes ; les icônes
+devant les titres ont disparu ; la case du portrait reste vide sans
+portrait, ici comme dans les classements. La page est passée au
+dictionnaire (`fiche.*`), et la provenance de ce qu'elle affirme la clôt.
+
+**Ce qui reste dans l'ancien rendu** : les vingt autres pages. À reprendre
+page par page, en relisant chaque fois qu'aucune couleur en dur n'est
+revenue. La suivante, par ordre de valeur : la fiche de match.
 
 
 - **Couleur principale** : Rouge sang (#C8102E) - couleur dominante USAP
