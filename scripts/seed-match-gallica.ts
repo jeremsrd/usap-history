@@ -133,9 +133,9 @@ const MATCHS: Record<string, MatchDeJournal> = {
  * relus par Claude, puis confrontés aux XV que Wikipédia donne des deux
  * finales, prénoms compris. Les deux sources concordent à quinze sur quinze
  * pour les quatre équipes, à l'orthographe près : le journal écrit Sicard,
- * Seyroux, Couffe, Amillat, Serres, Fournier, Nauté, Galiay, Dufour là où
- * Wikipédia écrit Sicart, Sayrou, Couffé, Amilhat, Serre, Fournié, Naute,
- * Gallay, Duffour.
+ * Seyroux, Couffe, Amillat, Serres, Fournier, Nauté, Galiay là où Wikipédia
+ * écrit Sicart, Sayrou, Couffé, Amilhat, Serre, Fournié, Naute, Gallay —
+ * huit graphies ; la neuvième, Duffour, le journal la tranche lui-même.
  *
  * **Ce que la table affirme** : le nom tel que le journal l'imprime, lu sur
  * l'image et non sur l'OCR, dans l'ordre du journal, ligne par ligne ; et en
@@ -192,7 +192,15 @@ const RELECTURES: Record<string, Relecture> = {
           { ligne: "arrière", noms: ["Caujolle"] },
           { ligne: "trois-quarts", noms: ["Cazajous", "Gardex", "Sentilles", "Lacoste"] },
           { ligne: "demis", noms: ["Pourtau", "Laterrade"] },
-          { ligne: "première ligne", noms: ["Lastegaray", "Faure", "Dufour"] },
+          // « Du-four » coupé en fin de ligne dans la composition, mais
+          // « Duffour » deux fois dans le même numéro — le récit, « Duffour,
+          // touché, n'était guère utile à son équipe », et la chronologie,
+          // « 3 h. 34 : Duffour est touché », « 3 h. 36 : Duffour revient ».
+          // C'est le journal qui tranche sa propre graphie. Wikipédia en fait
+          // le capitaine tarbais, sorti sur côte fracturée ; L'Auto ne marque
+          // aucun capitaine en 1914. Jérémy ne le connaissait pas : c'est un
+          // Tarbais, pas un Catalan, relu sur l'image le 6 septembre 2026.
+          { ligne: "première ligne", noms: ["Lastegaray", "Faure", "Duffour"] },
           { ligne: "deuxième ligne", noms: ["Labeyrie", "Mousseigne"] },
           { ligne: "troisième ligne", noms: ["Lavigne", "Vogt", "Galiay"] },
         ],

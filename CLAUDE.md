@@ -2671,8 +2671,14 @@ lues par Claude et confrontées aux XV que Wikipédia donne des deux finales,
 prénoms compris. **Quinze sur quinze pour les quatre équipes**, dans l'ordre
 du journal — l'OCR avait perdu « demis : Pascot » en 1925, l'image le rend.
 Seules divergent des graphies : le journal écrit Sicard, Seyroux, Couffe,
-Amillat, Serres, Fournier, Nauté, Galiay, Dufour, Wikipédia Sicart, Sayrou,
-Couffé, Amilhat, Serre, Fournié, Naute, Gallay, Duffour. La table
+Amillat, Serres, Fournier, Nauté, Galiay, Wikipédia Sicart, Sayrou, Couffé,
+Amilhat, Serre, Fournié, Naute, Gallay. **Une neuvième s'est tranchée
+d'elle-même** : « Du-four », coupé en fin de ligne dans la composition
+tarbaise, est « Duffour » deux fois dans le même numéro, au récit et à la
+chronologie — le pilier du Stadoceste que Wikipédia donne capitaine, sorti
+sur côte fracturée. Jérémy ne le connaissait pas, et pour cause : c'est un
+Tarbais. Devant un nom coupé par une césure, chercher ses autres
+occurrences dans le numéro avant de le comparer à quoi que ce soit. La table
 `RELECTURES` de `seed-match-gallica.ts` porte les deux, ligne par ligne,
 avec l'adresse de l'image relue, et `valide: false` : la simulation les
 affiche en regard, ≈ pour une variante à trancher, ✗ pour deux hommes, et
