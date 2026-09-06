@@ -813,6 +813,41 @@ rapprochement de noms, donc aucune erreur d'identité possible.
   identifiant** par `youtube.com/oembed?url=…&format=json` : le HTML de
   recherche désaligne titres et identifiants.
 
+#### Gallica — la presse d'avant-guerre
+
+**La seule source lue par machine avant 2004, et ce n'est pas une feuille :
+c'est un journal.** *L'Auto* de 1900 à 1944 et *Midi olympique* de 1929 à
+1946 y sont en texte intégral, et le numéro du lendemain d'une finale donne
+les deux XV par lignes, le capitaine, l'arbitre, le score décomposé, la
+mi-temps, l'affluence, parfois une chronologie à l'heure de l'horloge. Par
+`scripts/lib/gallica.ts` : le fascicule d'un jour, les pages où un mot
+figure, l'OCR d'une page en ALTO — et, quand l'OCR ne suffit pas, l'image
+elle-même, découpée par IIIF aux coordonnées de l'ALTO et **relue à l'œil**.
+
+Ce qu'il faut savoir avant de s'en servir :
+
+- **l'OCR abîme les noms propres**, « Raruis » pour Ramis, et peut manquer
+  tout à fait — la page des équipes de 1938 est « [texte illisible] » ligne
+  à ligne. Rien n'entre en base sans relecture sur l'image, ni sans que
+  Jérémy ait tranché la graphie ; la table `RELECTURES` de
+  `seed-match-gallica.ts` porte la relecture, `valide` son arbitrage ;
+- **le journal n'écrit pas ses XV de la même façon d'une année à l'autre** —
+  trois tournures connues, 1914, 1921, 1925 —, et un nom coupé par une
+  césure se cherche ailleurs dans le numéro avant d'être comparé à quoi que
+  ce soit : « Du-four » était « Duffour » deux fois plus loin ;
+- **le barème est celui de l'époque**, `baremeDeMatch`, et le journal le
+  vérifie lui-même par ses décompositions — « 2 essais, 1 but » font 8 en
+  1914 ;
+- **Gallica plafonne à quelques requêtes par minute** : trente secondes
+  entre deux, cache sur disque, balayages en arrière-plan ;
+- et **tout ce qui en sort est attesté `PROBABLE`**, l'image relue pour
+  adresse, Jérémy pour relecteur — cf. « Le troisième état ».
+
+Le détail des API, des numéros lus et de ce que chacun rend est dans
+« Remonter avant 2006 », plus bas ; la marche à suivre pour la prochaine
+rencontre est celle de 1914 et 1925 : simuler, découper l'image, relire,
+soumettre les graphies, écrire.
+
 ### Scripts
 
 Un script par match ou par lot cohérent, dans `scripts/`, **idempotent**
@@ -1617,7 +1652,7 @@ chronologie avant de l'écrire.
 entré en jeu », et non « on ne sait pas » — les remplaçants non utilisés sont
 les seuls concernés.
 
-**SAUF EN 2005-2006 — ET SUR LES CINQUANTE-TROIS MATCHS DE COUPE D'EUROPE DE 2007-2008 À 2018-2019 VENUS D'ESPN ET DE L'ERC, cf. `seed-cup-espn.ts` —, OÙ IL SE LIT « LA SOURCE NE LE DIT PAS ».** La LNR n'y
+**SAUF EN 2005-2006 — SUR LES CINQUANTE-TROIS MATCHS DE COUPE D'EUROPE DE 2007-2008 À 2018-2019 VENUS D'ESPN ET DE L'ERC, cf. `seed-cup-espn.ts` — ET SUR LES DEUX FINALES DE 1914 ET 1925 VENUES DE *L'AUTO*, cf. `seed-match-gallica.ts` —, OÙ IL SE LIT « LA SOURCE NE LE DIT PAS ».** Sur ces deux finales, **`positionPlayed` et `shirtNumber` sont `null` pour la même raison** : il n'y avait pas de numéros, et le journal ne distingue ni l'ailier du centre, ni le pilier du talonneur — la ligne est en `notes`, et le poste n'est porté que là où la ligne le dit sans ambiguïté. La LNR n'y
 publie aucun changement, sur aucune des vingt-sept feuilles : les temps de jeu
 ne se reconstituent pas, et `seed-opponent-sheet.ts` les laisse tous à `null`,
 titulaires compris. Sans cela il rendrait 80 minutes à chaque titulaire et
@@ -2584,8 +2619,23 @@ Par ordre de valeur.
    anciens et cinq recrues que la LNR n'a pas encore photographiées, cf.
    « Photos des joueurs » —, et les saisons sans aucun match.
 
-Sur les 120 saisons en base, 22 seulement portent des matchs : c'est le
-chantier de la phase 4, mené en remontant le temps saison par saison. Le bilan
+4. **L'avant-guerre, quand Jérémy le décidera.** La chaîne existe et a
+   servi deux fois : `seed-match-gallica.ts --match=AAAA-MM-JJ --dry` sur le
+   numéro du lendemain, découpe de l'image par IIIF aux coordonnées de
+   l'ALTO, relecture à l'œil confrontée aux XV de Wikipédia, graphies
+   soumises à Jérémy, écriture avec attestations. Ce qui attend, dans
+   l'ordre où c'est accessible : **la finale de 1921** — deux XV lisibles
+   sur l'image sans doute, l'OCR seul ne l'étant pas — ; **la finale de
+   1938**, dont la page des équipes est illisible à l'OCR et devra être lue
+   entièrement sur l'image ; **1944**, hors de Gallica ; puis les
+   demi-finales et finales perdues, dont Wikipédia donne les dates. Les
+   postes des trois-quarts, troisièmes lignes et piliers des XV écrits
+   resteront vides tant qu'une source ne les distingue pas.
+
+Sur les 120 saisons en base, 24 portent des matchs — 22 saisons entières
+de 2004-2005 à 2025-2026, et les deux finales de 1914 et de 1925, seules
+rencontres d'avant 2004 : c'est le chantier de la phase 4, mené en
+remontant le temps saison par saison. Le bilan
 de 2021-2022 — 9V 0N 17D, 43 points, treizième — est calculé depuis les scores
 officiels mais n'a pas été confronté à un classement d'époque ; ceux de
 2020-2021, 2019-2020 et 2018-2019 l'ont été, et leurs scripts refusent
@@ -2593,9 +2643,16 @@ d'écrire les agrégats s'ils s'en écartent.
 
 ### Remonter avant 2006 — ce qu'il faudra changer
 
-**Réflexion du 2 septembre 2026, ouverte par Jérémy et non tranchée.** Elle
-est consignée ici pour ne pas se reperdre : rien de ce qui suit n'est
-implémenté.
+**Réflexion du 2 septembre 2026, ouverte par Jérémy**, et **tranchée en
+partie le 6 septembre 2026** : le troisième état existe (la table
+`attestations`), le barème par époque existe (`baremeDeMatch`), la presse
+de Gallica se lit (`lib/gallica.ts`), et **les finales de 1914 et de 1925
+sont en base**, relues sur l'image, graphies tranchées par Jérémy,
+attestées. Ce qui suit garde la réflexion telle qu'elle s'est posée, puis
+l'inventaire des sources, puis ce que chaque pas a appris ; ce qui reste à
+faire est dit à la fin de « Où reprendre ». Les autres rencontres
+d'avant-guerre — 1921, 1938, les demi-finales — attendent : **Jérémy a
+choisi de les faire plus tard.**
 
 **Le constat, et il est chiffré : 99 saisons ne portent pas un seul match**,
 toutes antérieures à 2006-2007, qui est la plus ancienne en base. Or ni la LNR
