@@ -1744,12 +1744,25 @@ cartes ne disait pas, par deux `groupBy` sur les rencontres jouées. Plus
 d'épingle grise, plus de pastille « Domicile USAP ». Dictionnaire
 `stades.*`.
 
-**Ce qui reste dans l'ancien rendu** : les onze autres pages — arbitres,
-entraîneurs et présidents, listes et fiches, palmarès, statistiques,
-centurions, réalisateurs et records, ces trois derniers déjà passés au
-dictionnaire. À reprendre page par page, en relisant chaque fois qu'aucune
-couleur en dur n'est revenue. La suivante, par ordre de valeur : le
-palmarès, que l'accueil lie.
+**Le palmarès est refait le même jour.** Sa seule audace est **la
+chronologie** : une colonne d'années en grand caractère condensé — en or
+les titres, en encre les finales perdues, en gris les dates du club,
+fondation de 1902, scission de 1912, fusions de 1919 et 1933 —, et en
+regard ce qui s'est passé, l'adversaire, le score, le lieu, et **la
+rencontre quand la base la porte** : les six finales en base y sont liées,
+1914 et 1925 comprises. Le lecteur y voit d'un coup d'œil les années 1920
+et 1930 dorées, puis le long silence jusqu'en 2009. Le résumé tient en une
+phrase comptée sur la table `Trophy`, et chaque compétition a son tableau ;
+le championnat y réunit ses deux libellés de base, « Championnat de
+France » et « … Top 14 ». Les constantes de `PALMARES` restent le repli si
+la table était vide. Plus de quatre cases à trophée, plus de badges
+d'années, plus de frise à pastilles. Dictionnaire `palmares.*`.
+
+**Ce qui reste dans l'ancien rendu** : les dix autres pages — arbitres,
+entraîneurs et présidents, listes et fiches, statistiques, centurions,
+réalisateurs et records, ces trois derniers déjà passés au dictionnaire. À
+reprendre page par page, en relisant chaque fois qu'aucune couleur en dur
+n'est revenue. La suivante, par ordre de valeur : les statistiques.
 
 
 - **Couleur principale** : Rouge sang (#C8102E) - couleur dominante USAP

@@ -1,349 +1,231 @@
+import Link from "@/components/Lien";
 import { prisma } from "@/lib/prisma";
-import { Trophy, Star, Medal } from "lucide-react";
 import { PALMARES } from "@/lib/constants";
+import { dictionnaire } from "@/i18n/dictionnaire";
+import type { Langue } from "@/i18n/langues";
 import type { Metadata } from "next";
+
+/**
+ * Le palmarès, refait le 6 septembre 2026 dans l'identité posée sur les
+ * autres pages. Sa seule audace est **la chronologie** : une colonne
+ * d'années en grand caractère condensé — en or les titres, en encre les
+ * finales perdues, en gris les dates du club, fondation et fusions —, et
+ * en regard ce qui s'est passé, l'adversaire, le score, le lieu, et la
+ * rencontre quand la base la porte. C'est la structure réelle d'un
+ * palmarès, une suite de dates, et le lecteur y voit d'un coup d'œil les
+ * années 1920 et 1930 dorées, puis le long silence jusqu'en 2009.
+ *
+ * Puis, compétition par compétition, le même palmarès en tableaux. Les
+ * données viennent de la table `Trophy` ; si elle était vide, les
+ * constantes de `PALMARES` la remplacent.
+ *
+ * Ce que la page ne fait plus : quatre cases de chiffres à trophée, des
+ * badges d'années, des ronds d'icône, une frise à pastilles.
+ */
 
 export const dynamic = "force-dynamic";
 
-export const metadata: Metadata = {
-  title: "Palmarès - USAP Historia",
-  description:
-    "Le palmarès complet de l'USA Perpignan : titres de champion de France, finales, coupes et trophées européens.",
+type Props = { params: Promise<{ locale: Langue }> };
+
+export async function generateMetadata({ params }: Props): Promise<Metadata> {
+  const { locale } = await params;
+  const t = await dictionnaire(locale);
+  return { title: t("palmares.metaTitre"), description: t("palmares.metaDescription") };
+}
+
+const majuscule = (s: string) => s.charAt(0).toUpperCase() + s.slice(1);
+
+type Ligne = {
+  year: number;
+  achievement: string;
+  competition: string;
+  opponent: string | null;
+  score: string | null;
+  venue: string | null;
+  details: string | null;
 };
 
-// Icônes et couleurs par type de trophée
-const TROPHY_CONFIG: Record<
-  string,
-  { icon: typeof Trophy; color: string; bgColor: string }
-> = {
-  CHAMPION: {
-    icon: Trophy,
-    color: "text-usap-or",
-    bgColor: "bg-usap-or/10",
-  },
-  FINALISTE: {
-    icon: Star,
-    color: "text-muted-foreground",
-    bgColor: "bg-muted",
-  },
-  DEMI_FINALISTE: {
-    icon: Medal,
-    color: "text-muted-foreground",
-    bgColor: "bg-muted/50",
-  },
-  QUART_FINALISTE: {
-    icon: Medal,
-    color: "text-muted-foreground",
-    bgColor: "bg-muted/50",
-  },
-  VAINQUEUR_COUPE: {
-    icon: Trophy,
-    color: "text-usap-or",
-    bgColor: "bg-usap-or/10",
-  },
-  FINALISTE_COUPE: {
-    icon: Star,
-    color: "text-muted-foreground",
-    bgColor: "bg-muted",
-  },
-};
+const ORDRE_COMPETITIONS = ["Championnat de France", "Challenge Yves du Manoir", "Coupe d'Europe", "Pro D2"];
+/** Le championnat porte deux libellés en base, « Championnat de France » et « … Top 14 » : un seul ici. */
+const competitionDe = (l: Ligne) => (/championnat/i.test(l.competition) ? "Championnat de France" : l.competition);
+const estTitre = (l: Ligne) => l.achievement === "CHAMPION" || l.achievement === "VAINQUEUR_COUPE";
 
-const TROPHY_LABELS: Record<string, string> = {
-  CHAMPION: "Champion",
-  FINALISTE: "Finaliste",
-  DEMI_FINALISTE: "Demi-finaliste",
-  QUART_FINALISTE: "Quart de finaliste",
-  VAINQUEUR_COUPE: "Vainqueur",
-  FINALISTE_COUPE: "Finaliste",
-};
+export default async function PalmaresPage({ params }: Props) {
+  const { locale } = await params;
+  const t = await dictionnaire(locale);
 
-export default async function PalmaresPage() {
-  // Récupérer les trophées de la BDD
-  const trophies = await prisma.trophy.findMany({
-    orderBy: [{ year: "desc" }],
+  const trophies = await prisma.trophy.findMany({ orderBy: { year: "asc" } });
+  const lignes: Ligne[] =
+    trophies.length > 0
+      ? trophies
+      : [
+          ...PALMARES.titresChampion.map((year) => ({ year, achievement: "CHAMPION", competition: "Championnat de France" })),
+          ...PALMARES.finales.map((year) => ({ year, achievement: "FINALISTE", competition: "Championnat de France" })),
+          ...PALMARES.challengeDuManoir.map((year) => ({ year, achievement: "VAINQUEUR_COUPE", competition: "Challenge Yves du Manoir" })),
+          ...PALMARES.titresProD2.map((year) => ({ year, achievement: "CHAMPION", competition: "Pro D2" })),
+          ...PALMARES.finaleCoupeEurope.map((year) => ({ year, achievement: "FINALISTE", competition: "Coupe d'Europe" })),
+        ].map((l) => ({ ...l, opponent: null, score: null, venue: null, details: null }));
+
+  // Les finales que la base porte, par année et par championnat.
+  const finales = await prisma.match.findMany({
+    where: { round: { startsWith: "Finale" }, result: { not: null } },
+    select: { slug: true, date: true, competition: { select: { name: true, shortName: true } } },
+  });
+  const rencontreDe = (l: Ligne) =>
+    finales.find((f) => {
+      const c = f.competition.shortName || f.competition.name;
+      const proD2 = /pro d2/i.test(c);
+      return f.date.getFullYear() === l.year && proD2 === /pro d2/i.test(l.competition) && !/challenge|coupe/i.test(l.competition);
+    }) ?? null;
+
+  const libelle = (l: Ligne) => {
+    switch (l.achievement) {
+      case "CHAMPION":
+        return /pro d2/i.test(l.competition) ? t("palmares.championProD2") : t("palmares.champion");
+      case "FINALISTE":
+        return /championnat/i.test(l.competition) ? t("palmares.finaliste") : `${t("palmares.finalisteCoupe")} — ${l.competition}`;
+      case "DEMI_FINALISTE":
+        return `${t("palmares.demiFinaliste")} — ${l.competition}`;
+      case "QUART_FINALISTE":
+        return `${t("palmares.quartFinaliste")} — ${l.competition}`;
+      case "VAINQUEUR_COUPE":
+        return `${t("palmares.vainqueur")} du ${l.competition}`;
+      default:
+        return `${t("palmares.finalisteCoupe")} — ${l.competition}`;
+    }
+  };
+  const complement = (l: Ligne) =>
+    [l.opponent && t("palmares.contre", { adversaire: l.opponent }), l.score, l.venue && t("palmares.a", { lieu: l.venue })].filter(Boolean).join(", ");
+
+  const compte = (f: (l: Ligne) => boolean) => lignes.filter(f).length;
+  const resume = [
+    t("palmares.titres", { n: compte((l) => l.achievement === "CHAMPION" && /championnat/i.test(l.competition)) }),
+    t("palmares.finales", { n: compte((l) => l.achievement === "FINALISTE" && /championnat/i.test(l.competition)) }),
+    t("palmares.manoir", { n: compte((l) => l.achievement === "VAINQUEUR_COUPE" && /manoir/i.test(l.competition)) }),
+    t("palmares.proD2", { n: compte((l) => l.achievement === "CHAMPION" && /pro d2/i.test(l.competition)) }),
+    t("palmares.europe", { n: compte((l) => /coupe d'europe/i.test(l.competition)) }),
+  ];
+
+  // La chronologie : les dates du club et les trophées, dans l'ordre.
+  type Evenement = { year: number; texte: string; ton: "or" | "encre" | "gris"; ligne?: Ligne };
+  const dates: Evenement[] = [
+    { year: 1902, texte: t("palmares.fondation1902"), ton: "gris" },
+    { year: 1912, texte: t("palmares.sop1912"), ton: "gris" },
+    { year: 1919, texte: t("palmares.fusion1919"), ton: "gris" },
+    { year: 1933, texte: t("palmares.fusion1933"), ton: "gris" },
+  ];
+  const chronologie: Evenement[] = [
+    ...dates,
+    ...lignes.map<Evenement>((l) => ({ year: l.year, texte: libelle(l), ton: estTitre(l) ? "or" : "encre", ligne: l })),
+  ].sort((a, b) => a.year - b.year || (a.ton === "or" ? -1 : 1));
+  const tons = { or: "text-usap-or", encre: "text-foreground", gris: "text-muted-foreground" };
+
+  // Par compétition, dans l'ordre d'importance.
+  const groupes = new Map<string, Ligne[]>();
+  for (const l of lignes) {
+    const c = competitionDe(l);
+    groupes.set(c, [...(groupes.get(c) ?? []), l]);
+  }
+  const competitions = [...groupes.keys()].sort((a, b) => {
+    const ia = ORDRE_COMPETITIONS.indexOf(a);
+    const ib = ORDRE_COMPETITIONS.indexOf(b);
+    return (ia < 0 ? 99 : ia) - (ib < 0 ? 99 : ib) || a.localeCompare(b, "fr");
   });
 
-  // Grouper par compétition
-  const trophyByCompetition: Record<
-    string,
-    typeof trophies
-  > = {};
-  for (const t of trophies) {
-    if (!trophyByCompetition[t.competition]) {
-      trophyByCompetition[t.competition] = [];
-    }
-    trophyByCompetition[t.competition].push(t);
-  }
-
-  // Compteurs
-  const titlesCount = trophies.filter(
-    (t) => t.achievement === "CHAMPION" || t.achievement === "VAINQUEUR_COUPE",
-  ).length;
-  const finalsCount = trophies.filter(
-    (t) =>
-      t.achievement === "FINALISTE" || t.achievement === "FINALISTE_COUPE",
-  ).length;
-
-  // Si pas de données en BDD, utiliser les constantes statiques
-  const hasTrophyData = trophies.length > 0;
-
   return (
-    <div className="mx-auto max-w-7xl px-4 py-10">
-      <h1 className="mb-2 text-3xl font-bold uppercase tracking-wider text-foreground">
-        Palmarès
-      </h1>
-      <p className="mb-10 text-muted-foreground">
-        L&apos;histoire glorieuse de l&apos;USAP depuis 1902.
-      </p>
+    <div className="mx-auto max-w-6xl px-4 py-10 sm:py-14">
+      <header className="mb-8 sm:mb-12">
+        <h1 className="font-display text-7xl uppercase leading-none text-usap-sang sm:text-8xl">{t("palmares.titre")}</h1>
+        <p className="mt-4 max-w-prose text-lg leading-snug text-foreground">{majuscule(resume.join(", ").replace(/, ([^,]*)$/, " et $1"))}.</p>
+        <p className="mt-2 max-w-prose text-sm leading-relaxed text-muted-foreground">{t("palmares.reserve")}</p>
+      </header>
 
-      {/* Compteurs résumé */}
-      <div className="mb-10 grid grid-cols-2 gap-4 md:grid-cols-4">
-        <div className="rounded-lg border border-border bg-usap-carte p-4 text-center">
-          <Trophy className="mx-auto mb-2 h-6 w-6 text-usap-or" />
-          <div className="text-2xl font-bold text-usap-or sm:text-3xl">
-            {hasTrophyData ? titlesCount : PALMARES.titresChampion.length}
-          </div>
-          <div className="mt-1 text-sm text-muted-foreground">
-            Titres de champion
-          </div>
-        </div>
-        <div className="rounded-lg border border-border bg-usap-carte p-4 text-center">
-          <Star className="mx-auto mb-2 h-6 w-6 text-muted-foreground" />
-          <div className="text-2xl font-bold text-foreground sm:text-3xl">
-            {hasTrophyData ? finalsCount : PALMARES.finales.length}
-          </div>
-          <div className="mt-1 text-sm text-muted-foreground">Finales</div>
-        </div>
-        <div className="rounded-lg border border-border bg-usap-carte p-4 text-center">
-          <Trophy className="mx-auto mb-2 h-6 w-6 text-usap-or" />
-          <div className="text-2xl font-bold text-usap-or sm:text-3xl">
-            {hasTrophyData
-              ? trophies.filter(
-                  (t) =>
-                    t.achievement === "VAINQUEUR_COUPE" &&
-                    t.competition.includes("Manoir"),
-                ).length
-              : PALMARES.challengeDuManoir.length}
-          </div>
-          <div className="mt-1 text-sm text-muted-foreground">
-            Coupes du Manoir
-          </div>
-        </div>
-        <div className="rounded-lg border border-border bg-usap-carte p-4 text-center">
-          <Trophy className="mx-auto mb-2 h-6 w-6 text-usap-or" />
-          <div className="text-2xl font-bold text-usap-or sm:text-3xl">
-            {PALMARES.titresProD2.length}
-          </div>
-          <div className="mt-1 text-sm text-muted-foreground">
-            Titres Pro D2
-          </div>
-        </div>
-      </div>
+      {/* La chronologie */}
+      <section className="mb-12">
+        <Titre>{t("palmares.chronologieTitre")}</Titre>
+        <table className="w-full max-w-4xl border-collapse text-sm">
+          <tbody>
+            {chronologie.map((e, i) => {
+              const rencontre = e.ligne ? rencontreDe(e.ligne) : null;
+              return (
+                <tr key={i} className="border-b border-border">
+                  <td className={`w-24 py-1 pr-4 align-baseline font-display text-4xl leading-none tabular-nums sm:w-32 sm:text-5xl ${tons[e.ton]}`}>{e.year}</td>
+                  <td className="py-2 align-baseline">
+                    <span className={e.ton === "gris" ? "text-muted-foreground" : "font-semibold text-foreground"}>{e.texte}</span>
+                    {e.ligne && complement(e.ligne) && <span className="text-muted-foreground">, {complement(e.ligne)}</span>}
+                    {e.ligne?.details && <span className="block text-xs text-muted-foreground">{e.ligne.details}</span>}
+                    {rencontre && (
+                      <>
+                        {" "}
+                        <Link href={`/matchs/${rencontre.slug}`} className="text-sm text-muted-foreground underline hover:text-usap-sang">
+                          {t("palmares.laRencontre")}
+                        </Link>
+                      </>
+                    )}
+                  </td>
+                </tr>
+              );
+            })}
+          </tbody>
+        </table>
+      </section>
 
-      {hasTrophyData ? (
-        /* ── Données depuis la BDD ─────────────────────────── */
-        <div className="space-y-10">
-          {Object.entries(trophyByCompetition).map(([competition, items]) => (
-            <section key={competition}>
-              <h2 className="mb-4 text-2xl font-bold uppercase tracking-wider text-foreground">
-                {competition}
-              </h2>
-              <div className="space-y-3">
-                {items.map((t) => {
-                  const config = TROPHY_CONFIG[t.achievement] ?? {
-                    icon: Medal,
-                    color: "text-muted-foreground",
-                    bgColor: "bg-muted/50",
-                  };
-                  const Icon = config.icon;
+      {/* Compétition par compétition */}
+      {competitions.map((c) => (
+        <section key={c} className="mb-10">
+          <Titre encre>{c === "Championnat de France" ? t("palmares.championnat") : c}</Titre>
+          <div className="overflow-x-auto">
+            <table className="w-full max-w-4xl border-collapse text-sm">
+              <thead>
+                <tr className="border-b border-border text-left text-xs text-muted-foreground">
+                  <th scope="col" className="py-2 pr-4 font-medium">{t("palmares.colAnnee")}</th>
+                  <th scope="col" className="py-2 pr-4 font-medium">{t("palmares.colResultat")}</th>
+                  <th scope="col" className="py-2 pr-4 font-medium">{t("palmares.colAdversaire")}</th>
+                  <th scope="col" className="py-2 pr-4 text-right font-medium">{t("palmares.colScore")}</th>
+                  <th scope="col" className="hidden py-2 pr-4 font-medium sm:table-cell">{t("palmares.colLieu")}</th>
+                  <th scope="col" className="py-2 font-medium">
+                    <span className="sr-only">{t("palmares.colRencontre")}</span>
+                  </th>
+                </tr>
+              </thead>
+              <tbody className="tabular-nums">
+                {[...groupes.get(c)!].reverse().map((l, i) => {
+                  const rencontre = rencontreDe(l);
                   return (
-                    <div
-                      key={t.id}
-                      className="flex items-start gap-4 rounded-lg border border-border bg-usap-carte p-4"
-                    >
-                      <div
-                        className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-full ${config.bgColor}`}
-                      >
-                        <Icon className={`h-5 w-5 ${config.color}`} />
-                      </div>
-                      <div className="flex-1">
-                        <div className="flex items-center gap-2">
-                          <span className="text-lg font-bold text-usap-or">
-                            {t.year}
-                          </span>
-                          <span
-                            className={`rounded px-2 py-0.5 text-xs font-medium ${config.bgColor} ${config.color}`}
-                          >
-                            {TROPHY_LABELS[t.achievement] ?? t.achievement}
-                          </span>
-                        </div>
-                        {(t.opponent || t.score) && (
-                          <p className="mt-1 text-sm text-foreground">
-                            {t.opponent && (
-                              <span>
-                                vs {t.opponent}
-                                {t.score && ` — ${t.score}`}
-                              </span>
-                            )}
-                            {!t.opponent && t.score && <span>{t.score}</span>}
-                          </p>
+                    <tr key={i} className="border-b border-border hover:bg-muted">
+                      <td className={`py-1.5 pr-4 font-semibold ${estTitre(l) ? "text-usap-or" : "text-foreground"}`}>{l.year}</td>
+                      <td className="py-1.5 pr-4 text-foreground">{libelle(l).replace(/ — .*$/, "")}</td>
+                      <td className="py-1.5 pr-4 text-muted-foreground">{l.opponent ?? ""}</td>
+                      <td className="py-1.5 pr-4 text-right whitespace-nowrap text-foreground">{l.score ?? ""}</td>
+                      <td className="hidden py-1.5 pr-4 text-muted-foreground sm:table-cell">{l.venue ?? ""}</td>
+                      <td className="py-1.5 text-sm">
+                        {rencontre && (
+                          <Link href={`/matchs/${rencontre.slug}`} className="text-muted-foreground underline hover:text-usap-sang">
+                            {t("palmares.laRencontre")}
+                          </Link>
                         )}
-                        {t.venue && (
-                          <p className="mt-0.5 text-xs text-muted-foreground">
-                            {t.venue}
-                          </p>
-                        )}
-                        {t.details && (
-                          <p className="mt-1 text-sm text-muted-foreground">
-                            {t.details}
-                          </p>
-                        )}
-                      </div>
-                    </div>
+                      </td>
+                    </tr>
                   );
                 })}
-              </div>
-            </section>
-          ))}
-        </div>
-      ) : (
-        /* ── Fallback : données statiques ──────────────────── */
-        <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
-          {/* Champion de France */}
-          <PalmaresCard
-            icon={<Trophy className="h-5 w-5 text-usap-or" />}
-            title="Champion de France"
-            years={PALMARES.titresChampion}
-            badgeClass="bg-usap-sang/20 text-usap-sang"
-          />
-
-          {/* Finaliste */}
-          <PalmaresCard
-            icon={<Star className="h-5 w-5 text-muted-foreground" />}
-            title="Finaliste du Championnat"
-            years={PALMARES.finales}
-            badgeClass="bg-muted text-muted-foreground"
-          />
-
-          {/* Champion Pro D2 */}
-          <PalmaresCard
-            icon={<Trophy className="h-5 w-5 text-usap-or" />}
-            title="Champion de Pro D2"
-            years={PALMARES.titresProD2}
-            badgeClass="bg-usap-or/20 text-usap-or"
-          />
-
-          {/* Challenge du Manoir */}
-          <PalmaresCard
-            icon={<Trophy className="h-5 w-5 text-usap-or" />}
-            title="Challenge Yves du Manoir"
-            years={PALMARES.challengeDuManoir}
-            badgeClass="bg-usap-or/20 text-usap-or"
-          />
-
-          {/* Finale Coupe d'Europe */}
-          <PalmaresCard
-            icon={<Star className="h-5 w-5 text-muted-foreground" />}
-            title="Finale Coupe d'Europe"
-            years={PALMARES.finaleCoupeEurope}
-            badgeClass="bg-muted text-muted-foreground"
-          />
-        </div>
-      )}
-
-      {/* Frise chronologique résumée */}
-      <section className="mt-16">
-        <h2 className="mb-6 text-2xl font-bold uppercase tracking-wider text-foreground">
-          Chronologie
-        </h2>
-        <div className="relative border-l-2 border-usap-sang/30 pl-6">
-          <TimelineItem year={1902} text="Fondation de l'ASP (Association Sportive Perpignanaise)" />
-          <TimelineItem year={1914} text="1er titre de Champion de France" highlight />
-          <TimelineItem year={1919} text="Fusion ASP + SOP = USP" />
-          <TimelineItem year={1921} text="2e titre de Champion de France" highlight />
-          <TimelineItem year={1925} text="3e titre de Champion de France" highlight />
-          <TimelineItem year={1933} text="Fusion USP + Arlequin Club = USAP" />
-          <TimelineItem year={1935} text="1er Challenge Yves du Manoir" highlight />
-          <TimelineItem year={1938} text="4e titre de Champion de France" highlight />
-          <TimelineItem year={1944} text="5e titre de Champion de France" highlight />
-          <TimelineItem year={1955} text="6e titre + 2e Challenge du Manoir (doublé)" highlight />
-          <TimelineItem year={1994} text="3e Challenge Yves du Manoir" highlight />
-          <TimelineItem year={2003} text="Finale de la Coupe d'Europe (H-Cup)" />
-          <TimelineItem year={2009} text="7e titre de Champion de France" highlight />
-          <TimelineItem year={2010} text="Finale du Top 14" />
-          <TimelineItem year={2018} text="Champion de Pro D2 — Remontée en Top 14" highlight />
-          <TimelineItem year={2021} text="Champion de Pro D2 — Remontée en Top 14" highlight />
-        </div>
-      </section>
+              </tbody>
+            </table>
+          </div>
+        </section>
+      ))}
     </div>
   );
 }
 
-// ── Composants locaux ────────────────────────────────────────────────
-
-function PalmaresCard({
-  icon,
-  title,
-  years,
-  badgeClass,
-}: {
-  icon: React.ReactNode;
-  title: string;
-  years: readonly number[];
-  badgeClass: string;
-}) {
+/** Le titre d'une section : la voix condensée de la liste, sous un filet. */
+function Titre({ children, encre = false }: { children: React.ReactNode; encre?: boolean }) {
   return (
-    <div className="rounded-lg border border-border bg-usap-carte p-6">
-      <div className="mb-4 flex items-center gap-2">
-        {icon}
-        <h3 className="text-lg font-bold uppercase text-foreground">
-          {title}
-        </h3>
-      </div>
-      <div className="flex flex-wrap gap-2">
-        {years.map((year) => (
-          <span
-            key={year}
-            className={`rounded px-3 py-1 text-sm font-medium ${badgeClass}`}
-          >
-            {year}
-          </span>
-        ))}
-      </div>
-    </div>
-  );
-}
-
-function TimelineItem({
-  year,
-  text,
-  highlight,
-}: {
-  year: number;
-  text: string;
-  highlight?: boolean;
-}) {
-  return (
-    <div className="relative mb-6 last:mb-0">
-      <div
-        className={`absolute -left-[31px] h-4 w-4 rounded-full border-2 ${
-          highlight
-            ? "border-usap-sang bg-usap-sang"
-            : "border-border bg-background"
-        }`}
-      />
-      <div className="flex items-baseline gap-3">
-        <span
-          className={`text-lg font-bold ${highlight ? "text-usap-or" : "text-muted-foreground"}`}
-        >
-          {year}
-        </span>
-        <span
-          className={`text-sm ${highlight ? "font-medium text-foreground" : "text-muted-foreground"}`}
-        >
-          {text}
-        </span>
-      </div>
-    </div>
+    <h2
+      className={`mb-3 border-b-2 pb-1 font-display text-3xl uppercase leading-none ${
+        encre ? "border-foreground text-foreground" : "border-usap-sang text-usap-sang"
+      }`}
+    >
+      {children}
+    </h2>
   );
 }
