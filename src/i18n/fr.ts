@@ -254,6 +254,29 @@ export const fr = {
     precedente: "Page précédente",
     suivante: "Page suivante",
   },
+  stades: {
+    // La liste des stades.
+    titre: "Stades",
+    metaTitre: "Stades - USAP Historia",
+    metaDescription:
+      "Tous les stades où l'USAP a joué, pays par pays, avec le bilan de chaque terrain.",
+    chapeau: { one: "{n} stade en base, dont {joues} où l'USAP a joué.", other: "{n} stades en base, dont {joues} où l'USAP a joué." },
+    reserve:
+      "Les bilans portent sur les rencontres saisies, depuis 2004-2005 et les deux finales d'avant-guerre ; un terrain d'aujourd'hui posé sur une rencontre d'hier est dit en provenance sur sa fiche.",
+    sansPays: "Pays inconnu",
+    domicile: "USAP",
+    colStade: "Stade",
+    colVille: "Ville",
+    colPlaces: "Places",
+    colOccupant: "Terrain de",
+    colPeriode: "Joué",
+    colMatchs: "M",
+    colVictoires: "V",
+    colNuls: "N",
+    colDefaites: "D",
+    colPour: "Pour",
+    colContre: "Contre",
+  },
   stade: {
     // La fiche d'un stade.
     filAriane: "Stades",

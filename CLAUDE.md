@@ -1735,9 +1735,21 @@ l'affluence, le résultat en liens, le compte de la sélection, la
 provenance en pied. Plus de quatre cases vertes et rouges, plus d'épingle
 grise à la place d'une photo qu'aucun stade n'a. Dictionnaire `stade.*`.
 
-**Ce qui reste dans l'ancien rendu** : les douze autres pages. À reprendre
-page par page, en relisant chaque fois qu'aucune couleur en dur n'est
-revenue. La suivante, par ordre de valeur : la liste des stades.
+**La liste des stades est refaite le même jour**, sur le modèle de la liste
+des adversaires : **l'épine des pays**, la France en tête et Aimé-Giral en
+tête de la France. Une ligne par stade : le nom lié, la ville, la capacité,
+qui y reçoit — l'USAP en rouge, le club adverse lié à sa fiche —, la
+période où l'USAP y a joué, et **le bilan du terrain**, que la grille de
+cartes ne disait pas, par deux `groupBy` sur les rencontres jouées. Plus
+d'épingle grise, plus de pastille « Domicile USAP ». Dictionnaire
+`stades.*`.
+
+**Ce qui reste dans l'ancien rendu** : les onze autres pages — arbitres,
+entraîneurs et présidents, listes et fiches, palmarès, statistiques,
+centurions, réalisateurs et records, ces trois derniers déjà passés au
+dictionnaire. À reprendre page par page, en relisant chaque fois qu'aucune
+couleur en dur n'est revenue. La suivante, par ordre de valeur : le
+palmarès, que l'accueil lie.
 
 
 - **Couleur principale** : Rouge sang (#C8102E) - couleur dominante USAP
