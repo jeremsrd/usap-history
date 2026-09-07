@@ -52,7 +52,7 @@ usap-history/
 │   │   └── ui/ImageUpload.tsx
 │   ├── i18n/                     # langues.ts — les langues et le préfixe d'URL
 │   ├── lib/                      # prisma.ts, slugs.ts, utils.ts, constants.ts,
-│   │                             #   periodes.ts, supabase/
+│   │                             #   periodes.ts, staff.ts, supabase/
 │   └── types/index.ts
 ├── scripts/                      # ~180 scripts d'import, un par match ou par lot
 │   └── lib/                      # lnr.ts (feuilles de match LNR), noms.ts
@@ -1797,12 +1797,48 @@ raison. Plus de silhouette grise, plus de quatre cases dont deux en vert
 et rouge de Tailwind, plus de pastilles. Dictionnaire `arbitres.*` et
 `arbitre.*`.
 
-**Ce qui reste dans l'ancien rendu** : les sept autres pages —
-entraîneurs et présidents, listes et fiches, centurions, réalisateurs et
-records, ces trois derniers déjà passés au dictionnaire. À reprendre page
-par page, en relisant chaque fois qu'aucune couleur en dur n'est revenue.
-Les suivantes, par ordre de valeur : les entraîneurs et les présidents,
-puis les trois classements.
+**La fiche entraîneur et la liste des entraîneurs sont refaites le
+7 septembre 2026.** Le nom est en rouge comme celui d'un joueur — c'est un
+homme du club —, et sous le nom ses rôles et leurs périodes en une phrase,
+**en séquences contiguës** : « entraîneur principal de 2005-2006 à
+2006-2007, puis de 2023-2024 à 2025-2026 ; adjoint de 2007-2008 à
+2009-2010 » pour Azéma, et jamais « de 2005-2006 à 2025-2026 » d'un homme
+parti treize ans entre les deux. Le titre décidé sous son banc en or,
+comme sur la page de saison. La seule audace de la fiche est **la frise
+des rencontres jouées sous son banc, bornée à ses dates de prise et de fin
+de fonction** : Azéma a quitté le banc le 2 novembre 2025, et les
+rencontres suivantes sont celles de Labit — sans cette borne la même
+défaite comptait deux fois dans deux bilans, ce que l'ancienne page
+faisait. La règle vit dans `src/lib/staff.ts` — `passagesDe()` unifie le
+staff détaillé et la relation d'entraîneur principal, `sousSonBanc()`
+filtre les rencontres, `sequences()` découpe les saisons —, et les deux
+pages l'appellent. Le bilan tient en une phrase, toutes compétitions ; la
+saison par saison en tableau, rôle avec ses dates au mois près, division,
+classement, bilan du championnat, fait marquant en mots ; la note dit que
+les deux bilans ne comptent pas la même chose. `Provenance` accepte
+`Coach`.
+
+La liste est sur le modèle des saisons, mais **l'épine est celle des
+rôles** — entraîneurs principaux, puis ceux qui n'ont été qu'adjoints,
+puis Gilbert Brutus sous « avant les saisons saisies » —, du plus récent
+au plus ancien sous chacune. **Une épine des décennies a été essayée et
+défaite** : vingt-deux saisons tiennent en trois décennies, et Azéma,
+arrivé en 2005, tombait dans les années 2000 en tête de liste alors qu'il
+est le dernier parti. Qui dirigeait le banc est la vraie question d'une
+liste d'entraîneurs. Une ligne par homme : rôles en mots — « adjoint puis
+principal » —, période en séquences, saisons, le bilan des rencontres sous
+son banc, et le fait marquant de ses saisons, les titres en or et
+regroupés — « Champion de Pro D2 2018 et 2021 ». Pas de colonne de
+portrait, aucun des vingt et un n'en ayant. Plus de cartes à icône, plus
+de cinq cases dont deux en vert et rouge, plus d'encadré or à trophée,
+plus d'emoji ni de flèches. Dictionnaire `entraineurs.*` et
+`entraineur.*`, les libellés de rôle repris de `saison.role*`.
+
+**Ce qui reste dans l'ancien rendu** : les cinq autres pages — présidents,
+liste et fiche, centurions, réalisateurs et records, ces trois derniers
+déjà passés au dictionnaire. À reprendre page par page, en relisant
+chaque fois qu'aucune couleur en dur n'est revenue. Les suivantes, par
+ordre de valeur : les présidents, puis les trois classements.
 
 
 - **Couleur principale** : Rouge sang (#C8102E) - couleur dominante USAP
