@@ -1852,10 +1852,18 @@ nom, les saisons, le bilan et le fait marquant. Plus de cartes à icône
 avec le mandat en or, plus de trois cases, plus d'encadré à trophée, plus
 d'emoji ni de flèches. Dictionnaire `presidents.*` et `president.*`.
 
-**Ce qui reste dans l'ancien rendu** : les trois classements —
-centurions, réalisateurs et records —, déjà passés au dictionnaire. À
-reprendre page par page, en relisant chaque fois qu'aucune couleur en dur
-n'est revenue.
+**Les centurions sont refaits le 7 septembre 2026.** Sa seule audace est
+**le nombre de matchs en grand caractère condensé en tête de chaque
+ligne**, en rouge : c'est ce qui fait un centurion et la clé du
+classement, le rang n'en étant que l'ombre, en gris à côté. À matchs
+égaux, le plus ancien passe devant. La réserve de couverture, qui tenait
+dans un encadré gris, est un paragraphe sous le chapeau comme sur toutes
+les listes. Plus d'icône de bouclier, plus de tableau bordé et arrondi.
+La page portait déjà son dictionnaire.
+
+**Ce qui reste dans l'ancien rendu** : les réalisateurs et les records,
+déjà passés au dictionnaire. À reprendre page par page, en relisant
+chaque fois qu'aucune couleur en dur n'est revenue.
 
 
 - **Couleur principale** : Rouge sang (#C8102E) - couleur dominante USAP
