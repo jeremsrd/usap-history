@@ -1,5 +1,6 @@
 import { LANGUE_PAR_DEFAUT, type Langue } from "./langues";
 import { fr } from "./fr";
+import { ca } from "./ca";
 
 /**
  * Le dictionnaire, et la façon d'y puiser.
@@ -27,8 +28,9 @@ export type Entree = string | { one: string; other: string };
 
 const PAR_LANGUE: Record<Langue, () => Promise<{ default: unknown }>> = {
   fr: async () => ({ default: fr }),
-  // Le catalan n'existe pas encore : il rend le français, et la page le sait.
-  ca: async () => ({ default: fr }),
+  // Le catalan : ce qui lui manque retombe sur le français, section par
+  // section — l'accueil, refondu en dernier, n'y est pas encore.
+  ca: async () => ({ default: ca }),
 };
 
 function descendre(objet: unknown, cle: string): unknown {

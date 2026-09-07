@@ -998,6 +998,7 @@ doublons.
 | `seed-season-2021-2022.ts` | crée les rencontres d'une saison entière — date et heure, compétition, adversaire, lieu, score, réalisations, résultat, bonus, arbitre — puis les agrégats de saison. Premier jalon de la phase 4 |
 | `lib/erc.ts` | **les pages de l'ERC dans la Wayback Machine**, source officielle des coupes d'Europe d'avant l'EPCR. Deux lecteurs : les comptes rendus de 2007-2008 (`eng/12_NNNN.php`, en latin-1) — compositions à 22 numérotées, capitaines, cartons, réalisations par joueur, essais de pénalité, affluence, stade — et le **Match Centre** de 2010-2013 (`eng/matchcentre/NNNNN.php`), qui ajoute la mi-temps, l'arbitre et une **chronologie minutée**. Quatre secondes entre deux pages et un cache sur disque : l'archive refuse tout après une centaine de requêtes rapprochées |
 | `lib/attestations.ts` | **le troisième état** : `attester()` pose ou remplace la provenance d'un fait — entité, champ, degré, source, qui a tranché, qui a relu —, `attestationsDe()` la lit. À appeler par tout script qui écrit une valeur venue d'ailleurs que de la feuille officielle |
+| `verifier-dictionnaire.ts` | lecture seule : confronte `ca.ts` à `fr.ts` — clés manquantes, en trop, `{variables}` divergentes. Zéro défaut attendu, `accueil` seule section absente. À passer après toute clé ajoutée |
 | `seed-attestations.ts` | verse dans `attestations` les arbitrages que CLAUDE.md portait : postes tranchés, faits donnés par Jérémy, terrains d'aujourd'hui et terrains neutres, écussons hors LNR et EPCR, scores corrigés, couperets renseignés par Wikipédia, campagnes européennes d'ESPN et de l'ERC, saisons dont le garde-fou n'est pas la LNR. 126 lignes, idempotent. `--dry` |
 | `lib/gallica.ts` | **la presse numérisée de Gallica**, pour l'avant-guerre : le fascicule d'un jour, les pages où un mot figure, l'OCR d'une page en ALTO — césures recousues —, et ce qu'un article dit d'un match : les deux XV par lignes (« Les équipes se présentèrent comme suit »), le capitaine, l'arbitre, le score et la mi-temps d'un titre. Trente secondes entre deux requêtes, cache sur disque : Gallica rend 429 dès la cinquième page rapprochée |
 | `seed-match-gallica.ts` | **une rencontre d'avant-guerre depuis *L'Auto*** — les finales de 1914, 1921, 1925 et 1938 sont dans `MATCHS`, **1914 et 1925 sont écrites**, relues sur l'image et validées par Jérémy (`RELECTURES`, `valide`) ; le script crée la rencontre, les deux XV sans numéro, les réalisations sous le barème de l'époque, la chronologie de 1914 à l'horloge, et une attestation sur chaque fait : retrouve le numéro du lendemain, imprime XV, capitaines, arbitre, score et mi-temps avec les écarts — une ligne qui ne compte pas ses hommes, un club à quatorze —, et confronte chaque nom à la base. Refuse d'écrire tant que la base ne sait pas porter la provenance d'une composition ni le barème de 1925. `--match=AAAA-MM-JJ --dry` ; les rencontres connues sont dans `MATCHS` |
@@ -1451,6 +1452,44 @@ de Barcelone.
 - Les six redirections de slug passent par `cheminLocalise()`, faute de quoi un
   joueur renommé sortait de sa langue.
 
+### Le catalan — écrit le 7 septembre 2026, à faire relire
+
+**`src/i18n/ca.ts` répond à `fr.ts` clé pour clé**, 757 clés sur 780, et
+`dictionnaire.ts` le sert : toutes les pages publiques sont en catalan
+sous `/ca`, **sauf l'accueil**, dont la section manque à dessein — la page
+sera refondue en dernier, et son catalan écrit alors. C'est la seule qui
+porte encore le bandeau « Traducció al català en curs », déplacé du layout
+vers la page elle-même : un bandeau global aurait menti sur trente-cinq
+pages traduites.
+
+**Ce qui est écrit est du catalan standard, avec le vocabulaire du rugby
+tel que le Termcat le fixe** — assaig, transformació, cop de càstig, melé,
+talonador, obertura —, et **aucune tournure rossellonaise n'a été
+inventée** : le rossellonais est la variété visée, et c'est à un
+catalanophone d'ici de relire, pas à une machine de deviner. Trois choix
+tranchés une fois pour toutes, en tête de `ca.ts` : les lettres de
+résultat sont V, E, D — empat —, la colonne des matchs joués s'écrit « PJ »
+comme dans la presse, et les ordinaux de classement sont féminins,
+« 5a posició », parce qu'ils finissent tous en -a et qu'une seule
+plantilla suffit là où le français en demandait deux. « Arrière » est rendu
+« defensa », à confirmer à la relecture.
+
+**Ce que la traduction a fait sortir du code**, parce qu'une phrase en dur
+ne se traduit pas : les libellés de poste (`postes.*`, `POSITIONS` ne
+gardant que le numéro), les divisions (`divisions.*`), la section
+« Sources et arbitrages » (`provenance.*`, `Provenance` reçoit désormais
+la langue), les lettres V/N/D des frises de six pages, qui étaient
+écrites en dur dans chaque `lettre()`, deux « et » de jointure, et les
+noms de mois, qui passent par `LOCALE_INTL` — `ca-FR` pour le catalan.
+**Les nombres restent en `fr-FR` partout**, « 12 065 » et non « 12.065» :
+la Catalunya Nord est en France.
+
+**`scripts/verifier-dictionnaire.ts` garde les deux cahiers alignés** :
+clés manquantes, clés en trop, et `{variables}` qui divergent — une phrase
+traduite qui perdrait `{n}` l'afficherait en clair. Attendu : zéro défaut,
+la seule section absente étant `accueil`. **À passer après toute clé
+ajoutée à `fr.ts`.**
+
 ### Le dictionnaire — second temps, commencé
 
 `src/i18n/fr.ts` porte les phrases, `src/i18n/dictionnaire.ts` la façon d'y
@@ -1482,11 +1521,8 @@ puiser : `const t = await dictionnaire(langue)` puis `t("centurions.titre")`.
 page, bascule de thème, libellés de navigation — et trois pages, `centurions`,
 `realisateurs` et `records`, avec les en-têtes de tableau qu'elles partagent.
 
-**Ce qui ne l'est pas** : les vingt et une autres pages publiques, qui portent
-encore leur français en clair. Elles marchent, elles ne sont simplement pas
-prêtes pour le catalan. **Les sortir au fil des séances**, quand on touche une
-page pour autre chose — c'est ainsi que la migration se finit sans y consacrer
-une journée.
+**Les trente-cinq autres pages sont sorties du code au fil du chantier
+design**, du 5 au 7 septembre 2026, et le catalan les couvre depuis le 7.
 
 **L'admin n'y entrera pas**, et c'est délibéré : c'est le bureau de Jérémy,
 pas une page publique.
@@ -1512,12 +1548,13 @@ Le choix a d'abord été deux libellés, « FR » et « CA », au motif qu'un dr
 désigne un État et non une langue. **Arbitré par Jérémy le 4 septembre 2026**
 en faveur des drapeaux.
 
-**Et une langue offerte mais pas traduite doit le dire.** Le layout pose sur
-toute page qui n'est pas en français un bandeau : « Traducció al català en
-curs. Aquesta pàgina encara està en francès. » Sans lui, le sélecteur
-promettrait du catalan et rendrait du français — ce qui vaut moins que pas de
-sélecteur du tout. Le bandeau disparaîtra de lui-même quand la langue par
-défaut cessera d'être la seule traduite.
+**Et une langue offerte mais pas traduite doit le dire.** L'accueil, seule
+page sans catalan, porte un bandeau : « Traducció al català en curs. Aquesta
+pàgina encara està en francès. » Sans lui, le sélecteur promettrait du
+catalan et rendrait du français — ce qui vaut moins que pas de sélecteur du
+tout. Il était dans le layout, sur toutes les pages, tant qu'aucune n'était
+traduite ; il est dans la page depuis le 7 septembre 2026, et partira avec
+sa refonte.
 
 **Cette phrase est à faire relire par un catalanophone**, comme tout le
 catalan à venir.
@@ -1525,6 +1562,8 @@ catalan à venir.
 ### Ce qui reste
 
 - **Pas encore d'`hreflang`** dans les métadonnées.
+- **La relecture par un catalanophone de Catalunya Nord**, de tout `ca.ts`.
+- **L'accueil**, avec sa refonte.
 - **Les textes de la base** — bilans de saison, biographies — sont un chantier
   à part, et le plus lourd : ils grossissent à chaque saison reprise. Une
   traduction manquante devra se voir, comme se voit une donnée que la source ne

@@ -1,7 +1,7 @@
 import Link from "@/components/Lien";
 import { prisma } from "@/lib/prisma";
 import { MATCH_JOUE } from "@/lib/matchs";
-import { DIVISIONS, PALMARES } from "@/lib/constants";
+import { PALMARES } from "@/lib/constants";
 import { dictionnaire } from "@/i18n/dictionnaire";
 import type { Langue } from "@/i18n/langues";
 import type { Metadata } from "next";
@@ -146,7 +146,7 @@ export default async function SaisonsPage({ params }: Props) {
                         {s.label}
                       </Link>
                     </td>
-                    <td className="py-1.5 pr-4 whitespace-nowrap text-muted-foreground">{DIVISIONS[s.division] ?? s.division}</td>
+                    <td className="py-1.5 pr-4 whitespace-nowrap text-muted-foreground">{t(`divisions.${s.division}`)}</td>
                     <td className="py-1.5 pr-3 text-right whitespace-nowrap text-foreground">
                       {s.finalRanking == null ? "" : s.finalRanking === 1 ? t("saison.premier") : t("saison.rang", { n: s.finalRanking })}
                     </td>

@@ -5,7 +5,6 @@ import { notFound, redirect } from "next/navigation";
 import { prisma } from "@/lib/prisma";
 import { estJoue } from "@/lib/matchs";
 import type { MatchResult } from "@prisma/client";
-import { POSITIONS } from "@/lib/constants";
 import { formatDateFR, countryCodeToFlag } from "@/lib/utils";
 import { creditPhoto } from "@/lib/credits-photos";
 import type { Metadata } from "next";
@@ -55,7 +54,8 @@ type Props = {
 };
 
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
-  const { slug } = await params;
+  const { locale, slug } = await params;
+  const t = await dictionnaire(locale);
   const id = extractIdFromSlug(slug);
   if (!id) return { title: "Joueur introuvable - USAP Historia" };
 
@@ -65,7 +65,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   });
   if (!player) return { title: "Joueur introuvable - USAP Historia" };
 
-  const posLabel = player.position ? POSITIONS[player.position]?.label : undefined;
+  const posLabel = player.position ? t(`postes.${player.position}`) : undefined;
   return {
     title: `${player.firstName} ${player.lastName} - USAP Historia`,
     description: `Fiche de ${player.firstName} ${player.lastName}${posLabel ? `, ${posLabel}` : ""} à l'USA Perpignan. Statistiques, carrière et matchs.`,
@@ -173,7 +173,7 @@ export default async function JoueurDetailPage({ params }: Props) {
       : bilan[0][0] === bilan[bilan.length - 1][0]
         ? bilan[0][0]
         : `${bilan[0][0].slice(0, 4)}-${bilan[bilan.length - 1][0].slice(5)}`;
-  const poste = player.position ? `${POSITIONS[player.position]?.label ?? player.position}. ` : "";
+  const poste = player.position ? `${t(`postes.${player.position}`)}. ` : "";
 
   const age = player.birthDate && !player.deathDate
     ? Math.floor((Date.now() - new Date(player.birthDate).getTime()) / (365.25 * 24 * 60 * 60 * 1000))
@@ -416,7 +416,7 @@ export default async function JoueurDetailPage({ params }: Props) {
       )}
 
       {/* D'où vient ce que la fiche affirme, quand ce n'est pas d'une feuille */}
-      <Provenance entite="Player" id={player.id} />
+      <Provenance entite="Player" id={player.id} langue={locale} />
     </div>
   );
 }

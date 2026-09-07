@@ -3,7 +3,7 @@ import { Archivo } from "next/font/google";
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
 import { ThemeProvider } from "@/components/ThemeProvider";
-import { LANGUE_PAR_DEFAUT, LANGUES, estUneLangue, type Langue } from "@/i18n/langues";
+import { LANGUES, estUneLangue, type Langue } from "@/i18n/langues";
 import { dictionnaire } from "@/i18n/dictionnaire";
 import { NAV_LINKS } from "@/lib/constants";
 import { notFound } from "next/navigation";
@@ -87,14 +87,6 @@ export default async function RootLayout({
         >
           <div className="flex min-h-screen flex-col">
             <Header libelles={libelles} />
-            {/* **Une langue offerte mais pas encore traduite doit le dire.**
-                Sans ce bandeau, le sélecteur promettrait du catalan et rendrait
-                du français, ce qui vaut moins que pas de sélecteur du tout. */}
-            {langue !== LANGUE_PAR_DEFAUT && (
-              <p className="border-b border-border bg-usap-or/10 px-4 py-2 text-center text-sm text-foreground">
-                {t("langue.nonTraduit")}
-              </p>
-            )}
             <main className="flex-1">{children}</main>
             <Footer mention={t("pied.mention")} />
           </div>

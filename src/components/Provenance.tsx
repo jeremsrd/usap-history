@@ -1,5 +1,6 @@
 import { prisma } from "@/lib/prisma";
-import type { DegreAttestation } from "@prisma/client";
+import { dictionnaire } from "@/i18n/dictionnaire";
+import { LOCALE_INTL, type Langue } from "@/i18n/langues";
 
 /**
  * D'où vient ce que la page affirme, quand ce n'est pas de la feuille
@@ -10,57 +11,45 @@ import type { DegreAttestation } from "@prisma/client";
  * personne ». Ce composant le rend lisible au pied d'une fiche, et se tait
  * quand il n'y a rien : l'absence d'attestation se lit « source officielle
  * de la chaîne », et c'est le cas ordinaire.
+ *
+ * Ses libellés viennent du dictionnaire (`provenance.*`) depuis le
+ * 7 septembre 2026 ; la source elle-même, la note et les noms restent tels
+ * que la base les porte, en français.
  */
 
-const DEGRES: Record<DegreAttestation, string> = {
-  OFFICIEL: "Source officielle",
-  CONCORDANT: "Source secondaire, recoupée",
-  PROBABLE: "Probable",
-  ARBITRE: "Arbitré",
-};
-
-/** Le nom du champ tel qu'un lecteur le comprend. */
-const CHAMPS: Record<string, string> = {
-  "": "l'ensemble",
-  venueId: "le stade",
-  refereeId: "l'arbitre",
-  attendance: "l'affluence",
-  halfTime: "la mi-temps",
-  score: "le score",
-  composition: "la composition",
-  realisations: "les réalisations",
-  bonusOffensif: "le bonus offensif",
-  position: "le poste de référence",
-  logoUrl: "l'écusson",
-  minutesPlayed: "le temps de jeu",
-  agregats: "le bilan de la saison",
-};
+/** Les champs que le dictionnaire sait nommer ; les autres s'affichent tels quels. */
+const CHAMPS_CONNUS = new Set([
+  "venueId", "refereeId", "attendance", "halfTime", "score", "composition",
+  "realisations", "bonusOffensif", "position", "logoUrl", "minutesPlayed", "agregats",
+]);
 
 export default async function Provenance({
   entite,
   id,
+  langue,
 }: {
   entite: "Match" | "Player" | "Opponent" | "Season" | "Venue" | "Referee" | "Coach" | "President";
   id: string;
+  langue: Langue;
 }) {
   const lignes = await prisma.attestation.findMany({
     where: { entite, entiteId: id },
     orderBy: [{ champ: "asc" }, { createdAt: "asc" }],
   });
   if (lignes.length === 0) return null;
+  const t = await dictionnaire(langue);
+  const champ = (c: string) => (c === "" ? t("provenance.champ.ensemble") : CHAMPS_CONNUS.has(c) ? t(`provenance.champ.${c}`) : c);
 
   return (
     <section className="mt-10 border-t border-border pt-4 text-sm">
-      <h2 className="font-display text-lg uppercase text-usap-sang">Sources et arbitrages</h2>
-      <p className="mt-1 text-muted-foreground">
-        Ce que cette page affirme vient d&rsquo;une feuille officielle, sauf ce qui suit.
-      </p>
+      <h2 className="font-display text-lg uppercase text-usap-sang">{t("provenance.titre")}</h2>
+      <p className="mt-1 text-muted-foreground">{t("provenance.intro")}</p>
       <ul className="mt-3 space-y-2">
         {lignes.map((a) => (
           <li key={a.id} className="flex flex-col gap-0.5 sm:flex-row sm:gap-3">
             <span className="shrink-0 sm:w-40">
-              <span className="font-medium text-foreground">{CHAMPS[a.champ] ?? a.champ}</span>
-              <span className="text-muted-foreground"> · {DEGRES[a.degre]}</span>
+              <span className="font-medium text-foreground">{champ(a.champ)}</span>
+              <span className="text-muted-foreground"> · {t(`provenance.degre.${a.degre}`)}</span>
             </span>
             <span className="text-foreground">
               {a.sourceUrl ? (
@@ -70,12 +59,11 @@ export default async function Provenance({
               ) : (
                 a.source
               )}
-              {a.decidePar && <span className="text-muted-foreground"> — tranché par {a.decidePar}</span>}
+              {a.decidePar && <span className="text-muted-foreground">{t("provenance.tranchePar", { nom: a.decidePar })}</span>}
               {a.reluPar && (
                 <span className="text-muted-foreground">
-                  {" "}
-                  — relu par {a.reluPar}
-                  {a.reluLe ? ` le ${a.reluLe.toLocaleDateString("fr-FR")}` : ""}
+                  {t("provenance.reluPar", { nom: a.reluPar })}
+                  {a.reluLe ? t("provenance.le", { date: a.reluLe.toLocaleDateString(LOCALE_INTL[langue]) }) : ""}
                 </span>
               )}
               {a.note && <span className="block text-muted-foreground">{a.note}</span>}

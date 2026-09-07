@@ -129,11 +129,11 @@ export default async function MatchsPage({ params, searchParams }: Props) {
 
   const lettre = (result: string | null) =>
     result === "VICTOIRE"
-      ? { texte: "V", classe: "text-usap-sang" }
+      ? { texte: t("saison.lettreVictoire"), classe: "text-usap-sang" }
       : result === "NUL"
-        ? { texte: "N", classe: "text-foreground" }
+        ? { texte: t("saison.lettreNul"), classe: "text-foreground" }
         : result === "DEFAITE"
-          ? { texte: "D", classe: "text-muted-foreground" }
+          ? { texte: t("saison.lettreDefaite"), classe: "text-muted-foreground" }
           : null;
   const intitule = (m: (typeof matches)[number]) => {
     const c = m.competition.shortName || m.competition.name;

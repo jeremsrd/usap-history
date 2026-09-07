@@ -4,11 +4,11 @@ import Image from "next/image";
 import { notFound, redirect } from "next/navigation";
 import { prisma } from "@/lib/prisma";
 import { MATCH_JOUE, estJoue } from "@/lib/matchs";
-import { DIVISIONS, PALMARES } from "@/lib/constants";
+import { PALMARES } from "@/lib/constants";
 import { passagesDe, sequences, sousSonBanc, type Passage } from "@/lib/staff";
 import { formatDateFR } from "@/lib/utils";
 import { dictionnaire } from "@/i18n/dictionnaire";
-import { cheminLocalise, type Langue } from "@/i18n/langues";
+import { LOCALE_INTL, cheminLocalise, type Langue } from "@/i18n/langues";
 import type { Metadata } from "next";
 
 /**
@@ -149,7 +149,7 @@ export default async function EntraineurDetailPage({ params }: Props) {
   ].filter(Boolean) as string[];
 
   // Une prise ou une fin de fonction en cours de saison, au mois près.
-  const mois = (d: Date) => d.toLocaleDateString("fr-FR", { month: "long" });
+  const mois = (d: Date) => d.toLocaleDateString(LOCALE_INTL[locale], { month: "long" });
   const periodeDe = (p: Passage) =>
     p.startDate && p.endDate
       ? t("saison.staffDe", { debut: mois(p.startDate), fin: mois(p.endDate) })
@@ -175,10 +175,10 @@ export default async function EntraineurDetailPage({ params }: Props) {
   const nomClub = (o: { name: string; shortName: string | null }) => o.shortName || o.name;
   const lettre = (result: string | null) =>
     result === "VICTOIRE"
-      ? { texte: "V", classe: "text-usap-sang" }
+      ? { texte: t("saison.lettreVictoire"), classe: "text-usap-sang" }
       : result === "NUL"
-        ? { texte: "N", classe: "text-foreground" }
-        : { texte: "D", classe: "text-muted-foreground" };
+        ? { texte: t("saison.lettreNul"), classe: "text-foreground" }
+        : { texte: t("saison.lettreDefaite"), classe: "text-muted-foreground" };
   const affiche = (m: (typeof sous)[number]) => (m.isHome ? `USAP – ${nomClub(m.opponent)}` : `${nomClub(m.opponent)} – USAP`);
   const premiere = sous[0];
   const derniere = sous[sous.length - 1];
@@ -287,7 +287,7 @@ export default async function EntraineurDetailPage({ params }: Props) {
                         {p.isInterim && ` (${t("saison.roleInterimaire")})`}
                         {periode && `, ${periode}`}
                       </td>
-                      <td className="py-1.5 pr-3 whitespace-nowrap text-muted-foreground">{DIVISIONS[s.division] ?? s.division}</td>
+                      <td className="py-1.5 pr-3 whitespace-nowrap text-muted-foreground">{t(`divisions.${s.division}`)}</td>
                       <td className="py-1.5 pr-3 text-right text-muted-foreground">{s.finalRanking == null ? "" : s.finalRanking === 1 ? t("saison.premier") : t("saison.rang", { n: s.finalRanking })}</td>
                       <td className="py-1.5 pr-3 text-right text-foreground">{s.matchesPlayed ?? ""}</td>
                       <td className="py-1.5 pr-3 text-right text-usap-sang">{s.wins ?? ""}</td>
@@ -310,7 +310,7 @@ export default async function EntraineurDetailPage({ params }: Props) {
         </section>
       )}
 
-      <Provenance entite="Coach" id={coach.id} />
+      <Provenance entite="Coach" id={coach.id} langue={locale} />
     </div>
   );
 }

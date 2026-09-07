@@ -2,9 +2,9 @@ import Link from "@/components/Lien";
 import { prisma } from "@/lib/prisma";
 import { MATCH_JOUE } from "@/lib/matchs";
 import { formatDateFR } from "@/lib/utils";
-import { PALMARES, DIVISIONS } from "@/lib/constants";
+import { PALMARES } from "@/lib/constants";
 import { dictionnaire } from "@/i18n/dictionnaire";
-import type { Langue } from "@/i18n/langues";
+import { LANGUE_PAR_DEFAUT, type Langue } from "@/i18n/langues";
 import { Prisma } from "@prisma/client";
 
 /**
@@ -149,14 +149,19 @@ export default async function Home({ params }: Props) {
   };
   const lettre = (result: string | null) =>
     result === "VICTOIRE"
-      ? { texte: "V", classe: "text-usap-sang" }
+      ? { texte: t("saison.lettreVictoire"), classe: "text-usap-sang" }
       : result === "NUL"
-        ? { texte: "N", classe: "text-foreground" }
-        : { texte: "D", classe: "text-muted-foreground" };
+        ? { texte: t("saison.lettreNul"), classe: "text-foreground" }
+        : { texte: t("saison.lettreDefaite"), classe: "text-muted-foreground" };
 
   return (
     <div className="mx-auto max-w-6xl px-4 py-10 sm:py-14">
       {/* Le palmarès, écrit en grand */}
+      {/* **L'accueil est la dernière page sans catalan** : elle sera refondue en
+          dernier, et son dictionnaire écrit alors. D'ici là, le dire. */}
+      {locale !== LANGUE_PAR_DEFAUT && (
+        <p className="mb-8 border-b border-border bg-usap-or/10 px-4 py-2 text-center text-sm text-foreground">{t("langue.nonTraduit")}</p>
+      )}
       <header className="mb-12">
         <h1 className="font-display text-4xl uppercase leading-none text-foreground sm:text-6xl">{t("accueil.titre")}</h1>
         <p className="mt-6 font-display text-2xl uppercase leading-none text-usap-sang">{t("accueil.champion")}</p>
@@ -252,7 +257,7 @@ export default async function Home({ params }: Props) {
               {t("accueil.saisonTitre", { label: saison.label })}
             </Link>
           </Titre>
-          <p className="text-sm text-muted-foreground">{DIVISIONS[saison.division] ?? saison.division}.</p>
+          <p className="text-sm text-muted-foreground">{t(`divisions.${saison.division}`)}.</p>
           {saison.matches.length > 0 && (
             <ol aria-label={t("saison.friseAria")} className="mt-2 flex flex-wrap gap-x-1.5 font-display text-3xl leading-none sm:text-4xl">
               {saison.matches.map((m) => {

@@ -4,10 +4,10 @@ import { JoueurCellule } from "@/components/JoueurCellule";
 import { notFound } from "next/navigation";
 import { prisma } from "@/lib/prisma";
 import { estCouperet, estJoue } from "@/lib/matchs";
-import { DIVISIONS, POSITIONS } from "@/lib/constants";
+import { POSITIONS } from "@/lib/constants";
 import { formatDateFR } from "@/lib/utils";
 import { dictionnaire, type Traduire } from "@/i18n/dictionnaire";
-import type { Langue } from "@/i18n/langues";
+import { LOCALE_INTL, type Langue } from "@/i18n/langues";
 import type { Metadata } from "next";
 
 /**
@@ -220,7 +220,7 @@ export default async function SaisonDetailPage({ params }: Props) {
     [t("saison.victoires", { n: b.victoires }), t("saison.nuls", { n: b.nuls }), t("saison.defaites", { n: b.defaites })].join(", ");
 
   // ---- L'en-tête, en phrases ----
-  const division = DIVISIONS[season.division] ?? season.division;
+  const division = t(`divisions.${season.division}`);
   const rang = season.finalRanking == null ? null : season.finalRanking === 1 ? t("saison.premier") : t("saison.rang", { n: season.finalRanking });
   const titre = majuscule(
     [
@@ -242,7 +242,7 @@ export default async function SaisonDetailPage({ params }: Props) {
     );
     const chiffres = [
       season.pointsFor != null && season.pointsAgainst != null && t("saison.pointsMarques", { pour: season.pointsFor, contre: season.pointsAgainst }),
-      season.bonusOffensif != null && season.bonusDefensif != null && `${t("saison.bonusOffensifs", { n: season.bonusOffensif })} et ${t("saison.bonusDefensifs", { n: season.bonusDefensif })}`,
+      season.bonusOffensif != null && season.bonusDefensif != null && `${t("saison.bonusOffensifs", { n: season.bonusOffensif })}${t("commun.et")}${t("saison.bonusDefensifs", { n: season.bonusDefensif })}`,
       season.totalPoints != null && t("saison.pointsClassement", { n: season.totalPoints }),
     ].filter(Boolean) as string[];
     if (chiffres.length) bilan.push(majuscule(chiffres.join(", ")));
@@ -259,7 +259,7 @@ export default async function SaisonDetailPage({ params }: Props) {
   };
   // Une prise ou une fin de fonction en cours de saison, au mois près : la
   // source ne donne pas toujours le jour (cf. `seed-cloture-saisons.ts`).
-  const mois = (d: Date) => d.toLocaleDateString("fr-FR", { month: "long" });
+  const mois = (d: Date) => d.toLocaleDateString(LOCALE_INTL[locale], { month: "long" });
   const periode = (sc: (typeof season.seasonCoaches)[number]) =>
     sc.startDate && sc.endDate
       ? t("saison.staffDe", { debut: mois(sc.startDate), fin: mois(sc.endDate) })
@@ -517,7 +517,7 @@ export default async function SaisonDetailPage({ params }: Props) {
                           libelleActuel={t("joueurs.actuel")}
                         />
                       </td>
-                      <td className="hidden py-1 pr-4 text-xs text-muted-foreground sm:table-cell">{e.poste ? (POSITIONS[e.poste]?.label ?? e.poste) : ""}</td>
+                      <td className="hidden py-1 pr-4 text-xs text-muted-foreground sm:table-cell">{e.poste ? t(`postes.${e.poste}`) : ""}</td>
                       <td className="py-1 pr-3 text-right font-semibold text-foreground">{c?.matchs || ""}</td>
                       <td className="py-1 pr-3 text-right text-muted-foreground">
                         {c?.titulaire || ""}
@@ -539,7 +539,7 @@ export default async function SaisonDetailPage({ params }: Props) {
         </section>
       )}
 
-      <Provenance entite="Season" id={season.id} />
+      <Provenance entite="Season" id={season.id} langue={locale} />
     </div>
   );
 }

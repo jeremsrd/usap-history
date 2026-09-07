@@ -1,6 +1,5 @@
 import Link from "@/components/Lien";
 import { prisma } from "@/lib/prisma";
-import { DIVISIONS } from "@/lib/constants";
 import { formatDateFR } from "@/lib/utils";
 import { dictionnaire } from "@/i18n/dictionnaire";
 import type { Langue } from "@/i18n/langues";
@@ -127,7 +126,7 @@ export default async function RecordsPage({ params }: Props) {
         record: t(`records.${cle}`),
         detenteur: s.label,
         href: `/saisons/${s.label}`,
-        contexte: t("records.matchsDeSaison", { division: DIVISIONS[s.division] ?? s.division, n: s.matchesPlayed ?? 0 }),
+        contexte: t("records.matchsDeSaison", { division: t(`divisions.${s.division}`), n: s.matchesPlayed ?? 0 }),
       }
     );
   };

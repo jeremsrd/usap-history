@@ -21,6 +21,8 @@ type Props = {
   bareme: Bareme;
   /** « mi-temps », passé par la page qui seule tient le dictionnaire. */
   libelleMiTemps: string;
+  /** « et », entre les deux noms de la légende — passé par la page, qui seule tient le dictionnaire. */
+  libelleEt: string;
 };
 
 /** Ce que chaque fait vaut, sous le barème reçu : la valeur n'est écrite qu'une fois, dans `baremeDeMatch`. */
@@ -57,6 +59,7 @@ export default function ScoreEvolution({
   isHome,
   bareme,
   libelleMiTemps,
+  libelleEt,
 }: Props) {
   const scoringEvents = useMemo(() => {
     const POINTS = pointsDe(bareme);
@@ -155,7 +158,7 @@ export default function ScoreEvolution({
       {/* Deux traits, deux noms : la légende tient en une ligne de texte. */}
       <p className="mb-2 text-sm">
         <span className="font-semibold text-usap-sang">USAP</span>
-        <span className="mx-2 text-muted-foreground">et</span>
+        <span className="mx-2 text-muted-foreground">{libelleEt}</span>
         <span className="font-semibold text-foreground">{opponentName}</span>
       </p>
 

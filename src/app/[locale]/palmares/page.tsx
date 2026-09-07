@@ -89,7 +89,7 @@ export default async function PalmaresPage({ params }: Props) {
       case "QUART_FINALISTE":
         return `${t("palmares.quartFinaliste")} — ${l.competition}`;
       case "VAINQUEUR_COUPE":
-        return `${t("palmares.vainqueur")} du ${l.competition}`;
+        return t("palmares.vainqueurDe", { competition: l.competition });
       default:
         return `${t("palmares.finalisteCoupe")} — ${l.competition}`;
     }
@@ -136,7 +136,7 @@ export default async function PalmaresPage({ params }: Props) {
     <div className="mx-auto max-w-6xl px-4 py-10 sm:py-14">
       <header className="mb-8 sm:mb-12">
         <h1 className="font-display text-7xl uppercase leading-none text-usap-sang sm:text-8xl">{t("palmares.titre")}</h1>
-        <p className="mt-4 max-w-prose text-lg leading-snug text-foreground">{majuscule(resume.join(", ").replace(/, ([^,]*)$/, " et $1"))}.</p>
+        <p className="mt-4 max-w-prose text-lg leading-snug text-foreground">{majuscule(resume.join(", ").replace(/, ([^,]*)$/, `${t("commun.et")}$1`))}.</p>
         <p className="mt-2 max-w-prose text-sm leading-relaxed text-muted-foreground">{t("palmares.reserve")}</p>
       </header>
 

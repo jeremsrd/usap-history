@@ -1,5 +1,4 @@
 import { prisma } from "@/lib/prisma";
-import { POSITIONS } from "@/lib/constants";
 import { JoueurCellule } from "@/components/JoueurCellule";
 import { dictionnaire } from "@/i18n/dictionnaire";
 import type { Langue } from "@/i18n/langues";
@@ -125,7 +124,7 @@ export default async function CenturionsPage({ params }: Props) {
                   />
                 </td>
                 <td className="hidden py-2 pr-4 whitespace-nowrap text-muted-foreground sm:table-cell">
-                  {joueur.position ? (POSITIONS[joueur.position]?.label ?? joueur.position) : ""}
+                  {joueur.position ? t(`postes.${joueur.position}`) : ""}
                 </td>
                 <td className="hidden py-2 pr-4 whitespace-nowrap text-muted-foreground md:table-cell">
                   {annee(bilan.premier)}

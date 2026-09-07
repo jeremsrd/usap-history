@@ -161,11 +161,11 @@ export default async function StadeDetailPage({ params, searchParams }: Props) {
 
   const lettre = (result: string | null) =>
     result === "VICTOIRE"
-      ? { texte: "V", classe: "text-usap-sang" }
+      ? { texte: t("saison.lettreVictoire"), classe: "text-usap-sang" }
       : result === "NUL"
-        ? { texte: "N", classe: "text-foreground" }
+        ? { texte: t("saison.lettreNul"), classe: "text-foreground" }
         : result === "DEFAITE"
-          ? { texte: "D", classe: "text-muted-foreground" }
+          ? { texte: t("saison.lettreDefaite"), classe: "text-muted-foreground" }
           : null;
   const affiche = (m: { isHome: boolean; opponent: { name: string; shortName: string | null } }) =>
     m.isHome ? `USAP – ${nomClub(m.opponent)}` : `${nomClub(m.opponent)} – USAP`;
@@ -380,7 +380,7 @@ export default async function StadeDetailPage({ params, searchParams }: Props) {
         </section>
       )}
 
-      <Provenance entite="Venue" id={venue.id} />
+      <Provenance entite="Venue" id={venue.id} langue={locale} />
     </div>
   );
 }

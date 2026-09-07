@@ -123,11 +123,11 @@ export default async function ArbitreDetailPage({ params }: Props) {
   const nomClub = (o: { name: string; shortName: string | null }) => o.shortName || o.name;
   const lettre = (result: string | null) =>
     result === "VICTOIRE"
-      ? { texte: "V", classe: "text-usap-sang" }
+      ? { texte: t("saison.lettreVictoire"), classe: "text-usap-sang" }
       : result === "NUL"
-        ? { texte: "N", classe: "text-foreground" }
+        ? { texte: t("saison.lettreNul"), classe: "text-foreground" }
         : result === "DEFAITE"
-          ? { texte: "D", classe: "text-muted-foreground" }
+          ? { texte: t("saison.lettreDefaite"), classe: "text-muted-foreground" }
           : null;
   const affiche = (m: { isHome: boolean; opponent: { name: string; shortName: string | null } }) =>
     m.isHome ? `USAP – ${nomClub(m.opponent)}` : `${nomClub(m.opponent)} – USAP`;
@@ -139,7 +139,7 @@ export default async function ArbitreDetailPage({ params }: Props) {
   const enMots = (jaunes: number, rouges: number, long = false) =>
     [jaunes > 0 && t(long ? "arbitre.jaunes" : "arbitre.jaunesCourt", { n: jaunes }), rouges > 0 && t("arbitre.rouges", { n: rouges })]
       .filter(Boolean)
-      .join(long ? " et " : ", ");
+      .join(long ? t("commun.et") : ", ");
   const cartonsEnMots = (c: { jaunes: number; rouges: number }) => enMots(c.jaunes, c.rouges);
 
   return (
@@ -292,7 +292,7 @@ export default async function ArbitreDetailPage({ params }: Props) {
         </section>
       )}
 
-      <Provenance entite="Referee" id={referee.id} />
+      <Provenance entite="Referee" id={referee.id} langue={locale} />
     </div>
   );
 }

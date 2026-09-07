@@ -1,10 +1,10 @@
 /**
  * Les langues du site.
  *
- * **Le catalan n'est pas encore traduit** : il est déclaré, ses adresses
- * fonctionnent, et il rend le français en attendant. C'est délibéré — poser le
- * segment de langue dans l'URL coûte d'autant plus cher que le site grandit,
- * et il valait mieux le faire pendant qu'il est petit.
+ * **Le catalan est traduit depuis le 7 septembre 2026**, l'accueil excepté,
+ * qui sera refondu en dernier : `ca.ts` répond à `fr.ts` clé pour clé, et ce
+ * qui lui manque retombe sur le français. Le segment de langue dans l'URL,
+ * lui, date du 4 septembre — posé pendant que le site était petit.
  *
  * Le catalan visé est celui de **Catalunya Nord**, le rossellonais : l'USAP
  * est un club nord-catalan, et un supporter d'ici entend la différence avec le
@@ -15,6 +15,16 @@ export const LANGUES = ["fr", "ca"] as const;
 export type Langue = (typeof LANGUES)[number];
 
 export const LANGUE_PAR_DEFAUT: Langue = "fr";
+
+/**
+ * L'étiquette BCP 47 de chaque langue, pour `Intl` — les noms de mois, les
+ * dates en toutes lettres. Les nombres, eux, restent en `fr-FR` partout :
+ * la Catalunya Nord est en France, et « 12 065 » y est la forme attendue.
+ */
+export const LOCALE_INTL: Record<Langue, string> = {
+  fr: "fr-FR",
+  ca: "ca-FR",
+};
 
 /** Nom de chaque langue, dans cette langue — c'est l'usage d'un sélecteur. */
 export const NOM_DE_LA_LANGUE: Record<Langue, string> = {

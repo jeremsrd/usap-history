@@ -214,9 +214,9 @@ export default async function JoueursPage({
         aria-label={t("joueurs.entetePoste")}
         className="mb-8 flex flex-wrap gap-x-5 gap-y-2 text-sm"
       >
-        {Object.entries(POSITIONS).map(([key, { label }]) => (
+        {Object.keys(POSITIONS).map((key) => (
           <Filtre key={key} href={lienPoste(key)} actif={positionFilter === key}>
-            {label}
+            {t(`postes.${key}`)}
           </Filtre>
         ))}
         {positionFilter && (
@@ -232,7 +232,7 @@ export default async function JoueursPage({
         <p className="mb-3 text-sm text-muted-foreground">
           {t("joueurs.compte", { n: players.length })}
           {activeFilter && t("joueurs.dansEffectif")}
-          {positionFilter && ` — ${POSITIONS[positionFilter].label}`}
+          {positionFilter && ` — ${t(`postes.${positionFilter}`)}`}
           {searchQuery && t("joueurs.pourRecherche", { q: searchQuery })}
         </p>
       )}
@@ -315,7 +315,7 @@ export default async function JoueursPage({
                         )}
                       </td>
                       <td className="py-1.5 pr-4 align-middle text-muted-foreground">
-                        {p.position ? POSITIONS[p.position]?.label ?? p.position : ""}
+                        {p.position ? t(`postes.${p.position}`) : ""}
                       </td>
                       <td className="hidden py-1.5 pr-4 align-middle text-muted-foreground tabular-nums whitespace-nowrap sm:table-cell">
                         {b && (b.premier === b.dernier ? b.premier : `${b.premier}–${b.dernier}`)}

@@ -4,7 +4,6 @@ import { notFound } from "next/navigation";
 import { prisma } from "@/lib/prisma";
 import { estJoue } from "@/lib/matchs";
 import { baremeDeMatch } from "@/lib/scoring";
-import { POSITIONS } from "@/lib/constants";
 import { formatDateFR } from "@/lib/utils";
 import type { Metadata } from "next";
 import VideoEmbed from "@/components/VideoEmbed";
@@ -216,6 +215,7 @@ export default async function MatchDetailPage({ params }: Props) {
                 isHome={match.isHome}
                 bareme={baremeDeMatch(match.season.startYear)}
                 libelleMiTemps={t("match.legendeMiTemps")}
+                libelleEt={t("commun.et").trim()}
               />
             </div>
           )}
@@ -299,7 +299,7 @@ export default async function MatchDetailPage({ params }: Props) {
       )}
 
       {/* D'où vient ce que la page affirme, quand ce n'est pas de la feuille */}
-      <Provenance entite="Match" id={match.id} />
+      <Provenance entite="Match" id={match.id} langue={locale} />
     </div>
   );
 }
@@ -403,7 +403,7 @@ function Composition({ lignes, t, adverse = false }: { lignes: Ligne[]; t: Tradu
                 {mp.isCaptain && <span className="ml-1.5 text-xs text-usap-or">{t("match.capitaine")}</span>}
               </td>
               <td className="hidden py-1 pr-3 text-xs text-muted-foreground md:table-cell">
-                {mp.positionPlayed ? (POSITIONS[mp.positionPlayed]?.label ?? mp.positionPlayed) : ""}
+                {mp.positionPlayed ? t(`postes.${mp.positionPlayed}`) : ""}
               </td>
               <td className="py-1 pr-3 text-right text-muted-foreground whitespace-nowrap">
                 {mp.minutesPlayed != null && mp.minutesPlayed}

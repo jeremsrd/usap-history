@@ -316,6 +316,7 @@ export const fr = {
     demiFinaliste: "Demi-finaliste",
     quartFinaliste: "Quart de finaliste",
     vainqueur: "Vainqueur",
+    vainqueurDe: "Vainqueur du {competition}",
     finalisteCoupe: "Finaliste",
     contre: "contre {adversaire}",
     a: "à {lieu}",
@@ -833,6 +834,66 @@ export const fr = {
     essais: "Essais",
     points: "Points",
     actuel: "Actuel",
+  },
+  postes: {
+    // Les postes, tels que `Player.position` et `MatchPlayer.positionPlayed`
+    // les nomment. `POSITIONS` de `lib/constants.ts` garde le numéro ; les
+    // libellés affichés viennent d'ici, pour être traduits.
+    PILIER_GAUCHE: "Pilier gauche",
+    TALONNEUR: "Talonneur",
+    PILIER_DROIT: "Pilier droit",
+    DEUXIEME_LIGNE: "2ème ligne",
+    TROISIEME_LIGNE_AILE: "3ème ligne aile",
+    NUMERO_HUIT: "N°8",
+    DEMI_DE_MELEE: "Demi de mêlée",
+    DEMI_OUVERTURE: "Demi d'ouverture",
+    AILIER: "Ailier",
+    CENTRE: "Centre",
+    ARRIERE: "Arrière",
+  },
+  divisions: {
+    // Les divisions, telles que `Season.division` les nomme.
+    CHAMPIONNAT_2EME_SERIE: "Championnat 2ème série",
+    CHAMPIONNAT_1ERE_SERIE: "Championnat 1ère série",
+    CHAMPIONNAT_EXCELLENCE: "Championnat Excellence",
+    GROUPE_A: "Groupe A",
+    PREMIERE_DIVISION: "1ère Division",
+    TOP_16: "Top 16",
+    TOP_14: "Top 14",
+    PRO_D2: "Pro D2",
+  },
+  provenance: {
+    // La section « Sources et arbitrages » au pied des fiches.
+    titre: "Sources et arbitrages",
+    intro: "Ce que cette page affirme vient d'une feuille officielle, sauf ce qui suit.",
+    degre: {
+      OFFICIEL: "Source officielle",
+      CONCORDANT: "Source secondaire, recoupée",
+      PROBABLE: "Probable",
+      ARBITRE: "Arbitré",
+    },
+    champ: {
+      ensemble: "l'ensemble",
+      venueId: "le stade",
+      refereeId: "l'arbitre",
+      attendance: "l'affluence",
+      halfTime: "la mi-temps",
+      score: "le score",
+      composition: "la composition",
+      realisations: "les réalisations",
+      bonusOffensif: "le bonus offensif",
+      position: "le poste de référence",
+      logoUrl: "l'écusson",
+      minutesPlayed: "le temps de jeu",
+      agregats: "le bilan de la saison",
+    },
+    tranchePar: " — tranché par {nom}",
+    reluPar: " — relu par {nom}",
+    le: " le {date}",
+  },
+  commun: {
+    // Les mots de jointure que les pages écrivaient en dur.
+    et: " et ",
   },
   langue: {
     choisir: "Changer de langue",

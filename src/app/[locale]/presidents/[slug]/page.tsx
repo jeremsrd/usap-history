@@ -4,7 +4,7 @@ import Image from "next/image";
 import { notFound, redirect } from "next/navigation";
 import { prisma } from "@/lib/prisma";
 import { MATCH_JOUE, estJoue } from "@/lib/matchs";
-import { DIVISIONS, PALMARES } from "@/lib/constants";
+import { PALMARES } from "@/lib/constants";
 import { formatDateFR } from "@/lib/utils";
 import { dictionnaire } from "@/i18n/dictionnaire";
 import { cheminLocalise, type Langue } from "@/i18n/langues";
@@ -148,10 +148,10 @@ export default async function PresidentDetailPage({ params }: Props) {
   const nomClub = (o: { name: string; shortName: string | null }) => o.shortName || o.name;
   const lettre = (result: string | null) =>
     result === "VICTOIRE"
-      ? { texte: "V", classe: "text-usap-sang" }
+      ? { texte: t("saison.lettreVictoire"), classe: "text-usap-sang" }
       : result === "NUL"
-        ? { texte: "N", classe: "text-foreground" }
-        : { texte: "D", classe: "text-muted-foreground" };
+        ? { texte: t("saison.lettreNul"), classe: "text-foreground" }
+        : { texte: t("saison.lettreDefaite"), classe: "text-muted-foreground" };
   const affiche = (m: (typeof sous)[number]) => (m.isHome ? `USAP – ${nomClub(m.opponent)}` : `${nomClub(m.opponent)} – USAP`);
 
   return (
@@ -251,7 +251,7 @@ export default async function PresidentDetailPage({ params }: Props) {
                           {s.label}
                         </Link>
                       </td>
-                      <td className="py-1.5 pr-3 whitespace-nowrap text-muted-foreground">{DIVISIONS[s.division] ?? s.division}</td>
+                      <td className="py-1.5 pr-3 whitespace-nowrap text-muted-foreground">{t(`divisions.${s.division}`)}</td>
                       <td className="py-1.5 pr-3 text-right text-muted-foreground">
                         {s.finalRanking == null ? "" : s.finalRanking === 1 ? t("saison.premier") : t("saison.rang", { n: s.finalRanking })}
                       </td>
@@ -283,7 +283,7 @@ export default async function PresidentDetailPage({ params }: Props) {
         </section>
       )}
 
-      <Provenance entite="President" id={president.id} />
+      <Provenance entite="President" id={president.id} langue={locale} />
     </div>
   );
 }
