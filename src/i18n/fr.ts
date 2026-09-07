@@ -763,7 +763,7 @@ export const fr = {
     reserveTexte:
       "La LNR ne publie aucun fait de match pour 2004-2005 — ni essai, ni transformation, ni pénalité — et n'en publie qu'une poignée pour 2005-2006. Les joueurs de ces années-là ont marqué davantage que ce que leur ligne affiche, et les époques antérieures ne sont pas en base du tout.",
     reserveBareme:
-      "Le détail retombe sur le total partout : essai 5 points, transformation 2, pénalité et drop 3. Un essai de pénalité, lui, vaut sept points et n'a pas d'auteur — il compte pour l'équipe et pour personne, comme un essai collectif.",
+      "Le détail retombe sur le total partout, sous le barème de chaque saison — essai 5 points, transformation 2, pénalité et drop 3 aujourd'hui ; 3, 2, 3 et 4 en 1914. Un essai de pénalité, lui, n'a pas d'auteur — il compte pour l'équipe et pour personne, comme un essai collectif.",
     sectionPoints: "Aux points",
     sectionEssais: "Aux essais",
     sectionAuPied: "Au pied",
@@ -771,9 +771,10 @@ export const fr = {
     critereEssais: "Les joueurs à {seuil} essais ou plus.",
     critereAuPied:
       "Les joueurs à {seuil} points au pied ou plus — transformations, pénalités et drops.",
-    legendeComplete: "E : essais — T : transformations — P : pénalités — D : drops",
-    legendeAuPied: "T : transformations — P : pénalités — D : drops",
-    enteteEssaisParMatch: "Essais/match",
+    colTransformations: "Transf.",
+    colPenalites: "Pén.",
+    colDrops: "Drops",
+    enteteEssaisParMatch: "Par match",
   },
   records: {
     titre: "Records",

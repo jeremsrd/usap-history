@@ -1861,9 +1861,22 @@ dans un encadré gris, est un paragraphe sous le chapeau comme sur toutes
 les listes. Plus d'icône de bouclier, plus de tableau bordé et arrondi.
 La page portait déjà son dictionnaire.
 
-**Ce qui reste dans l'ancien rendu** : les réalisateurs et les records,
-déjà passés au dictionnaire. À reprendre page par page, en relisant
-chaque fois qu'aucune couleur en dur n'est revenue.
+**Les réalisateurs sont refaits le 7 septembre 2026**, sur le modèle des
+centurions : la valeur du classement — points, essais, points au pied —
+en grand caractère condensé en rouge en tête de chaque ligne, le rang en
+gris à côté ; chaque classement sous un titre rouge et son filet, son
+critère en une phrase, le détail en colonnes aux **en-têtes écrits en
+mots** — essais, transformations, pénalités, drops — plutôt qu'en lettres
+à légende, les deux légendes ayant disparu du dictionnaire. Les trois
+ancres sont des liens condensés en tête avec leur compte, les réserves
+des paragraphes sous le chapeau, et la réserve du barème dit désormais
+qu'il est celui de chaque saison. Plus de cible, de médaille ni
+d'empreinte de pas devant les titres, plus de puces bordées, plus
+d'encadré gris, plus de tableaux arrondis.
+
+**Ce qui reste dans l'ancien rendu** : les records, déjà passés au
+dictionnaire. À reprendre en relisant qu'aucune couleur en dur n'est
+revenue.
 
 
 - **Couleur principale** : Rouge sang (#C8102E) - couleur dominante USAP
