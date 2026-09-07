@@ -1,28 +1,50 @@
 import Link from "@/components/Lien";
 import { prisma } from "@/lib/prisma";
+import { DIVISIONS } from "@/lib/constants";
 import { formatDateFR } from "@/lib/utils";
-import { CalendarDays, Flame, Trophy } from "lucide-react";
 import { dictionnaire } from "@/i18n/dictionnaire";
 import type { Langue } from "@/i18n/langues";
 import type { Metadata } from "next";
 
+/**
+ * Les records, refaits le 7 septembre 2026 — la dernière page de l'ancien
+ * rendu. Sa seule audace est **la valeur du record en grand caractère
+ * condensé en tête de chaque ligne**, en rouge, comme le nombre de matchs
+ * des centurions et les années des présidents : un record est un nombre,
+ * et c'est lui qu'on grossit. Le reste est en lignes — ce que le record
+ * mesure, qui le porte, lié à la rencontre, à la saison ou au joueur, et
+ * où et quand —, trois tableaux sous un titre rouge et son filet : sur un
+ * match, sur une saison, les séries. Les réserves sont des paragraphes
+ * sous le chapeau ; le compte des affluences connues et la division d'une
+ * saison sont lus dans la base, plus écrits en dur.
+ *
+ * Ce que la page ne fait plus : une flamme, un calendrier et un trophée
+ * devant les titres, un encadré gris, vingt-trois cartes bordées à
+ * libellé en capitales espacées.
+ */
+
 export const dynamic = "force-dynamic";
 
-export async function generateMetadata({
-  params,
-}: {
-  params: Promise<{ locale: Langue }>;
-}): Promise<Metadata> {
+type Props = { params: Promise<{ locale: Langue }> };
+
+export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const t = await dictionnaire((await params).locale);
   return { title: t("records.metaTitre"), description: t("records.metaDescription") };
 }
 
-export default async function RecordsPage({
-  params,
-}: {
-  params: Promise<{ locale: Langue }>;
-}) {
+/** Une ligne de record : la valeur, ce qu'elle mesure, qui la porte, où et quand. */
+interface Ligne {
+  cle: string;
+  valeur: number | string;
+  record: string;
+  detenteur: string;
+  href?: string;
+  contexte?: string;
+}
+
+export default async function RecordsPage({ params }: Props) {
   const t = await dictionnaire((await params).locale);
+  const nombre = (n: number) => n.toLocaleString("fr-FR");
 
   const matchs = await prisma.match.findMany({
     where: { result: { not: null }, scoreUsap: { not: null } },
@@ -35,117 +57,114 @@ export default async function RecordsPage({
       result: true,
       triesUsap: true,
       attendance: true,
-      opponent: { select: { shortName: true } },
+      opponent: { select: { shortName: true, name: true } },
       season: { select: { label: true } },
     },
     orderBy: { date: "asc" },
   });
-
   // `scoreUsap` est nullable en base — un calendrier à venir n'en porte pas —,
   // mais le filtre l'exclut : on resserre le type pour la suite.
-  type Rencontre = (typeof matchs)[number] & {
-    scoreUsap: number;
-    scoreOpponent: number;
-  };
+  type Rencontre = (typeof matchs)[number] & { scoreUsap: number; scoreOpponent: number };
   const joues = matchs as Rencontre[];
 
   const lignes = await prisma.matchPlayer.findMany({
-    where: {
-      isOpponent: false,
-      playerId: { not: null },
-      match: { result: { not: null } },
-    },
+    where: { isOpponent: false, playerId: { not: null }, match: { result: { not: null } } },
     select: {
       totalPoints: true,
       tries: true,
       penalties: true,
       player: { select: { firstName: true, lastName: true, slug: true } },
       match: {
-        select: {
-          slug: true,
-          date: true,
-          isHome: true,
-          scoreUsap: true,
-          scoreOpponent: true,
-          opponent: { select: { shortName: true } },
-        },
+        select: { slug: true, date: true, isHome: true, scoreUsap: true, scoreOpponent: true, opponent: { select: { shortName: true, name: true } }, season: { select: { label: true } } },
       },
     },
   });
-
-  const saisons = await prisma.season.findMany({
-    where: { matchesPlayed: { not: null } },
-    orderBy: { startYear: "asc" },
-  });
+  const saisons = await prisma.season.findMany({ where: { matchesPlayed: { not: null } }, orderBy: { startYear: "asc" } });
 
   // ── Fabrique de records ────────────────────────────────────────────
   const meilleur = <T,>(liste: T[], valeur: (x: T) => number): T | null =>
-    liste.reduce<T | null>(
-      (a, b) => (a === null || valeur(b) > valeur(a) ? b : a),
-      null,
-    );
-
-  const affiche = (m: Rencontre) =>
-    `${m.isHome ? "" : "à "}${m.opponent?.shortName ?? "?"} — ${m.scoreUsap}-${m.scoreOpponent}`;
+    liste.reduce<T | null>((a, b) => (a === null || valeur(b) > valeur(a) ? b : a), null);
+  const nomClub = (o: { name: string; shortName: string | null } | null) => o?.shortName || o?.name || "?";
+  const affiche = (m: { isHome: boolean; scoreUsap: number | null; scoreOpponent: number | null; opponent: { name: string; shortName: string | null } | null }) =>
+    m.isHome ? `USAP – ${nomClub(m.opponent)}, ${m.scoreUsap}-${m.scoreOpponent}` : `${nomClub(m.opponent)} – USAP, ${m.scoreOpponent}-${m.scoreUsap}`;
+  const quand = (m: { date: Date; season: { label: string } }) => `${formatDateFR(m.date)}, ${m.season.label}`;
+  const nom = (p: { firstName: string; lastName: string }) => `${p.firstName} ${p.lastName}`;
 
   const victoires = joues.filter((m) => m.result === "VICTOIRE");
   const defaites = joues.filter((m) => m.result === "DEFAITE");
   const avecEssais = joues.filter((m) => m.triesUsap != null);
-  const avecAffluence = joues.filter((m) => m.attendance != null);
+  const avecAffluence = joues.filter((m) => m.attendance != null && m.attendance > 0);
 
-  const plusLargeVictoire = meilleur(victoires, (m) => m.scoreUsap - m.scoreOpponent);
-  const plusLourdeDefaite = meilleur(defaites, (m) => m.scoreOpponent - m.scoreUsap);
-  const plusDePoints = meilleur(joues, (m) => m.scoreUsap);
-  const plusEncaisses = meilleur(joues, (m) => m.scoreOpponent);
-  const totalLePlusHaut = meilleur(joues, (m) => m.scoreUsap + m.scoreOpponent);
-  const plusDEssais = meilleur(avecEssais, (m) => m.triesUsap!);
-  const plusGrosseAffluence = meilleur(avecAffluence, (m) => m.attendance!);
+  const deMatch = (cle: string, m: Rencontre | null, valeur: (m: Rencontre) => number | string): Ligne | null =>
+    m && { cle, valeur: valeur(m), record: t(`records.${cle}`), detenteur: affiche(m), href: `/matchs/${m.slug}`, contexte: quand(m) };
+  const deJoueur = (cle: string, l: (typeof lignes)[number] | null, valeur: (l: (typeof lignes)[number]) => number): Ligne | null =>
+    l?.player
+      ? { cle, valeur: valeur(l), record: t(`records.${cle}`), detenteur: nom(l.player), href: `/joueurs/${l.player.slug}`, contexte: `${affiche(l.match)}, ${quand(l.match)}` }
+      : null;
 
-  const plusDePointsJoueur = meilleur(lignes, (l) => l.totalPoints);
-  const plusDEssaisJoueur = meilleur(lignes, (l) => l.tries);
-  const plusDePenalites = meilleur(lignes, (l) => l.penalties);
+  const surUnMatch = [
+    deMatch("plusLargeVictoire", meilleur(victoires, (m) => m.scoreUsap - m.scoreOpponent), (m) => `+${m.scoreUsap - m.scoreOpponent}`),
+    deMatch("plusLourdeDefaite", meilleur(defaites, (m) => m.scoreOpponent - m.scoreUsap), (m) => `−${m.scoreOpponent - m.scoreUsap}`),
+    deMatch("plusDePointsMarques", meilleur(joues, (m) => m.scoreUsap), (m) => m.scoreUsap),
+    deMatch("plusDePointsEncaisses", meilleur(joues, (m) => m.scoreOpponent), (m) => m.scoreOpponent),
+    deMatch("plusDEssais", meilleur(avecEssais, (m) => m.triesUsap!), (m) => m.triesUsap!),
+    deMatch("matchProlifique", meilleur(joues, (m) => m.scoreUsap + m.scoreOpponent), (m) => m.scoreUsap + m.scoreOpponent),
+    deJoueur("pointsJoueur", meilleur(lignes, (l) => l.totalPoints), (l) => l.totalPoints),
+    deJoueur("essaisJoueur", meilleur(lignes, (l) => l.tries), (l) => l.tries),
+    deJoueur("penalitesJoueur", meilleur(lignes, (l) => l.penalties), (l) => l.penalties),
+    deMatch("affluence", meilleur(avecAffluence, (m) => m.attendance!), (m) => nombre(m.attendance!)),
+  ].filter(Boolean) as Ligne[];
 
   // ── Records de saison ──────────────────────────────────────────────
   type Saison = (typeof saisons)[number];
-  const parSaison = (valeur: (s: Saison) => number) => meilleur(saisons, valeur);
   const diff = (s: Saison) => (s.pointsFor ?? 0) - (s.pointsAgainst ?? 0);
-
-  const plusDePointsSaison = parSaison((s) => s.totalPoints ?? 0);
-  const plusDeVictoires = parSaison((s) => s.wins ?? 0);
-  const plusDeDefaites = parSaison((s) => s.losses ?? 0);
-  const plusMarques = parSaison((s) => s.pointsFor ?? 0);
-  const plusEncaissesSaison = parSaison((s) => s.pointsAgainst ?? 0);
-  const meilleureDiff = parSaison(diff);
-  const pireDiff = parSaison((s) => -diff(s));
-  const plusDeBonus = parSaison((s) => s.bonusOffensif ?? 0);
+  const deSaison = (cle: string, valeur: (s: Saison) => number, affichee: (s: Saison) => number | string = valeur): Ligne | null => {
+    const s = meilleur(saisons, valeur);
+    return (
+      s && {
+        cle,
+        valeur: affichee(s),
+        record: t(`records.${cle}`),
+        detenteur: s.label,
+        href: `/saisons/${s.label}`,
+        contexte: t("records.matchsDeSaison", { division: DIVISIONS[s.division] ?? s.division, n: s.matchesPlayed ?? 0 }),
+      }
+    );
+  };
 
   // Meilleur total individuel d'une saison, essais et points.
-  const parJoueurEtSaison = new Map<
-    string,
-    { nom: string; slug: string; saison: string; essais: number; points: number }
-  >();
+  const parJoueurEtSaison = new Map<string, { nom: string; slug: string; saison: string; essais: number; points: number }>();
   for (const l of lignes) {
-    const saison = joues.find((m) => m.slug === l.match.slug)?.season.label;
-    if (!saison || !l.player) continue;
+    if (!l.player) continue;
+    const saison = l.match.season.label;
     const cle = `${l.player.slug}|${saison}`;
-    const b = parJoueurEtSaison.get(cle) ?? {
-      nom: `${l.player.firstName} ${l.player.lastName}`,
-      slug: l.player.slug,
-      saison,
-      essais: 0,
-      points: 0,
-    };
+    const b = parJoueurEtSaison.get(cle) ?? { nom: nom(l.player), slug: l.player.slug, saison, essais: 0, points: 0 };
     b.essais += l.tries;
     b.points += l.totalPoints;
     parJoueurEtSaison.set(cle, b);
   }
   const totaux = [...parJoueurEtSaison.values()];
-  const meilleurMarqueurSaison = meilleur(totaux, (t) => t.essais);
-  const meilleurRealisateurSaison = meilleur(totaux, (t) => t.points);
+  const deTotal = (cle: string, valeur: (x: (typeof totaux)[number]) => number): Ligne | null => {
+    const x = meilleur(totaux, valeur);
+    return x && { cle, valeur: valeur(x), record: t(`records.${cle}`), detenteur: x.nom, href: `/joueurs/${x.slug}`, contexte: x.saison };
+  };
+
+  const surUneSaison = [
+    deSaison("saisonPoints", (s) => s.totalPoints ?? 0),
+    deSaison("saisonVictoires", (s) => s.wins ?? 0),
+    deSaison("saisonDefaites", (s) => s.losses ?? 0),
+    deSaison("saisonMarques", (s) => s.pointsFor ?? 0),
+    deSaison("saisonEncaisses", (s) => s.pointsAgainst ?? 0),
+    deSaison("saisonMeilleureDiff", diff, (s) => `+${diff(s)}`),
+    deSaison("saisonPireDiff", (s) => -diff(s), (s) => `${diff(s)}`),
+    deSaison("saisonBonus", (s) => s.bonusOffensif ?? 0),
+    deTotal("essaisSurUneSaison", (x) => x.essais),
+    deTotal("pointsSurUneSaison", (x) => x.points),
+  ].filter(Boolean) as Ligne[];
 
   // ── Séries ─────────────────────────────────────────────────────────
   /** La plus longue suite de rencontres consécutives vérifiant `ok`. */
-  function serie(ok: (resultat: string) => boolean) {
+  function serie(cle: string, ok: (resultat: string) => boolean): Ligne {
     let courante = 0;
     let record = { longueur: 0, debut: joues[0]?.date, fin: joues[0]?.date };
     let debut = joues[0]?.date;
@@ -156,260 +175,88 @@ export default async function RecordsPage({
       }
       if (courante === 0) debut = m.date;
       courante++;
-      if (courante > record.longueur) {
-        record = { longueur: courante, debut, fin: m.date };
-      }
+      if (courante > record.longueur) record = { longueur: courante, debut, fin: m.date };
     }
-    return record;
+    return {
+      cle,
+      valeur: record.longueur,
+      record: t(`records.${cle}`),
+      detenteur: record.debut && record.fin ? t("records.serieDuAu", { debut: formatDateFR(record.debut), fin: formatDateFR(record.fin) }) : "",
+    };
   }
   const series = [
-    { label: t("records.serieVictoires"), ...serie((r) => r === "VICTOIRE") },
-    { label: t("records.serieSansDefaite"), ...serie((r) => r !== "DEFAITE") },
-    { label: t("records.serieDefaites"), ...serie((r) => r === "DEFAITE") },
+    serie("serieVictoires", (r) => r === "VICTOIRE"),
+    serie("serieSansDefaite", (r) => r !== "DEFAITE"),
+    serie("serieDefaites", (r) => r === "DEFAITE"),
   ];
 
   return (
-    <div className="mx-auto max-w-7xl px-4 py-10">
-      <h1 className="mb-2 flex items-center gap-3 text-3xl font-bold uppercase tracking-wider text-foreground">
-        <Flame className="h-8 w-8 text-usap-or" />
-        {t("records.titre")}
-      </h1>
-      <p className="mb-6 text-muted-foreground">
-        {t("records.chapeau")}
-      </p>
-
-      <div className="mb-10 rounded-lg border border-border bg-muted/30 p-4 text-sm text-muted-foreground">
-        <p>
-          <span className="font-semibold text-foreground">
-            {t("records.reserveTitre")}
-          </span>{" "}
-          {t("records.reserveTexte")}
+    <div className="mx-auto max-w-5xl px-4 py-10 sm:py-14">
+      <header className="mb-8 sm:mb-12">
+        <h1 className="font-display text-7xl uppercase leading-none text-usap-sang sm:text-8xl">{t("records.titre")}</h1>
+        <p className="mt-4 max-w-prose text-lg leading-snug text-foreground">{t("records.chapeau")}</p>
+        <p className="mt-2 max-w-prose text-sm leading-relaxed text-muted-foreground">
+          {t("records.reserveTitre")} {t("records.reserveTexte")}
         </p>
-        <p className="mt-2">
-          {t("records.reserveSaisons")}
-        </p>
-      </div>
+        <p className="mt-1 max-w-prose text-sm leading-relaxed text-muted-foreground">{t("records.reserveSaisons")}</p>
+      </header>
 
-      {/* ── Sur un match ────────────────────────────────────── */}
-      <section className="mb-12">
-        <h2 className="mb-4 flex items-center gap-2 text-xl font-bold uppercase tracking-wider text-foreground">
-          <CalendarDays className="h-5 w-5 text-usap-or" />
-          {t("records.surUnMatch")}
-        </h2>
-        <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
-          {plusLargeVictoire && (
-            <Carte
-              label={t("records.plusLargeVictoire")}
-              valeur={`+${plusLargeVictoire.scoreUsap - plusLargeVictoire.scoreOpponent}`}
-              detail={affiche(plusLargeVictoire)}
-              contexte={`${plusLargeVictoire.season.label} — ${formatDateFR(plusLargeVictoire.date)}`}
-              href={`/matchs/${plusLargeVictoire.slug}`}
-            />
-          )}
-          {plusLourdeDefaite && (
-            <Carte
-              label={t("records.plusLourdeDefaite")}
-              valeur={`−${plusLourdeDefaite.scoreOpponent - plusLourdeDefaite.scoreUsap}`}
-              detail={affiche(plusLourdeDefaite)}
-              contexte={`${plusLourdeDefaite.season.label} — ${formatDateFR(plusLourdeDefaite.date)}`}
-              href={`/matchs/${plusLourdeDefaite.slug}`}
-            />
-          )}
-          {plusDePoints && (
-            <Carte
-              label={t("records.plusDePointsMarques")}
-              valeur={plusDePoints.scoreUsap}
-              detail={affiche(plusDePoints)}
-              contexte={`${plusDePoints.season.label} — ${formatDateFR(plusDePoints.date)}`}
-              href={`/matchs/${plusDePoints.slug}`}
-            />
-          )}
-          {plusEncaisses && (
-            <Carte
-              label={t("records.plusDePointsEncaisses")}
-              valeur={plusEncaisses.scoreOpponent}
-              detail={affiche(plusEncaisses)}
-              contexte={`${plusEncaisses.season.label} — ${formatDateFR(plusEncaisses.date)}`}
-              href={`/matchs/${plusEncaisses.slug}`}
-            />
-          )}
-          {plusDEssais && (
-            <Carte
-              label={t("records.plusDEssais")}
-              valeur={plusDEssais.triesUsap!}
-              detail={affiche(plusDEssais)}
-              contexte={`${plusDEssais.season.label} — ${formatDateFR(plusDEssais.date)}`}
-              href={`/matchs/${plusDEssais.slug}`}
-            />
-          )}
-          {totalLePlusHaut && (
-            <Carte
-              label={t("records.matchProlifique")}
-              valeur={totalLePlusHaut.scoreUsap + totalLePlusHaut.scoreOpponent}
-              detail={affiche(totalLePlusHaut)}
-              contexte={`${totalLePlusHaut.season.label} — ${formatDateFR(totalLePlusHaut.date)}`}
-              href={`/matchs/${totalLePlusHaut.slug}`}
-            />
-          )}
-          {plusDePointsJoueur?.player && (
-            <Carte
-              label={t("records.pointsJoueur")}
-              valeur={plusDePointsJoueur.totalPoints}
-              detail={plusDePointsJoueur.player.firstName + " " + plusDePointsJoueur.player.lastName}
-              contexte={`${plusDePointsJoueur.match.isHome ? "" : "à "}${plusDePointsJoueur.match.opponent?.shortName} — ${formatDateFR(plusDePointsJoueur.match.date)}`}
-              href={`/joueurs/${plusDePointsJoueur.player.slug}`}
-            />
-          )}
-          {plusDEssaisJoueur?.player && (
-            <Carte
-              label={t("records.essaisJoueur")}
-              valeur={plusDEssaisJoueur.tries}
-              detail={plusDEssaisJoueur.player.firstName + " " + plusDEssaisJoueur.player.lastName}
-              contexte={`${plusDEssaisJoueur.match.isHome ? "" : "à "}${plusDEssaisJoueur.match.opponent?.shortName} — ${formatDateFR(plusDEssaisJoueur.match.date)}`}
-              href={`/joueurs/${plusDEssaisJoueur.player.slug}`}
-            />
-          )}
-          {plusDePenalites?.player && (
-            <Carte
-              label={t("records.penalitesJoueur")}
-              valeur={plusDePenalites.penalties}
-              detail={plusDePenalites.player.firstName + " " + plusDePenalites.player.lastName}
-              contexte={`${plusDePenalites.match.isHome ? "" : "à "}${plusDePenalites.match.opponent?.shortName} — ${formatDateFR(plusDePenalites.match.date)}`}
-              href={`/joueurs/${plusDePenalites.player.slug}`}
-            />
-          )}
-          {plusGrosseAffluence && (
-            <Carte
-              label={t("records.affluence")}
-              valeur={plusGrosseAffluence.attendance!.toLocaleString("fr-FR")}
-              detail={affiche(plusGrosseAffluence)}
-              contexte={`${plusGrosseAffluence.season.label} — ${formatDateFR(plusGrosseAffluence.date)}`}
-              href={`/matchs/${plusGrosseAffluence.slug}`}
-              note={t("records.affluenceNote")}
-            />
-          )}
-        </div>
-      </section>
-
-      {/* ── Sur une saison ──────────────────────────────────── */}
-      <section className="mb-12">
-        <h2 className="mb-4 flex items-center gap-2 text-xl font-bold uppercase tracking-wider text-foreground">
-          <Trophy className="h-5 w-5 text-usap-or" />
-          {t("records.surUneSaison")}
-        </h2>
-        <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
-          {[
-            { label: t("records.saisonPoints"), s: plusDePointsSaison, v: (s: Saison) => s.totalPoints },
-            { label: t("records.saisonVictoires"), s: plusDeVictoires, v: (s: Saison) => s.wins },
-            { label: t("records.saisonDefaites"), s: plusDeDefaites, v: (s: Saison) => s.losses },
-            { label: t("records.saisonMarques"), s: plusMarques, v: (s: Saison) => s.pointsFor },
-            { label: t("records.saisonEncaisses"), s: plusEncaissesSaison, v: (s: Saison) => s.pointsAgainst },
-            { label: t("records.saisonMeilleureDiff"), s: meilleureDiff, v: (s: Saison) => `+${diff(s)}` },
-            { label: t("records.saisonPireDiff"), s: pireDiff, v: (s: Saison) => `${diff(s)}` },
-            { label: t("records.saisonBonus"), s: plusDeBonus, v: (s: Saison) => s.bonusOffensif },
-          ].map(
-            ({ label, s, v }) =>
-              s && (
-                <Carte
-                  key={label}
-                  label={label}
-                  valeur={v(s) ?? "—"}
-                  detail={s.label}
-                  contexte={t("records.matchsDeSaison", {
-                    division: s.division === "PRO_D2" ? "Pro D2" : "Top 14",
-                    n: s.matchesPlayed ?? 0,
-                  })}
-                  href={`/saisons/${s.label}`}
-                />
-              ),
-          )}
-          {meilleurMarqueurSaison && (
-            <Carte
-              label={t("records.essaisSurUneSaison")}
-              valeur={meilleurMarqueurSaison.essais}
-              detail={meilleurMarqueurSaison.nom}
-              contexte={meilleurMarqueurSaison.saison}
-              href={`/joueurs/${meilleurMarqueurSaison.slug}`}
-            />
-          )}
-          {meilleurRealisateurSaison && (
-            <Carte
-              label={t("records.pointsSurUneSaison")}
-              valeur={meilleurRealisateurSaison.points}
-              detail={meilleurRealisateurSaison.nom}
-              contexte={meilleurRealisateurSaison.saison}
-              href={`/joueurs/${meilleurRealisateurSaison.slug}`}
-            />
-          )}
-        </div>
-      </section>
-
-      {/* ── Séries ──────────────────────────────────────────── */}
-      <section>
-        <h2 className="mb-1 flex items-center gap-2 text-xl font-bold uppercase tracking-wider text-foreground">
-          <Flame className="h-5 w-5 text-usap-or" />
-          {t("records.series")}
-        </h2>
-        <p className="mb-4 text-sm text-muted-foreground">
-          {t("records.seriesChapeau")}
-        </p>
-        <div className="grid gap-3 sm:grid-cols-3">
-          {series.map((s) => (
-            <Carte
-              key={s.label}
-              label={s.label}
-              valeur={s.longueur}
-              detail={
-                s.debut && s.fin
-                  ? `${formatDateFR(s.debut)} → ${formatDateFR(s.fin)}`
-                  : "—"
-              }
-            />
-          ))}
-        </div>
-      </section>
+      <Tableau titre={t("records.surUnMatch")} lignes={surUnMatch} t={t} note={t("records.affluenceNote", { n: avecAffluence.length })} />
+      <Tableau titre={t("records.surUneSaison")} lignes={surUneSaison} t={t} />
+      <Tableau titre={t("records.series")} chapeau={t("records.seriesChapeau")} lignes={series} t={t} />
     </div>
   );
 }
 
-/** Une carte de record : la valeur, ce qu'elle désigne, et où la vérifier. */
-function Carte({
-  label,
-  valeur,
-  detail,
-  contexte,
-  href,
+/** Un tableau de records : la valeur en grand en tête de ligne, le reste en mots. */
+function Tableau({
+  titre,
+  chapeau,
+  lignes,
   note,
+  t,
 }: {
-  label: string;
-  valeur: number | string;
-  detail: string;
-  contexte?: string;
-  href?: string;
+  titre: string;
+  chapeau?: string;
+  lignes: Ligne[];
   note?: string;
+  t: (cle: string) => string;
 }) {
-  const corps = (
-    <>
-      <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
-        {label}
-      </p>
-      <p className="mt-1 text-3xl font-bold text-usap-sang">{valeur}</p>
-      <p className="mt-1 font-medium text-foreground">{detail}</p>
-      {contexte && (
-        <p className="text-sm text-muted-foreground">{contexte}</p>
-      )}
-      {note && <p className="mt-2 text-xs text-muted-foreground">{note}</p>}
-    </>
-  );
-
-  const classes =
-    "block rounded-lg border border-border bg-usap-carte p-4 transition-colors";
-
-  return href ? (
-    <Link href={href} className={`${classes} hover:border-usap-or/40`}>
-      {corps}
-    </Link>
-  ) : (
-    <div className={classes}>{corps}</div>
+  return (
+    <section className="mb-12">
+      <h2 className="mb-1 border-b-2 border-usap-sang pb-1 font-display text-3xl uppercase leading-none text-usap-sang">{titre}</h2>
+      {chapeau && <p className="mb-3 max-w-prose text-sm text-muted-foreground">{chapeau}</p>}
+      <div className="overflow-x-auto">
+        <table className="w-full border-collapse text-sm">
+          <thead className="sr-only">
+            <tr>
+              <th scope="col">{t("records.colValeur")}</th>
+              <th scope="col">{t("records.colRecord")}</th>
+              <th scope="col">{t("records.colDetenteur")}</th>
+              <th scope="col">{t("records.colContexte")}</th>
+            </tr>
+          </thead>
+          <tbody className="tabular-nums">
+            {lignes.map((l) => (
+              <tr key={l.cle} className="border-b border-border hover:bg-muted">
+                <td className="py-2 pr-4 text-right whitespace-nowrap font-display text-3xl leading-none text-usap-sang sm:text-4xl">{l.valeur}</td>
+                <td className="py-2 pr-4 text-muted-foreground">{l.record}</td>
+                <td className="py-2 pr-4 text-foreground">
+                  {l.href ? (
+                    <Link href={l.href} className="font-semibold hover:text-usap-sang">
+                      {l.detenteur}
+                    </Link>
+                  ) : (
+                    l.detenteur
+                  )}
+                </td>
+                <td className="hidden py-2 text-muted-foreground sm:table-cell">{l.contexte}</td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+      {note && <p className="mt-2 max-w-prose text-xs text-muted-foreground">{note}</p>}
+    </section>
   );
 }

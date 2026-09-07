@@ -1369,10 +1369,13 @@ des quatre premiers en viennent. La division et le nombre de matchs sont donc
 rappelés sur chaque carte, plutôt que de laisser croire à une comparaison qui
 n'en est pas une.
 
-**Les séries ne coupent pas aux saisons** : quinze défaites d'affilée du
-25 août 2018 au 26 janvier 2019, toutes compétitions confondues. C'est le
-sens usuel du mot, et le contraire aurait fabriqué des séries plus courtes que
-la réalité.
+**Les séries ne coupent pas aux saisons**, et elles comptent toutes les
+compétitions : douze défaites d'affilée du 27 octobre 2018 au 26 janvier
+2019. Ce fichier a dit « quinze, du 25 août » tant que la campagne
+européenne de 2018-2019 n'était pas en base ; depuis le 5 septembre 2026,
+le nul de Chaban-Delmas du 20 octobre 2018 coupe la série en huit puis
+douze, et la page le dit d'elle-même. C'est le sens usuel du mot, et le
+contraire aurait fabriqué des séries plus courtes que la réalité.
 
 **Présidents et entraîneurs — chronologique, et la période affichée avec.**
 Les deux listes étaient l'une alphabétique, l'autre triée sur
@@ -1632,8 +1635,8 @@ au dictionnaire (`match.*`), provenance en pied.
 **frise des résultats** : sous le millésime en rouge condensé, la saison
 entière en une ligne de lettres — V en rouge, N en encre, D en gris —,
 chacune liée à sa rencontre. C'est la structure réelle d'une saison, et
-elle se lit d'un coup d'œil : les quinze défaites d'affilée de 2018-2019 s'y
-voient sans qu'on les nomme. Le titre décidé est une ligne en or — « Champion
+elle se lit d'un coup d'œil : les vingt défaites en vingt et une rencontres
+de l'automne 2018 s'y voient sans qu'on les nomme. Le titre décidé est une ligne en or — « Champion
 de Pro D2, promu » —, et une relégation seule s'écrit en gris, l'or n'étant
 pas pour elle. Le classement et le bilan du championnat tiennent en une
 phrase, le staff en une autre, le bilan rédigé suit ; les rencontres par
@@ -1874,9 +1877,24 @@ qu'il est celui de chaque saison. Plus de cible, de médaille ni
 d'empreinte de pas devant les titres, plus de puces bordées, plus
 d'encadré gris, plus de tableaux arrondis.
 
-**Ce qui reste dans l'ancien rendu** : les records, déjà passés au
-dictionnaire. À reprendre en relisant qu'aucune couleur en dur n'est
-revenue.
+**Les records sont refaits le 7 septembre 2026, et c'était la dernière
+page de l'ancien rendu.** Sa seule audace est la valeur du record en
+grand caractère condensé en rouge en tête de chaque ligne — un record est
+un nombre, et c'est lui qu'on grossit. Le reste est en lignes : ce que le
+record mesure, qui le porte, lié à la rencontre, à la saison ou au joueur,
+et où et quand ; trois tableaux sous un titre rouge et son filet — sur un
+match, sur une saison, les séries. **Deux valeurs en dur en sont sorties** :
+le nombre de rencontres à affluence connue, que la note disait « 36 »
+quand la base en compte davantage, et la division d'une saison, que la
+page réduisait à Pro D2 ou Top 14 quand 2004-2005 est un Top 16 — les
+deux sont lus dans la base. Plus de flamme, de calendrier ni de trophée
+devant les titres, plus d'encadré gris, plus de vingt-trois cartes
+bordées à libellé en capitales espacées.
+
+**Le chantier est clos le 7 septembre 2026** : les trente-six pages
+publiques sont dans la même voix. Ce qui reste est le bilingue, reporté
+à la fin, et une relecture de chaque page nouvelle pour qu'aucune couleur
+en dur n'y revienne.
 
 
 - **Couleur principale** : Rouge sang (#C8102E) - couleur dominante USAP
