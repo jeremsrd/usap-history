@@ -1834,11 +1834,28 @@ de cinq cases dont deux en vert et rouge, plus d'encadré or à trophée,
 plus d'emoji ni de flèches. Dictionnaire `entraineurs.*` et
 `entraineur.*`, les libellés de rôle repris de `saison.role*`.
 
-**Ce qui reste dans l'ancien rendu** : les cinq autres pages — présidents,
-liste et fiche, centurions, réalisateurs et records, ces trois derniers
-déjà passés au dictionnaire. À reprendre page par page, en relisant
-chaque fois qu'aucune couleur en dur n'est revenue. Les suivantes, par
-ordre de valeur : les présidents, puis les trois classements.
+**La fiche président et la liste des présidents sont refaites le
+7 septembre 2026**, sur le modèle des entraîneurs. La fiche : le nom en
+rouge, le mandat en une phrase quand la fiche le porte — « Président de
+2007 à 2012 » —, sinon les saisons que la base couvre et la réserve qui
+dit que ce n'est pas la même chose ; le titre décidé sous sa présidence
+en or ; la frise des rencontres jouées sous sa présidence, quatre cents
+lettres pour Rivière ; le bilan en une phrase ; la saison par saison avec
+l'entraîneur principal lié et le fait marquant. `Provenance` accepte
+`President`. **La liste n'a pas d'épine** : quatre hommes sur vingt-deux
+saisons, une épine n'aurait rien à structurer. C'est **une chronologie**,
+à la manière du palmarès — les années en grand caractère condensé en
+tête de chaque ligne, en rouge quand c'est le mandat que la fiche porte
+(« 2013– », « 2007–2012 »), en gris quand ce ne sont que les saisons
+couvertes (Dagrenat, Besson), et la réserve dit la différence ; puis le
+nom, les saisons, le bilan et le fait marquant. Plus de cartes à icône
+avec le mandat en or, plus de trois cases, plus d'encadré à trophée, plus
+d'emoji ni de flèches. Dictionnaire `presidents.*` et `president.*`.
+
+**Ce qui reste dans l'ancien rendu** : les trois classements —
+centurions, réalisateurs et records —, déjà passés au dictionnaire. À
+reprendre page par page, en relisant chaque fois qu'aucune couleur en dur
+n'est revenue.
 
 
 - **Couleur principale** : Rouge sang (#C8102E) - couleur dominante USAP

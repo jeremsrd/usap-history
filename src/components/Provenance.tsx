@@ -40,7 +40,7 @@ export default async function Provenance({
   entite,
   id,
 }: {
-  entite: "Match" | "Player" | "Opponent" | "Season" | "Venue" | "Referee" | "Coach";
+  entite: "Match" | "Player" | "Opponent" | "Season" | "Venue" | "Referee" | "Coach" | "President";
   id: string;
 }) {
   const lignes = await prisma.attestation.findMany({
