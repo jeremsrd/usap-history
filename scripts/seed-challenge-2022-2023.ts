@@ -148,7 +148,7 @@ const MATCHES: MatchData[] = [
     isHome: false,
     opponentName: "Glasgow Warriors",
     opponentLabel: "Glasgow",
-    venueFix: { name: "Murrayfield", city: "Édimbourg", capacity: 67144 },
+    venueFix: { name: "Murrayfield Stadium", city: "Édimbourg", capacity: 67144 },
     scoreUsap: 18,
     scoreOpponent: 26,
     report:

@@ -1008,6 +1008,7 @@ doublons.
 | `fetch-player-photos.ts` | rapatrie les portraits dans `public/images/players/`, renseigne `photoUrl` et consigne auteur et licence dans `credits.json` : **la LNR pour l'effectif, Wikimedia Commons pour les anciens**. `--dry`, `--effectif` ou `--commons` pour n'en faire qu'une, `--images` pour n'écrire que les fichiers, `--planche` pour la planche contact, `--force` pour réécrire |
 | `fetch-club-logos.ts` | rapatrie les logos officiels des clubs dans `public/images/logos/`, depuis les CDN de la LNR et de l'EPCR, et renseigne `Opponent.logoUrl` |
 | `fix-match-venues.ts` | met les stades en ordre : fusionne les doublons, crée les manquants, rattache chaque club à son terrain — déduit des déplacements déjà enregistrés — puis complète les matchs sans lieu, par `terrainDuMatch()` |
+| `fix-venue-countries.ts` | donne un pays aux stades qui n'en ont pas — **celui du club qui y reçoit**, ou la ville pour les quatre terrains neutres — et fusionne deux doublons nés de deux scripts qui ne cherchaient pas le même nom, Murrayfield et Montjuïc. Le 7 septembre 2026, 54 stades sur 72 étaient « Pays inconnu » sur la page des stades. Idempotent ; `--dry` |
 | `seed-stades-historiques.ts` | écrit les terrains d'**avant** : les trois clubs qui ont déménagé pendant la période couverte, chacun avec sa source. À relancer après `fix-match-venues.ts` si un stade manquait |
 | `sync-effectif.ts` | met l'effectif professionnel en accord avec la LNR : crée les fiches manquantes, lève `isActive` sur l'effectif et l'abaisse sur les partants, puis **inscrit l'effectif à la saison en cours** (`SeasonPlayer`, en ajout seul) ; refuse d'écrire tant qu'un doublon ou un nom douteux subsiste |
 | `fix-minutes-cartons-jaunes.ts` | **la reprise du 6 septembre 2026** : retire à chaque joueur jauni les minutes de sa sanction, sur toute la base — 843 lignes —, en retrouvant la minute où il a cessé d'être en jeu ; laisse et nomme les cartons sans minute, les lignes sans minutes et celles dont les minutes ne se déduisent plus d'une entrée et d'une sortie, qu'une reprise de leur feuille règle. Déjà appliqué ; `--dry` |
@@ -3584,6 +3585,22 @@ d'un siècle, c'est la règle qu'on connaîtra le moins bien.
   l'adresse que la FFR publie sur Mon Club House — avenue Pierre-de-Coubertin,
   65000 Tarbes — est bien celle de ce stade. Deux sources concordantes, aucune
   officielle au sens du projet, et la même réserve sur l'époque.
+
+  **Les 70 stades ont un pays depuis le 7 septembre 2026.** Cinquante-quatre
+  n'en avaient pas, dont tous ceux de France hors Aimé-Giral, et la page des
+  stades les rangeait sous « Pays inconnu » : aucun script de stade n'écrivait
+  `countryId`. Il n'y avait rien à chercher — le club qui y reçoit a un pays
+  en base, et les quatre terrains neutres se situent par leur ville —, et
+  `fix-venue-countries.ts` le recopie. Il a fusionné au passage deux doublons
+  que rien ne signalait : « Murrayfield », créé par `seed-challenge-2022-2023`
+  pour le Glasgow-USAP de 2022, à côté du « Murrayfield Stadium » de
+  `seed-cup-espn` pour l'Edinburgh-USAP de 2014 ; et le « Stade Olympique de
+  Montjuïc » du `seed.ts` initial, sans match, à côté de l'« Estadi Olímpic
+  Lluís Companys » du quart de 2011. Les deux scripts d'origine cherchent
+  désormais le nom conservé, sans quoi une relance recréerait le doublon —
+  c'est le sinistre déjà connu des joueurs. **Un script qui crée un stade
+  doit lui donner son pays**, et chercher le stade par le nom que la base
+  porte déjà.
 
   Deux clubs n'ont toujours pas de terrain rattaché : Cardiff et les Lions,
   que l'USAP n'a reçus qu'à Aimé-Giral. Sans déplacement là-bas, rien ne

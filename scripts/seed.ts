@@ -138,9 +138,9 @@ async function main() {
     }),
     prisma.venue.create({
       data: {
-        name: "Stade Olympique de Montjuïc",
+        name: "Estadi Olímpic Lluís Companys",
         city: "Barcelone",
-        capacity: 55000,
+        capacity: 55926,
         isHomeGround: false,
         notes:
           "L'USAP y a délocalisé plusieurs matchs pour promouvoir l'identité catalane.",
