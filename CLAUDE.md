@@ -1772,12 +1772,37 @@ tableau comptait les rencontres à venir, son `groupBy` n'ayant pas de
 filtre. Plus de quatre cases à icône, plus de V verts ni de D rouges,
 plus de cartes de joueur ni de record. Dictionnaire `statistiques.*`.
 
-**Ce qui reste dans l'ancien rendu** : les neuf autres pages — arbitres,
+**La fiche arbitre et la liste des arbitres sont refaites le 7 septembre
+2026.** Le nom de l'arbitre est en **encre**, non en rouge — le rouge est
+celui de l'USAP, et un arbitre n'a pas de camp —, le prénom au-dessus comme
+sur le dos de maillot de la fiche joueur, sans le numéro. La seule audace
+de la fiche est la frise des rencontres sifflées, la même que sur la page
+de saison et la fiche stade. Le bilan tient en une phrase, la part des
+désignations sur une réception et sur un déplacement en une autre, et
+**les cartons qu'il a distribués** en une troisième — jaunes et rouges,
+des deux camps, comptés sur les feuilles de ses rencontres, sans jamais
+écrire « 0 rouge » : c'est la seule donnée de la base qui soit propre à un
+arbitre, et l'ancienne page ne la disait pas. Les rencontres en tableau,
+avec le stade lié à sa fiche, les cartons du match en mots et l'affluence ;
+`Provenance` accepte désormais `Referee`, la table n'en portant encore
+aucune. Aucun filtre : la médiane est à trois rencontres, le maximum à
+vingt-deux. La liste est sur le modèle exact de `/joueurs`, l'épine
+alphabétique et l'index, une ligne par arbitre avec la période, le bilan
+catalan sous son sifflet et ses cartons ; le chapeau nomme le plus souvent
+désigné et compte les rencontres jouées sans arbitre, l'un et l'autre lus
+dans la base. **Pas de colonne de portrait** : aucun des cent deux
+arbitres n'en a, et une case vide à cent pour cent se lit comme une erreur
+— la colonne de nationalité de `/joueurs` avait été retirée pour la même
+raison. Plus de silhouette grise, plus de quatre cases dont deux en vert
+et rouge de Tailwind, plus de pastilles. Dictionnaire `arbitres.*` et
+`arbitre.*`.
+
+**Ce qui reste dans l'ancien rendu** : les sept autres pages —
 entraîneurs et présidents, listes et fiches, centurions, réalisateurs et
 records, ces trois derniers déjà passés au dictionnaire. À reprendre page
 par page, en relisant chaque fois qu'aucune couleur en dur n'est revenue.
-Les suivantes, par ordre de valeur : les arbitres, fiche et liste, puis
-les entraîneurs et les présidents, puis les trois classements.
+Les suivantes, par ordre de valeur : les entraîneurs et les présidents,
+puis les trois classements.
 
 
 - **Couleur principale** : Rouge sang (#C8102E) - couleur dominante USAP
@@ -3495,11 +3520,15 @@ d'un siècle, c'est la règle qu'on connaîtra le moins bien.
   vérifier qu'ils y recevaient déjà, en 2020-2021 pour l'un, le 2 septembre
   2018 pour l'autre.
 - **Affluences éparses** : 36 matchs sur 600 joués, l'EPCR ayant fourni celles
-  des coupes. **Vingt-trois matchs joués n'ont pas d'arbitre** — huit en
-  2005-2006, quatre en 2006-2007, quatre en 2007-2008, cinq en 2008-2009, deux
-  en 2010-2011 —, la LNR n'en publiant pas les officiels ; c'est une lacune qui
-  s'aggrave en remontant, et les cinq saisons les plus anciennes en portent la
-  totalité. **65 fiches sur 319 sont illustrées** — dont
+  des coupes. **Soixante-treize matchs joués n'ont pas d'arbitre** au
+  7 septembre 2026 — vingt-trois de championnat, huit en 2005-2006, quatre en
+  2006-2007, quatre en 2007-2008, cinq en 2008-2009, deux en 2010-2011, la LNR
+  n'en publiant pas les officiels ; quatorze en 2004-2005, où elle n'en publie
+  pas davantage ; et trente-six rencontres européennes de 2007-2008 à
+  2018-2019, ESPN ne donnant jamais l'arbitre et l'ERC seulement sur ses
+  pages Match Centre. C'est une lacune qui s'aggrave en remontant, et la
+  liste des arbitres en donne le compte, lu dans la base. **65 fiches sur
+  319 sont illustrées** — dont
 46 des 50 joueurs de l'effectif, cf. « Photos des joueurs ».
 
   **214 fiches sur 351 portent une biographie** depuis le 4 septembre 2026, et
