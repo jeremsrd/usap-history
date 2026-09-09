@@ -4,42 +4,38 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
 
+/**
+ * La connexion à l'administration.
+ *
+ * **LE MODE INSCRIPTION A ÉTÉ RETIRÉ**, le 9 septembre 2026, sur décision de
+ * Jérémy et le même jour que la création d'administrateur d'office. La page
+ * offrait un « Créer un compte » qui appelait `supabase.auth.signUp` : sur un
+ * site dont l'administration compte un seul homme, c'était une porte sans
+ * usage. Elle ne donnait aucun droit — un compte neuf n'a pas de ligne dans
+ * `users`, et le garde de l'admin le renvoie à l'accueil —, mais elle
+ * invitait à en créer.
+ *
+ * **CE RETRAIT NE FERME PAS L'INSCRIPTION, IL LA CACHE.** La clé publique de
+ * Supabase est dans le navigateur, et `signUp` reste appelable sans passer
+ * par cette page. Ce qui ferme réellement la porte est un réglage du projet
+ * Supabase, « Allow new users to sign up », à décocher dans
+ * Authentication → Sign In / Providers. Le dire plutôt que de laisser croire
+ * qu'un formulaire retiré suffit : c'est la même erreur que renommer
+ * `/login`, écartée le même jour.
+ */
 export default function LoginPage() {
   const router = useRouter();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState<string | null>(null);
-  const [success, setSuccess] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
-  const [mode, setMode] = useState<"login" | "signup">("login");
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
     setError(null);
-    setSuccess(null);
     setLoading(true);
 
     const supabase = createClient();
-
-    if (mode === "signup") {
-      const { error } = await supabase.auth.signUp({
-        email,
-        password,
-      });
-
-      if (error) {
-        setError(error.message);
-        setLoading(false);
-        return;
-      }
-
-      setSuccess(
-        "Compte créé ! Vérifiez votre email pour confirmer, puis connectez-vous.",
-      );
-      setMode("login");
-      setLoading(false);
-      return;
-    }
 
     const { error } = await supabase.auth.signInWithPassword({
       email,
@@ -103,54 +99,15 @@ export default function LoginPage() {
           </div>
 
           {error && <p className="text-sm text-destructive">{error}</p>}
-          {success && <p className="text-sm text-green-600">{success}</p>}
 
           <button
             type="submit"
             disabled={loading}
             className="w-full rounded-md bg-usap-sang px-4 py-2 font-medium text-white transition-colors hover:bg-usap-sang/90 disabled:opacity-50"
           >
-            {loading
-              ? "Chargement..."
-              : mode === "login"
-                ? "Se connecter"
-                : "Créer le compte"}
+            {loading ? "Chargement..." : "Se connecter"}
           </button>
         </form>
-
-        <p className="mt-4 text-center text-sm text-muted-foreground">
-          {mode === "login" ? (
-            <>
-              Pas encore de compte ?{" "}
-              <button
-                type="button"
-                onClick={() => {
-                  setMode("signup");
-                  setError(null);
-                  setSuccess(null);
-                }}
-                className="text-usap-sang hover:underline"
-              >
-                Créer un compte
-              </button>
-            </>
-          ) : (
-            <>
-              Déjà un compte ?{" "}
-              <button
-                type="button"
-                onClick={() => {
-                  setMode("login");
-                  setError(null);
-                  setSuccess(null);
-                }}
-                className="text-usap-sang hover:underline"
-              >
-                Se connecter
-              </button>
-            </>
-          )}
-        </p>
       </div>
     </div>
   );

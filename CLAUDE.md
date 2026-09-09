@@ -4269,11 +4269,20 @@ compte d'authentification :
 insert into users (id, email, role) values ('<uuid auth>', '<courriel>', 'ADMIN');
 ```
 
-**Ce qui reste, et n'a pas été tranché** : la page de connexion porte un
-formulaire d'inscription, `mode: "signup"`, qui appelle
-`supabase.auth.signUp`. Un compte ainsi créé n'a aucun accès à l'admin — il
-n'a pas de ligne dans `users`, donc il est renvoyé vers l'accueil —, mais
-rien n'empêche de créer des comptes d'authentification.
+**LE MODE INSCRIPTION EST RETIRÉ DE LA PAGE DE CONNEXION**, le même jour et
+sur la même décision. Elle offrait un « Créer un compte » qui appelait
+`supabase.auth.signUp`. Il ne donnait aucun droit — un compte neuf n'a pas de
+ligne dans `users` —, mais sur un site dont l'administration compte un seul
+homme, c'était une porte sans usage, et elle invitait à en créer. La page se
+réduit à deux champs et un bouton.
+
+**ET CE RETRAIT NE FERME PAS L'INSCRIPTION, IL LA CACHE.** La clé publique de
+Supabase est dans le navigateur, et `signUp` reste appelable sans passer par
+cette page. Ce qui ferme réellement la porte est un réglage du projet
+Supabase, « Allow new users to sign up », à décocher dans
+Authentication → Sign In / Providers. **Le dire plutôt que de laisser croire
+qu'un formulaire retiré suffit** : ce serait la même erreur que renommer
+`/login`, écartée le même jour et pour la même raison.
 
 ## Notes pour Claude Code
 
