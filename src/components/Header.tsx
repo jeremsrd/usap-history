@@ -4,8 +4,8 @@ import { useState, useRef, useEffect } from "react";
 import Link from "@/components/Lien";
 import Image from "next/image";
 import { usePathname } from "next/navigation";
-import { ChevronDown, Menu, Settings, X } from "lucide-react";
-import { NAV_LINKS, NAV_LINKS_MAIN, NAV_LINKS_MORE } from "@/lib/constants";
+import { ChevronDown, Menu, X } from "lucide-react";
+import { NAV_LINKS_MAIN, NAV_LINKS_MORE } from "@/lib/constants";
 import { cheminSansLangue } from "@/i18n/langues";
 import SelecteurLangue from "@/components/SelecteurLangue";
 import { cn } from "@/lib/utils";
@@ -14,6 +14,14 @@ import { ThemeToggle } from "@/components/ThemeToggle";
 /**
  * Les libellés viennent du serveur : le Header est un composant client, et le
  * dictionnaire n'a pas à partir dans le navigateur pour trois mots de menu.
+ *
+ * **L'ADMINISTRATION N'A PLUS DE LIEN ICI**, depuis le 9 septembre 2026. Une
+ * roue dentée y figurait, en bureau et en mobile, donc sur chaque page du
+ * site. Ce n'est pas une mesure de sécurité — l'admin est gardé page par page
+ * et action par action, et le cacher ne protégerait rien. C'est que ce lien
+ * ne sert qu'à une personne, et qu'il rendait l'admin et la connexion
+ * **découvrables depuis toutes les pages** : les robots les suivaient. Jérémy
+ * connaît l'adresse, `/admin` y mène toujours.
  */
 export default function Header({ libelles }: { libelles: Record<string, string> }) {
   const [isOpen, setIsOpen] = useState(false);
@@ -132,20 +140,8 @@ export default function Header({ libelles }: { libelles: Record<string, string> 
             </div>
           </nav>
 
-          {/* Admin + theme toggle */}
+          {/* Langue + thème. L'administration n'a pas de lien, cf. l'en-tête. */}
           <div className="ml-2 flex items-center gap-1 border-l border-border pl-2">
-            <Link
-              href="/admin"
-              className={cn(
-                "rounded-md p-2 transition-colors",
-                pathname.startsWith("/admin")
-                  ? "text-usap-sang"
-                  : "text-muted-foreground hover:bg-accent hover:text-foreground",
-              )}
-              title={libelles["nav.admin"]}
-            >
-              <Settings className="h-4 w-4" />
-            </Link>
             <SelecteurLangue titre={libelles["langue.choisir"]} />
             <ThemeToggle libelles={libelles} />
           </div>
@@ -208,21 +204,6 @@ export default function Header({ libelles }: { libelles: Record<string, string> 
             </Link>
           ))}
 
-          {/* Admin */}
-          <div className="my-2 border-t border-border" />
-          <Link
-            href="/admin"
-            onClick={() => setIsOpen(false)}
-            className={cn(
-              "flex items-center gap-2 rounded-md px-3 py-2 text-sm font-medium transition-colors",
-              pathname.startsWith("/admin")
-                ? "bg-usap-sang/20 text-usap-sang"
-                : "text-muted-foreground hover:bg-accent hover:text-foreground",
-            )}
-          >
-            <Settings className="h-4 w-4" />
-            Administration
-          </Link>
         </nav>
       )}
     </header>

@@ -25,7 +25,6 @@ export const fr = {
     arbitres: "Arbitres",
     entraineurs: "Entraîneurs",
     presidents: "Présidents",
-    admin: "Admin",
     menu: "Ouvrir le menu",
     fermer: "Fermer le menu",
     logo: "Logo USAP",

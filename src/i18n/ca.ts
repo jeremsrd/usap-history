@@ -37,7 +37,6 @@ export const ca = {
     arbitres: "Àrbitres",
     entraineurs: "Entrenadors",
     presidents: "Presidents",
-    admin: "Admin",
     menu: "Obrir el menú",
     fermer: "Tancar el menú",
     logo: "Logo de la USAP",

@@ -68,7 +68,6 @@ export default async function RootLayout({
 
   // Les libellés du menu, résolus ici : le Header est un composant client.
   const libelles: Record<string, string> = {
-    "nav.admin": t("nav.admin"),
     "nav.logo": t("nav.logo"),
     "nav.explorer": t("nav.explorer"),
     "nav.menu": t("nav.menu"),

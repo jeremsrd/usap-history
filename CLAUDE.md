@@ -4210,6 +4210,55 @@ C'est ainsi qu'`opponent_venues` a été créée le 31 août 2026. **Relire le S
 avant de l'exécuter** : `migrate diff` rend tout l'écart entre le schéma et la
 base, dérive comprise, et pas seulement ce qu'on croit ajouter.
 
+## L'administration, et ce qui la protège
+
+**Trois choses posées le 9 septembre 2026**, le lendemain de la mise en ligne
+du domaine, sur une remarque de Jérémy : « le lien d'admin sur le site, c'est
+un peu gênant, et `/login` n'est pas optimale ».
+
+**Le lien a disparu de l'en-tête.** Une roue dentée y figurait, en bureau et
+en mobile, donc sur chaque page publique. **Ce n'est pas une mesure de
+sécurité** — le cacher ne protégerait rien, et l'admin est réellement gardé,
+cf. plus bas. C'est que ce lien ne sert qu'à une personne, et qu'il rendait
+l'admin et la connexion **découvrables depuis toutes les pages** : les robots
+les suivaient. `/admin` y mène toujours.
+
+**LE GARDE DU MIDDLEWARE NE S'ACTIVAIT PLUS, ET RIEN NE LE DISAIT.**
+`lib/supabase/middleware.ts` testait `pathname.startsWith("/admin")`, ce qui
+était juste jusqu'au 4 septembre 2026 ; depuis que la langue est dans
+l'adresse, le chemin réel est `/fr/admin`, et le test valait `false` sur
+**toutes** les requêtes.
+
+**Aucune page n'était pour autant ouverte**, et c'est ce qui rend le cas
+intéressant : les douze pages d'admin et leurs douze modules d'actions
+appellent chacun `auth.getUser()` avant de lire ou d'écrire, et ce sont eux
+qui protégeaient. Ce qui avait disparu, c'est la **seconde couche** — celle
+qui rattrape une page ajoutée sans son garde. **Une défense en profondeur qui
+ne se déclenche jamais ne protège de rien, et son silence est le pire de ses
+défauts** : rien ne distingue, en lisant le code, un garde qui veille d'un
+garde dont la condition est toujours fausse. Le segment de langue est
+désormais lu, et la redirection le porte : elle envoyait vers `/login`, que le
+middleware renvoyait ensuite vers `/fr/login`, en deux sauts au lieu d'un.
+
+**Le renommage de `/login` a été écarté, et c'est un arbitrage.** Une adresse
+obscure ne protège de rien : les robots essaient des milliers de chemins de
+toute façon. Ce qui manquait n'était pas un nom secret mais une directive
+`noindex` — la page n'avait ni balise `robots` ni en-tête `X-Robots-Tag`. Deux
+layouts minimaux la portent désormais, `admin/layout.tsx` et
+`login/layout.tsx`, qui n'existent que pour cela : Next.js ne fusionne cette
+métadonnée que depuis un segment de route.
+
+**Deux choses restent, et elles demandent une décision.**
+
+- **La page d'admin crée un administrateur d'office si la table `users` est
+  vide.** Il y a un utilisateur aujourd'hui, un `ADMIN`, donc aucun risque
+  immédiat. Mais si cette table se vidait — une migration, une remise à zéro
+  —, le premier visiteur authentifié deviendrait administrateur.
+- **La page de connexion porte un formulaire d'inscription**, `mode:
+  "signup"`, qui appelle `supabase.auth.signUp`. Un compte ainsi créé n'a pas
+  accès à l'admin tant que la table `users` n'est pas vide — il est renvoyé
+  vers l'accueil —, mais les deux points ci-dessus se répondent.
+
 ## Notes pour Claude Code
 
 - Toujours créer des composants réutilisables
