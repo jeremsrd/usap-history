@@ -4248,16 +4248,32 @@ layouts minimaux la portent désormais, `admin/layout.tsx` et
 `login/layout.tsx`, qui n'existent que pour cela : Next.js ne fusionne cette
 métadonnée que depuis un segment de route.
 
-**Deux choses restent, et elles demandent une décision.**
+**LA CRÉATION D'ADMINISTRATEUR D'OFFICE EST SUPPRIMÉE**, le même jour, sur
+décision de Jérémy. Le tableau de bord inscrivait le demandeur en `ADMIN`
+quand la table `users` était vide : c'était **la seule porte du site à
+délivrer un droit au lieu de le vérifier**. Le risque n'était pas théorique,
+la page de connexion portant un formulaire d'inscription ouvert — une table
+vidée par une migration ou une remise à zéro aurait donné l'administration au
+premier venu.
 
-- **La page d'admin crée un administrateur d'office si la table `users` est
-  vide.** Il y a un utilisateur aujourd'hui, un `ADMIN`, donc aucun risque
-  immédiat. Mais si cette table se vidait — une migration, une remise à zéro
-  —, le premier visiteur authentifié deviendrait administrateur.
-- **La page de connexion porte un formulaire d'inscription**, `mode:
-  "signup"`, qui appelle `supabase.auth.signUp`. Un compte ainsi créé n'a pas
-  accès à l'admin tant que la table `users` n'est pas vide — il est renvoyé
-  vers l'accueil —, mais les deux points ci-dessus se répondent.
+Son garde est désormais celui des douze autres pages, **au mot près** :
+`if (!dbUser || dbUser.role === "VIEWER") redirect("/")`. Une fiche absente
+vaut refus. Plus aucun chemin du code n'écrit dans `users`, vérifié.
+
+**L'amorçage se fait donc à la main, et c'est voulu.** Sans ligne dans
+`users`, l'administration est close pour tout le monde, y compris pour
+Jérémy. La première s'écrit dans Supabase, l'identifiant étant celui du
+compte d'authentification :
+
+```sql
+insert into users (id, email, role) values ('<uuid auth>', '<courriel>', 'ADMIN');
+```
+
+**Ce qui reste, et n'a pas été tranché** : la page de connexion porte un
+formulaire d'inscription, `mode: "signup"`, qui appelle
+`supabase.auth.signUp`. Un compte ainsi créé n'a aucun accès à l'admin — il
+n'a pas de ligne dans `users`, donc il est renvoyé vers l'accueil —, mais
+rien n'empêche de créer des comptes d'authentification.
 
 ## Notes pour Claude Code
 
