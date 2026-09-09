@@ -54,6 +54,27 @@ export const TERRAINS_PARTICULIERS: Record<string, string | null> = {
   // trompe : l'Estadi Cornellà-El Prat tient 40 000 places, l'affluence le
   // dément d'elle-même.
   "2011-04-09": "Estadi Olímpic Lluís Companys",
+  // **ET CE N'EST PAS LA SEULE DÉLOCALISATION À BARCELONE : IL Y EN A TROIS.**
+  // Les deux autres sont des rencontres de championnat, où rien ne distingue
+  // une réception délocalisée d'une réception ordinaire — la feuille de la LNR
+  // désigne l'USAP recevante et ne nomme aucun lieu, si bien que la déduction
+  // les plaçait toutes deux à Aimé-Giral, en silence. Signalé par Jérémy le
+  // 9 septembre 2026.
+  //
+  //   15 septembre 2012, J5, Perpignan 34-20 Toulouse, ~23 000 spectateurs ;
+  //   19 avril 2014,     J25, Perpignan 31-46 Toulon,  ~24 000 spectateurs.
+  //
+  // Trois sources concordantes, dont deux nomment les trois délocalisations
+  // ensemble et redonnent les scores que la base porte déjà : Wikipédia,
+  // « Stade olympique Lluís-Companys » ; RugbyPass, qui liste les trois
+  // précédents avec leurs scores et leurs affluences ; France 3 Occitanie du
+  // 19 avril 2014, qui annonce « la troisième délocalisation » — ce qui borne
+  // la liste autant qu'il la confirme. ESPN nomme Montjuïc sur celle de 2014.
+  //
+  // L'affluence n'est pas écrite : « environ 23 000 » n'a pas la précision des
+  // 12 065 d'une feuille de presse, et le chiffre vit dans l'attestation.
+  "2012-09-15": "Estadi Olímpic Lluís Companys",
+  "2014-04-19": "Estadi Olímpic Lluís Companys",
   // Demi-finale de Heineken Cup 2011, Northampton-Perpignan du 1er mai 2011,
   // au **Stadium MK** de Milton Keynes, terrain neutre choisi par l'ERC.
   // Sources : Wikipédia et ESPN.

@@ -1009,6 +1009,7 @@ doublons.
 | `fetch-player-photos.ts` | rapatrie les portraits dans `public/images/players/`, renseigne `photoUrl` et consigne auteur et licence dans `credits.json` : **la LNR pour l'effectif, Wikimedia Commons pour les anciens**. `--dry`, `--effectif` ou `--commons` pour n'en faire qu'une, `--images` pour n'écrire que les fichiers, `--planche` pour la planche contact, `--force` pour réécrire |
 | `fetch-club-logos.ts` | rapatrie les logos officiels des clubs dans `public/images/logos/`, depuis les CDN de la LNR et de l'EPCR, et renseigne `Opponent.logoUrl` |
 | `fix-match-venues.ts` | met les stades en ordre : fusionne les doublons, crée les manquants, rattache chaque club à son terrain — déduit des déplacements déjà enregistrés — puis complète les matchs sans lieu, par `terrainDuMatch()` |
+| `fix-matchs-barcelone.ts` | **les réceptions délocalisées au stade olympique de Montjuïc**, à Barcelone : la LNR ne publiant aucun lieu, le stade se déduit du camp, et les rencontres du 15 septembre 2012 contre Toulouse et du 19 avril 2014 contre Toulon étaient à Aimé-Giral. Applique ce que `TERRAINS_PARTICULIERS` dit désormais, et atteste `CONCORDANT` sur `Match.venueId`. Déjà appliqué ; `--dry` |
 | `fix-venue-countries.ts` | donne un pays aux stades qui n'en ont pas — **celui du club qui y reçoit**, ou la ville pour les quatre terrains neutres — et fusionne deux doublons nés de deux scripts qui ne cherchaient pas le même nom, Murrayfield et Montjuïc. Le 7 septembre 2026, 54 stades sur 72 étaient « Pays inconnu » sur la page des stades. Idempotent ; `--dry` |
 | `seed-stades-historiques.ts` | écrit les terrains d'**avant** : les trois clubs qui ont déménagé pendant la période couverte, chacun avec sa source. À relancer après `fix-match-venues.ts` si un stade manquait |
 | `sync-effectif.ts` | met l'effectif professionnel en accord avec la LNR : crée les fiches manquantes, lève `isActive` sur l'effectif et l'abaisse sur les partants, puis **inscrit l'effectif à la saison en cours** (`SeasonPlayer`, en ajout seul) ; refuse d'écrire tant qu'un doublon ou un nom douteux subsiste |
@@ -3585,6 +3586,38 @@ d'un siècle, c'est la règle qu'on connaîtra le moins bien.
   l'USAP d'avant 2015 sont à Moga le 12 mai 2012, à Chaban le 24 août 2012 et
   le 29 mars 2014. Ces cas-là, avec la finale de Pro D2 2018 sur terrain
   neutre, sont dans `TERRAINS_PARTICULIERS`, qui prime sur tout le reste.
+
+  **ET UNE RÉCEPTION PEUT ÊTRE DÉLOCALISÉE, SANS QUE RIEN NE LE DISE.**
+  L'USAP a reçu trois fois au stade olympique de Montjuïc, à Barcelone, et une
+  seule était en base — le quart de finale de Heineken Cup du 9 avril 2011
+  contre Toulon, posé pour son affiche. Les deux autres sont des rencontres de
+  championnat, et une réception délocalisée reste une réception : la déduction
+  par le camp les plaçait à Aimé-Giral, en silence, comme elle plaçait la
+  finale de Pro D2 2018 chez le recevant désigné. **Signalé par Jérémy le
+  9 septembre 2026**, et corrigé par `fix-matchs-barcelone.ts` :
+
+  |  | Rencontre | Affluence |
+  |---|---|---|
+  | 15/09/2012 | J5, Perpignan 34-20 Toulouse | ~23 000 |
+  | 19/04/2014 | J25, Perpignan 31-46 Toulon | ~24 000 |
+
+  Trois sources concordantes, dont deux nomment les trois délocalisations
+  ensemble et redonnent les scores déjà en base : Wikipédia, « Stade olympique
+  Lluís-Companys » ; RugbyPass, qui liste les trois précédents avec leurs
+  scores et leurs affluences ; France 3 Occitanie du 19 avril 2014, qui annonce
+  « la troisième délocalisation » — ce qui borne la liste autant qu'il la
+  confirme. ESPN nomme Montjuïc sur celle de 2014 également.
+
+  **Les affluences ne sont pas écrites**, et c'est délibéré : la source ne les
+  donne qu'en ordre de grandeur, quand la colonne porte ailleurs des comptes à
+  l'unité — 12 065 à Jean-Bouin. Elles vivent dans l'attestation, où
+  l'approximation se lit. `isNeutralVenue` reste à `false` : l'USAP y est bien
+  recevante.
+
+  **Ce qu'il faut en retenir pour la suite.** Un stade juste ne se démontre par
+  aucun contrôle interne — les scores, les minutes et les points retombent
+  quel que soit le lieu écrit. Devant une affiche qui a pu remplir plus grand
+  qu'Aimé-Giral, aller voir plutôt que déduire.
 
   Deux clubs ont **changé de nom de stade sans déménager**, et n'ont rien à y
   faire : Montpellier (Yves-du-Manoir → Altrad Stadium → GGL Stadium) et
