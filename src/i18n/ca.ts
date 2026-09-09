@@ -783,6 +783,18 @@ export const ca = {
     serieDefaites: "Derrotes seguides",
     matchsDeSaison: { one: "{division}, {n} partit", other: "{division}, {n} partits" },
     serieDuAu: "del {debut} al {fin}",
+    toutesCompetitions: "Totes les competicions",
+    parCompetition: "Competició per competició",
+    parCompetitionChapeau:
+      "Els mateixos rècords d'un partit, restringits a una competició. Els balanços de temporada no hi figuren : la base només té un balanç per temporada, el del campionat sol, i no hi ha cap agregat per competició per repartir. Un rècord que la font no permet establir hi falta en lloc de valer zero — la LNR no publica cap fet de partit del 2004-2005, de manera que el Top 16 no té ni assaigs ni realitzacions de jugador.",
+    parCompetitionSeries:
+      "Les ratxes d'una competició només compten els seus partits : no les tallen ni els de les altres competicions ni les temporades passades en una altra divisió. Una ratxa de Top 14 pot, doncs, saltar per damunt d'un pas per la Pro D2.",
+    competitionContexte: { one: "{n} partit jugat, del {debut} al {fin}.", other: "{n} partits jugats, del {debut} al {fin}." },
+    competitionContexteUneSaison: { one: "{n} partit jugat el {saison}.", other: "{n} partits jugats el {saison}." },
+    competitionsEcartees: {
+      one: "{n} competició queda fora, per manca de partits perquè un rècord ho sigui : {liste}. El llindar és de {seuil} partits jugats.",
+      other: "{n} competicions queden fora, per manca de partits perquè un rècord ho sigui : {liste}. El llindar és de {seuil} partits jugats.",
+    },
     colValeur: "Valor",
     colRecord: "Rècord",
     colDetenteur: "Posseïdor",

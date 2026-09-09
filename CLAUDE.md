@@ -1381,6 +1381,44 @@ le nul de Chaban-Delmas du 20 octobre 2018 coupe la série en huit puis
 douze, et la page le dit d'elle-même. C'est le sens usuel du mot, et le
 contraire aurait fabriqué des séries plus courtes que la réalité.
 
+**ET LES RECORDS SE LISENT AUSSI COMPÉTITION PAR COMPÉTITION**, depuis le
+9 septembre 2026, à la demande de Jérémy. Le bloc global reste en tête,
+inchangé — c'est lui qu'on vient chercher —, et l'épine des compétitions
+suit, chacune sous son nom en rouge condensé avec son compte de rencontres
+et sa période, sur le modèle des ancres de `/realisateurs`. Cinq
+compétitions y figurent : Top 14, Pro D2, Challenge européen, H-Cup,
+Top 16.
+
+Trois choses arbitrées au passage, et elles valent d'être retenues :
+
+- **les bilans de saison ne s'y découpent pas.** Ils sont stockés sur
+  `Season` et portent le championnat seul, phases finales exclues, pour
+  coller au classement officiel : il n'existe pas d'agrégat de saison par
+  compétition, et en fabriquer un ici en inventerait un que la base ne
+  tient pas. Le bloc reste global, et le chapeau le dit ;
+- **une série de compétition ignore ce qui n'en est pas, elle ne s'y coupe
+  pas** — ni les rencontres des autres compétitions, ni les saisons passées
+  dans une autre division. D'où **dix-sept défaites d'affilée en Top 14, du
+  19 avril 2014 au 26 janvier 2019**, qui enjambent les quatre saisons de
+  Pro D2 : les dix-sept rencontres de Top 14 de cet intervalle sont bien
+  toutes des défaites, vérifié à part. C'est le sens utile, et la page
+  l'annonce ;
+- **une compétition de moins de dix rencontres n'a pas de records**, et
+  l'omission est dite plutôt que tue — les barrages d'accession (4) et le
+  championnat de 1ère série (2) sont nommés avec leur compte. Sur deux
+  rencontres, chacun des dix records est porté par l'une des deux, et le
+  tableau ne mesure plus rien.
+
+**UN RECORD À ZÉRO N'EST PAS UN RECORD, ET LE TOP 16 L'A MONTRÉ.** La LNR ne
+publie aucun fait de match sur 2004-2005 : toutes les lignes de composition y
+valent zéro point et zéro essai, et le maximum tombait sur la première venue
+— « 0 points d'un joueur, Ludovic Loustau ». Un homme se voyait attribuer un
+record qu'il ne détient pas, faute de source, et rien ne le signalait : le
+calcul était juste, c'est la donnée qui était absente. Les aides de la page
+rendent désormais `null` sur une mesure nulle, la ligne disparaît, et le
+chapeau dit pourquoi. **Le même piège attend toute page qui prend un maximum
+sur une colonne que la source peut laisser à zéro.**
+
 **Présidents et entraîneurs — chronologique, et la période affichée avec.**
 Les deux listes étaient l'une alphabétique, l'autre triée sur
 `President.startYear` — un champ que **deux présidents sur quatre ont vide**,

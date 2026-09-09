@@ -819,6 +819,18 @@ export const fr = {
     serieDefaites: "Défaites d'affilée",
     matchsDeSaison: { one: "{division}, {n} match", other: "{division}, {n} matchs" },
     serieDuAu: "du {debut} au {fin}",
+    toutesCompetitions: "Toutes compétitions",
+    parCompetition: "Compétition par compétition",
+    parCompetitionChapeau:
+      "Les mêmes records d'une rencontre, restreints à une compétition. Les bilans de saison n'y figurent pas : la base ne tient qu'un bilan par saison, celui du championnat seul, et il n'existe pas d'agrégat par compétition à découper. Un record que la source ne permet pas d'établir manque plutôt que de valoir zéro — la LNR ne publie aucun fait de match sur 2004-2005, si bien que le Top 16 n'a ni essais ni réalisations de joueur.",
+    parCompetitionSeries:
+      "Les séries d'une compétition ne comptent que ses rencontres : ni celles des autres compétitions ni les saisons passées dans une autre division ne les coupent. Une série de Top 14 peut donc enjamber un passage en Pro D2.",
+    competitionContexte: { one: "{n} rencontre jouée, de {debut} à {fin}.", other: "{n} rencontres jouées, de {debut} à {fin}." },
+    competitionContexteUneSaison: { one: "{n} rencontre jouée en {saison}.", other: "{n} rencontres jouées en {saison}." },
+    competitionsEcartees: {
+      one: "{n} compétition reste en dehors, faute d'assez de rencontres pour qu'un record en soit un : {liste}. Le seuil est de {seuil} rencontres jouées.",
+      other: "{n} compétitions restent en dehors, faute d'assez de rencontres pour qu'un record en soit un : {liste}. Le seuil est de {seuil} rencontres jouées.",
+    },
     colValeur: "Valeur",
     colRecord: "Record",
     colDetenteur: "Détenteur",
