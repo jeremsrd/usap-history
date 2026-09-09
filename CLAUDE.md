@@ -1015,6 +1015,7 @@ doublons.
 | `fix-minutes-cartons-jaunes.ts` | **la reprise du 6 septembre 2026** : retire à chaque joueur jauni les minutes de sa sanction, sur toute la base — 843 lignes —, en retrouvant la minute où il a cessé d'être en jeu ; laisse et nomme les cartons sans minute, les lignes sans minutes et celles dont les minutes ne se déduisent plus d'une entrée et d'une sortie, qu'une reprise de leur feuille règle. Déjà appliqué ; `--dry` |
 | `fix-null-penalty-tries.ts` | met à 0 les compteurs `penaltyTries` restés `null`, mais seulement là où les points retombent déjà sur le score |
 | `fix-barrages-access-match.ts` | les deux trous des barrages d'accession — arbitre du 12/06/2022, mi-temps du 03/06/2023 — et la transformation que la chronologie de ce dernier avait perdue |
+| `fix-arbitres-challenge-2022-2023.ts` | les deux arbitres faux de la poule de Challenge 2022-2023 — Christophe Berdos, retraité depuis mai 2015, sur le Perpignan-Bristol du 9 décembre 2022, et Evan Urruzmendi, arbitre français, sur le Perpignan-Glasgow du 14 janvier 2023 —, remplacés par Chris Busby et Craig Evans d'après Wikipédia et rugbyreferee.net, concordants ; attestation `CONCORDANT` sur `Match.refereeId`. Déjà appliqué ; `--dry` |
 | `fix-carton-rouge-dragons-2025.ts` | la minute du carton rouge de Paia'aua, 35ᵉ pour 14ᵉ, dans la chronologie du 7 décembre 2025 ; porte les trois preuves concordantes |
 
 `fix-duplicate-players.ts` existe aussi mais apparie les prénoms par préfixe et
@@ -3678,6 +3679,20 @@ d'un siècle, c'est la règle qu'on connaîtra le moins bien.
   liste des arbitres en donne le compte, lu dans la base. **65 fiches sur
   319 sont illustrées** — dont
 46 des 50 joueurs de l'effectif, cf. « Photos des joueurs ».
+
+  **Et un arbitre posé peut être faux, sans que rien ne le signale.** Le
+  9 septembre 2026, Jérémy a relevé Christophe Berdos sur le Perpignan-Bristol
+  du 9 décembre 2022 : Berdos a sifflé son dernier match professionnel le
+  16 mai 2015, atteint par la limite d'âge. La même poule de Challenge portait
+  Evan Urruzmendi, arbitre français, sur le Perpignan-Glasgow du 14 janvier
+  2023 — l'EPCR ne désigne pas un arbitre français sur un club français. Les
+  deux noms ne venaient d'aucun script : une saisie à la main, d'avant les
+  attestations. Chris Busby et Craig Evans les remplacent, d'après Wikipédia
+  et les désignations de rugbyreferee.net, concordantes, par
+  `fix-arbitres-challenge-2022-2023.ts`. Deux signaux à connaître, faute de
+  feuille officielle sur ces quatre matchs : un écart de sept ans ou plus
+  entre deux rencontres d'une même fiche d'arbitre — Berdos était le seul de
+  toute la base —, et un arbitre français sur un match européen de l'USAP.
 
   **214 fiches sur 351 portent une biographie** depuis le 4 septembre 2026, et
   autant une date de naissance, une taille et un lieu de naissance
