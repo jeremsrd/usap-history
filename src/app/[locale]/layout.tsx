@@ -6,6 +6,7 @@ import { ThemeProvider } from "@/components/ThemeProvider";
 import { LANGUES, estUneLangue, type Langue } from "@/i18n/langues";
 import { dictionnaire } from "@/i18n/dictionnaire";
 import { NAV_LINKS } from "@/lib/constants";
+import { SITE_URL } from "@/lib/seo";
 import { notFound } from "next/navigation";
 import "../globals.css";
 
@@ -24,6 +25,10 @@ const archivo = Archivo({
 });
 
 export const metadata: Metadata = {
+  // L'adresse du site, dont Next.js a besoin pour résoudre toute métadonnée
+  // écrite en relatif. Les `hreflang`, eux, sont absolus par construction
+  // (cf. `lib/seo.ts`) : la balise n'accepte rien d'autre.
+  metadataBase: new URL(SITE_URL),
   title: "USAP Historia - L'histoire de l'USA Perpignan depuis 1902",
   description:
     "USAP Historia — Base de données historique complète de l'USA Perpignan : matchs, joueurs, saisons et statistiques du club catalan depuis 1902.",

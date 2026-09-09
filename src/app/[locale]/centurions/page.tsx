@@ -3,6 +3,7 @@ import { JoueurCellule } from "@/components/JoueurCellule";
 import { dictionnaire } from "@/i18n/dictionnaire";
 import type { Langue } from "@/i18n/langues";
 import type { Metadata } from "next";
+import { liensAlternatifs } from "@/lib/seo";
 
 /**
  * Les centurions, refaits le 7 septembre 2026 dans l'identité des listes.
@@ -29,8 +30,9 @@ const SEUIL = 100;
 type Props = { params: Promise<{ locale: Langue }> };
 
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
-  const t = await dictionnaire((await params).locale);
-  return { title: t("centurions.metaTitre"), description: t("centurions.metaDescription") };
+  const { locale } = await params;
+  const t = await dictionnaire(locale);
+  return { title: t("centurions.metaTitre"), description: t("centurions.metaDescription"), alternates: liensAlternatifs(locale, "/centurions") };
 }
 
 export default async function CenturionsPage({ params }: Props) {

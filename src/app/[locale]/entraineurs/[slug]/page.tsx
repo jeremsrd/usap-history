@@ -10,6 +10,7 @@ import { formatDateFR } from "@/lib/utils";
 import { dictionnaire } from "@/i18n/dictionnaire";
 import { LOCALE_INTL, cheminLocalise, type Langue } from "@/i18n/langues";
 import type { Metadata } from "next";
+import { liensAlternatifs } from "@/lib/seo";
 
 /**
  * La fiche d'un entraîneur, refaite le 7 septembre 2026 dans l'identité
@@ -53,7 +54,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const coach = id ? await prisma.coach.findUnique({ where: { id }, select: { firstName: true, lastName: true } }) : null;
   if (!coach) return { title: t("entraineur.introuvable") };
   const nom = `${coach.firstName} ${coach.lastName}`;
-  return { title: t("entraineur.metaTitre", { nom }), description: t("entraineur.metaDescription", { nom }) };
+  return { title: t("entraineur.metaTitre", { nom }), description: t("entraineur.metaDescription", { nom }), alternates: liensAlternatifs(locale, `/entraineurs/${slug}`) };
 }
 
 const SAISON = {

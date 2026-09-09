@@ -4,6 +4,7 @@ import { MATCH_JOUE } from "@/lib/matchs";
 import { dictionnaire } from "@/i18n/dictionnaire";
 import type { Langue } from "@/i18n/langues";
 import type { Metadata } from "next";
+import { liensAlternatifs } from "@/lib/seo";
 
 /**
  * La liste des stades, refaite le 6 septembre 2026 sur le modèle de la
@@ -27,7 +28,7 @@ type Props = { params: Promise<{ locale: Langue }> };
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const { locale } = await params;
   const t = await dictionnaire(locale);
-  return { title: t("stades.metaTitre"), description: t("stades.metaDescription") };
+  return { title: t("stades.metaTitre"), description: t("stades.metaDescription"), alternates: liensAlternatifs(locale, "/stades") };
 }
 
 const nombre = (n: number) => n.toLocaleString("fr-FR");

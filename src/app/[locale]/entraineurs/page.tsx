@@ -7,6 +7,7 @@ import { passagesDe, sequences, sousSonBanc } from "@/lib/staff";
 import { dictionnaire } from "@/i18n/dictionnaire";
 import type { Langue } from "@/i18n/langues";
 import type { Metadata } from "next";
+import { liensAlternatifs } from "@/lib/seo";
 
 /**
  * La liste des entraîneurs, refaite le 7 septembre 2026 sur le modèle de
@@ -39,7 +40,7 @@ type Props = { params: Promise<{ locale: Langue }> };
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const { locale } = await params;
   const t = await dictionnaire(locale);
-  return { title: t("entraineurs.metaTitre"), description: t("entraineurs.metaDescription") };
+  return { title: t("entraineurs.metaTitre"), description: t("entraineurs.metaDescription"), alternates: liensAlternatifs(locale, "/entraineurs") };
 }
 
 const SAISON = { id: true, label: true, startYear: true, endYear: true, champion: true, promoted: true, relegated: true } as const;

@@ -4,6 +4,7 @@ import { MATCH_JOUE } from "@/lib/matchs";
 import { dictionnaire } from "@/i18n/dictionnaire";
 import type { Langue } from "@/i18n/langues";
 import type { Metadata } from "next";
+import { liensAlternatifs } from "@/lib/seo";
 
 /**
  * La liste des arbitres, refaite le 7 septembre 2026 sur le modèle exact
@@ -30,7 +31,7 @@ type Props = { params: Promise<{ locale: Langue }> };
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const { locale } = await params;
   const t = await dictionnaire(locale);
-  return { title: t("arbitres.metaTitre"), description: t("arbitres.metaDescription") };
+  return { title: t("arbitres.metaTitre"), description: t("arbitres.metaDescription"), alternates: liensAlternatifs(locale, "/arbitres") };
 }
 
 const ALPHABET = "ABCDEFGHIJKLMNOPQRSTUVWXYZ".split("");

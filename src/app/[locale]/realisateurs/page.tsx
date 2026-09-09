@@ -4,6 +4,7 @@ import { JoueurCellule } from "@/components/JoueurCellule";
 import { dictionnaire, type Traduire } from "@/i18n/dictionnaire";
 import type { Langue } from "@/i18n/langues";
 import type { Metadata } from "next";
+import { liensAlternatifs } from "@/lib/seo";
 
 /**
  * Trois classements de ce qui se marque, sur une seule page. Ils ne se
@@ -35,8 +36,9 @@ export const dynamic = "force-dynamic";
 type Props = { params: Promise<{ locale: Langue }> };
 
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
-  const t = await dictionnaire((await params).locale);
-  return { title: t("realisateurs.metaTitre"), description: t("realisateurs.metaDescription") };
+  const { locale } = await params;
+  const t = await dictionnaire(locale);
+  return { title: t("realisateurs.metaTitre"), description: t("realisateurs.metaDescription"), alternates: liensAlternatifs(locale, "/realisateurs") };
 }
 
 interface Fiche {

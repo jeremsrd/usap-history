@@ -6,6 +6,7 @@ import { dictionnaire } from "@/i18n/dictionnaire";
 import type { Langue } from "@/i18n/langues";
 import type { Metadata } from "next";
 import type { Prisma } from "@prisma/client";
+import { liensAlternatifs } from "@/lib/seo";
 
 /**
  * La liste des rencontres, refaite le 6 septembre 2026 dans l'identité
@@ -36,7 +37,7 @@ type Props = {
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const { locale } = await params;
   const t = await dictionnaire(locale);
-  return { title: t("matchs.metaTitre"), description: t("matchs.metaDescription") };
+  return { title: t("matchs.metaTitre"), description: t("matchs.metaDescription"), alternates: liensAlternatifs(locale, "/matchs") };
 }
 
 const nombre = (n: number) => n.toLocaleString("fr-FR");

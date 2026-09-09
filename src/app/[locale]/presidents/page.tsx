@@ -6,6 +6,7 @@ import { duPlusRecent, periodeDesSaisons } from "@/lib/periodes";
 import { dictionnaire } from "@/i18n/dictionnaire";
 import type { Langue } from "@/i18n/langues";
 import type { Metadata } from "next";
+import { liensAlternatifs } from "@/lib/seo";
 
 /**
  * La liste des présidents, refaite le 7 septembre 2026. Quatre hommes
@@ -30,7 +31,7 @@ type Props = { params: Promise<{ locale: Langue }> };
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const { locale } = await params;
   const t = await dictionnaire(locale);
-  return { title: t("presidents.metaTitre"), description: t("presidents.metaDescription") };
+  return { title: t("presidents.metaTitre"), description: t("presidents.metaDescription"), alternates: liensAlternatifs(locale, "/presidents") };
 }
 
 export default async function PresidentsPage({ params }: Props) {

@@ -9,6 +9,7 @@ import { formatDateFR } from "@/lib/utils";
 import { dictionnaire } from "@/i18n/dictionnaire";
 import { cheminLocalise, type Langue } from "@/i18n/langues";
 import type { Metadata } from "next";
+import { liensAlternatifs } from "@/lib/seo";
 
 /**
  * La fiche d'un président, refaite le 7 septembre 2026 dans l'identité
@@ -47,7 +48,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const president = id ? await prisma.president.findUnique({ where: { id }, select: { firstName: true, lastName: true } }) : null;
   if (!president) return { title: t("president.introuvable") };
   const nom = `${president.firstName} ${president.lastName}`;
-  return { title: t("president.metaTitre", { nom }), description: t("president.metaDescription", { nom }) };
+  return { title: t("president.metaTitre", { nom }), description: t("president.metaDescription", { nom }), alternates: liensAlternatifs(locale, `/presidents/${slug}`) };
 }
 
 export default async function PresidentDetailPage({ params }: Props) {

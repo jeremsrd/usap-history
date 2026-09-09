@@ -10,6 +10,7 @@ import { creditPhoto } from "@/lib/credits-photos";
 import type { Metadata } from "next";
 import { cheminLocalise, type Langue } from "@/i18n/langues";
 import { dictionnaire, type Traduire } from "@/i18n/dictionnaire";
+import { liensAlternatifs } from "@/lib/seo";
 
 /**
  * La fiche d'un joueur, refaite le 6 septembre 2026 dans l'identité posée sur
@@ -69,6 +70,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   return {
     title: `${player.firstName} ${player.lastName} - USAP Historia`,
     description: `Fiche de ${player.firstName} ${player.lastName}${posLabel ? `, ${posLabel}` : ""} à l'USA Perpignan. Statistiques, carrière et matchs.`,
+    alternates: liensAlternatifs(locale, `/joueurs/${slug}`),
   };
 }
 

@@ -5,6 +5,7 @@ import { slugify } from "@/lib/slugs";
 import { dictionnaire, type Traduire } from "@/i18n/dictionnaire";
 import type { Langue } from "@/i18n/langues";
 import type { Metadata } from "next";
+import { liensAlternatifs } from "@/lib/seo";
 
 /**
  * Les records, refaits le 7 septembre 2026 — la dernière page de l'ancien
@@ -51,8 +52,9 @@ const SEUIL_COMPETITION = 10;
 type Props = { params: Promise<{ locale: Langue }> };
 
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
-  const t = await dictionnaire((await params).locale);
-  return { title: t("records.metaTitre"), description: t("records.metaDescription") };
+  const { locale } = await params;
+  const t = await dictionnaire(locale);
+  return { title: t("records.metaTitre"), description: t("records.metaDescription"), alternates: liensAlternatifs(locale, "/records") };
 }
 
 /** Une ligne de record : la valeur, ce qu'elle mesure, qui la porte, où et quand. */

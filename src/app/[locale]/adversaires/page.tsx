@@ -6,6 +6,7 @@ import { dictionnaire } from "@/i18n/dictionnaire";
 import type { Langue } from "@/i18n/langues";
 import type { Metadata } from "next";
 import type { Prisma } from "@prisma/client";
+import { liensAlternatifs } from "@/lib/seo";
 
 /**
  * La liste des clubs adverses, refaite le 6 septembre 2026 dans l'identité
@@ -33,7 +34,7 @@ type Props = {
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const { locale } = await params;
   const t = await dictionnaire(locale);
-  return { title: t("adversaires.metaTitre"), description: t("adversaires.metaDescription") };
+  return { title: t("adversaires.metaTitre"), description: t("adversaires.metaDescription"), alternates: liensAlternatifs(locale, "/adversaires") };
 }
 
 /** Le millésime d'une saison d'après une date : une saison commence en été. */

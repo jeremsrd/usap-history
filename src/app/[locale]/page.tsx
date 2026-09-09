@@ -6,6 +6,8 @@ import { PALMARES } from "@/lib/constants";
 import { dictionnaire } from "@/i18n/dictionnaire";
 import { LANGUE_PAR_DEFAUT, type Langue } from "@/i18n/langues";
 import { Prisma } from "@prisma/client";
+import { liensAlternatifs } from "@/lib/seo";
+import type { Metadata } from "next";
 
 /**
  * L'accueil, refait le 6 septembre 2026 dans l'identité posée sur les
@@ -30,6 +32,16 @@ import { Prisma } from "@prisma/client";
 export const dynamic = "force-dynamic";
 
 type Props = { params: Promise<{ locale: Langue }> };
+
+/**
+ * L'accueil n'a pas de titre à lui : celui du layout est déjà le sien. Il
+ * ne déclare donc que ses liens alternatifs, que Next.js ne fusionne pas
+ * depuis le layout — lequel ignore de toute façon le chemin de la page.
+ */
+export async function generateMetadata({ params }: Props): Promise<Metadata> {
+  const { locale } = await params;
+  return { alternates: liensAlternatifs(locale, "/") };
+}
 
 // Les rencontres jouées un même jour de l'année, par requête brute : Prisma
 // ne sait pas filtrer sur le mois et le jour d'une date.

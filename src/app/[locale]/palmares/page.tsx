@@ -4,6 +4,7 @@ import { PALMARES } from "@/lib/constants";
 import { dictionnaire } from "@/i18n/dictionnaire";
 import type { Langue } from "@/i18n/langues";
 import type { Metadata } from "next";
+import { liensAlternatifs } from "@/lib/seo";
 
 /**
  * Le palmarès, refait le 6 septembre 2026 dans l'identité posée sur les
@@ -30,7 +31,7 @@ type Props = { params: Promise<{ locale: Langue }> };
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const { locale } = await params;
   const t = await dictionnaire(locale);
-  return { title: t("palmares.metaTitre"), description: t("palmares.metaDescription") };
+  return { title: t("palmares.metaTitre"), description: t("palmares.metaDescription"), alternates: liensAlternatifs(locale, "/palmares") };
 }
 
 const majuscule = (s: string) => s.charAt(0).toUpperCase() + s.slice(1);

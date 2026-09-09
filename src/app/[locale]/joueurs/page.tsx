@@ -6,6 +6,7 @@ import { dictionnaire } from "@/i18n/dictionnaire";
 import type { Langue } from "@/i18n/langues";
 import type { Metadata } from "next";
 import type { Position } from "@prisma/client";
+import { liensAlternatifs } from "@/lib/seo";
 
 export const dynamic = "force-dynamic";
 
@@ -33,10 +34,12 @@ export async function generateMetadata({
 }: {
   params: Params;
 }): Promise<Metadata> {
-  const t = await dictionnaire((await params).locale);
+  const { locale } = await params;
+  const t = await dictionnaire(locale);
   return {
     title: t("joueurs.metaTitre"),
     description: t("joueurs.metaDescription"),
+    alternates: liensAlternatifs(locale, "/joueurs"),
   };
 }
 

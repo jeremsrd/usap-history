@@ -10,6 +10,7 @@ import VideoEmbed from "@/components/VideoEmbed";
 import ScoreEvolution from "@/components/ScoreEvolution";
 import { dictionnaire, type Traduire } from "@/i18n/dictionnaire";
 import type { Langue } from "@/i18n/langues";
+import { liensAlternatifs } from "@/lib/seo";
 
 /**
  * La fiche d'une rencontre, refaite le 6 septembre 2026 dans l'identité posée
@@ -32,7 +33,7 @@ type Props = {
 };
 
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
-  const { slug } = await params;
+  const { locale, slug } = await params;
   const match = await prisma.match.findUnique({
     where: { slug },
     select: {
@@ -59,6 +60,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   return {
     title: `${score} - USAP Historia`,
     description: `${match.competition.shortName || match.competition.name} — ${score}, ${formatDateFR(match.date)}.`,
+    alternates: liensAlternatifs(locale, `/matchs/${slug}`),
   };
 }
 

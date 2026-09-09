@@ -9,6 +9,7 @@ import { formatDateFR } from "@/lib/utils";
 import { dictionnaire } from "@/i18n/dictionnaire";
 import { cheminLocalise, type Langue } from "@/i18n/langues";
 import type { Metadata } from "next";
+import { liensAlternatifs } from "@/lib/seo";
 
 /**
  * La fiche d'un club adverse, refaite le 6 septembre 2026 dans l'identité
@@ -52,7 +53,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const opponent = id ? await prisma.opponent.findUnique({ where: { id }, select: { name: true, shortName: true } }) : null;
   if (!opponent) return { title: t("adversaire.introuvable") };
   const nom = opponent.shortName || opponent.name;
-  return { title: t("adversaire.metaTitre", { nom }), description: t("adversaire.metaDescription", { nom }) };
+  return { title: t("adversaire.metaTitre", { nom }), description: t("adversaire.metaDescription", { nom }), alternates: liensAlternatifs(locale, `/adversaires/${slug}`) };
 }
 
 export default async function AdversaireDetailPage({ params }: Props) {

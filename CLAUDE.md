@@ -1491,6 +1491,34 @@ de Barcelone.
   réalisateurs.
 - Les six redirections de slug passent par `cheminLocalise()`, faute de quoi un
   joueur renommé sortait de sa langue.
+- **Les `hreflang` et les canoniques sont posés depuis le 9 septembre 2026**,
+  le lendemain de la mise en ligne du domaine : `liensAlternatifs(langue,
+  chemin)` de `src/lib/seo.ts` rend les trois liens — `fr`, `ca`, `x-default`
+  vers le français —, et **les vingt-deux pages publiques l'appellent dans
+  leur `generateMetadata`**, fiches comprises, le chemin portant alors le
+  slug. Vérifié page à page : vingt-deux conformes, zéro en défaut.
+
+  Trois choses à savoir avant d'ajouter une page :
+
+  - **le chemin se donne sans son segment de langue** — « /records » —, la
+    fonction préfixant elle-même les deux langues, comme `cheminLocalise()`
+    le fait pour les liens ;
+  - **Next.js ne fusionne pas `alternates` depuis le layout**, qui ignore de
+    toute façon le chemin de la page : une page publique nouvelle qui oublie
+    l'appel n'aura **pas** de `hreflang`, et rien ne le signalera. L'admin et
+    la connexion en sont dépourvus à dessein, n'étant ni publics ni traduits ;
+  - **le domaine est écrit dans `seo.ts`, non lu dans l'environnement.**
+    `NEXT_PUBLIC_SITE_URL` avait été essayé et retiré le jour même : cette
+    variable vaut `http://localhost:3000` dans le `.env` du dépôt, ne sert
+    nulle part ailleurs dans `src/`, et rien ne garantissait sa valeur chez
+    l'hébergeur. **Une canonique qui désignerait `localhost` ou le domaine de
+    préproduction serait pire que pas de `hreflang` du tout** : elle
+    demanderait aux moteurs de désindexer le site. Le domaine est un fait du
+    site ; il change une fois par décennie, et alors on change cette ligne.
+
+  Le layout porte `metadataBase` pour la même raison, et l'accueil un
+  `generateMetadata` qui ne déclare que ses liens — son titre reste celui du
+  layout, que Next.js fusionne.
 
 ### Le catalan — écrit le 7 septembre 2026, à faire relire
 
@@ -1600,8 +1628,6 @@ sa refonte.
 catalan à venir.
 
 ### Ce qui reste
-
-- **Pas encore d'`hreflang`** dans les métadonnées.
 - **La relecture par un catalanophone de Catalunya Nord**, de tout `ca.ts`.
 - **L'accueil**, avec sa refonte.
 - **Les textes de la base** — bilans de saison, biographies — sont un chantier

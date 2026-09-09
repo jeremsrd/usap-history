@@ -9,6 +9,7 @@ import { formatDateFR } from "@/lib/utils";
 import { dictionnaire, type Traduire } from "@/i18n/dictionnaire";
 import { LOCALE_INTL, type Langue } from "@/i18n/langues";
 import type { Metadata } from "next";
+import { liensAlternatifs } from "@/lib/seo";
 
 /**
  * La page d'une saison, refaite le 6 septembre 2026 dans l'identité posée
@@ -48,6 +49,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   return {
     title: t("saison.metaTitre", { label }),
     description: t("saison.metaDescription", { label }),
+    alternates: liensAlternatifs(locale, `/saisons/${label}`),
   };
 }
 

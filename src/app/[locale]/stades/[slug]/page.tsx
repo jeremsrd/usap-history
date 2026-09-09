@@ -8,6 +8,7 @@ import { formatDateFR } from "@/lib/utils";
 import { dictionnaire } from "@/i18n/dictionnaire";
 import { cheminLocalise, type Langue } from "@/i18n/langues";
 import type { Metadata } from "next";
+import { liensAlternatifs } from "@/lib/seo";
 
 /**
  * La fiche d'un stade, refaite le 6 septembre 2026 dans l'identité posée
@@ -50,7 +51,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const id = extractIdFromSlug(slug);
   const venue = id ? await prisma.venue.findUnique({ where: { id }, select: { name: true, city: true } }) : null;
   if (!venue) return { title: t("stade.introuvable") };
-  return { title: t("stade.metaTitre", { nom: venue.name, ville: venue.city }), description: t("stade.metaDescription", { nom: venue.name, ville: venue.city }) };
+  return { title: t("stade.metaTitre", { nom: venue.name, ville: venue.city }), description: t("stade.metaDescription", { nom: venue.name, ville: venue.city }), alternates: liensAlternatifs(locale, `/stades/${slug}`) };
 }
 
 export default async function StadeDetailPage({ params, searchParams }: Props) {

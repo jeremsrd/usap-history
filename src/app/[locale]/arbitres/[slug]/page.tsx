@@ -8,6 +8,7 @@ import { formatDateFR } from "@/lib/utils";
 import { dictionnaire } from "@/i18n/dictionnaire";
 import { cheminLocalise, type Langue } from "@/i18n/langues";
 import type { Metadata } from "next";
+import { liensAlternatifs } from "@/lib/seo";
 
 /**
  * La fiche d'un arbitre, refaite le 7 septembre 2026 dans l'identité posée
@@ -48,7 +49,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const referee = id ? await prisma.referee.findUnique({ where: { id }, select: { firstName: true, lastName: true } }) : null;
   if (!referee) return { title: t("arbitre.introuvable") };
   const nom = `${referee.firstName} ${referee.lastName}`;
-  return { title: t("arbitre.metaTitre", { nom }), description: t("arbitre.metaDescription", { nom }) };
+  return { title: t("arbitre.metaTitre", { nom }), description: t("arbitre.metaDescription", { nom }), alternates: liensAlternatifs(locale, `/arbitres/${slug}`) };
 }
 
 export default async function ArbitreDetailPage({ params }: Props) {

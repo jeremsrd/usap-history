@@ -7,6 +7,7 @@ import { libellePeriode, periodeDesSaisons } from "@/lib/periodes";
 import { dictionnaire } from "@/i18n/dictionnaire";
 import type { Langue } from "@/i18n/langues";
 import type { Metadata } from "next";
+import { liensAlternatifs } from "@/lib/seo";
 
 /**
  * La page des statistiques, refaite le 6 septembre 2026 dans l'identité
@@ -44,7 +45,7 @@ type Props = { params: Promise<{ locale: Langue }> };
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const { locale } = await params;
   const t = await dictionnaire(locale);
-  return { title: t("statistiques.metaTitre"), description: t("statistiques.metaDescription") };
+  return { title: t("statistiques.metaTitre"), description: t("statistiques.metaDescription"), alternates: liensAlternatifs(locale, "/statistiques") };
 }
 
 const nombre = (n: number) => n.toLocaleString("fr-FR");
