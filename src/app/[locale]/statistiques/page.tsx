@@ -3,6 +3,7 @@ import { JoueurCellule } from "@/components/JoueurCellule";
 import { prisma } from "@/lib/prisma";
 import { MATCH_JOUE, estJoue } from "@/lib/matchs";
 import { formatDateFR } from "@/lib/utils";
+import { libellePeriode, periodeDesSaisons } from "@/lib/periodes";
 import { dictionnaire } from "@/i18n/dictionnaire";
 import type { Langue } from "@/i18n/langues";
 import type { Metadata } from "next";
@@ -16,6 +17,18 @@ import type { Metadata } from "next";
  * plus lourde défaite, le plus gros score, chacun en grand caractère
  * condensé comme sur la fiche de match, avec sous chacun les quatre
  * suivants en lignes. Un record est un score, et il se lit comme tel.
+ *
+ * **LE BILAN SE LIT AUSSI COMPÉTITION PAR COMPÉTITION** depuis le
+ * 9 septembre 2026, demandé par Jérémy après le même découpage sur
+ * `/records` : le bilan global et ses deux camps restent en tête, un
+ * second tableau donne chaque compétition avec sa période, et chaque
+ * ligne mène à ses rencontres dans la liste des matchs.
+ *
+ * **Toutes les compétitions y figurent, sans seuil**, à la différence des
+ * records — et c'est la distinction à retenir : un bilan se lit sur
+ * n'importe quel nombre de rencontres, quand un record en demande assez
+ * pour en être un. Quatre barrages d'accession font un bilan honnête ;
+ * ils ne font pas un record.
  *
  * Ce que la page ne fait plus : quatre cases de chiffres à icône, des V
  * verts et des D rouges, des lignes de joueur en cartes, des cartes de
@@ -71,6 +84,42 @@ export default async function StatistiquesPage({ params }: Props) {
   };
   const total = bilan();
   const premiere = await prisma.match.findFirst({ where: MATCH_JOUE, orderBy: { date: "asc" }, select: { season: { select: { label: true } } } });
+
+  // ---- Le bilan par compétition -------------------------------------------
+  // Une seule requête plutôt que trois `groupBy` et une jointure : les
+  // rencontres jouées tiennent en quelques centaines de lignes de cinq
+  // champs, et il faut de toute façon leurs saisons pour la période.
+  const rencontres = await prisma.match.findMany({
+    where: MATCH_JOUE,
+    select: {
+      result: true,
+      scoreUsap: true,
+      scoreOpponent: true,
+      competition: { select: { id: true, name: true, shortName: true } },
+      season: { select: { label: true, startYear: true } },
+    },
+  });
+  const groupes = new Map<
+    string,
+    { id: string; nom: string; saisons: Map<string, { label: string; startYear: number }>; joues: number; victoires: number; nuls: number; defaites: number; pour: number; contre: number }
+  >();
+  for (const m of rencontres) {
+    const c = m.competition;
+    const g =
+      groupes.get(c.id) ??
+      { id: c.id, nom: c.shortName || c.name, saisons: new Map(), joues: 0, victoires: 0, nuls: 0, defaites: 0, pour: 0, contre: 0 };
+    g.joues++;
+    if (m.result === "VICTOIRE") g.victoires++;
+    else if (m.result === "NUL") g.nuls++;
+    else if (m.result === "DEFAITE") g.defaites++;
+    g.pour += m.scoreUsap ?? 0;
+    g.contre += m.scoreOpponent ?? 0;
+    g.saisons.set(m.season.label, m.season);
+    groupes.set(c.id, g);
+  }
+  const competitions = [...groupes.values()]
+    .map((g) => ({ ...g, periode: libellePeriode(periodeDesSaisons([...g.saisons.values()])) }))
+    .sort((a, b) => b.joues - a.joues);
 
   // ---- Les classements courts ---------------------------------------------
   // Prisma type ses `groupBy` clé par clé : trois branches écrites en clair
@@ -207,6 +256,43 @@ export default async function StatistiquesPage({ params }: Props) {
                 <td className="hidden py-1.5 pr-3 text-right text-foreground sm:table-cell">{nombre(b.pour)}</td>
                 <td className="hidden py-1.5 pr-3 text-right text-muted-foreground sm:table-cell">{nombre(b.contre)}</td>
                 <td className="py-1.5 text-right text-foreground">{pourcent(b.victoires, b.joues)}</td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+
+        <h3 className="mt-8 mb-2 font-display text-2xl uppercase leading-none text-foreground">{t("statistiques.bilanParCompetition")}</h3>
+        <p className="mb-3 max-w-prose text-sm text-muted-foreground">{t("statistiques.bilanParCompetitionNote")}</p>
+        <table className="w-full max-w-3xl border-collapse text-sm">
+          <thead>
+            <tr className="border-b border-border text-left text-xs text-muted-foreground">
+              <th scope="col" className="py-2 pr-4 font-medium">{t("statistiques.colCompetition")}</th>
+              <th scope="col" className="hidden py-2 pr-4 font-medium md:table-cell">{t("classement.periode")}</th>
+              <th scope="col" className="py-2 pr-3 text-right font-medium">{t("statistiques.colJoues")}</th>
+              <th scope="col" className="py-2 pr-3 text-right font-medium">{t("statistiques.colVictoires")}</th>
+              <th scope="col" className="py-2 pr-3 text-right font-medium">{t("statistiques.colNuls")}</th>
+              <th scope="col" className="py-2 pr-3 text-right font-medium">{t("statistiques.colDefaites")}</th>
+              <th scope="col" className="hidden py-2 pr-3 text-right font-medium sm:table-cell">{t("statistiques.colPour")}</th>
+              <th scope="col" className="hidden py-2 pr-3 text-right font-medium sm:table-cell">{t("statistiques.colContre")}</th>
+              <th scope="col" className="py-2 text-right font-medium">{t("statistiques.colTaux")}</th>
+            </tr>
+          </thead>
+          <tbody className="tabular-nums">
+            {competitions.map((c) => (
+              <tr key={c.id} className="border-b border-border hover:bg-muted">
+                <td className="py-1.5 pr-4">
+                  <Link href={`/matchs?competition=${c.id}`} className="font-semibold text-foreground hover:text-usap-sang">
+                    {c.nom}
+                  </Link>
+                </td>
+                <td className="hidden py-1.5 pr-4 whitespace-nowrap text-muted-foreground md:table-cell">{c.periode}</td>
+                <td className="py-1.5 pr-3 text-right text-foreground">{nombre(c.joues)}</td>
+                <td className="py-1.5 pr-3 text-right text-usap-sang">{c.victoires || ""}</td>
+                <td className="py-1.5 pr-3 text-right text-foreground">{c.nuls || ""}</td>
+                <td className="py-1.5 pr-3 text-right text-muted-foreground">{c.defaites || ""}</td>
+                <td className="hidden py-1.5 pr-3 text-right text-foreground sm:table-cell">{nombre(c.pour)}</td>
+                <td className="hidden py-1.5 pr-3 text-right text-muted-foreground sm:table-cell">{nombre(c.contre)}</td>
+                <td className="py-1.5 text-right text-foreground">{pourcent(c.victoires, c.joues)}</td>
               </tr>
             ))}
           </tbody>

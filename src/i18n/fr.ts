@@ -274,6 +274,10 @@ export const fr = {
     colPour: "Pour",
     colContre: "Contre",
     colTaux: "% V",
+    bilanParCompetition: "Par compétition",
+    bilanParCompetitionNote:
+      "Toutes les compétitions y figurent, même celles de deux ou quatre rencontres : un bilan se lit sur n'importe quel nombre de rencontres, quand un record en demande assez pour en être un — d'où le seuil de la page des records. Les phases finales comptent dans leur compétition.",
+    colCompetition: "Compétition",
     realisateursTitre: "Les réalisateurs",
     capesTitre: "Les plus capés",
     essaisTitre: "Les essais",

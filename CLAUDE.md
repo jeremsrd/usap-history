@@ -1855,6 +1855,27 @@ tableau comptait les rencontres à venir, son `groupBy` n'ayant pas de
 filtre. Plus de quatre cases à icône, plus de V verts ni de D rouges,
 plus de cartes de joueur ni de record. Dictionnaire `statistiques.*`.
 
+**ET LE BILAN SE LIT AUSSI COMPÉTITION PAR COMPÉTITION**, depuis le
+9 septembre 2026 et pour la même raison que les records : le global et ses
+deux camps restent en tête, un second tableau donne chaque compétition avec
+sa période, et chaque ligne mène à ses rencontres dans la liste des matchs,
+dont le bilan de sélection redonne exactement les mêmes chiffres.
+
+**Toutes les compétitions y figurent, sans seuil**, à la différence des
+records — et c'est la distinction à retenir : **un bilan se lit sur
+n'importe quel nombre de rencontres, un record en demande assez pour en
+être un.** Quatre barrages d'accession font un bilan honnête, ils ne font
+pas un record. Les sept compétitions sont donc là, jusqu'aux deux finales
+d'avant-guerre.
+
+**Le tableau se vérifie de lui-même** : la somme de ses sept lignes
+retombe au point près sur la ligne « toutes rencontres » — 686 jouées,
+352 V, 23 N, 311 D, 15 598 points pour 14 588 —, et sa ligne de Top 16
+redonne les 18 V, 1 N, 11 D et 688-583 que ce fichier documente par
+ailleurs. Une seule requête le nourrit, les rencontres jouées tenant en
+quelques centaines de lignes de cinq champs, et il faut de toute façon
+leurs saisons pour la période.
+
 **La fiche arbitre et la liste des arbitres sont refaites le 7 septembre
 2026.** Le nom de l'arbitre est en **encre**, non en rouge — le rouge est
 celui de l'USAP, et un arbitre n'a pas de camp —, le prénom au-dessus comme

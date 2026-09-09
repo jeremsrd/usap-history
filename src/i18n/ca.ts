@@ -251,6 +251,10 @@ export const ca = {
     colPour: "A favor",
     colContre: "En contra",
     colTaux: "% V",
+    bilanParCompetition: "Per competició",
+    bilanParCompetitionNote:
+      "Totes les competicions hi figuren, fins i tot les de dos o quatre partits : un balanç es llegeix amb qualsevol nombre de partits, mentre que un rècord en demana prou per ser-ho — d'aquí el llindar de la pàgina de rècords. Les fases finals compten dins la seva competició.",
+    colCompetition: "Competició",
     realisateursTitre: "Els anotadors",
     capesTitre: "Els més capats",
     essaisTitre: "Els assaigs",
