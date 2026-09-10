@@ -32,7 +32,8 @@
  * transparence — un rectangle blanc derrière l'écusson en thème sombre.
  *
  * `--usap` rafraîchit `public/images/usap/logo.png`, l'écusson catalan que le
- * site affiche partout ailleurs que sur les fiches d'adversaire.
+ * site affiche partout ailleurs que sur les fiches d'adversaire. Il vient du
+ * site du club et non de la LNR — cf. `SOURCE_USAP`.
  *
  * Idempotent : un fichier déjà présent n'est pas retéléchargé, sauf `--tout`
  * ou `--club`.
@@ -263,6 +264,29 @@ const CHEMIN_PUBLIC = "/images/logos";
 /** L'écusson catalan, hors du dossier des adversaires et référencé en dur. */
 const LOGO_USAP = join(process.cwd(), "public", "images", "usap", "logo.png");
 
+/**
+ * L'ÉCUSSON CATALAN VIENT DU SITE DU CLUB, ET NON DE LA LNR.
+ *
+ * La LNR n'en sert que **151 par 151** — la plus petite de toute sa série,
+ * la taille de Clermont —, ce qui a suffi tant que le seul affichage du
+ * blason était les 32 pixels du Header. Le hero de l'accueil l'affiche à 160
+ * depuis le 10 septembre 2026 : sur un écran à deux pixels par point, cela
+ * fait 320 tirés de 151, et les lettres de l'écusson sont molles. Aucune
+ * variante plus grande n'existe sur `cdn.lnr.fr` — c'est la même limite que
+ * les 192 pixels du CDN de l'EPCR.
+ *
+ * `usap.fr` publie le même écusson en **523 par 523, PNG transparent**. C'est
+ * la source la plus autorisée qui soit pour la marque d'un club, simplement
+ * pas celle que la chaîne interroge d'office : même raison qu'Albi, Bourgoin
+ * et Tarbes dans `SOURCES_HORS_LNR`, à ceci près qu'ici la LNR donne bien une
+ * image — elle est seulement trop petite pour l'usage qu'on en fait.
+ *
+ * Écrit ici plutôt que laissé au hasard d'un `--usap` : sans cette ligne, la
+ * première relance rendrait le petit écusson de la LNR et personne ne le
+ * verrait, le Header n'ayant besoin que de 32 pixels.
+ */
+const SOURCE_USAP = "https://www.usap.fr/applications/starter/usap/resources/logos/logo.png";
+
 /** Pages de calendrier où la LNR expose les logos de tous les clubs engagés. */
 const PAGES_LNR = [
   // 2018-2019 est là pour Agen, seul club de cette saison-là que les
@@ -447,20 +471,30 @@ async function main() {
   }
 
   if (USAP) {
-    const source = lnr.get("Perpignan") ?? lnr.get("USAP");
-    if (!source) sans.push("USAP (aucune source LNR)");
-    else if (DRY_RUN) {
-      console.log("  USAP               → images/usap/logo.png");
+    if (DRY_RUN) {
+      console.log(`  USAP               → images/usap/logo.png (${SOURCE_USAP})`);
       recuperes++;
     } else {
-      const reponse = await fetch(source, { signal: AbortSignal.timeout(30_000) });
+      const reponse = await fetch(SOURCE_USAP, {
+        headers: { "User-Agent": "Mozilla/5.0" },
+        signal: AbortSignal.timeout(30_000),
+      });
       if (!reponse.ok) sans.push(`USAP (téléchargement ${reponse.status})`);
       else {
         const contenu = Buffer.from(await reponse.arrayBuffer());
-        await writeFile(LOGO_USAP, contenu);
-        console.log(`  USAP               → images/usap/logo.png (${Math.round(contenu.length / 1024)} ko)`);
-        recuperes++;
-        octets += contenu.length;
+        const { width, height } = await sharp(contenu).metadata();
+        // Un écusson plus petit que celui en place serait une régression que
+        // rien ne signalerait : le Header s'en contente, le hero non.
+        if (!width || !height || width < 400) {
+          sans.push(`USAP (écusson rendu en ${width}×${height}, trop petit)`);
+        } else {
+          await writeFile(LOGO_USAP, contenu);
+          console.log(
+            `  USAP               → images/usap/logo.png (${width}×${height}, ${Math.round(contenu.length / 1024)} ko)`,
+          );
+          recuperes++;
+          octets += contenu.length;
+        }
       }
     }
   }

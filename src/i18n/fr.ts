@@ -31,6 +31,14 @@ export const fr = {
   },
   accueil: {
     // La page d'accueil.
+    //
+    // **Le serment ouvre la page**, à la demande de Jérémy le 10 septembre
+    // 2026. Il est donné d'une seule pièce, guillemets compris : une phrase
+    // qu'on cite ne se découpe pas en morceaux pour y glisser du balisage —
+    // « sang et or » resterait en encre plutôt que de prendre ses deux
+    // couleurs, comme partout ailleurs dans le dictionnaire.
+    serment:
+      "« Je m'engage à servir l'USAP avec foi et dévouement pour être digne du blason sang et or qu'elle me confie et que mes anciens ont chargé de gloire »",
     titre: "L'histoire de l'USAP depuis 1902",
     // Le nombre de titres est dans `PALMARES` ; la phrase est écrite en
     // lettres, et se réécrit le jour d'un huitième Bouclier.

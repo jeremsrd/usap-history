@@ -1,4 +1,5 @@
 import Link from "@/components/Lien";
+import Image from "next/image";
 import { prisma } from "@/lib/prisma";
 import { MATCH_JOUE } from "@/lib/matchs";
 import { formatDateFR } from "@/lib/utils";
@@ -174,6 +175,26 @@ export default async function Home({ params }: Props) {
       {locale !== LANGUE_PAR_DEFAUT && (
         <p className="mb-8 border-b border-border bg-usap-or/10 px-4 py-2 text-center text-sm text-foreground">{t("langue.nonTraduit")}</p>
       )}
+      {/* **Le serment ouvre la page**, demandé par Jérémy le 10 septembre 2026 :
+          l'écusson d'un côté, de l'autre les mots que le club fait siens, dans
+          la voix condensée des titres. Deux colonnes dès `sm`, l'une et
+          l'autre dessous en mobile — un écusson de 151 pixels ne se met pas à
+          côté de quatre lignes sur 375. Il est au-dessus du palmarès : c'est
+          désormais lui qu'on lit en premier, et le palmarès garde son or. */}
+      <section className="mb-12 grid items-center gap-6 border-b border-border pb-10 sm:grid-cols-[auto_1fr] sm:gap-10 sm:pb-14">
+        <Image
+          src="/images/usap/logo.png"
+          alt={t("nav.logo")}
+          width={151}
+          height={151}
+          priority
+          className="h-28 w-28 sm:h-40 sm:w-40"
+        />
+        <blockquote className="font-display text-2xl uppercase leading-[1.05] text-foreground sm:text-4xl">
+          {t("accueil.serment")}
+        </blockquote>
+      </section>
+
       <header className="mb-12">
         <h1 className="font-display text-4xl uppercase leading-none text-foreground sm:text-6xl">{t("accueil.titre")}</h1>
         <p className="mt-6 font-display text-2xl uppercase leading-none text-usap-sang">{t("accueil.champion")}</p>

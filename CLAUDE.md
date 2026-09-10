@@ -1099,6 +1099,32 @@ sombre. `--club=Clermont` force ce retéléchargement ; `--usap` fait de même
 pour `public/images/usap/logo.png`, l'écusson catalan que le site affiche
 partout ailleurs.
 
+**ET L'ÉCUSSON CATALAN NE VIENT PLUS DE LA LNR DEPUIS LE 10 SEPTEMBRE 2026**,
+mais du site du club. La LNR n'en sert que **151 × 151** — la plus petite de
+toute sa série, la taille de Clermont —, et aucune variante plus grande
+n'existe sur son CDN. Cela a suffi tant que le seul affichage du blason était
+les 32 pixels du Header : c'est **le hero de l'accueil**, qui le montre à
+160, qui a révélé le défaut — 320 pixels sur un écran Retina tirés d'une
+image de 151, et les lettres de l'écusson molles. `usap.fr` publie le même
+écusson en **523 × 523, PNG transparent, 47 ko**.
+
+Deux choses à en retenir, et la seconde vaut au-delà de ce cas :
+
+- **la source est écrite dans le script**, constante `SOURCE_USAP`, et non
+  posée à la main dans `public/`. Sans cette ligne, la première relance de
+  `--usap` aurait rendu le petit écusson de la LNR **et personne ne l'aurait
+  vu**, le Header n'ayant besoin que de 32 pixels. C'est la même leçon que
+  `generateVenueSlug` : fournir la fonction plutôt que faire attention ;
+- **le script refuse désormais un écusson de moins de 400 pixels** et le
+  nomme, plutôt que d'écraser le bon par un plus petit — pendant de
+  `PLACEHOLDER_LNR`, qui reconnaît le bouclier gris. Une régression
+  silencieuse sur une image ne se voit pas au journal d'exécution.
+
+C'est le même arbitrage que `SOURCES_HORS_LNR` pour Albi, Bourgoin et Tarbes,
+à une différence près : pour eux la LNR donne une URL qui ne mène à rien ;
+ici elle donne une vraie image, seulement trop petite pour l'usage qu'on en
+fait désormais.
+
 Les originaux de la LNR sont de tailles très inégales — 5420×6346 pour
 Carcassonne, 151×151 pour Clermont — et **`fetch-club-logos.ts` réduit ce qui
 dépasse 1 200 pixels**. Le plus grand affichage du site est de 48 pixels et
@@ -1775,6 +1801,28 @@ par l'en-tête ; le slogan centré sur dégradé, le bouton rouge, les cartes
 de chiffres, les pastilles vertes et rouges aussi. Le nombre de titres est
 écrit en lettres dans le dictionnaire (`accueil.champion`) et se réécrira
 le jour d'un huitième. Dictionnaire `accueil.*`.
+
+**ET LE SERMENT L'OUVRE DEPUIS LE 10 SEPTEMBRE 2026**, demandé par Jérémy :
+en tête de page, avant le palmarès, l'écusson d'un côté et de l'autre les
+mots que le club fait siens — « Je m'engage à servir l'USAP avec foi et
+dévouement… » —, dans la voix condensée des titres, le tout clos d'un filet.
+Deux colonnes dès `sm`, l'une sous l'autre en mobile : un écusson et quatre
+lignes ne tiennent pas côte à côte sur 375 pixels. Le palmarès garde son or
+et reste l'audace de la page ; le serment l'annonce.
+
+Trois choses arbitrées au passage :
+
+- **la phrase est dans le dictionnaire d'une seule pièce**, guillemets
+  compris (`accueil.serment`). Colorer « sang » en rouge et « or » en or
+  aurait été joli et aurait demandé du balisage dans une chaîne à traduire —
+  ce que la règle du projet interdit ;
+- **elle n'est pas attribuée.** Jérémy a donné le texte, non sa source ; une
+  légende qui le nommerait affirmerait quelque chose que rien n'atteste ;
+- **l'écusson y est à 160 pixels**, et c'est ce qui a fait découvrir que
+  celui du dépôt n'en faisait que 151 — cf. « Logos des clubs ».
+
+L'accueil reste la seule page sans catalan : le serment y paraît en français
+sous `/ca`, sous le bandeau qui le dit déjà.
 
 **La liste des saisons est refaite le même jour**, sur le modèle exact de
 `/joueurs` : **l'épine des décennies**, grosses années condensées en rouge
