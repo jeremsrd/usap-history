@@ -40,14 +40,6 @@ export const fr = {
     serment:
       "« Je m'engage à servir l'USAP avec foi et dévouement pour être digne du blason sang et or qu'elle me confie et que mes anciens ont chargé de gloire »",
     titre: "L'histoire de l'USAP depuis 1902",
-    // Le nombre de titres est dans `PALMARES` ; la phrase est écrite en
-    // lettres, et se réécrit le jour d'un huitième Bouclier.
-    champion: "Sept fois champion de France",
-    finaliste: "Finaliste en {annees}",
-    proD2: "champion de Pro D2 en {annees}",
-    manoir: "Challenge Yves-du-Manoir en {annees}",
-    europe: "finaliste de la Coupe d'Europe en {annees}",
-    palmares: "Le palmarès",
     chapeau:
       "Chaque rencontre, chaque joueur et chaque saison de l'USA Perpignan, d'après les feuilles de match officielles et la presse d'époque.",
     chiffres: "{matchs} matchs, {joueurs} joueurs, {saisons} saisons documentées sur {total}.",

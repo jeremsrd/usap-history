@@ -1800,7 +1800,9 @@ doublant le Header. La section « palmarès » à badges a disparu, absorbée
 par l'en-tête ; le slogan centré sur dégradé, le bouton rouge, les cartes
 de chiffres, les pastilles vertes et rouges aussi. Le nombre de titres est
 écrit en lettres dans le dictionnaire (`accueil.champion`) et se réécrira
-le jour d'un huitième. Dictionnaire `accueil.*`.
+le jour d'un huitième. Dictionnaire `accueil.*`. **Ce paragraphe décrit
+l'accueil du 6 septembre 2026 ; le palmarès en est parti depuis, et la clé
+`accueil.champion` avec lui — cf. plus bas.**
 
 **ET LE SERMENT L'OUVRE DEPUIS LE 10 SEPTEMBRE 2026**, demandé par Jérémy :
 en tête de page, avant le palmarès, l'écusson d'un côté et de l'autre les
@@ -1849,6 +1851,28 @@ et le score ne peuvent pas se désynchroniser.
 
 Le bloc était **déjà en deux colonnes** avant cette séance, avec son score en
 grand : seuls les écussons manquaient.
+
+**ET LE PALMARÈS A QUITTÉ L'ACCUEIL**, le même jour, sur décision de Jérémy.
+Il en était l'audace depuis le 6 septembre — « Sept fois champion de France »
+en rouge et les sept années du Bouclier en or condensé, chacune liée à sa
+saison —, plus la phrase des finales, de la Pro D2, du Manoir et de l'Europe.
+La raison : le serment ouvre désormais la page, et trois choses s'y disaient
+coup sur coup ce que fait ce club.
+
+Deux conséquences, l'une et l'autre assumées :
+
+- **l'accueil ne mène plus directement à `/palmares`.** Sa section
+  « Explorer » ne le liste pas — saisons, matchs, joueurs, statistiques,
+  adversaires, stades. La page reste atteignable de partout par le Header et
+  par le pied de page ; si elle devait retrouver une entrée ici, c'est dans
+  « Explorer » qu'elle irait ;
+- **six clés du dictionnaire sont parties avec le bloc** — `champion`,
+  `finaliste`, `proD2`, `manoir`, `europe`, `palmares` —, vérifiées comme
+  n'ayant aucun autre appelant dans `src/`, ainsi que l'import de `PALMARES`
+  et les aides `saisonDe` et `listeAnnees`. Une clé morte dans le cahier se
+  recopie ensuite en catalan et se traduit pour rien.
+
+L'accueil n'a donc plus qu'une audace, et c'est **le serment**.
 
 **La liste des saisons est refaite le même jour**, sur le modèle exact de
 `/joueurs` : **l'épine des décennies**, grosses années condensées en rouge

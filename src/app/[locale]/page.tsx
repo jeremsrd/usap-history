@@ -3,7 +3,6 @@ import Image from "next/image";
 import { prisma } from "@/lib/prisma";
 import { MATCH_JOUE } from "@/lib/matchs";
 import { formatDateFR } from "@/lib/utils";
-import { PALMARES } from "@/lib/constants";
 import { dictionnaire } from "@/i18n/dictionnaire";
 import { LANGUE_PAR_DEFAUT, type Langue } from "@/i18n/langues";
 import { Prisma } from "@prisma/client";
@@ -11,18 +10,24 @@ import { liensAlternatifs } from "@/lib/seo";
 import type { Metadata } from "next";
 
 /**
- * L'accueil, refait le 6 septembre 2026 dans l'identité posée sur les
- * fiches et la page de saison. Sa seule audace est le **palmarès écrit en
- * grand** : sous le titre, les sept années du Bouclier en or condensé,
- * chacune liée à sa saison — c'est ce qui fait ce club, et un site
- * d'histoire n'a pas de meilleure ouverture qu'une date. La phrase de
- * présentation dit la source et l'étendue de la base, en chiffres lus dans
- * la base elle-même.
+ * L'accueil, refait le 6 septembre 2026 dans l'identité posée sur les fiches
+ * et la page de saison, puis **repris bloc par bloc à partir du 10 septembre**
+ * avec Jérémy.
  *
- * Puis, dans l'ordre où un supporter les cherche : le dernier match et le
- * prochain, en une ligne chacun ; la saison en cours avec sa frise des
- * résultats, la même que sur la page de saison ; ce jour dans l'histoire ;
- * et six entrées pour explorer, en texte.
+ * **Le serment l'ouvre** : l'écusson d'un côté, de l'autre les mots que le
+ * club fait siens, dans la voix condensée des titres. Suit le titre, puis la
+ * phrase de présentation, qui dit la source et l'étendue de la base en
+ * chiffres lus dans la base elle-même. Puis, dans l'ordre où un supporter les
+ * cherche : le dernier match et le prochain, écussons de part et d'autre du
+ * score ; la saison en cours avec sa frise des résultats, la même que sur la
+ * page de saison ; ce jour dans l'histoire ; et six entrées pour explorer.
+ *
+ * **LE PALMARÈS A QUITTÉ CETTE PAGE LE 10 SEPTEMBRE 2026**, sur décision de
+ * Jérémy. Il en était l'audace — les sept années du Bouclier en or condensé,
+ * chacune liée à sa saison —, mais le serment ouvre désormais la page, et
+ * trois choses s'y disaient coup sur coup ce que fait ce club. Il garde sa
+ * page, `/palmares`, que le Header et le pied de page atteignent depuis
+ * partout ; l'accueil n'y mène plus directement, et c'est assumé.
  *
  * Ce que la page ne fait plus : un slogan centré sur un dégradé, un bouton
  * rouge, des cartes à icône pour les chiffres, des pastilles vertes et
@@ -58,9 +63,6 @@ type CeJour = {
 };
 
 const nombre = (n: number) => n.toLocaleString("fr-FR");
-const saisonDe = (annee: number) => `/saisons/${annee - 1}-${annee}`;
-const listeAnnees = (annees: readonly number[]) =>
-  annees.length > 1 ? `${annees.slice(0, -1).join(", ")} et ${annees[annees.length - 1]}` : String(annees[0]);
 
 export default async function Home({ params }: Props) {
   const { locale } = await params;
@@ -231,23 +233,6 @@ export default async function Home({ params }: Props) {
 
       <header className="mb-12">
         <h1 className="font-display text-4xl uppercase leading-none text-foreground sm:text-6xl">{t("accueil.titre")}</h1>
-        <p className="mt-6 font-display text-2xl uppercase leading-none text-usap-sang">{t("accueil.champion")}</p>
-        <ol className="mt-1 flex flex-wrap gap-x-5 font-display text-6xl leading-none text-usap-or tabular-nums sm:text-8xl">
-          {PALMARES.titresChampion.map((annee) => (
-            <li key={annee}>
-              <Link href={saisonDe(annee)} className="hover:text-usap-sang">
-                {annee}
-              </Link>
-            </li>
-          ))}
-        </ol>
-        <p className="mt-3 max-w-prose text-sm leading-relaxed text-muted-foreground">
-          {t("accueil.finaliste", { annees: listeAnnees(PALMARES.finales) })}, {t("accueil.proD2", { annees: listeAnnees(PALMARES.titresProD2) })},{" "}
-          {t("accueil.manoir", { annees: listeAnnees(PALMARES.challengeDuManoir) })}, {t("accueil.europe", { annees: listeAnnees(PALMARES.finaleCoupeEurope) })}.{" "}
-          <Link href="/palmares" className="underline hover:text-usap-sang">
-            {t("accueil.palmares")}
-          </Link>
-        </p>
         <p className="mt-6 max-w-prose text-lg leading-snug text-foreground">
           {t("accueil.chapeau")}{" "}
           {t("accueil.chiffres", { matchs: nombre(matchs), joueurs: nombre(joueurs), saisons: saisonsDocumentees, total: saisons })}
