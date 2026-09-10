@@ -92,7 +92,7 @@ export default async function RootLayout({
           <div className="flex min-h-screen flex-col">
             <Header libelles={libelles} />
             <main className="flex-1">{children}</main>
-            <Footer mention={t("pied.mention")} />
+            <Footer langue={langue} />
           </div>
         </ThemeProvider>
       </body>

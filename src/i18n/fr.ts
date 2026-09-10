@@ -920,6 +920,22 @@ export const fr = {
     nonTraduit: "Traducció al català en curs. Aquesta pàgina encara està en francès.",
   },
   pied: {
+    // Le pied de page. Les chiffres de `couverture` sont lus dans la base :
+    // ils bougent à chaque saison reprise, et un nombre recopié se périme
+    // sans qu'on s'en aperçoive.
+    couverture: "{rencontres} rencontres en base, sur {saisons} saisons, de {premiere} à {derniere}.",
+    reserve:
+      "La base ne couvre pas toute l'histoire du club : les saisons d'avant 2004-2005 s'y ajoutent une à une, à mesure que les sources le permettent.",
+    site: "Le site",
+    donnees: "Les données",
+    donneesChampionnat: "Championnat\u00a0:",
+    donneesEurope: "Coupes d'Europe\u00a0:",
+    donneesAvant: "Avant 2004\u00a0:",
+    mentions: "Mentions",
+    mentionEcussons:
+      "Les écussons de club sont des marques déposées, propriété de leurs détenteurs.",
+    mentionPortraits:
+      "Les portraits appartiennent à leurs auteurs ; le crédit de chaque photo figure sur la fiche du joueur.",
     mention: "USAP Historia — Données historiques de l'USA Perpignan depuis 1902",
   },
   theme: {

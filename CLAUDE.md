@@ -2023,6 +2023,42 @@ publiques sont dans la même voix. Ce qui reste est le bilingue, reporté
 à la fin, et une relecture de chaque page nouvelle pour qu'aucune couleur
 en dur n'y revienne.
 
+**LE PIED DE PAGE EST REFAIT LE 10 SEPTEMBRE 2026**, à la demande de
+Jérémy : c'était le dernier morceau de la couche partagée que le chantier
+n'avait pas touché — une ligne grise centrée, la mention et rien d'autre.
+Sa seule audace est **le nom en grand**, dans la voix du dos de maillot,
+la même que celle des titres de page à ceci près qu'ici elle clôt au lieu
+d'ouvrir ; puis quatre colonnes sous leur filet rouge. Il porte trois
+choses que le site n'avait nulle part où dire, faute de page « à propos » :
+
+- **le plan du site**, les quatorze entrées à plat — les huit du menu
+  « Explorer » comprises, que le Header cache derrière un bouton et
+  qu'aucun robot ne suit ;
+- **d'où viennent les données**, source par compétition et lien vers
+  chacune — LNR, EPCR, Gallica. C'est le pendant général de la section
+  « Sources et arbitrages » que `Provenance` pose au pied des fiches ;
+- **l'étendue de la base, lue dans la base** — rencontres jouées,
+  saisons, première et dernière —, avec la réserve de couverture. Ces
+  chiffres bougent à chaque saison reprise : écrits en dur ils se
+  périmeraient sans que rien ne le dise, comme le « 36 » des affluences
+  sur la page des records. Ils passent par `unstable_cache`, une heure :
+  le pied paraît sur les trente-six pages, et trois agrégats à chaque
+  chargement pour trois nombres qui bougent d'un match par semaine
+  seraient du gaspillage.
+
+**Les mentions de droits sont là et pas ailleurs**, arbitré par Jérémy le
+même jour : les écussons de club sont des marques déposées, les portraits
+appartiennent à leurs auteurs. Le crédit de chaque photo reste sur la
+fiche du joueur — CC BY-SA l'exige nommément —, le pied dit ce qu'une
+fiche ne peut pas répéter. La phrase « site non officiel, sans lien avec
+l'USAP » a été écartée du même mouvement : elle se posera à part, si elle
+se pose.
+
+**Et les deux-points sont dans le libellé, non dans le composant** :
+« Championnat&nbsp;: LNR » en français, « Campionat: LNR » en catalan —
+le français fait précéder les deux-points d'une espace insécable, le
+catalan non. La ponctuation appartient à la langue, comme le pluriel.
+
 
 - **Couleur principale** : Rouge sang (#C8102E) - couleur dominante USAP
 - **Couleur secondaire** : Or/Jaune (#FFD700 dark, #b8860b light) - accent catalan

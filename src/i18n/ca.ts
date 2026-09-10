@@ -873,6 +873,19 @@ export const ca = {
     nonTraduit: "Traducció al català en curs. Aquesta pàgina encara està en francès.",
   },
   pied: {
+    couverture: "{rencontres} partits a la base, en {saisons} temporades, de {premiere} a {derniere}.",
+    reserve:
+      "La base no cobreix tota la història del club: les temporades anteriors a 2004-2005 s'hi afegeixen una a una, a mesura que les fonts ho permeten.",
+    site: "El lloc",
+    donnees: "Les dades",
+    donneesChampionnat: "Campionat:",
+    donneesEurope: "Copes d'Europa:",
+    donneesAvant: "Abans de 2004:",
+    mentions: "Avisos legals",
+    mentionEcussons:
+      "Els escuts dels clubs són marques registrades, propietat dels seus titulars.",
+    mentionPortraits:
+      "Els retrats pertanyen als seus autors; el crèdit de cada fotografia consta a la fitxa del jugador.",
     mention: "USAP Historia — Dades històriques de la USA Perpinyà des de 1902",
   },
   theme: {
