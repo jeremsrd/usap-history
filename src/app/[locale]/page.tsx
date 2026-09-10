@@ -123,6 +123,39 @@ export default async function Home({ params }: Props) {
   const saisons = await prisma.season.count();
   const saisonsDocumentees = await prisma.season.count({ where: { matches: { some: MATCH_JOUE } } });
 
+  // **UN JOUEUR AU HASARD**, demandé par Jérémy le 10 septembre 2026.
+  //
+  // Le tirage porte sur les hommes qui ont **joué** sous le maillot — au
+  // moins une feuille sur une rencontre jouée —, et non sur les 381 fiches
+  // liées au club : une recrue sans match afficherait trois zéros, ce qui
+  // n'est pas un portrait.
+  //
+  // La page est `force-dynamic`, donc le tirage est refait à chaque
+  // chargement : c'est ce qu'on attend d'un « au hasard ». `orderBy` est
+  // nécessaire, faute de quoi le `skip` porterait sur un ordre indéfini.
+  const ELIGIBLE = { matchAppearances: { some: { isOpponent: false, match: MATCH_JOUE } } };
+  const tirables = await prisma.player.count({ where: ELIGIBLE });
+  const [auHasard] = tirables
+    ? await prisma.player.findMany({
+        where: ELIGIBLE,
+        select: { id: true, slug: true, firstName: true, lastName: true, photoUrl: true },
+        orderBy: { id: "asc" },
+        skip: Math.floor(Math.random() * tirables),
+        take: 1,
+      })
+    : [];
+  // Les mêmes règles de compte que la fiche du joueur et que `/centurions` :
+  // une ligne de composition sur une rencontre jouée vaut un match, le
+  // remplaçant non entré compris. Deux pages qui lient l'une vers l'autre ne
+  // peuvent pas annoncer deux nombres différents pour le même homme.
+  const bilanAuHasard = auHasard
+    ? await prisma.matchPlayer.aggregate({
+        where: { playerId: auHasard.id, isOpponent: false, match: MATCH_JOUE },
+        _count: { _all: true },
+        _sum: { totalPoints: true, tries: true },
+      })
+    : null;
+
   let ceJour: CeJour[] = [];
   try {
     ceJour = await prisma.$queryRaw<CeJour[]>(
@@ -402,6 +435,45 @@ export default async function Home({ params }: Props) {
             <p className="text-sm text-muted-foreground">{t("accueil.ceJourAucun", { date: aujourdhui })}</p>
           )}
         </section>
+
+        {/* **Un joueur au hasard** : l'autre bloc de découverte de la page, à
+            côté de « ce jour dans l'histoire ». Le nom est dans la voix du dos
+            de maillot, comme sur la fiche du joueur — prénom au-dessus, nom
+            condensé en rouge —, et **la case du portrait reste vide** quand la
+            LNR et Commons n'ont rien : 65 fiches sur 381 sont illustrées, et
+            ne tirer que parmi celles-là rendrait presque toujours un joueur de
+            l'effectif du jour. */}
+        {auHasard && bilanAuHasard && (
+          <section className="mb-10">
+            <Titre>{t("accueil.hasardTitre")}</Titre>
+            <div className="flex items-center gap-5">
+              {auHasard.photoUrl && (
+                <Image
+                  src={auHasard.photoUrl}
+                  alt=""
+                  width={112}
+                  height={112}
+                  className="h-28 w-28 shrink-0 rounded-xs object-cover"
+                />
+              )}
+              <div className="min-w-0">
+                <Link href={`/joueurs/${auHasard.slug}`} className="group">
+                  <span className="block font-display text-2xl leading-none text-foreground group-hover:text-usap-sang">
+                    {auHasard.firstName}
+                  </span>
+                  <span className="block font-display text-5xl uppercase leading-[0.9] text-usap-sang sm:text-6xl">
+                    {auHasard.lastName}
+                  </span>
+                </Link>
+                <p className="mt-2 text-sm text-muted-foreground tabular-nums">
+                  {t("accueil.hasardMatchs", { n: bilanAuHasard._count._all })},{" "}
+                  {t("accueil.hasardPoints", { n: bilanAuHasard._sum.totalPoints ?? 0 })},{" "}
+                  {t("accueil.hasardEssais", { n: bilanAuHasard._sum.tries ?? 0 })}
+                </p>
+              </div>
+            </div>
+          </section>
+        )}
 
         {/* Explorer */}
         <section>

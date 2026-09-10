@@ -743,6 +743,21 @@ Ce qu'il faut savoir avant d'écrire du code :
   sans cet arrêt, le prochain cas passerait en silence dans une saison qu'on
   n'aurait pas balayée. Vérifié sans régression : aucune des 3 489 fiches de
   la base ne porte un tel patronyme ;
+- **et elle écrit des prénoms qui n'existent pas, qu'il ne faut pas corriger
+  de mémoire.** « Ramiro **Efouardo** Pez », n°16 catalan du Bayonne-Perpignan
+  du 8 octobre 2005 : le mot n'est un prénom dans aucune langue, et l'œil y
+  lit « Eduardo » aussitôt. Sauf que la LNR l'écrit ainsi **dans sa
+  composition et dans l'adresse de sa propre fiche joueur**
+  (`/joueur/17806-ramiro-efouardo-pez-1`) — ce n'est donc pas une coquille de
+  page, c'est son enregistrement —, et que **Wikipédia ne lui connaît aucun
+  second prénom**, ni en français ni en anglais : « Ramiro Pez », rien de
+  plus. Aucune source ne dit « Eduardo ».
+
+  La fiche reste donc telle que la source officielle l'écrit. Corriger, ce
+  serait affirmer que la LNR se trompe **et** inventer ce qu'elle aurait dû
+  écrire — c'est ce que `NOMS_MAL_DECOUPES` exige de démontrer avant d'y
+  inscrire une ligne. Relevé le 10 septembre 2026 en tirant le joueur au
+  hasard de l'accueil, et laissé en l'état faute de seconde source ;
 - **elle émet un gabarit `Prenom_N NOM_N` quand un joueur manque à sa propre
   base**, et l'enregistrement est alors corrompu de bout en bout : absent de
   la composition, sans fiche (`url: null`), et irrattrapable. Le cas de
@@ -1836,6 +1851,26 @@ Deux choses à savoir avant d'y toucher :
   le site, et la doublure aligne l'écusson sur le titre qui suit ;
 - **son or est `usap-or-vif`, non `usap-or`**, cf. « Thème clair/sombre » : le
   second est illisible sur le sang en thème clair.
+
+**ET UN JOUEUR AU HASARD**, demandé le même jour, posé entre « ce jour dans
+l'histoire » et « Explorer » — les deux blocs de découverte de la page se
+suivent. Nom dans la voix du dos de maillot, portrait quand il y en a un,
+matchs, points et essais. Trois choses arbitrées :
+
+- **le tirage porte sur les hommes qui ont joué**, au moins une feuille sur
+  une rencontre jouée, non sur les 381 fiches liées au club : une recrue sans
+  match afficherait trois zéros, ce qui n'est pas un portrait ;
+- **la case du portrait reste vide sans photo**, comme sur `/joueurs`. Ne
+  tirer que parmi les 65 fiches illustrées aurait été plus joli et **faux** :
+  46 d'entre elles sont l'effectif du jour, et « au hasard » aurait presque
+  toujours rendu un joueur de cette saison ;
+- **les compteurs suivent la règle de la fiche joueur et de `/centurions`** —
+  une ligne de composition sur une rencontre jouée vaut un match, remplaçant
+  non entré compris. Deux pages qui lient l'une vers l'autre ne peuvent pas
+  annoncer deux nombres différents pour le même homme.
+
+Le pluriel passe par `Intl.PluralRules`, **trois clés pour trois compteurs** :
+la fonction ne s'applique qu'à un `{n}` à la fois, et « 1 matchs » se verrait.
 
 **ET « LE DERNIER MATCH / LE PROCHAIN » PORTE LES DEUX ÉCUSSONS**, le même
 jour et à la même demande. Ils encadrent le score — et « À venir » pour le

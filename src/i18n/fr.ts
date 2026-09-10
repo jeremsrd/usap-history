@@ -63,6 +63,12 @@ export const fr = {
     saisonEntiere: "La saison entière",
     ceJourTitre: "Ce jour dans l'histoire",
     ceJourAucun: "Aucune rencontre de l'USAP un {date} dans la base.",
+    // Le joueur tiré au hasard. Trois compteurs, trois clés : `Intl.PluralRules`
+    // ne s'applique qu'à un `{n}` à la fois, et « 1 matchs » se verrait.
+    hasardTitre: "Un joueur au hasard",
+    hasardMatchs: { one: "{n} match", other: "{n} matchs" },
+    hasardPoints: { one: "{n} point", other: "{n} points" },
+    hasardEssais: { one: "{n} essai", other: "{n} essais" },
     explorerTitre: "Explorer",
     explorerSaisons: "toutes les saisons, de 1902 à aujourd'hui",
     explorerMatchs: "toutes les rencontres, par saison et par adversaire",
