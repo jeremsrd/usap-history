@@ -1023,6 +1023,7 @@ doublons.
 | `fix-opponent-lineup.ts` | remet une composition en accord avec la feuille officielle — LNR pour le championnat, EPCR pour les coupes — (identités, dossards, titulaires, capitaine) ; `--usap` traite aussi le camp catalan |
 | `fetch-player-photos.ts` | rapatrie les portraits dans `public/images/players/`, renseigne `photoUrl` et consigne auteur et licence dans `credits.json` : **la LNR pour l'effectif, Wikimedia Commons pour les anciens**. `--dry`, `--effectif` ou `--commons` pour n'en faire qu'une, `--images` pour n'écrire que les fichiers, `--planche` pour la planche contact, `--force` pour réécrire |
 | `fetch-club-logos.ts` | rapatrie les logos officiels des clubs dans `public/images/logos/`, depuis les CDN de la LNR et de l'EPCR, et renseigne `Opponent.logoUrl` |
+| `generate-favicon.ts` | **l'icône d'onglet**, dérivée de l'écusson du dépôt — aucun accès réseau. Quatre tailles dans un `.ico`, PNG enveloppés à la main, sharp n'écrivant pas ce format ; le blason étant plus haut que large, il est posé au centre d'un carré sans être déformé. À relancer si l'écusson change. `--dry` |
 | `fix-match-venues.ts` | met les stades en ordre : fusionne les doublons, crée les manquants, rattache chaque club à son terrain — déduit des déplacements déjà enregistrés — puis complète les matchs sans lieu, par `terrainDuMatch()` |
 | `fix-matchs-barcelone.ts` | **les réceptions délocalisées au stade olympique de Montjuïc**, à Barcelone : la LNR ne publiant aucun lieu, le stade se déduit du camp, et les rencontres du 15 septembre 2012 contre Toulouse et du 19 avril 2014 contre Toulon étaient à Aimé-Giral. Applique ce que `TERRAINS_PARTICULIERS` dit désormais, et atteste `CONCORDANT` sur `Match.venueId`. Déjà appliqué ; `--dry` |
 | `fix-venue-countries.ts` | donne un pays aux stades qui n'en ont pas — **celui du club qui y reçoit**, ou la ville pour les quatre terrains neutres — et fusionne deux doublons nés de deux scripts qui ne cherchaient pas le même nom, Murrayfield et Montjuïc. Le 7 septembre 2026, 54 stades sur 72 étaient « Pays inconnu » sur la page des stades. Idempotent ; `--dry` |
@@ -1139,6 +1140,26 @@ C'est le même arbitrage que `SOURCES_HORS_LNR` pour Albi, Bourgoin et Tarbes,
 à une différence près : pour eux la LNR donne une URL qui ne mène à rien ;
 ici elle donne une vraie image, seulement trop petite pour l'usage qu'on en
 fait désormais.
+
+**ET L'ICÔNE D'ONGLET EN DÉCOULE**, depuis le 10 septembre 2026 :
+`src/app/favicon.ico` portait encore celle du starter Next.js.
+`generate-favicon.ts` la dérive de `public/images/usap/logo.png` — donc de la
+même source que le Header, le hero et le pied de page —, en quatre tailles,
+16 à 64. Trois choses apprises en l'écrivant :
+
+- **le blason est plus haut que large** (413 × 523 une fois ses marges
+  transparentes retirées) et une icône est carrée : il est posé au centre d'un
+  carré, `fit: "contain"`, plutôt qu'étiré — l'étirer donnait un écusson gras
+  à 16 pixels ;
+- **un `.ico` enveloppe des PNG**, ce que tout navigateur moderne lit, et
+  c'est la seule façon d'en produire un ici : sharp n'écrit pas ce format.
+  L'en-tête et la table des matières sont assemblés à la main, six octets puis
+  seize par taille ;
+- **et une icône ne se valide pas au journal d'exécution**, comme un écusson
+  ou un portrait : la planche des quatre tailles sur fond clair et sur fond
+  sombre, agrandie sans lissage, montre qu'à 16 pixels le blason garde sa
+  forme et ses barres sang et or quand le mot « USAP » n'est plus lisible —
+  ce qui est le sort de tous les écussons à cette taille, et acceptable.
 
 Les originaux de la LNR sont de tailles très inégales — 5420×6346 pour
 Carcassonne, 151×151 pour Clermont — et **`fetch-club-logos.ts` réduit ce qui
