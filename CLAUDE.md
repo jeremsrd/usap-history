@@ -1824,6 +1824,32 @@ Trois choses arbitrées au passage :
 L'accueil reste la seule page sans catalan : le serment y paraît en français
 sous `/ca`, sous le bandeau qui le dit déjà.
 
+**ET « LE DERNIER MATCH / LE PROCHAIN » PORTE LES DEUX ÉCUSSONS**, le même
+jour et à la même demande. Ils encadrent le score — et « À venir » pour le
+prochain —, à 48 pixels, façon tableau d'affichage. **Le choix s'est fait sur
+pièce** : les deux dispositions possibles ont été posées l'une sous l'autre
+sur la page, l'écusson collé au nom du club ou l'écusson encadrant le score,
+et Jérémy a retenu la seconde — contre l'avis que j'avais donné, qui tenait à
+ce que la première lie l'écusson au club plutôt qu'au nombre.
+
+**C'est une exception assumée**, et il fallait l'écrire dans le code : la
+fiche de match et la liste des matchs se sont débarrassées de leurs logos
+pendant le chantier design, « les écussons sont ailleurs sur le site ». Ici
+les deux blocs ne montrent qu'une rencontre chacun, et l'écusson illustre au
+lieu d'encombrer. Sans cette note, la prochaine relecture y verra un oubli de
+nettoyage et le « corrigera ».
+
+Trois précautions dans ces quelques lignes, toutes déjà des règles du
+projet : l'écusson **adverse** porte `logo-club`, celui de l'USAP non — il a
+son propre contour d'or, comme dans le Header et dans le hero ; un club sans
+écusson ne laisse **pas** de case vide, le nom se suffit ; et `shrink-0`,
+faute de quoi le score écrase l'écusson dans la colonne étroite du mobile.
+L'ordre vient de `isHome`, lu au même endroit pour les deux appels : l'écusson
+et le score ne peuvent pas se désynchroniser.
+
+Le bloc était **déjà en deux colonnes** avant cette séance, avec son score en
+grand : seuls les écussons manquaient.
+
 **La liste des saisons est refaite le même jour**, sur le modèle exact de
 `/joueurs` : **l'épine des décennies**, grosses années condensées en rouge
 avec un index en tête — c'est ainsi qu'on cherche dans cent vingt saisons,

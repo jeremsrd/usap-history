@@ -79,7 +79,7 @@ export default async function Home({ params }: Props) {
     matchday: true,
     round: true,
     competition: { select: { name: true, shortName: true } },
-    opponent: { select: { name: true, shortName: true } },
+    opponent: { select: { name: true, shortName: true, logoUrl: true } },
     venue: { select: { name: true, city: true, slug: true } },
   } as const;
   // Un match dont le score n'est pas saisi n'est pas « le dernier match » :
@@ -142,6 +142,40 @@ export default async function Home({ params }: Props) {
   const aujourdhui = now.toLocaleDateString("fr-FR", { day: "numeric", month: "long" });
 
   const nomAdverse = (m: { opponent: { name: string; shortName: string | null } }) => m.opponent.shortName || m.opponent.name;
+  /**
+   * L'ÉCUSSON D'UN CAMP, POSÉ DE PART ET D'AUTRE DU SCORE.
+   *
+   * Demandé par Jérémy le 10 septembre 2026, et **choisi sur pièce** : les
+   * deux dispositions possibles ont été mises l'une sous l'autre sur la page
+   * — l'écusson collé au nom du club, ou l'écusson encadrant le score, façon
+   * tableau d'affichage —, et c'est la seconde qu'il a retenue.
+   *
+   * C'est une exception assumée au reste du site : la fiche de match et la
+   * liste des matchs se sont débarrassées de leurs logos pendant le chantier
+   * design, les écussons étant ailleurs. Ici les deux blocs ne montrent
+   * qu'une rencontre chacun, et l'écusson illustre au lieu d'encombrer — à ne
+   * pas prendre plus tard pour un oubli de nettoyage.
+   *
+   * Trois précautions dans ces quelques lignes :
+   *
+   * - **l'écusson adverse porte `logo-club`**, sans quoi une marque sombre —
+   *   le tigre de Leicester, le masque des Ospreys — disparaîtrait en thème
+   *   sombre sans que rien ne le signale. Celui de l'USAP s'en passe, comme
+   *   dans le Header et dans le hero : il a son propre contour d'or ;
+   * - **un club sans écusson ne laisse pas de case vide.** Les 61 adversaires
+   *   en ont un aujourd'hui, un club neuf entrerait sans, et le nom se suffit ;
+   * - **`shrink-0`**, faute de quoi un écusson se laisse écraser par le score
+   *   dans la colonne étroite du mobile.
+   *
+   * L'ordre vient de `isHome`, et les deux appels le lisent au même endroit :
+   * l'écusson et le score ne peuvent pas se désynchroniser.
+   */
+  const ecusson = (m: { opponent: { name: string; shortName: string | null; logoUrl: string | null } }, usap: boolean) =>
+    usap ? (
+      <Image src="/images/usap/logo.png" alt="" width={56} height={56} className="h-12 w-12 shrink-0" />
+    ) : (
+      m.opponent.logoUrl && <Image src={m.opponent.logoUrl} alt="" width={56} height={56} className="h-12 w-12 shrink-0 logo-club" />
+    );
   const affiche = (m: { isHome: boolean; opponent: { name: string; shortName: string | null } }) =>
     m.isHome ? (
       <>
@@ -235,12 +269,14 @@ export default async function Home({ params }: Props) {
                   {affiche(dernier)}
                 </Link>
               </p>
-              <p className="mt-1 font-display text-5xl leading-none text-foreground tabular-nums">
+              <p className="mt-2 flex items-center gap-4 font-display text-5xl leading-none text-foreground tabular-nums">
+                {ecusson(dernier, dernier.isHome)}
                 <Link href={`/matchs/${dernier.slug}`} className="hover:text-usap-sang">
                   {dernier.isHome ? dernier.scoreUsap : dernier.scoreOpponent}
                   <span className="mx-2 text-muted-foreground">–</span>
                   {dernier.isHome ? dernier.scoreOpponent : dernier.scoreUsap}
                 </Link>
+                {ecusson(dernier, !dernier.isHome)}
               </p>
               <p className="mt-1 text-sm text-muted-foreground">
                 {dernier.result === "VICTOIRE" ? t("match.victoire") : dernier.result === "NUL" ? t("match.nul") : t("match.defaite")}
@@ -268,7 +304,11 @@ export default async function Home({ params }: Props) {
                   {affiche(prochain)}
                 </Link>
               </p>
-              <p className="mt-1 font-display text-5xl leading-none text-muted-foreground">{t("match.aVenir")}</p>
+              <p className="mt-2 flex items-center gap-4 font-display text-5xl leading-none text-muted-foreground">
+                {ecusson(prochain, prochain.isHome)}
+                {t("match.aVenir")}
+                {ecusson(prochain, !prochain.isHome)}
+              </p>
               {prochain.venue && (
                 <p className="mt-1 text-sm text-muted-foreground">
                   <Link href={`/stades/${prochain.venue.slug}`} className="hover:text-usap-sang">
