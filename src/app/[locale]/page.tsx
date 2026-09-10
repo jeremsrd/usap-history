@@ -204,217 +204,230 @@ export default async function Home({ params }: Props) {
         : { texte: t("saison.lettreDefaite"), classe: "text-muted-foreground" };
 
   return (
-    <div className="mx-auto max-w-6xl px-4 py-10 sm:py-14">
-      {/* Le palmarès, écrit en grand */}
+    <>
       {/* **L'accueil est la dernière page sans catalan** : elle sera refondue en
-          dernier, et son dictionnaire écrit alors. D'ici là, le dire. */}
+          dernier, et son dictionnaire écrit alors. D'ici là, le dire. Le
+          bandeau reste au-dessus du hero : il avertit sur la page entière. */}
       {locale !== LANGUE_PAR_DEFAUT && (
-        <p className="mb-8 border-b border-border bg-usap-or/10 px-4 py-2 text-center text-sm text-foreground">{t("langue.nonTraduit")}</p>
+        <p className="border-b border-border bg-usap-or/10 px-4 py-2 text-center text-sm text-foreground">{t("langue.nonTraduit")}</p>
       )}
-      {/* **Le serment ouvre la page**, demandé par Jérémy le 10 septembre 2026 :
+      {/* **LE SERMENT, SANG ET OR**, demandé par Jérémy le 10 septembre 2026 :
           l'écusson d'un côté, de l'autre les mots que le club fait siens, dans
-          la voix condensée des titres. Deux colonnes dès `sm`, l'une et
-          l'autre dessous en mobile — un écusson de 151 pixels ne se met pas à
-          côté de quatre lignes sur 375. Il est au-dessus du palmarès : c'est
-          désormais lui qu'on lit en premier, et le palmarès garde son or. */}
-      <section className="mb-12 grid items-center gap-6 border-b border-border pb-10 sm:grid-cols-[auto_1fr] sm:gap-10 sm:pb-14">
-        <Image
-          src="/images/usap/logo.png"
-          alt={t("nav.logo")}
-          width={151}
-          height={151}
-          priority
-          className="h-28 w-28 sm:h-40 sm:w-40"
-        />
-        <blockquote className="font-display text-2xl uppercase leading-[1.05] text-foreground sm:text-4xl">
-          {t("accueil.serment")}
-        </blockquote>
+          la voix condensée des titres. Deux colonnes dès `sm`, l'une et l'autre
+          dessous en mobile — un écusson ne se met pas à côté de quatre lignes
+          sur 375 pixels.
+
+          **Le bandeau va d'un bord à l'autre**, et c'est pourquoi il est hors
+          du conteneur de la page : un rectangle rouge à l'intérieur des marges
+          se lirait comme une carte, ce dont le chantier design a justement
+          débarrassé le site. Sa doublure intérieure reprend la largeur du
+          reste, pour que l'écusson s'aligne sur le titre qui suit.
+
+          **L'or y est `usap-or-vif`, non `usap-or`** : celui-ci vaut un or
+          sombre en thème clair, illisible sur le sang — 1,8:1. Cf. la
+          démonstration dans `globals.css`. */}
+      <section className="bg-usap-sang">
+        <div className="mx-auto grid max-w-6xl items-center gap-6 px-4 py-10 sm:grid-cols-[auto_1fr] sm:gap-10 sm:py-14">
+          <Image
+            src="/images/usap/logo.png"
+            alt={t("nav.logo")}
+            width={224}
+            height={224}
+            priority
+            className="h-28 w-28 sm:h-40 sm:w-40"
+          />
+          <blockquote className="font-display text-2xl uppercase leading-[1.05] text-usap-or-vif sm:text-4xl">
+            {t("accueil.serment")}
+          </blockquote>
+        </div>
       </section>
 
-      <header className="mb-12">
-        <h1 className="font-display text-4xl uppercase leading-none text-foreground sm:text-6xl">{t("accueil.titre")}</h1>
-        <p className="mt-6 max-w-prose text-lg leading-snug text-foreground">{t("accueil.chapeau")}</p>
-        {/* L'état des travaux, en italique : le chapeau dit le projet, cette
-            note dit où il en est. Les chiffres sont ici et non là-haut — « en
-            cours » est exactement ce qu'ils disent. */}
-        <p className="mt-2 max-w-prose text-sm italic leading-relaxed text-muted-foreground">
-          {t("accueil.reserve", {
-            matchs: nombre(matchs),
-            joueurs: nombre(joueurs),
-            saisons: saisonsDocumentees,
-            total: saisons,
-          })}
-        </p>
-      </header>
+      <div className="mx-auto max-w-6xl px-4 py-10 sm:py-14">
+        <header className="mb-12">
+          <h1 className="font-display text-4xl uppercase leading-none text-foreground sm:text-6xl">{t("accueil.titre")}</h1>
+          <p className="mt-6 max-w-prose text-lg leading-snug text-foreground">{t("accueil.chapeau")}</p>
+          {/* L'état des travaux, en italique : le chapeau dit le projet, cette
+              note dit où il en est. Les chiffres sont ici et non là-haut — « en
+              cours » est exactement ce qu'ils disent. */}
+          <p className="mt-2 max-w-prose text-sm italic leading-relaxed text-muted-foreground">
+            {t("accueil.reserve", {
+              matchs: nombre(matchs),
+              joueurs: nombre(joueurs),
+              saisons: saisonsDocumentees,
+              total: saisons,
+            })}
+          </p>
+        </header>
 
-      {/* Le dernier match, le prochain */}
-      {(dernier || prochain) && (
-        <section className="mb-10 grid gap-8 md:grid-cols-2">
-          {dernier && (
-            <div>
-              <Titre>{t("accueil.dernierTitre")}</Titre>
-              <p className="text-sm text-muted-foreground">
-                {intitule(dernier)}, {t("match.le", { date: formatDateFR(dernier.date) })}.
-              </p>
-              <p className="mt-1 text-xl text-foreground">
-                <Link href={`/matchs/${dernier.slug}`} className="hover:text-usap-sang">
-                  {affiche(dernier)}
-                </Link>
-              </p>
-              <p className="mt-2 flex items-center gap-4 font-display text-5xl leading-none text-foreground tabular-nums">
-                {ecusson(dernier, dernier.isHome)}
-                <Link href={`/matchs/${dernier.slug}`} className="hover:text-usap-sang">
-                  {dernier.isHome ? dernier.scoreUsap : dernier.scoreOpponent}
-                  <span className="mx-2 text-muted-foreground">–</span>
-                  {dernier.isHome ? dernier.scoreOpponent : dernier.scoreUsap}
-                </Link>
-                {ecusson(dernier, !dernier.isHome)}
-              </p>
-              <p className="mt-1 text-sm text-muted-foreground">
-                {dernier.result === "VICTOIRE" ? t("match.victoire") : dernier.result === "NUL" ? t("match.nul") : t("match.defaite")}
-                {dernier.venue && (
-                  <>
-                    ,{" "}
-                    <Link href={`/stades/${dernier.venue.slug}`} className="hover:text-usap-sang">
-                      {dernier.venue.name}, {dernier.venue.city}
-                    </Link>
-                  </>
-                )}
-                .
-              </p>
-            </div>
-          )}
-          {prochain && (
-            <div>
-              <Titre encre>{t("accueil.prochainTitre")}</Titre>
-              <p className="text-sm text-muted-foreground">
-                {intitule(prochain)}, {t("match.le", { date: formatDateFR(prochain.date) })}
-                {prochain.kickoffTime ? ` ${t("match.a", { heure: prochain.kickoffTime })}` : ""}.
-              </p>
-              <p className="mt-1 text-xl text-foreground">
-                <Link href={`/matchs/${prochain.slug}`} className="hover:text-usap-sang">
-                  {affiche(prochain)}
-                </Link>
-              </p>
-              <p className="mt-2 flex items-center gap-4 font-display text-5xl leading-none text-muted-foreground">
-                {ecusson(prochain, prochain.isHome)}
-                {t("match.aVenir")}
-                {ecusson(prochain, !prochain.isHome)}
-              </p>
-              {prochain.venue && (
-                <p className="mt-1 text-sm text-muted-foreground">
-                  <Link href={`/stades/${prochain.venue.slug}`} className="hover:text-usap-sang">
-                    {prochain.venue.name}, {prochain.venue.city}
+        {/* Le dernier match, le prochain */}
+        {(dernier || prochain) && (
+          <section className="mb-10 grid gap-8 md:grid-cols-2">
+            {dernier && (
+              <div>
+                <Titre>{t("accueil.dernierTitre")}</Titre>
+                <p className="text-sm text-muted-foreground">
+                  {intitule(dernier)}, {t("match.le", { date: formatDateFR(dernier.date) })}.
+                </p>
+                <p className="mt-1 text-xl text-foreground">
+                  <Link href={`/matchs/${dernier.slug}`} className="hover:text-usap-sang">
+                    {affiche(dernier)}
                   </Link>
+                </p>
+                <p className="mt-2 flex items-center gap-4 font-display text-5xl leading-none text-foreground tabular-nums">
+                  {ecusson(dernier, dernier.isHome)}
+                  <Link href={`/matchs/${dernier.slug}`} className="hover:text-usap-sang">
+                    {dernier.isHome ? dernier.scoreUsap : dernier.scoreOpponent}
+                    <span className="mx-2 text-muted-foreground">–</span>
+                    {dernier.isHome ? dernier.scoreOpponent : dernier.scoreUsap}
+                  </Link>
+                  {ecusson(dernier, !dernier.isHome)}
+                </p>
+                <p className="mt-1 text-sm text-muted-foreground">
+                  {dernier.result === "VICTOIRE" ? t("match.victoire") : dernier.result === "NUL" ? t("match.nul") : t("match.defaite")}
+                  {dernier.venue && (
+                    <>
+                      ,{" "}
+                      <Link href={`/stades/${dernier.venue.slug}`} className="hover:text-usap-sang">
+                        {dernier.venue.name}, {dernier.venue.city}
+                      </Link>
+                    </>
+                  )}
                   .
                 </p>
-              )}
-            </div>
-          )}
-        </section>
-      )}
-
-      {/* La saison en cours, et sa frise */}
-      {saison && (
-        <section className="mb-10">
-          <Titre>
-            <Link href={`/saisons/${saison.label}`} className="hover:text-usap-or">
-              {t("accueil.saisonTitre", { label: saison.label })}
-            </Link>
-          </Titre>
-          <p className="text-sm text-muted-foreground">{t(`divisions.${saison.division}`)}.</p>
-          {saison.matches.length > 0 && (
-            <ol aria-label={t("saison.friseAria")} className="mt-2 flex flex-wrap gap-x-1.5 font-display text-3xl leading-none sm:text-4xl">
-              {saison.matches.map((m) => {
-                const l = lettre(m.result);
-                return (
-                  <li key={m.id}>
-                    <Link
-                      href={`/matchs/${m.slug}`}
-                      title={`${formatDateFR(m.date)}, ${m.isHome ? `USAP – ${nomAdverse(m)}` : `${nomAdverse(m)} – USAP`}, ${m.isHome ? m.scoreUsap : m.scoreOpponent}-${m.isHome ? m.scoreOpponent : m.scoreUsap}`}
-                      className={`${l.classe} hover:text-usap-or`}
-                    >
-                      {l.texte}
+              </div>
+            )}
+            {prochain && (
+              <div>
+                <Titre encre>{t("accueil.prochainTitre")}</Titre>
+                <p className="text-sm text-muted-foreground">
+                  {intitule(prochain)}, {t("match.le", { date: formatDateFR(prochain.date) })}
+                  {prochain.kickoffTime ? ` ${t("match.a", { heure: prochain.kickoffTime })}` : ""}.
+                </p>
+                <p className="mt-1 text-xl text-foreground">
+                  <Link href={`/matchs/${prochain.slug}`} className="hover:text-usap-sang">
+                    {affiche(prochain)}
+                  </Link>
+                </p>
+                <p className="mt-2 flex items-center gap-4 font-display text-5xl leading-none text-muted-foreground">
+                  {ecusson(prochain, prochain.isHome)}
+                  {t("match.aVenir")}
+                  {ecusson(prochain, !prochain.isHome)}
+                </p>
+                {prochain.venue && (
+                  <p className="mt-1 text-sm text-muted-foreground">
+                    <Link href={`/stades/${prochain.venue.slug}`} className="hover:text-usap-sang">
+                      {prochain.venue.name}, {prochain.venue.city}
                     </Link>
-                  </li>
-                );
-              })}
-            </ol>
-          )}
-          <p className="mt-2 text-sm">
-            <Link href={`/saisons/${saison.label}`} className="text-muted-foreground underline hover:text-usap-sang">
-              {t("accueil.saisonEntiere")}
-            </Link>
-          </p>
-        </section>
-      )}
-
-      {/* Ce jour dans l'histoire */}
-      <section className="mb-10">
-        <Titre encre>
-          {t("accueil.ceJourTitre")}
-          <span className="ml-3 text-xl text-muted-foreground">{aujourdhui}</span>
-        </Titre>
-        {ceJour.length > 0 ? (
-          <table className="w-full max-w-3xl border-collapse text-sm">
-            <tbody className="tabular-nums">
-              {ceJour.map((m) => {
-                const l = lettre(m.result);
-                return (
-                  <tr key={m.slug} className="border-b border-border hover:bg-muted">
-                    <td className="py-1.5 pr-4 font-display text-2xl leading-none text-usap-sang">{new Date(m.date).getFullYear()}</td>
-                    <td className="py-1.5 pr-4">
-                      <Link href={`/matchs/${m.slug}`} className="text-foreground hover:text-usap-sang">
-                        {m.is_home ? (
-                          <>
-                            <span className="font-semibold text-usap-sang">USAP</span> – {m.opponent_name}
-                          </>
-                        ) : (
-                          <>
-                            {m.opponent_name} – <span className="font-semibold text-usap-sang">USAP</span>
-                          </>
-                        )}
-                      </Link>
-                      <span className="ml-2 text-xs text-muted-foreground">{m.competition_name}</span>
-                    </td>
-                    <td className="py-1.5 pr-3 text-right font-semibold text-foreground whitespace-nowrap">
-                      {m.is_home ? m.score_usap : m.score_opponent} – {m.is_home ? m.score_opponent : m.score_usap}
-                    </td>
-                    <td className={`py-1.5 text-center font-bold ${l.classe}`}>{l.texte}</td>
-                  </tr>
-                );
-              })}
-            </tbody>
-          </table>
-        ) : (
-          <p className="text-sm text-muted-foreground">{t("accueil.ceJourAucun", { date: aujourdhui })}</p>
+                    .
+                  </p>
+                )}
+              </div>
+            )}
+          </section>
         )}
-      </section>
 
-      {/* Explorer */}
-      <section>
-        <Titre>{t("accueil.explorerTitre")}</Titre>
-        <ul className="grid gap-x-8 gap-y-2 text-sm sm:grid-cols-2 lg:grid-cols-3">
-          {(
-            [
-              ["/saisons", "nav.saisons", "accueil.explorerSaisons"],
-              ["/matchs", "nav.matchs", "accueil.explorerMatchs"],
-              ["/joueurs", "nav.joueurs", "accueil.explorerJoueurs"],
-              ["/statistiques", "nav.statistiques", "accueil.explorerStatistiques"],
-              ["/adversaires", "nav.adversaires", "accueil.explorerAdversaires"],
-              ["/stades", "nav.stades", "accueil.explorerStades"],
-            ] as const
-          ).map(([href, nom, desc]) => (
-            <li key={href}>
-              <Link href={href} className="font-semibold text-foreground hover:text-usap-sang">
-                {t(nom)}
+        {/* La saison en cours, et sa frise */}
+        {saison && (
+          <section className="mb-10">
+            <Titre>
+              <Link href={`/saisons/${saison.label}`} className="hover:text-usap-or">
+                {t("accueil.saisonTitre", { label: saison.label })}
               </Link>
-              <span className="text-muted-foreground">, {t(desc)}.</span>
-            </li>
-          ))}
-        </ul>
-      </section>
-    </div>
+            </Titre>
+            <p className="text-sm text-muted-foreground">{t(`divisions.${saison.division}`)}.</p>
+            {saison.matches.length > 0 && (
+              <ol aria-label={t("saison.friseAria")} className="mt-2 flex flex-wrap gap-x-1.5 font-display text-3xl leading-none sm:text-4xl">
+                {saison.matches.map((m) => {
+                  const l = lettre(m.result);
+                  return (
+                    <li key={m.id}>
+                      <Link
+                        href={`/matchs/${m.slug}`}
+                        title={`${formatDateFR(m.date)}, ${m.isHome ? `USAP – ${nomAdverse(m)}` : `${nomAdverse(m)} – USAP`}, ${m.isHome ? m.scoreUsap : m.scoreOpponent}-${m.isHome ? m.scoreOpponent : m.scoreUsap}`}
+                        className={`${l.classe} hover:text-usap-or`}
+                      >
+                        {l.texte}
+                      </Link>
+                    </li>
+                  );
+                })}
+              </ol>
+            )}
+            <p className="mt-2 text-sm">
+              <Link href={`/saisons/${saison.label}`} className="text-muted-foreground underline hover:text-usap-sang">
+                {t("accueil.saisonEntiere")}
+              </Link>
+            </p>
+          </section>
+        )}
+
+        {/* Ce jour dans l'histoire */}
+        <section className="mb-10">
+          <Titre encre>
+            {t("accueil.ceJourTitre")}
+            <span className="ml-3 text-xl text-muted-foreground">{aujourdhui}</span>
+          </Titre>
+          {ceJour.length > 0 ? (
+            <table className="w-full max-w-3xl border-collapse text-sm">
+              <tbody className="tabular-nums">
+                {ceJour.map((m) => {
+                  const l = lettre(m.result);
+                  return (
+                    <tr key={m.slug} className="border-b border-border hover:bg-muted">
+                      <td className="py-1.5 pr-4 font-display text-2xl leading-none text-usap-sang">{new Date(m.date).getFullYear()}</td>
+                      <td className="py-1.5 pr-4">
+                        <Link href={`/matchs/${m.slug}`} className="text-foreground hover:text-usap-sang">
+                          {m.is_home ? (
+                            <>
+                              <span className="font-semibold text-usap-sang">USAP</span> – {m.opponent_name}
+                            </>
+                          ) : (
+                            <>
+                              {m.opponent_name} – <span className="font-semibold text-usap-sang">USAP</span>
+                            </>
+                          )}
+                        </Link>
+                        <span className="ml-2 text-xs text-muted-foreground">{m.competition_name}</span>
+                      </td>
+                      <td className="py-1.5 pr-3 text-right font-semibold text-foreground whitespace-nowrap">
+                        {m.is_home ? m.score_usap : m.score_opponent} – {m.is_home ? m.score_opponent : m.score_usap}
+                      </td>
+                      <td className={`py-1.5 text-center font-bold ${l.classe}`}>{l.texte}</td>
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </table>
+          ) : (
+            <p className="text-sm text-muted-foreground">{t("accueil.ceJourAucun", { date: aujourdhui })}</p>
+          )}
+        </section>
+
+        {/* Explorer */}
+        <section>
+          <Titre>{t("accueil.explorerTitre")}</Titre>
+          <ul className="grid gap-x-8 gap-y-2 text-sm sm:grid-cols-2 lg:grid-cols-3">
+            {(
+              [
+                ["/saisons", "nav.saisons", "accueil.explorerSaisons"],
+                ["/matchs", "nav.matchs", "accueil.explorerMatchs"],
+                ["/joueurs", "nav.joueurs", "accueil.explorerJoueurs"],
+                ["/statistiques", "nav.statistiques", "accueil.explorerStatistiques"],
+                ["/adversaires", "nav.adversaires", "accueil.explorerAdversaires"],
+                ["/stades", "nav.stades", "accueil.explorerStades"],
+              ] as const
+            ).map(([href, nom, desc]) => (
+              <li key={href}>
+                <Link href={href} className="font-semibold text-foreground hover:text-usap-sang">
+                  {t(nom)}
+                </Link>
+                <span className="text-muted-foreground">, {t(desc)}.</span>
+              </li>
+            ))}
+          </ul>
+        </section>
+      </div>
+    </>
   );
 }
 

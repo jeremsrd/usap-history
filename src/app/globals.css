@@ -47,6 +47,7 @@
   --radius-4xl: calc(var(--radius) + 16px);
   --color-usap-sang: var(--usap-sang);
   --color-usap-or: var(--usap-or);
+  --color-usap-or-vif: var(--usap-or-vif);
   --color-usap-fond: var(--usap-fond);
   --color-usap-carte: var(--usap-carte);
 }
@@ -60,6 +61,21 @@
  * passée en rouge et rien d'autre : un site catalan gris-bleu. L'encre et les
  * règles sont désormais tirées vers le rouge, sans crème ni gris froid, pour
  * que les deux couleurs du club portent la page au lieu de la ponctuer.
+ */
+/*
+ * **L'OR QUI TIENT SUR LE SANG, ET QUI NE VARIE PAS AVEC LE THÈME.**
+ *
+ * `--usap-or` change de valeur d'un thème à l'autre — un or sombre sur fond
+ * clair, un or vif sur fond sombre —, ce qui est juste tant que le fond suit
+ * le thème. Le hero de l'accueil, lui, est **rouge dans les deux thèmes** :
+ * c'est une surface qui a choisi son camp, et son encre doit choisir avec
+ * elle. L'or sombre y serait illisible — 1,8:1 sur #C8102E —, quand l'or vif
+ * donne 4,2:1, ce qui passe le seuil AA des grands caractères (3:1) où ce
+ * texte se trouve.
+ *
+ * Ce n'est donc pas une couleur en dur déguisée en jeton : c'est un jeton
+ * dont la valeur est la même des deux côtés, parce que la surface qu'il
+ * habille l'est aussi. À n'employer que sur du sang.
  */
 :root {
   --radius: 0.1875rem;
@@ -96,6 +112,7 @@
   --sidebar-ring: #b8860b;
   --usap-sang: #C8102E;
   --usap-or: #b8860b;
+  --usap-or-vif: #FFD700;
   --usap-fond: #ffffff;
   --usap-carte: #f8f4f3;
 }
@@ -143,6 +160,7 @@
   --sidebar-ring: #FFD700;
   --usap-sang: #C8102E;
   --usap-or: #FFD700;
+  --usap-or-vif: #FFD700;
   --usap-fond: #150b0d;
   --usap-carte: #211416;
 }

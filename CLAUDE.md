@@ -1826,6 +1826,17 @@ Trois choses arbitrées au passage :
 L'accueil reste la seule page sans catalan : le serment y paraît en français
 sous `/ca`, sous le bandeau qui le dit déjà.
 
+**ET LE HERO EST PASSÉ SANG ET OR LE 10 SEPTEMBRE 2026**, à la demande de
+Jérémy : bandeau rouge d'un bord à l'autre, écusson à gauche, serment en or.
+Deux choses à savoir avant d'y toucher :
+
+- **il est hors du conteneur de la page**, dans un fragment, avec sa propre
+  doublure `mx-auto max-w-6xl` — un rectangle rouge à l'intérieur des marges
+  se lirait comme une carte, ce dont le chantier design a justement débarrassé
+  le site, et la doublure aligne l'écusson sur le titre qui suit ;
+- **son or est `usap-or-vif`, non `usap-or`**, cf. « Thème clair/sombre » : le
+  second est illisible sur le sang en thème clair.
+
 **ET « LE DERNIER MATCH / LE PROCHAIN » PORTE LES DEUX ÉCUSSONS**, le même
 jour et à la même demande. Ils encadrent le score — et « À venir » pour le
 prochain —, à 48 pixels, façon tableau d'affichage. **Le choix s'est fait sur
@@ -2200,6 +2211,18 @@ catalan non. La ponctuation appartient à la langue, comme le pluriel.
 - **Convention** : toujours utiliser les couleurs sémantiques Tailwind (`bg-background`, `text-foreground`, `border-border`, `bg-card`, `bg-muted`, etc.) plutôt que des couleurs hardcodées
 - **USAP brand** : `usap-sang`, `usap-or`, `usap-fond`, `usap-carte` sont définis via CSS variables et s'adaptent au thème
 - **Interdit** : `border-white/10`, `bg-white/5`, ou toute couleur hardcodée qui ne s'adapte pas au thème
+- **UNE EXCEPTION, ET UNE SEULE : `usap-or-vif`**, ajouté le 10 septembre 2026
+  pour le hero de l'accueil. `usap-or` vaut un or **sombre** en thème clair,
+  ce qui est juste tant que le fond suit le thème ; sur le bandeau rouge du
+  hero, qui est **sang dans les deux thèmes**, il donne 1,8:1 — illisible.
+  `usap-or-vif` (`#FFD700`) vaut la même chose des deux côtés et donne 4,2:1,
+  au-dessus du seuil AA des grands caractères (3:1), où ce texte se trouve.
+
+  Ce n'est donc pas une couleur en dur déguisée en jeton : c'est un jeton dont
+  la valeur ne varie pas **parce que la surface qu'il habille ne varie pas non
+  plus**. La règle qui va avec : **ne l'employer que sur du sang**. Une
+  surface qui choisit son camp impose son encre ; une surface qui suit le
+  thème garde `usap-or`.
 
 ## Postes de rugby
 
@@ -4249,6 +4272,21 @@ npx tsx scripts/<script>.ts --dry    # simulation, pour les scripts de masse
 npx tsc --noEmit --strict --skipLibCheck --target es2022 --module esnext \
   --moduleResolution bundler --esModuleInterop scripts/<script>.ts
 ```
+
+⚠️ **CE PROJET N'A PAS DE FORMATEUR, ET IL NE FAUT PAS EN LANCER UN.** Ni
+prettier en dépendance, ni `.prettierrc` : le style du dépôt — lignes longues,
+`select` d'une seule traite — est tenu à la main, et il est cohérent. Un
+`npx prettier --write` sur une page en réécrit deux cents lignes dans un autre
+style, et `npx` l'installe volontiers sans qu'on l'ait demandé. Passé une fois
+le 10 septembre 2026 par réflexe, annulé aussitôt.
+
+⚠️ **`prettier --check` MENT SUR UN CHEMIN QUI CONTIENT `[locale]`** : les
+crochets y sont lus comme une classe de caractères, aucun fichier ne
+correspond, et il annonce « All files formatted correctly » — pour zéro
+fichier. C'est ce qui a fait croire un moment que la page était conforme quand
+`--write` la réécrivait. La leçon vaut pour **tout** outil qui prend des
+motifs : sur ce dépôt, la moitié des chemins portent des crochets, et un
+outil qui ne trouve rien annonce le plus souvent que tout va bien.
 
 ⚠️ `tsconfig.json` porte `"exclude": ["node_modules", "scripts"]` : un
 `npx tsc --noEmit` **ne vérifie aucun script**, et `tsx` ne fait que retirer
