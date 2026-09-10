@@ -1874,6 +1874,31 @@ Deux conséquences, l'une et l'autre assumées :
 
 L'accueil n'a donc plus qu'une audace, et c'est **le serment**.
 
+**ET SON CHAPEAU DIT LE PROJET, NON SON AVANCEMENT**, arbitré par Jérémy le
+même jour. La phrase de présentation promet « chaque rencontre, chaque joueur
+et chaque saison de l'USA Perpignan », et une **note en italique** dessous dit
+que les données sont en cours de saisie et de recherche, avec les chiffres du
+jour — matchs, joueurs, saisons couvertes sur le total, tous lus dans la base.
+
+**Le défaut n'était pas l'ambition, c'était de la démentir trois fois de
+suite.** L'ancienne version promettait tout, retirait 95 saisons trois mots
+plus loin — « {saisons} saisons documentées sur {total} » —, puis le redisait
+une troisième fois dans la réserve : une promesse, un démenti et une
+explication en trois lignes. J'avais proposé de borner la promesse à
+2004-2005 ; Jérémy a tranché l'inverse, et il a raison — une promesse rabotée
+rapetisse le projet à son avancement du jour, quand une note qui dit où l'on
+en est le date sans le réduire.
+
+**Les chiffres sont donc dans la note et non dans le chapeau** : collés à la
+promesse ils la contredisent, sous « en cours de saisie » ils la datent — ce
+ne sont plus des trous, c'est un chantier. La clé `accueil.chiffres` a
+disparu, absorbée par `accueil.reserve`.
+
+Et c'est ce qui rend cohérente la `description` du site, « Base de données
+historique **complète** de l'USA Perpignan » : elle est dans le même registre
+que le chapeau. Avec une promesse bornée elle aurait détonné, dans la phrase
+la plus lue du site.
+
 **La liste des saisons est refaite le même jour**, sur le modèle exact de
 `/joueurs` : **l'épine des décennies**, grosses années condensées en rouge
 avec un index en tête — c'est ainsi qu'on cherche dans cent vingt saisons,

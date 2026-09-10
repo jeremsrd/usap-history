@@ -40,11 +40,23 @@ export const fr = {
     serment:
       "« Je m'engage à servir l'USAP avec foi et dévouement pour être digne du blason sang et or qu'elle me confie et que mes anciens ont chargé de gloire »",
     titre: "L'histoire de l'USAP depuis 1902",
+    // **LA PROMESSE, PUIS L'ÉTAT DES TRAVAUX** — arbitré par Jérémy le
+    // 10 septembre 2026 : le chapeau dit ce que le site est, comme s'il était
+    // fini, et la note en italique dit que la saisie est en cours.
+    //
+    // C'est le contraire de ce que j'avais proposé, et il a raison : borner
+    // la promesse à 2004-2005 rapetissait le projet à son avancement du jour.
+    // Une promesse tenue par une note qui dit où on en est vaut mieux qu'une
+    // promesse rabotée. Ce qu'il fallait supprimer n'était pas l'ambition,
+    // c'était de la démentir **trois fois de suite** — « chaque saison »,
+    // puis « 25 sur 120 », puis la réserve. Elle ne se dit plus qu'une fois,
+    // dans la note, à sa place.
     chapeau:
       "Chaque rencontre, chaque joueur et chaque saison de l'USA Perpignan, d'après les feuilles de match officielles et la presse d'époque.",
-    chiffres: "{matchs} matchs, {joueurs} joueurs, {saisons} saisons documentées sur {total}.",
+    // La note en italique. Elle porte les chiffres : « en cours » est
+    // précisément ce qu'ils disent.
     reserve:
-      "Les feuilles de match sont saisies depuis 2004-2005 ; avant, seules les finales de 1914 et de 1925 le sont, reconstituées depuis la presse.",
+      "Les données sont en cours de saisie et de recherche : {matchs} matchs et {joueurs} joueurs en base, sur {saisons} des {total} saisons du club. Le travail remonte le temps, saison par saison.",
     dernierTitre: "Le dernier match",
     prochainTitre: "Le prochain match",
     saisonTitre: "La saison {label}",

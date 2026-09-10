@@ -233,11 +233,18 @@ export default async function Home({ params }: Props) {
 
       <header className="mb-12">
         <h1 className="font-display text-4xl uppercase leading-none text-foreground sm:text-6xl">{t("accueil.titre")}</h1>
-        <p className="mt-6 max-w-prose text-lg leading-snug text-foreground">
-          {t("accueil.chapeau")}{" "}
-          {t("accueil.chiffres", { matchs: nombre(matchs), joueurs: nombre(joueurs), saisons: saisonsDocumentees, total: saisons })}
+        <p className="mt-6 max-w-prose text-lg leading-snug text-foreground">{t("accueil.chapeau")}</p>
+        {/* L'état des travaux, en italique : le chapeau dit le projet, cette
+            note dit où il en est. Les chiffres sont ici et non là-haut — « en
+            cours » est exactement ce qu'ils disent. */}
+        <p className="mt-2 max-w-prose text-sm italic leading-relaxed text-muted-foreground">
+          {t("accueil.reserve", {
+            matchs: nombre(matchs),
+            joueurs: nombre(joueurs),
+            saisons: saisonsDocumentees,
+            total: saisons,
+          })}
         </p>
-        <p className="mt-1 max-w-prose text-sm leading-relaxed text-muted-foreground">{t("accueil.reserve")}</p>
       </header>
 
       {/* Le dernier match, le prochain */}
