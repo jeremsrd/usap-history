@@ -2004,6 +2004,25 @@ rien — `JoueurCellule` reçoit `isActive={false}`. Après une journée le bloc
 est mince, en mai c'est le palmarès de la saison ; il prolonge le bloc au
 lieu d'en ajouter un, l'accueil étant déjà long.
 
+**ET « CE JOUR DANS L'HISTOIRE » EST EN TROIS COLONNES**, depuis le
+11 septembre 2026 à la demande de Jérémy — c'était le bloc le plus faible de
+la page, un tableau de trois lignes souvent vide. Les rencontres jouées un
+même jour de l'année restent la première colonne. La deuxième donne **les
+anniversaires de la semaine** — les sept jours autour d'aujourd'hui, la
+date sur chaque ligne, le jour même en gras, l'âge **fêté** et non celui
+d'aujourd'hui, un disparu gardant son année. **La semaine et non le jour,
+et c'est compté** : 211 naissances tombent sur 155 jours distincts, la
+colonne du seul jour aurait été vide six jours sur dix ; la semaine en
+donne quatre en moyenne. La troisième donne **la rencontre la plus proche
+il y a dix, vingt, cinquante et cent ans**, à trois semaines près — un jour
+précis tomberait à côté —, en une seule requête sur les quatre fenêtres ;
+cinquante et cent ans ne rendent rien tant que la base s'arrête à
+2004-2005 et aux deux finales d'avant-guerre, et la colonne s'allongera
+d'elle-même quand elles rendront. Une colonne vide le dit plutôt que de
+disparaître : les trois gardent leur place d'un jour à l'autre. Les titres
+de colonne sont des h3 en encre, `SousTitre`, partagés avec les classements
+de la saison. Clés `accueil.ceJour*`.
+
 **ET LE PALMARÈS A QUITTÉ L'ACCUEIL**, le même jour, sur décision de Jérémy.
 Il en était l'audace depuis le 6 septembre — « Sept fois champion de France »
 en rouge et les sept années du Bouclier en or condensé, chacune liée à sa

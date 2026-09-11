@@ -25,7 +25,9 @@ import type { Metadata } from "next";
  * tête-à-tête avec le prochain adversaire et les réalisateurs contre lui ;
  * la saison en cours avec son bilan en chiffres — championnat seul, comme le
  * classement — et ses trois classements courts, les mêmes que sur la page de
- * saison ; ce jour dans l'histoire ; et six entrées pour explorer.
+ * saison ; ce jour dans l'histoire en trois colonnes — les rencontres du
+ * jour, les joueurs nés ce jour, il y a dix, vingt, cinquante, cent ans — ;
+ * et six entrées pour explorer.
  *
  * **LE PALMARÈS A QUITTÉ CETTE PAGE LE 10 SEPTEMBRE 2026**, sur décision de
  * Jérémy. Il en était l'audace — les sept années du Bouclier en or condensé,
@@ -304,6 +306,60 @@ export default async function Home({ params }: Props) {
     // La requête brute échoue en silence : la section dit alors « aucune ».
   }
   const aujourdhui = now.toLocaleDateString("fr-FR", { day: "numeric", month: "long" });
+
+  // **« CE JOUR » EN TROIS COLONNES**, demandé par Jérémy le 11 septembre
+  // 2026 : le bloc était un tableau de trois lignes, souvent vide. S'y
+  // ajoutent **les joueurs nés ce jour-là** et **il y a dix, vingt, cinquante,
+  // cent ans**.
+  //
+  // Les naissances se filtrent en mémoire : 214 fiches portent une date, et
+  // Prisma ne sait pas comparer un mois et un jour. La condition du lien avec
+  // le club est celle de la liste des joueurs — les adversaires n'ont pas de
+  // date de naissance, mais la règle vaut d'être écrite.
+  const avecDate = await prisma.player.findMany({
+    where: {
+      birthDate: { not: null },
+      OR: [{ careerClubs: { some: { isUsap: true } } }, { matchAppearances: { some: { isOpponent: false } } }, { seasonSquads: { some: {} } }],
+    },
+    select: { id: true, slug: true, firstName: true, lastName: true, photoUrl: true, isActive: true, birthDate: true, deathDate: true },
+  });
+  // **La semaine, non le jour**, et c'est compté : 211 naissances tombent sur
+  // 155 jours distincts, la colonne du seul jour serait vide six jours sur
+  // dix. Sept jours autour d'aujourd'hui en donnent quatre en moyenne, et la
+  // date de chacun est écrite sur sa ligne. Le tri suit le calendrier, du
+  // plus proche passé au plus lointain à venir.
+  const jourDeLAnnee = (mois: number, jour: number) => new Date(Date.UTC(now.getFullYear(), mois, jour)).getTime();
+  const ecart = (d: Date) => {
+    const delta = Math.round((jourDeLAnnee(d.getUTCMonth(), d.getUTCDate()) - jourDeLAnnee(now.getMonth(), now.getDate())) / 86400000);
+    // Un anniversaire fin décembre vu de début janvier est à quelques jours, pas à un an.
+    return delta > 182 ? delta - 365 : delta < -182 ? delta + 365 : delta;
+  };
+  const anniversaires = avecDate
+    .map((j) => ({ ...j, ecart: ecart(j.birthDate!) }))
+    .filter((j) => Math.abs(j.ecart) <= 3)
+    .sort((a, b) => a.ecart - b.ecart || a.birthDate!.getTime() - b.birthDate!.getTime());
+
+  // « Il y a N ans » : la rencontre jouée la plus proche d'aujourd'hui, N ans
+  // plus tôt, à trois semaines près — un jour précis tomberait presque
+  // toujours à côté, une saison en compte vingt-six. Une seule requête pour
+  // les quatre fenêtres, puis la plus proche de chacune en mémoire. Cinquante
+  // et cent ans ne rendent rien tant que la base s'arrête à 2004-2005 et aux
+  // deux finales d'avant-guerre ; le jour où elles rendront, la colonne
+  // s'allongera d'elle-même.
+  const DISTANCES = [10, 20, 50, 100] as const;
+  const FENETRE = 21 * 24 * 3600 * 1000;
+  const cibles = DISTANCES.map((n) => ({ n, date: new Date(Date.UTC(now.getFullYear() - n, now.getMonth(), now.getDate(), 12)) }));
+  const autrefois = await prisma.match.findMany({
+    where: { AND: [MATCH_JOUE, { OR: cibles.map((c) => ({ date: { gte: new Date(c.date.getTime() - FENETRE), lte: new Date(c.date.getTime() + FENETRE) } })) }] },
+    select: { slug: true, date: true, scoreUsap: true, scoreOpponent: true, result: true, isHome: true, opponent: { select: { name: true, shortName: true } }, competition: { select: { name: true, shortName: true } } },
+  });
+  const ilYA = cibles
+    .map((c) => {
+      const proches = autrefois.filter((m) => Math.abs(m.date.getTime() - c.date.getTime()) <= FENETRE);
+      const m = proches.length ? proches.reduce((a, b) => (Math.abs(b.date.getTime() - c.date.getTime()) < Math.abs(a.date.getTime() - c.date.getTime()) ? b : a)) : null;
+      return m && { n: c.n, match: m };
+    })
+    .filter((x): x is { n: (typeof DISTANCES)[number]; match: (typeof autrefois)[number] } => x != null);
 
   const nomAdverse = (m: { opponent: { name: string; shortName: string | null } }) => m.opponent.shortName || m.opponent.name;
   /**
@@ -758,46 +814,121 @@ export default async function Home({ params }: Props) {
           </section>
         )}
 
-        {/* Ce jour dans l'histoire */}
+        {/* **Ce jour dans l'histoire, en trois colonnes** : les rencontres
+            jouées un même jour de l'année, les anniversaires de la semaine
+            avec l'âge fêté, le jour même en gras, et la rencontre la plus proche il y a dix, vingt,
+            cinquante et cent ans. Une colonne vide le dit plutôt que de
+            disparaître : les trois restent à leur place d'un jour à l'autre. */}
         <section className="mb-10">
           <Titre encre>
             {t("accueil.ceJourTitre")}
             <span className="ml-3 text-xl text-muted-foreground">{aujourdhui}</span>
           </Titre>
-          {ceJour.length > 0 ? (
-            <table className="w-full max-w-3xl border-collapse text-sm">
-              <tbody className="tabular-nums">
-                {ceJour.map((m) => {
-                  const l = lettre(m.result);
-                  return (
-                    <tr key={m.slug} className="border-b border-border hover:bg-muted">
-                      <td className="py-1.5 pr-4 font-display text-2xl leading-none text-usap-sang">{new Date(m.date).getFullYear()}</td>
-                      <td className="py-1.5 pr-4">
-                        <Link href={`/matchs/${m.slug}`} className="text-foreground hover:text-usap-sang">
-                          {m.is_home ? (
-                            <>
-                              <span className="font-semibold text-usap-sang">USAP</span> – {m.opponent_name}
-                            </>
-                          ) : (
-                            <>
-                              {m.opponent_name} – <span className="font-semibold text-usap-sang">USAP</span>
-                            </>
-                          )}
-                        </Link>
-                        <span className="ml-2 text-xs text-muted-foreground">{m.competition_name}</span>
-                      </td>
-                      <td className="py-1.5 pr-3 text-right font-semibold text-foreground whitespace-nowrap">
-                        {m.is_home ? m.score_usap : m.score_opponent} – {m.is_home ? m.score_opponent : m.score_usap}
-                      </td>
-                      <td className={`py-1.5 text-center font-bold ${l.classe}`}>{l.texte}</td>
-                    </tr>
-                  );
-                })}
-              </tbody>
-            </table>
-          ) : (
-            <p className="text-sm text-muted-foreground">{t("accueil.ceJourAucun", { date: aujourdhui })}</p>
-          )}
+          <div className="grid gap-8 md:grid-cols-3">
+            <div>
+              <SousTitre>{t("accueil.ceJourRencontres")}</SousTitre>
+              {ceJour.length > 0 ? (
+                <table className="w-full border-collapse text-sm">
+                  <tbody className="tabular-nums">
+                    {ceJour.map((m) => {
+                      const l = lettre(m.result);
+                      return (
+                        <tr key={m.slug} className="border-b border-border hover:bg-muted">
+                          <td className="py-1.5 pr-3 font-display text-2xl leading-none text-usap-sang">{new Date(m.date).getFullYear()}</td>
+                          <td className="py-1.5 pr-3">
+                            <Link href={`/matchs/${m.slug}`} className="text-foreground hover:text-usap-sang">
+                              {m.is_home ? (
+                                <>
+                                  <span className="font-semibold text-usap-sang">USAP</span> – {m.opponent_name}
+                                </>
+                              ) : (
+                                <>
+                                  {m.opponent_name} – <span className="font-semibold text-usap-sang">USAP</span>
+                                </>
+                              )}
+                            </Link>
+                            <span className="block text-xs text-muted-foreground">{m.competition_name}</span>
+                          </td>
+                          <td className="py-1.5 pr-2 text-right font-semibold text-foreground whitespace-nowrap">
+                            {m.is_home ? m.score_usap : m.score_opponent} – {m.is_home ? m.score_opponent : m.score_usap}
+                          </td>
+                          <td className={`py-1.5 text-center font-bold ${l.classe}`}>{l.texte}</td>
+                        </tr>
+                      );
+                    })}
+                  </tbody>
+                </table>
+              ) : (
+                <p className="text-sm text-muted-foreground">{t("accueil.ceJourAucun", { date: aujourdhui })}</p>
+              )}
+            </div>
+            <div>
+              <SousTitre>{t("accueil.ceJourNes")}</SousTitre>
+              {anniversaires.length > 0 ? (
+                <table className="w-full border-collapse text-sm">
+                  <tbody className="tabular-nums">
+                    {anniversaires.map((j) => {
+                      const annee = j.birthDate!.getUTCFullYear();
+                      return (
+                        <tr key={j.id} className={`border-b border-border hover:bg-muted ${j.ecart === 0 ? "font-semibold" : ""}`}>
+                          <td className="py-1.5 pr-3 text-muted-foreground whitespace-nowrap">
+                            {j.birthDate!.toLocaleDateString("fr-FR", { day: "numeric", month: "short", timeZone: "UTC" })}
+                          </td>
+                          <td className="py-1.5 pr-3">
+                            <JoueurCellule slug={j.slug} firstName={j.firstName} lastName={j.lastName} photoUrl={j.photoUrl} isActive={j.isActive} libelleActuel={t("joueurs.actuel")} />
+                          </td>
+                          {/* L'âge n'est donné qu'à un vivant : la base porte la
+                              date de décès des figures historiques. */}
+                          {/* L'âge fêté — celui de l'anniversaire, pas celui
+                              d'aujourd'hui —, l'année de cet anniversaire
+                              pouvant être la voisine autour du 1er janvier.
+                              Un disparu garde son année de naissance. */}
+                          <td className="py-1.5 text-right text-muted-foreground whitespace-nowrap">
+                            {j.deathDate
+                              ? annee
+                              : t("accueil.ceJourAge", { n: new Date(now.getFullYear(), now.getMonth(), now.getDate() + j.ecart).getFullYear() - annee })}
+                          </td>
+                        </tr>
+                      );
+                    })}
+                  </tbody>
+                </table>
+              ) : (
+                <p className="text-sm text-muted-foreground">{t("accueil.ceJourNesAucun", { date: aujourdhui })}</p>
+              )}
+            </div>
+            <div>
+              <SousTitre>{t("accueil.ceJourIlYA")}</SousTitre>
+              {ilYA.length > 0 ? (
+                <table className="w-full border-collapse text-sm">
+                  <tbody className="tabular-nums">
+                    {ilYA.map(({ n, match: m }) => {
+                      const l = lettre(m.result);
+                      return (
+                        <tr key={n} className="border-b border-border hover:bg-muted">
+                          <td className="py-1.5 pr-3 font-display text-2xl leading-none text-usap-sang whitespace-nowrap">{t("accueil.ceJourAns", { n })}</td>
+                          <td className="py-1.5 pr-3">
+                            <Link href={`/matchs/${m.slug}`} className="text-foreground hover:text-usap-sang">
+                              {affiche(m)}
+                            </Link>
+                            <span className="block text-xs text-muted-foreground">
+                              {formatDateFR(m.date)}, {m.competition.shortName || m.competition.name}
+                            </span>
+                          </td>
+                          <td className="py-1.5 pr-2 text-right font-semibold text-foreground whitespace-nowrap">
+                            {m.isHome ? m.scoreUsap : m.scoreOpponent} – {m.isHome ? m.scoreOpponent : m.scoreUsap}
+                          </td>
+                          <td className={`py-1.5 text-center font-bold ${l.classe}`}>{l.texte}</td>
+                        </tr>
+                      );
+                    })}
+                  </tbody>
+                </table>
+              ) : (
+                <p className="text-sm text-muted-foreground">{t("accueil.ceJourIlYAAucun")}</p>
+              )}
+            </div>
+          </div>
         </section>
 
         {/* Explorer */}
@@ -843,7 +974,7 @@ function ClassementCourt<C>({
   if (lignes.length === 0) return null;
   return (
     <div>
-      <h3 className="mb-2 border-b border-foreground pb-1 font-display text-xl uppercase leading-none text-foreground">{titre}</h3>
+      <SousTitre>{titre}</SousTitre>
       <table className="w-full border-collapse text-sm">
         <tbody className="tabular-nums">
           {lignes.map((l, i) => (
@@ -861,6 +992,11 @@ function ClassementCourt<C>({
       </table>
     </div>
   );
+}
+
+/** Le titre d'une colonne dans une section : un h3 en encre, plus petit que le h2 — une hiérarchie, pas une répétition. */
+function SousTitre({ children }: { children: React.ReactNode }) {
+  return <h3 className="mb-2 border-b border-foreground pb-1 font-display text-xl uppercase leading-none text-foreground">{children}</h3>;
 }
 
 /**

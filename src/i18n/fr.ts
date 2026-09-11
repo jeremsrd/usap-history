@@ -79,6 +79,15 @@ export const fr = {
     bilanPoints: "Pts au classement",
     ceJourTitre: "Ce jour dans l'histoire",
     ceJourAucun: "Aucune rencontre de l'USAP un {date} dans la base.",
+    // Les trois colonnes de « ce jour » : les rencontres, les naissances,
+    // et la rencontre la plus proche il y a dix, vingt, cinquante, cent ans.
+    ceJourRencontres: "Les rencontres",
+    ceJourNes: "Anniversaires de la semaine",
+    ceJourNesAucun: "Aucun anniversaire de joueur cette semaine dans la base.",
+    ceJourAge: { one: "{n} an", other: "{n} ans" },
+    ceJourIlYA: "Il y a…",
+    ceJourAns: "{n} ans",
+    ceJourIlYAAucun: "Aucune rencontre à ces distances dans la base.",
     // Le joueur tiré au hasard. Trois compteurs, trois clés : `Intl.PluralRules`
     // ne s'applique qu'à un `{n}` à la fois, et « 1 matchs » se verrait.
     hasardTitre: "Un joueur au hasard",
