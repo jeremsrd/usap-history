@@ -3,6 +3,7 @@ import Image from "next/image";
 import { JoueurCellule } from "@/components/JoueurCellule";
 import { prisma } from "@/lib/prisma";
 import { MATCH_JOUE, estJoue } from "@/lib/matchs";
+import { matchPoints } from "@/lib/scoring";
 import { formatDateFR } from "@/lib/utils";
 import { dictionnaire } from "@/i18n/dictionnaire";
 import { LANGUE_PAR_DEFAUT, type Langue } from "@/i18n/langues";
@@ -21,9 +22,10 @@ import type { Metadata } from "next";
  * chiffres lus dans la base elle-même. Puis, dans l'ordre où un supporter les
  * cherche : sur une même ligne, le dernier match et le prochain, écussons de
  * part et d'autre du score, et un joueur au hasard dans un bandeau sang ; le
- * tête-à-tête avec le prochain adversaire, frise et bilan ; la saison en
- * cours avec sa frise des résultats, la même que sur la page de saison ; ce
- * jour dans l'histoire ; et six entrées pour explorer.
+ * tête-à-tête avec le prochain adversaire et les réalisateurs contre lui ;
+ * la saison en cours avec son bilan en chiffres — championnat seul, comme le
+ * classement — et ses trois classements courts, les mêmes que sur la page de
+ * saison ; ce jour dans l'histoire ; et six entrées pour explorer.
  *
  * **LE PALMARÈS A QUITTÉ CETTE PAGE LE 10 SEPTEMBRE 2026**, sur décision de
  * Jérémy. Il en était l'audace — les sept années du Bouclier en or condensé,
@@ -67,6 +69,15 @@ type CeJour = {
 
 const nombre = (n: number) => n.toLocaleString("fr-FR");
 const majuscule = (s: string) => s.charAt(0).toUpperCase() + s.slice(1);
+/**
+ * Le bouton du site public, le seul : plein sang, texte blanc, or vif au
+ * survol — le couple du hero —, la voix condensée des titres, le rayon du
+ * site. Ni ombre ni bouton fantôme. Né sur le tête-à-tête, repris pour la
+ * saison ; toute page qui en voudrait un reprend cette classe.
+ */
+const BOUTON = "inline-block rounded-xs bg-usap-sang px-5 py-2 font-display text-lg uppercase leading-none text-primary-foreground hover:text-usap-or-vif";
+/** Une différence signée, avec le vrai signe moins et non le trait d'union. */
+const signe = (n: number) => (n > 0 ? `+${n}` : n < 0 ? `−${-n}` : "0");
 
 export default async function Home({ params }: Props) {
   const { locale } = await params;
@@ -144,15 +155,88 @@ export default async function Home({ params }: Props) {
   const saison = await prisma.season.findFirst({
     orderBy: { startYear: "desc" },
     select: {
+      id: true,
       label: true,
+      startYear: true,
       division: true,
       matches: {
-        where: MATCH_JOUE,
         orderBy: { date: "asc" },
-        select: { id: true, slug: true, date: true, result: true, isHome: true, scoreUsap: true, scoreOpponent: true, opponent: { select: { name: true, shortName: true } } },
+        select: {
+          id: true,
+          result: true,
+          matchday: true,
+          scoreUsap: true,
+          scoreOpponent: true,
+          triesUsap: true,
+          triesOpponent: true,
+          bonusOffensif: true,
+          bonusDefensif: true,
+          competition: { select: { type: true } },
+        },
       },
     },
   });
+  // **LE BILAN CHIFFRÉ DE LA SAISON EN COURS**, à la demande de Jérémy le
+  // 11 septembre 2026, à la place de la frise des lettres qu'il n'aimait pas
+  // ici. Sur le **championnat seul, phase régulière** — les rencontres de
+  // type CHAMPIONNAT qui portent une journée —, comme l'en-tête de la page de
+  // saison et le classement officiel. Les essais ne sont donnés que si la
+  // source les a dits sur chaque rencontre ; les points de classement
+  // viennent de `matchPoints()`, jamais d'un `4 × victoires` en dur.
+  const championnat = saison ? saison.matches.filter((m) => m.competition.type === "CHAMPIONNAT" && m.matchday != null) : [];
+  const jouesSaison = championnat.filter(estJoue);
+  const bilanSaison = saison && {
+    joues: jouesSaison.length,
+    aVenir: championnat.length - jouesSaison.length,
+    victoires: jouesSaison.filter((m) => m.result === "VICTOIRE").length,
+    nuls: jouesSaison.filter((m) => m.result === "NUL").length,
+    defaites: jouesSaison.filter((m) => m.result === "DEFAITE").length,
+    pour: jouesSaison.reduce((s, m) => s + m.scoreUsap, 0),
+    contre: jouesSaison.reduce((s, m) => s + m.scoreOpponent, 0),
+    essaisPour: jouesSaison.every((m) => m.triesUsap != null) ? jouesSaison.reduce((s, m) => s + (m.triesUsap ?? 0), 0) : null,
+    essaisContre: jouesSaison.every((m) => m.triesOpponent != null) ? jouesSaison.reduce((s, m) => s + (m.triesOpponent ?? 0), 0) : null,
+    bonusOffensifs: jouesSaison.filter((m) => m.bonusOffensif).length,
+    bonusDefensifs: jouesSaison.filter((m) => m.bonusDefensif).length,
+    // `estJoue` resserre les scores, pas `result` ; une rencontre jouée en a un.
+    points: jouesSaison.reduce((s, m) => s + (m.result ? matchPoints(m.result, m.bonusOffensif, m.bonusDefensif, saison.startYear) : 0), 0),
+  };
+
+  // **LES TROIS CLASSEMENTS DE LA SAISON EN COURS**, demandés par Jérémy le
+  // 11 septembre 2026 : réalisateurs, marqueurs d'essais, plus utilisés —
+  // ceux de la page de saison, à cinq noms, sous la frise. Même lecture des
+  // lignes catalanes des rencontres jouées, même règle d'égalité : à valeur
+  // égale le moins de matchs devant, puis le plus de titularisations.
+  const lignesSaison = saison
+    ? await prisma.matchPlayer.findMany({
+        where: { match: { seasonId: saison.id, ...MATCH_JOUE }, isOpponent: false, playerId: { not: null } },
+        select: { playerId: true, totalPoints: true, tries: true, isStarter: true },
+      })
+    : [];
+  type CumulSaison = { matchs: number; titulaire: number; points: number; essais: number };
+  const cumulsSaison = new Map<string, CumulSaison>();
+  for (const l of lignesSaison) {
+    const c = cumulsSaison.get(l.playerId!) ?? { matchs: 0, titulaire: 0, points: 0, essais: 0 };
+    c.matchs += 1;
+    if (l.isStarter) c.titulaire += 1;
+    c.points += l.totalPoints;
+    c.essais += l.tries;
+    cumulsSaison.set(l.playerId!, c);
+  }
+  const classementSaison = (cle: keyof CumulSaison) =>
+    [...cumulsSaison.entries()]
+      .filter(([, c]) => c[cle] > 0)
+      .sort(([, a], [, b]) => b[cle] - a[cle] || a.matchs - b.matchs || b.titulaire - a.titulaire)
+      .slice(0, 5);
+  const classementsSaison = { points: classementSaison("points"), essais: classementSaison("essais"), matchs: classementSaison("matchs") };
+  const idsSaison = [...new Set(Object.values(classementsSaison).flat().map(([id]) => id))];
+  const joueursSaison = idsSaison.length
+    ? await prisma.player.findMany({
+        where: { id: { in: idsSaison } },
+        select: { id: true, slug: true, firstName: true, lastName: true, photoUrl: true, isActive: true },
+      })
+    : [];
+  const lignesDe = (entrees: [string, CumulSaison][]) => entrees.map(([id, cumul]) => ({ joueur: joueursSaison.find((j) => j.id === id)!, cumul }));
+
   // Les rencontres à venir ne sont pas des matchs référencés : la page des
   // statistiques compte de la même façon.
   const matchs = await prisma.match.count({ where: MATCH_JOUE });
@@ -563,15 +647,9 @@ export default async function Home({ params }: Props) {
                   )}
                 </p>
               )}
-              {/* **Le bouton**, demandé par Jérémy — le seul du site public, et
-                  il en fixe la forme : plein sang, texte blanc, or vif au
-                  survol, le couple du hero ; la voix condensée des titres, le
-                  rayon du site. Pas de bouton fantôme ni d'ombre. */}
+              {/* **Le bouton**, demandé par Jérémy — cf. `BOUTON`. */}
               <p className="mt-4 text-center">
-                <Link
-                  href={`/adversaires/${prochain.opponent.slug}`}
-                  className="inline-block rounded-xs bg-usap-sang px-5 py-2 font-display text-lg uppercase leading-none text-primary-foreground hover:text-usap-or-vif"
-                >
+                <Link href={`/adversaires/${prochain.opponent.slug}`} className={BOUTON}>
                   {t("accueil.faceAComplet")}
                 </Link>
               </p>
@@ -627,27 +705,53 @@ export default async function Home({ params }: Props) {
                 {t("accueil.saisonTitre", { label: saison.label })}
               </Link>
             </Titre>
-            <p className="text-sm text-muted-foreground">{t(`divisions.${saison.division}`)}.</p>
-            {saison.matches.length > 0 && (
-              <ol aria-label={t("saison.friseAria")} className="mt-2 flex flex-wrap gap-x-1.5 font-display text-3xl leading-none sm:text-4xl">
-                {saison.matches.map((m) => {
-                  const l = lettre(m.result);
-                  return (
-                    <li key={m.id}>
-                      <Link
-                        href={`/matchs/${m.slug}`}
-                        title={`${formatDateFR(m.date)}, ${m.isHome ? `USAP – ${nomAdverse(m)}` : `${nomAdverse(m)} – USAP`}, ${m.isHome ? m.scoreUsap : m.scoreOpponent}-${m.isHome ? m.scoreOpponent : m.scoreUsap}`}
-                        className={`${l.classe} hover:text-usap-or`}
-                      >
-                        {l.texte}
-                      </Link>
-                    </li>
-                  );
-                })}
-              </ol>
+            <p className="text-sm text-muted-foreground">
+              {t(`divisions.${saison.division}`)}
+              {bilanSaison && bilanSaison.aVenir > 0 && `, ${t("accueil.bilanAVenir", { n: bilanSaison.aVenir })}`}. {t("accueil.bilanNote")}
+            </p>
+            {/* **Le bilan en chiffres**, à la place de la frise des lettres :
+                une rangée de nombres dans la voix condensée, chacun sous son
+                libellé en petit — ce que le classement officiel dit d'une
+                équipe, dans son ordre. Les points de classement sont en rouge,
+                c'est le chiffre qu'on vient chercher. Un tiret quand la source
+                n'a pas dit les essais. */}
+            {bilanSaison && bilanSaison.joues > 0 && (
+              <dl className="mt-4 grid grid-cols-3 gap-x-6 gap-y-4 text-center sm:grid-cols-5 lg:grid-cols-10">
+                {(
+                  [
+                    ["accueil.bilanJoues", bilanSaison.joues],
+                    ["accueil.bilanVictoires", bilanSaison.victoires],
+                    ["accueil.bilanNuls", bilanSaison.nuls],
+                    ["accueil.bilanDefaites", bilanSaison.defaites],
+                    ["accueil.bilanPour", bilanSaison.pour],
+                    ["accueil.bilanContre", bilanSaison.contre],
+                    ["accueil.bilanDifference", bilanSaison.pour - bilanSaison.contre],
+                    ["accueil.bilanEssais", bilanSaison.essaisPour != null && bilanSaison.essaisContre != null ? `${bilanSaison.essaisPour}/${bilanSaison.essaisContre}` : null],
+                    ["accueil.bilanBonus", `${bilanSaison.bonusOffensifs}/${bilanSaison.bonusDefensifs}`],
+                    ["accueil.bilanPoints", bilanSaison.points],
+                  ] as const
+                ).map(([cle, valeur]) => (
+                  <div key={cle}>
+                    <dd className={`font-display text-4xl leading-none tabular-nums ${cle === "accueil.bilanPoints" ? "text-usap-sang" : "text-foreground"}`}>
+                      {valeur == null ? "–" : cle === "accueil.bilanDifference" ? signe(valeur as number) : valeur}
+                    </dd>
+                    <dt className="mt-1 text-xs text-muted-foreground">{t(cle)}</dt>
+                  </div>
+                ))}
+              </dl>
             )}
-            <p className="mt-2 text-sm">
-              <Link href={`/saisons/${saison.label}`} className="text-muted-foreground underline hover:text-usap-sang">
+            {/* Les trois classements, en trois colonnes dès `md`. Les titres
+                sont des h3 en encre, plus petits que le titre rouge de la
+                section : c'est une hiérarchie, pas une répétition. */}
+            {classementsSaison.points.length > 0 && (
+              <div className="mt-6 grid gap-8 md:grid-cols-3">
+                <ClassementCourt titre={t("saison.realisateursTitre")} lignes={lignesDe(classementsSaison.points)} valeur={(c) => t("saison.valeurPoints", { n: c.points })} libelleActuel={t("joueurs.actuel")} />
+                <ClassementCourt titre={t("saison.essaisTitre")} lignes={lignesDe(classementsSaison.essais)} valeur={(c) => t("saison.valeurEssais", { n: c.essais })} libelleActuel={t("joueurs.actuel")} />
+                <ClassementCourt titre={t("saison.utilisationTitre")} lignes={lignesDe(classementsSaison.matchs)} valeur={(c) => t("saison.valeurMatchs", { n: c.matchs })} libelleActuel={t("joueurs.actuel")} />
+              </div>
+            )}
+            <p className="mt-6 text-center">
+              <Link href={`/saisons/${saison.label}`} className={BOUTON}>
                 {t("accueil.saisonEntiere")}
               </Link>
             </p>
@@ -721,6 +825,41 @@ export default async function Home({ params }: Props) {
         </section>
       </div>
     </>
+  );
+}
+
+/** Un classement court de la saison : le rang, le joueur, la valeur — celui de la page de saison, à cinq noms. */
+function ClassementCourt<C>({
+  titre,
+  lignes,
+  valeur,
+  libelleActuel,
+}: {
+  titre: string;
+  lignes: { joueur: { slug: string; firstName: string; lastName: string; photoUrl: string | null }; cumul: C }[];
+  valeur: (c: C) => string;
+  libelleActuel: string;
+}) {
+  if (lignes.length === 0) return null;
+  return (
+    <div>
+      <h3 className="mb-2 border-b border-foreground pb-1 font-display text-xl uppercase leading-none text-foreground">{titre}</h3>
+      <table className="w-full border-collapse text-sm">
+        <tbody className="tabular-nums">
+          {lignes.map((l, i) => (
+            <tr key={l.joueur.slug} className="border-b border-border hover:bg-muted">
+              <td className="w-6 py-1 pr-2 text-right text-muted-foreground">{i + 1}</td>
+              <td className="py-1 pr-3">
+                {/* « Actuel » est tu : dans la saison en cours, chacun l'est
+                    par définition, et la mention quatorze fois n'annonce rien. */}
+                <JoueurCellule slug={l.joueur.slug} firstName={l.joueur.firstName} lastName={l.joueur.lastName} photoUrl={l.joueur.photoUrl} isActive={false} libelleActuel={libelleActuel} />
+              </td>
+              <td className="py-1 text-right whitespace-nowrap font-semibold text-foreground">{valeur(l.cumul)}</td>
+            </tr>
+          ))}
+        </tbody>
+      </table>
+    </div>
   );
 }
 

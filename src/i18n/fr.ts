@@ -60,7 +60,23 @@ export const fr = {
     dernierTitre: "Le dernier match",
     prochainTitre: "Le prochain match",
     saisonTitre: "La saison {label}",
-    saisonEntiere: "La saison entière",
+    saisonEntiere: "Voir la saison entière",
+    // Le bilan en chiffres de la saison en cours, championnat seul : les
+    // libellés sous les nombres, courts — la colonne fait 100 pixels en
+    // bureau. Les essais et les bonus s'écrivent « pour/contre » et
+    // « offensifs/défensifs » en un seul nombre composé.
+    bilanNote: "Bilan du championnat seul, comme le classement officiel.",
+    bilanAVenir: { one: "{n} journée à venir", other: "{n} journées à venir" },
+    bilanJoues: "Joués",
+    bilanVictoires: "Victoires",
+    bilanNuls: "Nuls",
+    bilanDefaites: "Défaites",
+    bilanPour: "Points pour",
+    bilanContre: "Points contre",
+    bilanDifference: "Différence",
+    bilanEssais: "Essais pour/contre",
+    bilanBonus: "Bonus off./déf.",
+    bilanPoints: "Pts au classement",
     ceJourTitre: "Ce jour dans l'histoire",
     ceJourAucun: "Aucune rencontre de l'USAP un {date} dans la base.",
     // Le joueur tiré au hasard. Trois compteurs, trois clés : `Intl.PluralRules`

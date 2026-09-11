@@ -1975,6 +1975,35 @@ Trois choses arbitrées par Jérémy le même jour :
   bouton rouge » de l'ancien accueil ; celui-ci est demandé, et il mène à
   une page précise plutôt qu'à un slogan.
 
+**ET LA FRISE DE LA SAISON A QUITTÉ L'ACCUEIL**, le 11 septembre 2026 :
+Jérémy n'aime pas les lettres V, N, D en rangée ici — elle reste l'audace
+de la page de saison et de la fiche adversaire. À sa place, **le bilan en
+chiffres** : une rangée de dix nombres dans la voix condensée, chacun sous
+son libellé en petit — joués, victoires, nuls, défaites, points pour et
+contre, différence, essais pour/contre, bonus offensifs/défensifs, points au
+classement, ce dernier en rouge. **Championnat seul, phase régulière** — les
+rencontres de type `CHAMPIONNAT` qui portent une journée —, comme l'en-tête
+de la page de saison et le classement officiel, et la note le dit ; les
+journées à venir sont comptées à côté de la division. Les essais ne
+s'affichent que si la source les a dits sur chaque rencontre, un tiret sinon ;
+les points de classement viennent de `matchPoints()`, jamais d'un
+`4 × victoires` en dur. Trois colonnes en mobile, cinq en `sm`, dix en `lg`,
+**chaque nombre centré sur son libellé**, et sous la rangée le bouton « Voir
+la saison entière », centré — la même classe `BOUTON` que le tête-à-tête,
+écrite une fois dans la page. Clés `accueil.bilan*`.
+
+**ET LA SAISON EN COURS PORTE SES TROIS CLASSEMENTS**, depuis le
+11 septembre 2026 à la demande de Jérémy, qui voulait « un truc en trois
+colonnes » : sous la frise, réalisateurs, marqueurs d'essais et plus
+utilisés — ceux de la page de saison, à cinq noms, mêmes clés de titre et de
+valeur (`saison.realisateursTitre`, `valeurPoints`…), même règle d'égalité.
+Les titres sont des h3 en encre, plus petits que le h2 rouge de la section :
+une hiérarchie, pas une répétition. **« Actuel » y est tu** : dans la saison
+en cours chacun l'est par définition, et la mention quatorze fois n'annonce
+rien — `JoueurCellule` reçoit `isActive={false}`. Après une journée le bloc
+est mince, en mai c'est le palmarès de la saison ; il prolonge le bloc au
+lieu d'en ajouter un, l'accueil étant déjà long.
+
 **ET LE PALMARÈS A QUITTÉ L'ACCUEIL**, le même jour, sur décision de Jérémy.
 Il en était l'audace depuis le 6 septembre — « Sept fois champion de France »
 en rouge et les sept années du Bouclier en or condensé, chacune liée à sa
