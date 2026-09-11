@@ -1873,10 +1873,29 @@ Deux choses à savoir avant d'y toucher :
 - **son or est `usap-or-vif`, non `usap-or`**, cf. « Thème clair/sombre » : le
   second est illisible sur le sang en thème clair.
 
-**ET UN JOUEUR AU HASARD**, demandé le même jour, posé entre « ce jour dans
-l'histoire » et « Explorer » — les deux blocs de découverte de la page se
-suivent. Nom dans la voix du dos de maillot, portrait quand il y en a un,
-matchs, points et essais. Trois choses arbitrées :
+**ET UN JOUEUR AU HASARD**, demandé le même jour. Il a d'abord été posé
+entre « ce jour dans l'histoire » et « Explorer », puis **remonté le
+11 septembre 2026 en troisième colonne du bloc « dernier match / prochain
+match »**, à la demande de Jérémy : les trois choses qu'un supporter regarde
+en premier, sur une même ligne, et une colonne sous le titre en `md`. Nom
+dans la voix du dos de maillot, portrait quand il y en a un, matchs, points
+et essais. **Le nom est en 4xl, un cran sous le score des deux autres
+colonnes, et c'est mesuré** : en 5xl, « Kubunakaravi » fait 298 pixels
+quand un tiers de page moins le portrait en laisse 240, et un patronyme ne
+se coupe pas au milieu ; le prénom au-dessus rend au bloc la hauteur du
+score.
+
+**Et la colonne est un bandeau sang**, demandé par Jérémy le même jour — la
+seconde surface colorée de la page après le hero, et elle en reprend la
+règle : la surface impose son encre. Titre et nom en `usap-or-vif`, le dos
+de maillot tel qu'il est ; prénom et bilan en `primary-foreground`, blanc
+dans les deux thèmes — c'est le jeton du site pour du texte sur du sang, et
+il n'y en a pas d'autre. La grille étire la colonne à la hauteur des deux
+voisines, ce qui fait le cadre sans bordure ; et le bandeau **déborde de
+son rembourrage en haut et en bas** (`md:-my-5`), sans quoi son titre
+descendait de vingt pixels sous les deux autres. En mobile les blocs
+s'empilent et il garde ses marges. `Titre` a gagné une variante `sang` pour
+cela. Trois choses arbitrées :
 
 - **le tirage porte sur les hommes qui ont joué**, au moins une feuille sur
   une rencontre jouée, non sur les 381 fiches liées au club : une recrue sans

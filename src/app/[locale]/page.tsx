@@ -18,9 +18,10 @@ import type { Metadata } from "next";
  * club fait siens, dans la voix condensée des titres. Suit le titre, puis la
  * phrase de présentation, qui dit la source et l'étendue de la base en
  * chiffres lus dans la base elle-même. Puis, dans l'ordre où un supporter les
- * cherche : le dernier match et le prochain, écussons de part et d'autre du
- * score ; la saison en cours avec sa frise des résultats, la même que sur la
- * page de saison ; ce jour dans l'histoire ; et six entrées pour explorer.
+ * cherche : sur une même ligne, le dernier match et le prochain, écussons de
+ * part et d'autre du score, et un joueur au hasard ; la saison en cours avec
+ * sa frise des résultats, la même que sur la page de saison ; ce jour dans
+ * l'histoire ; et six entrées pour explorer.
  *
  * **LE PALMARÈS A QUITTÉ CETTE PAGE LE 10 SEPTEMBRE 2026**, sur décision de
  * Jérémy. Il en était l'audace — les sept années du Bouclier en or condensé,
@@ -292,9 +293,13 @@ export default async function Home({ params }: Props) {
           </p>
         </header>
 
-        {/* Le dernier match, le prochain */}
-        {(dernier || prochain) && (
-          <section className="mb-10 grid gap-8 md:grid-cols-2">
+        {/* **Le dernier match, le prochain, un joueur au hasard** — trois
+            colonnes au même niveau, demandé par Jérémy le 11 septembre 2026 :
+            le joueur y était d'abord seul, plus bas, entre « ce jour dans
+            l'histoire » et « Explorer ». Ce sont les trois choses qu'un
+            supporter regarde en premier, et elles tiennent sur une ligne. */}
+        {(dernier || prochain || auHasard) && (
+          <section className="mb-10 grid gap-8 md:grid-cols-3">
             {dernier && (
               <div>
                 <Titre>{t("accueil.dernierTitre")}</Titre>
@@ -354,6 +359,63 @@ export default async function Home({ params }: Props) {
                     .
                   </p>
                 )}
+              </div>
+            )}
+            {/* **Un joueur au hasard.** Le nom est dans la voix du dos de
+                maillot, comme sur la fiche du joueur — prénom au-dessus, nom
+                condensé en rouge —, et **la case du portrait reste vide** quand
+                la LNR et Commons n'ont rien : 65 fiches sur 381 sont
+                illustrées, et ne tirer que parmi celles-là rendrait presque
+                toujours un joueur de l'effectif du jour.
+
+                **Le nom est en 4xl, un cran sous le score des deux autres
+                colonnes, et c'est mesuré** : en 5xl, « Kubunakaravi » fait
+                298 pixels quand un tiers de page moins le portrait en laisse
+                240, et un patronyme ne se coupe pas au milieu. En 4xl tout
+                tient, « Guerois-Galisson » se coupant à son trait d'union. Le
+                prénom au-dessus rend au bloc la hauteur du score.
+
+                **Et la colonne est un bandeau sang**, demandé par Jérémy le
+                11 septembre 2026 — la seule surface colorée de la page avec le
+                hero, et elle en reprend la règle : la surface impose son encre.
+                Titre et nom en `usap-or-vif`, le dos de maillot tel qu'il est,
+                prénom et bilan en `primary-foreground`, blanc dans les deux
+                thèmes. `usap-or` y serait illisible en clair, cf. `globals.css`.
+                La grille étire la colonne à la hauteur des deux autres, ce qui
+                fait le cadre sans bordure ; et **le bandeau déborde en haut et
+                en bas de son rembourrage** (`md:-my-5`) pour que son titre reste
+                sur la ligne des deux autres — un rembourrage sans ce
+                débordement le faisait descendre de vingt pixels. En mobile
+                les blocs s'empilent, et le bandeau garde ses marges. */}
+            {auHasard && bilanAuHasard && (
+              <div className="rounded-xs bg-usap-sang p-5 md:-my-5">
+                <Titre sang>{t("accueil.hasardTitre")}</Titre>
+                <div className="flex items-center gap-4">
+                  {auHasard.photoUrl && (
+                    <Image
+                      src={auHasard.photoUrl}
+                      alt=""
+                      width={96}
+                      height={96}
+                      className="h-20 w-20 shrink-0 rounded-xs object-cover"
+                    />
+                  )}
+                  <div className="min-w-0">
+                    <Link href={`/joueurs/${auHasard.slug}`} className="group">
+                      <span className="block font-display text-xl leading-none text-primary-foreground group-hover:text-usap-or-vif">
+                        {auHasard.firstName}
+                      </span>
+                      <span className="block break-words font-display text-4xl uppercase leading-[0.9] text-usap-or-vif">
+                        {auHasard.lastName}
+                      </span>
+                    </Link>
+                    <p className="mt-2 text-sm text-primary-foreground tabular-nums">
+                      {t("accueil.hasardMatchs", { n: bilanAuHasard._count._all })},{" "}
+                      {t("accueil.hasardPoints", { n: bilanAuHasard._sum.totalPoints ?? 0 })},{" "}
+                      {t("accueil.hasardEssais", { n: bilanAuHasard._sum.tries ?? 0 })}
+                    </p>
+                  </div>
+                </div>
               </div>
             )}
           </section>
@@ -436,45 +498,6 @@ export default async function Home({ params }: Props) {
           )}
         </section>
 
-        {/* **Un joueur au hasard** : l'autre bloc de découverte de la page, à
-            côté de « ce jour dans l'histoire ». Le nom est dans la voix du dos
-            de maillot, comme sur la fiche du joueur — prénom au-dessus, nom
-            condensé en rouge —, et **la case du portrait reste vide** quand la
-            LNR et Commons n'ont rien : 65 fiches sur 381 sont illustrées, et
-            ne tirer que parmi celles-là rendrait presque toujours un joueur de
-            l'effectif du jour. */}
-        {auHasard && bilanAuHasard && (
-          <section className="mb-10">
-            <Titre>{t("accueil.hasardTitre")}</Titre>
-            <div className="flex items-center gap-5">
-              {auHasard.photoUrl && (
-                <Image
-                  src={auHasard.photoUrl}
-                  alt=""
-                  width={112}
-                  height={112}
-                  className="h-28 w-28 shrink-0 rounded-xs object-cover"
-                />
-              )}
-              <div className="min-w-0">
-                <Link href={`/joueurs/${auHasard.slug}`} className="group">
-                  <span className="block font-display text-2xl leading-none text-foreground group-hover:text-usap-sang">
-                    {auHasard.firstName}
-                  </span>
-                  <span className="block font-display text-5xl uppercase leading-[0.9] text-usap-sang sm:text-6xl">
-                    {auHasard.lastName}
-                  </span>
-                </Link>
-                <p className="mt-2 text-sm text-muted-foreground tabular-nums">
-                  {t("accueil.hasardMatchs", { n: bilanAuHasard._count._all })},{" "}
-                  {t("accueil.hasardPoints", { n: bilanAuHasard._sum.totalPoints ?? 0 })},{" "}
-                  {t("accueil.hasardEssais", { n: bilanAuHasard._sum.tries ?? 0 })}
-                </p>
-              </div>
-            </div>
-          </section>
-        )}
-
         {/* Explorer */}
         <section>
           <Titre>{t("accueil.explorerTitre")}</Titre>
@@ -503,12 +526,16 @@ export default async function Home({ params }: Props) {
   );
 }
 
-/** Le titre d'une section : la voix condensée de la liste, sous un filet. */
-function Titre({ children, encre = false }: { children: React.ReactNode; encre?: boolean }) {
+/**
+ * Le titre d'une section : la voix condensée de la liste, sous un filet.
+ * `sang` est la variante pour un bandeau rouge, où le rouge du titre
+ * disparaîtrait : l'or vif, seul or lisible sur le sang.
+ */
+function Titre({ children, encre = false, sang = false }: { children: React.ReactNode; encre?: boolean; sang?: boolean }) {
   return (
     <h2
       className={`mb-3 border-b-2 pb-1 font-display text-3xl uppercase leading-none ${
-        encre ? "border-foreground text-foreground" : "border-usap-sang text-usap-sang"
+        sang ? "border-usap-or-vif text-usap-or-vif" : encre ? "border-foreground text-foreground" : "border-usap-sang text-usap-sang"
       }`}
     >
       {children}
