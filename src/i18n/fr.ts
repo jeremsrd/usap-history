@@ -69,6 +69,14 @@ export const fr = {
     hasardMatchs: { one: "{n} match", other: "{n} matchs" },
     hasardPoints: { one: "{n} point", other: "{n} points" },
     hasardEssais: { one: "{n} essai", other: "{n} essais" },
+    // Le tête-à-tête avec le prochain adversaire, sous la ligne des trois
+    // colonnes. Le bilan et les records reprennent les clés de la fiche
+    // adversaire (`adversaire.bilan`, `plusLarge`, `plusLourde`) : deux pages
+    // qui disent la même chose le disent avec les mêmes mots.
+    faceATitre: "Face à {nom}",
+    faceADernieres: "Les cinq dernières confrontations",
+    faceAPremiere: "Ce sera la première rencontre entre les deux clubs.",
+    faceAComplet: "Le tête-à-tête complet",
     explorerTitre: "Explorer",
     explorerSaisons: "toutes les saisons, de 1902 à aujourd'hui",
     explorerMatchs: "toutes les rencontres, par saison et par adversaire",

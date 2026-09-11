@@ -1938,6 +1938,43 @@ et le score ne peuvent pas se désynchroniser.
 Le bloc était **déjà en deux colonnes** avant cette séance, avec son score en
 grand : seuls les écussons manquaient.
 
+**ET « FACE À » — LE TÊTE-À-TÊTE AVEC LE PROCHAIN ADVERSAIRE**, ajouté le
+11 septembre 2026 à la demande de Jérémy, sous la ligne des trois colonnes et
+avant la saison en cours : l'affiche, puis qui on affronte, puis où on en
+est. C'est ce qu'un supporter se demande sitôt l'adversaire connu, et le
+bloc change de lui-même à chaque journée. Il porte le bilan en une phrase
+**avec les clés de la fiche adversaire** (`adversaire.bilan`, `plusLarge`,
+`plusLourde`), **les cinq dernières confrontations** en lignes courtes —
+date, affiche, score, lettre —, le plus large succès et la plus lourde
+défaite, et **un bouton** vers le tête-à-tête complet. Un club jamais
+rencontré n'efface pas le bloc, il le dit : « première rencontre entre les
+deux clubs » est une information — ce sera le cas de l'Ulster en janvier.
+Le titre est en encre, comme celui de la fiche adversaire : le rouge est
+celui de l'USAP. Quatre clés `accueil.faceA*`.
+
+Trois choses arbitrées par Jérémy le même jour :
+
+- **la frise des confrontations a été essayée et défaite** — trente-deux
+  lettres pour Castres, « indigeste ». Sur la fiche du club elle est
+  l'audace de la page ; ici elle encombrait un bloc qui n'est pas le sujet.
+  Les cinq dernières disent la tendance sans le mur ;
+- **le bloc est en deux moitiés** dès `md` : à gauche le tête-à-tête, à
+  droite **les cinq meilleurs réalisateurs catalans contre ce club**, dans
+  le tableau de la fiche adversaire (`adversaire.realisateursTitre`,
+  `JoueurCellule`). Choisi contre les joueurs passés par les deux camps,
+  dont la liste serait énorme pour certains clubs. Le libellé « Les cinq
+  dernières confrontations » est visible au-dessus du petit tableau — cinq
+  lignes sans titre se lisent comme une liste tronquée —, et le bouton est
+  centré sous sa colonne. **Le titre de droite est en rouge**, celui de
+  gauche en encre : deux titres noirs côte à côte font fade, et les
+  réalisateurs sont des Catalans — le rouge est le leur ;
+- **le lien est un bouton**, le seul du site public, et il en fixe la
+  forme : plein sang, texte `primary-foreground`, or vif au survol — le
+  couple du hero —, dans la voix condensée des titres, au rayon du site.
+  Pas de bouton fantôme ni d'ombre. Le chantier design avait retiré « le
+  bouton rouge » de l'ancien accueil ; celui-ci est demandé, et il mène à
+  une page précise plutôt qu'à un slogan.
+
 **ET LE PALMARÈS A QUITTÉ L'ACCUEIL**, le même jour, sur décision de Jérémy.
 Il en était l'audace depuis le 6 septembre — « Sept fois champion de France »
 en rouge et les sept années du Bouclier en or condensé, chacune liée à sa

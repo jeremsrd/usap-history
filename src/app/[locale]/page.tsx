@@ -1,7 +1,8 @@
 import Link from "@/components/Lien";
 import Image from "next/image";
+import { JoueurCellule } from "@/components/JoueurCellule";
 import { prisma } from "@/lib/prisma";
-import { MATCH_JOUE } from "@/lib/matchs";
+import { MATCH_JOUE, estJoue } from "@/lib/matchs";
 import { formatDateFR } from "@/lib/utils";
 import { dictionnaire } from "@/i18n/dictionnaire";
 import { LANGUE_PAR_DEFAUT, type Langue } from "@/i18n/langues";
@@ -19,9 +20,10 @@ import type { Metadata } from "next";
  * phrase de présentation, qui dit la source et l'étendue de la base en
  * chiffres lus dans la base elle-même. Puis, dans l'ordre où un supporter les
  * cherche : sur une même ligne, le dernier match et le prochain, écussons de
- * part et d'autre du score, et un joueur au hasard ; la saison en cours avec
- * sa frise des résultats, la même que sur la page de saison ; ce jour dans
- * l'histoire ; et six entrées pour explorer.
+ * part et d'autre du score, et un joueur au hasard dans un bandeau sang ; le
+ * tête-à-tête avec le prochain adversaire, frise et bilan ; la saison en
+ * cours avec sa frise des résultats, la même que sur la page de saison ; ce
+ * jour dans l'histoire ; et six entrées pour explorer.
  *
  * **LE PALMARÈS A QUITTÉ CETTE PAGE LE 10 SEPTEMBRE 2026**, sur décision de
  * Jérémy. Il en était l'audace — les sept années du Bouclier en or condensé,
@@ -64,6 +66,7 @@ type CeJour = {
 };
 
 const nombre = (n: number) => n.toLocaleString("fr-FR");
+const majuscule = (s: string) => s.charAt(0).toUpperCase() + s.slice(1);
 
 export default async function Home({ params }: Props) {
   const { locale } = await params;
@@ -82,7 +85,7 @@ export default async function Home({ params }: Props) {
     matchday: true,
     round: true,
     competition: { select: { name: true, shortName: true } },
-    opponent: { select: { name: true, shortName: true, logoUrl: true } },
+    opponent: { select: { id: true, slug: true, name: true, shortName: true, logoUrl: true } },
     venue: { select: { name: true, city: true, slug: true } },
   } as const;
   // Un match dont le score n'est pas saisi n'est pas « le dernier match » :
@@ -97,6 +100,47 @@ export default async function Home({ params }: Props) {
     orderBy: { date: "asc" },
     select: selectionRencontre,
   });
+  // **FACE AU PROCHAIN ADVERSAIRE**, demandé par Jérémy le 11 septembre
+  // 2026 : ce qu'un supporter se demande sitôt l'affiche connue. Les
+  // rencontres jouées contre ce club, dans l'ordre, et le bilan se calcule en
+  // mémoire comme sur la fiche adversaire — vingt-sept lignes au plus.
+  const confrontations = prochain
+    ? await prisma.match.findMany({
+        where: { opponentId: prochain.opponent.id, ...MATCH_JOUE },
+        orderBy: { date: "asc" },
+        select: { id: true, slug: true, date: true, result: true, isHome: true, scoreUsap: true, scoreOpponent: true, season: { select: { label: true } } },
+      })
+    : [];
+  // **Les réalisateurs catalans contre ce club**, pour la moitié droite —
+  // choisi par Jérémy contre les joueurs passés par les deux camps, dont la
+  // liste serait énorme pour certains clubs. Même lecture des lignes que sur
+  // la fiche adversaire, les cinq premiers.
+  const lignesFace = confrontations.length
+    ? await prisma.matchPlayer.findMany({
+        where: { matchId: { in: confrontations.map((m) => m.id) }, isOpponent: false, playerId: { not: null } },
+        select: { playerId: true, totalPoints: true, tries: true },
+      })
+    : [];
+  const cumulsFace = new Map<string, { matchs: number; points: number; essais: number }>();
+  for (const l of lignesFace) {
+    const c = cumulsFace.get(l.playerId!) ?? { matchs: 0, points: 0, essais: 0 };
+    c.matchs += 1;
+    c.points += l.totalPoints;
+    c.essais += l.tries;
+    cumulsFace.set(l.playerId!, c);
+  }
+  const meilleursFaceIds = [...cumulsFace.entries()]
+    .filter(([, c]) => c.points > 0)
+    .sort(([, a], [, b]) => b.points - a.points || b.essais - a.essais || a.matchs - b.matchs)
+    .slice(0, 5)
+    .map(([id]) => id);
+  const joueursFace = meilleursFaceIds.length
+    ? await prisma.player.findMany({
+        where: { id: { in: meilleursFaceIds } },
+        select: { id: true, slug: true, firstName: true, lastName: true, photoUrl: true, isActive: true },
+      })
+    : [];
+  const realisateursFace = meilleursFaceIds.map((id) => ({ joueur: joueursFace.find((j) => j.id === id)!, cumul: cumulsFace.get(id)! }));
   const saison = await prisma.season.findFirst({
     orderBy: { startYear: "desc" },
     select: {
@@ -212,14 +256,14 @@ export default async function Home({ params }: Props) {
     ) : (
       m.opponent.logoUrl && <Image src={m.opponent.logoUrl} alt="" width={56} height={56} className="h-12 w-12 shrink-0 logo-club" />
     );
-  const affiche = (m: { isHome: boolean; opponent: { name: string; shortName: string | null } }) =>
+  const affiche = (m: { isHome: boolean; opponent?: { name: string; shortName: string | null } }, nom = m.opponent ? nomAdverse({ opponent: m.opponent }) : "") =>
     m.isHome ? (
       <>
-        <span className="font-semibold text-usap-sang">USAP</span> – {nomAdverse(m)}
+        <span className="font-semibold text-usap-sang">USAP</span> – {nom}
       </>
     ) : (
       <>
-        {nomAdverse(m)} – <span className="font-semibold text-usap-sang">USAP</span>
+        {nom} – <span className="font-semibold text-usap-sang">USAP</span>
       </>
     );
   const intitule = (m: { matchday: number | null; round: string | null; competition: { name: string; shortName: string | null } }) => {
@@ -420,6 +464,160 @@ export default async function Home({ params }: Props) {
             )}
           </section>
         )}
+
+        {/* **Face au prochain adversaire.** Le bilan en une phrase avec les
+            mots de la fiche du club, les cinq dernières confrontations en
+            lignes courtes, le plus large succès et la plus lourde défaite liés
+            à leur rencontre, et un bouton vers le tête-à-tête complet. Un club
+            jamais rencontré le dit, plutôt que de cacher le bloc : « première
+            rencontre » est une information. Le bloc suit le prochain match et
+            précède la saison : l'affiche, puis qui on affronte, puis où on en
+            est.
+
+            **La frise des confrontations a été essayée et défaite** le
+            11 septembre 2026 : trente-deux lettres pour Castres, « indigeste »
+            selon Jérémy — sur la fiche du club elle est l'audace de la page,
+            ici elle encombrait un bloc qui n'est pas le sujet. Les cinq
+            dernières confrontations disent la tendance sans le mur.
+
+            **Le bloc est en deux moitiés** dès `md` : à gauche le tête-à-tête,
+            à droite **les cinq meilleurs réalisateurs catalans contre ce
+            club**, dans le tableau de la fiche adversaire. Choisi par Jérémy
+            contre les joueurs passés par les deux camps, dont la liste serait
+            énorme pour certains clubs. */}
+        {prochain && (() => {
+          const jouees = confrontations.filter(estJoue);
+          const victoires = jouees.filter((m) => m.result === "VICTOIRE");
+          const nuls = jouees.filter((m) => m.result === "NUL");
+          const defaites = jouees.filter((m) => m.result === "DEFAITE");
+          const pour = jouees.reduce((s, m) => s + m.scoreUsap, 0);
+          const contre = jouees.reduce((s, m) => s + m.scoreOpponent, 0);
+          const plusLarge = victoires.length ? victoires.reduce((a, m) => (m.scoreUsap - m.scoreOpponent > a.scoreUsap - a.scoreOpponent ? m : a)) : null;
+          const plusLourde = defaites.length ? defaites.reduce((a, m) => (m.scoreOpponent - m.scoreUsap > a.scoreOpponent - a.scoreUsap ? m : a)) : null;
+          const dernieres = [...jouees].reverse().slice(0, 5);
+          const nom = nomAdverse(prochain);
+          const score = (m: (typeof jouees)[number]) => (
+            <Link href={`/matchs/${m.slug}`} className="hover:text-usap-sang">
+              {m.scoreUsap}-{m.scoreOpponent} {t("match.le", { date: formatDateFR(m.date) })}
+            </Link>
+          );
+          return (
+            <section className="mb-10 grid gap-8 md:grid-cols-2">
+              <div>
+              <Titre encre>
+                <Link href={`/adversaires/${prochain.opponent.slug}`} className="hover:text-usap-sang">
+                  {t("accueil.faceATitre", { nom })}
+                </Link>
+              </Titre>
+              <p className="max-w-prose text-foreground">
+                {jouees.length === 0
+                  ? `${t("adversaire.aucune")} ${t("accueil.faceAPremiere")}`
+                  : t(jouees.length === 1 ? "adversaire.bilanUne" : "adversaire.bilan", {
+                      n: jouees.length,
+                      saison: jouees[0].season.label,
+                      v: t("saison.victoires", { n: victoires.length }),
+                      nu: t("saison.nuls", { n: nuls.length }),
+                      d: t("saison.defaites", { n: defaites.length }),
+                      pour: nombre(pour),
+                      contre: nombre(contre),
+                    })}
+              </p>
+              {dernieres.length > 0 && (
+                <table className="mt-3 w-full border-collapse text-sm">
+                  {/* Le libellé est visible, à la demande de Jérémy : un tableau
+                      de cinq lignes sans titre se lit comme une liste tronquée. */}
+                  <caption className="pb-1 text-left text-sm font-semibold text-foreground">{t("accueil.faceADernieres")}</caption>
+                  <tbody className="tabular-nums">
+                    {dernieres.map((m) => {
+                      const l = lettre(m.result);
+                      return (
+                        <tr key={m.id} className="border-b border-border hover:bg-muted">
+                          <td className="py-1.5 pr-4 text-muted-foreground whitespace-nowrap">{formatDateFR(m.date)}</td>
+                          <td className="py-1.5 pr-4">
+                            <Link href={`/matchs/${m.slug}`} className="text-foreground hover:text-usap-sang">
+                              {affiche(m, nom)}
+                            </Link>
+                          </td>
+                          <td className="py-1.5 pr-3 text-right font-semibold text-foreground whitespace-nowrap">
+                            {m.isHome ? m.scoreUsap : m.scoreOpponent} – {m.isHome ? m.scoreOpponent : m.scoreUsap}
+                          </td>
+                          <td className={`py-1.5 text-center font-bold ${l.classe}`}>{l.texte}</td>
+                        </tr>
+                      );
+                    })}
+                  </tbody>
+                </table>
+              )}
+              {(plusLarge || plusLourde) && (
+                <p className="mt-3 max-w-prose text-sm leading-relaxed text-muted-foreground">
+                  {plusLarge && (
+                    <>
+                      {t("adversaire.plusLarge", { score: "" }).trim()} {score(plusLarge)}
+                      {plusLourde ? ", " : "."}
+                    </>
+                  )}
+                  {plusLourde && (
+                    <>
+                      {plusLarge ? t("adversaire.plusLourde", { score: "" }).trim() : majuscule(t("adversaire.plusLourde", { score: "" }).trim())} {score(plusLourde)}.
+                    </>
+                  )}
+                </p>
+              )}
+              {/* **Le bouton**, demandé par Jérémy — le seul du site public, et
+                  il en fixe la forme : plein sang, texte blanc, or vif au
+                  survol, le couple du hero ; la voix condensée des titres, le
+                  rayon du site. Pas de bouton fantôme ni d'ombre. */}
+              <p className="mt-4 text-center">
+                <Link
+                  href={`/adversaires/${prochain.opponent.slug}`}
+                  className="inline-block rounded-xs bg-usap-sang px-5 py-2 font-display text-lg uppercase leading-none text-primary-foreground hover:text-usap-or-vif"
+                >
+                  {t("accueil.faceAComplet")}
+                </Link>
+              </p>
+              </div>
+              {realisateursFace.length > 0 && (
+                <div>
+                  {/* En rouge, non en encre comme sur la fiche : deux titres
+                      noirs côte à côte font fade, a dit Jérémy, et celui-ci
+                      parle des Catalans — le rouge est le leur. */}
+                  <Titre>{t("adversaire.realisateursTitre", { nom })}</Titre>
+                  <table className="w-full border-collapse text-sm">
+                    <thead>
+                      <tr className="border-b border-border text-left text-xs text-muted-foreground">
+                        <th scope="col" className="py-2 pr-2 font-medium" />
+                        <th scope="col" className="py-2 pr-3 font-medium">{t("adversaire.colJoueur")}</th>
+                        <th scope="col" className="py-2 pr-3 text-right font-medium">{t("adversaire.colMatchs")}</th>
+                        <th scope="col" className="py-2 pr-3 text-right font-medium">{t("adversaire.colEssais")}</th>
+                        <th scope="col" className="py-2 text-right font-medium">{t("adversaire.colPoints")}</th>
+                      </tr>
+                    </thead>
+                    <tbody className="tabular-nums">
+                      {realisateursFace.map((r, i) => (
+                        <tr key={r.joueur.id} className="border-b border-border hover:bg-muted">
+                          <td className="w-6 py-1 pr-2 text-right text-muted-foreground">{i + 1}</td>
+                          <td className="py-1 pr-3">
+                            <JoueurCellule
+                              slug={r.joueur.slug}
+                              firstName={r.joueur.firstName}
+                              lastName={r.joueur.lastName}
+                              photoUrl={r.joueur.photoUrl}
+                              isActive={r.joueur.isActive}
+                              libelleActuel={t("joueurs.actuel")}
+                            />
+                          </td>
+                          <td className="py-1 pr-3 text-right text-muted-foreground">{r.cumul.matchs}</td>
+                          <td className="py-1 pr-3 text-right text-foreground">{r.cumul.essais || ""}</td>
+                          <td className="py-1 text-right font-semibold text-foreground">{r.cumul.points}</td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              )}
+            </section>
+          );
+        })()}
 
         {/* La saison en cours, et sa frise */}
         {saison && (
