@@ -93,13 +93,6 @@ export const ca = {
     clotureVictoires: "victòries",
     cloturePoints: "punts marcats",
     clotureJoueurs: "jugadors",
-    explorerTitre: "Explorar",
-    explorerSaisons: "totes les temporades, de 1902 fins avui",
-    explorerMatchs: "tots els partits, per temporada i per adversari",
-    explorerJoueurs: "tots els jugadors que han passat pel club",
-    explorerStatistiques: "les classificacions i els balanços",
-    explorerAdversaires: "els clubs trobats",
-    explorerStades: "els camps on ha jugat la USAP",
   },
   joueurs: {
     titre: "Jugadors",

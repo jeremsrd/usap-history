@@ -111,13 +111,6 @@ export const fr = {
     clotureVictoires: "victoires",
     cloturePoints: "points marqués",
     clotureJoueurs: "joueurs",
-    explorerTitre: "Explorer",
-    explorerSaisons: "toutes les saisons, de 1902 à aujourd'hui",
-    explorerMatchs: "toutes les rencontres, par saison et par adversaire",
-    explorerJoueurs: "tous les joueurs passés par le club",
-    explorerStatistiques: "les classements et les bilans",
-    explorerAdversaires: "les clubs rencontrés",
-    explorerStades: "les terrains où l'USAP a joué",
   },
   joueurs: {
     titre: "Joueurs",

@@ -2133,8 +2133,10 @@ sang ; présentation et ligne des trois colonnes sur le fond de la page ;
 tête-à-tête sur la surface `usap-carte` — celle du pied de page, gris rosé
 en clair, sang sombre en sombre —, cernée d'un filet haut et bas parce
 qu'en clair la teinte seule ne se voit presque pas ; la saison sur le
-fond ; « ce jour » sur la surface ; « Explorer » sur le fond ; la clôture
-sang. **L'espacement a doublé** : `py-12` puis `py-16` par bande, contre
+fond ; « ce jour » sur la surface ; la clôture sang. **La bande
+« Explorer » est partie le même jour**, à la demande de Jérémy — six entrées
+en texte que le Header et le pied de page portent déjà, et sept clés
+`accueil.explorer*` avec elle, dans les deux cahiers. **L'espacement a doublé** : `py-12` puis `py-16` par bande, contre
 `mb-10` entre les blocs. Ce ne sont pas des cartes — rien n'est bordé
 dans les marges —, ce sont des bandes, comme le hero l'était déjà. Le
 `-mb-16` de la clôture et le `md:-my-5` du joueur au hasard survivent au
@@ -2162,11 +2164,10 @@ coup sur coup ce que fait ce club.
 
 Deux conséquences, l'une et l'autre assumées :
 
-- **l'accueil ne mène plus directement à `/palmares`.** Sa section
-  « Explorer » ne le liste pas — saisons, matchs, joueurs, statistiques,
-  adversaires, stades. La page reste atteignable de partout par le Header et
-  par le pied de page ; si elle devait retrouver une entrée ici, c'est dans
-  « Explorer » qu'elle irait ;
+- **l'accueil ne mène plus directement à `/palmares`.** La page reste
+  atteignable de partout par le Header et par le pied de page — et la
+  section « Explorer », qui ne le listait pas, est partie à son tour le
+  14 septembre 2026 ;
 - **six clés du dictionnaire sont parties avec le bloc** — `champion`,
   `finaliste`, `proD2`, `manoir`, `europe`, `palmares` —, vérifiées comme
   n'ayant aucun autre appelant dans `src/`, ainsi que l'import de `PALMARES`

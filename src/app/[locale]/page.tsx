@@ -28,8 +28,10 @@ import type { Metadata } from "next";
  * classement — et ses trois classements courts, les mêmes que sur la page de
  * saison ; ce jour dans l'histoire en trois colonnes — les rencontres du
  * jour, les anniversaires de la semaine, il y a dix, vingt, cinquante, cent
- * ans — ; six entrées pour explorer ; et **le bandeau de clôture**, sang et
- * or comme le hero, cinq nombres lus dans la base.
+ * ans — ; et **le bandeau de clôture**, sang et or comme le hero, cinq
+ * nombres lus dans la base. La bande « Explorer » — six entrées en texte —
+ * est partie le 14 septembre 2026 à la demande de Jérémy : le Header et le
+ * pied de page portent déjà ces entrées.
  *
  * **LE PALMARÈS A QUITTÉ CETTE PAGE LE 10 SEPTEMBRE 2026**, sur décision de
  * Jérémy. Il en était l'audace — les sept années du Bouclier en or condensé,
@@ -472,7 +474,7 @@ export default async function Home({ params }: Props) {
           bloc est une bande d'un bord à l'autre, sa doublure alignée sur le
           hero, et les fonds alternent : le fond de la page, puis la surface
           `usap-carte` — celle du pied de page, gris rosé en clair, sang sombre
-          en sombre —, puis le fond, et le sang pour clore. Ce ne sont pas des
+          en sombre —, puis le fond, puis la surface, et le sang pour clore. Ce ne sont pas des
           cartes, ce sont des bandes, comme le hero ; et l'espacement a doublé,
           `py-12` puis `py-16` par bande, contre `mb-10` entre les blocs. */}
       <Bande>
@@ -949,29 +951,6 @@ export default async function Home({ params }: Props) {
           </div>
         </Bande>
 
-        {/* Explorer */}
-        <Bande>
-          <Titre>{t("accueil.explorerTitre")}</Titre>
-          <ul className="grid gap-x-8 gap-y-2 text-sm sm:grid-cols-2 lg:grid-cols-3">
-            {(
-              [
-                ["/saisons", "nav.saisons", "accueil.explorerSaisons"],
-                ["/matchs", "nav.matchs", "accueil.explorerMatchs"],
-                ["/joueurs", "nav.joueurs", "accueil.explorerJoueurs"],
-                ["/statistiques", "nav.statistiques", "accueil.explorerStatistiques"],
-                ["/adversaires", "nav.adversaires", "accueil.explorerAdversaires"],
-                ["/stades", "nav.stades", "accueil.explorerStades"],
-              ] as const
-            ).map(([href, nom, desc]) => (
-              <li key={href}>
-                <Link href={href} className="font-semibold text-foreground hover:text-usap-sang">
-                  {t(nom)}
-                </Link>
-                <span className="text-muted-foreground">, {t(desc)}.</span>
-              </li>
-            ))}
-          </ul>
-        </Bande>
 
       {/* **LE BANDEAU DE CLÔTURE, SANG ET OR** : la page s'est ouverte sur le
           serment, elle se ferme sur ce que le club a fait — « depuis 1902 »,
