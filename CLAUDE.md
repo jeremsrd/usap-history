@@ -40,6 +40,7 @@ usap-history/
 │   │   ├── realisateurs/          # points, essais et points au pied
 │   │   ├── records/               # records sur un match, sur une saison, séries
 │   │   ├── palmares/, statistiques/
+│   │   ├── mentions-legales/, confidentialite/   # les deux pages légales
 │   │   ├── login/, auth/callback/, api/upload/
 │   │   └── admin/                # protégé — saisons, matchs (+ [id]), joueurs,
 │   │                             #   adversaires, arbitres, stades, entraineurs,
@@ -1594,9 +1595,9 @@ de Barcelone.
 - **Les `hreflang` et les canoniques sont posés depuis le 9 septembre 2026**,
   le lendemain de la mise en ligne du domaine : `liensAlternatifs(langue,
   chemin)` de `src/lib/seo.ts` rend les trois liens — `fr`, `ca`, `x-default`
-  vers le français —, et **les vingt-deux pages publiques l'appellent dans
-  leur `generateMetadata`**, fiches comprises, le chemin portant alors le
-  slug. Vérifié page à page : vingt-deux conformes, zéro en défaut.
+  vers le français —, et **les vingt-quatre pages publiques l'appellent dans
+  leur `generateMetadata`**, fiches et pages légales comprises, le chemin
+  portant alors le slug. Vérifié page à page : zéro en défaut.
 
   Trois choses à savoir avant d'ajouter une page :
 
@@ -2478,6 +2479,35 @@ fiche du joueur — CC BY-SA l'exige nommément —, le pied dit ce qu'une
 fiche ne peut pas répéter. La phrase « site non officiel, sans lien avec
 l'USAP » a été écartée du même mouvement : elle se posera à part, si elle
 se pose.
+
+**LES DEUX PAGES LÉGALES EXISTENT DEPUIS LE 14 SEPTEMBRE 2026**,
+`/mentions-legales` et `/confidentialite`, liées depuis la colonne
+« Mentions » du pied, en français et en catalan, avec leurs `hreflang` —
+rendues par `PageLegale`, un titre et des sections dont tout le texte vient
+du dictionnaire (`mentions.*`, `confidentialite.*`), chaque section donnant
+son nombre de paragraphes plutôt que de sonder des clés. Ce que Jérémy a
+donné : éditeur et directeur de la publication Jérémy Sardà, à titre
+personnel et non professionnel, contact jeremsrd@gmail.com. L'hébergeur,
+Vercel, est lu dans les en-têtes du site en production. La phrase « site
+indépendant, sans lien avec l'USAP », écartée du pied le 10 septembre, est
+là, dans les mentions.
+
+**PAS DE BANDEAU COOKIES, ET C'EST UNE DÉCISION FONDÉE SUR UN CONSTAT** :
+le site ne dépose aucun cookie sur ses pages publiques — vérifié dans le
+code et sur les en-têtes de production —, n'a ni mesure d'audience ni
+script tiers, et le thème est en `localStorage`, une préférence d'interface
+exemptée. Le seul cookie est la session Supabase de l'administrateur, posée
+à sa connexion, strictement nécessaire. Un bandeau affirmerait le contraire
+de la réalité ; la politique de confidentialité dit en une phrase qu'il n'y
+en a pas. **Le jour où une mesure d'audience entrerait**, le bandeau
+devient dû, et la politique est à réviser — sa date est écrite dedans.
+
+Ce que la politique dit des joueurs, et qui vaut d'être su : le site publie
+des données personnelles — nom, naissance, taille, portrait — sur le
+fondement de l'intérêt légitime et des traitements à des fins historiques
+(articles 6.1.f et 89 du RGPD), depuis des sources publiques, et toute
+personne concernée peut demander rectification, effacement ou opposition à
+l'adresse de contact, réponse dans le mois.
 
 **Et les deux-points sont dans le libellé, non dans le composant** :
 « Championnat&nbsp;: LNR » en français, « Campionat: LNR » en catalan —

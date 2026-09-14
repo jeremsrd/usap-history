@@ -162,6 +162,19 @@ export default async function Footer({ langue }: { langue: Langue }) {
             <p className="mt-2 text-sm leading-relaxed text-muted-foreground">
               {t("pied.mentionPortraits")}
             </p>
+            {/* Les deux pages légales, depuis le 14 septembre 2026. */}
+            <ul className="mt-3 space-y-1 text-sm">
+              <li>
+                <Link href="/mentions-legales" className="text-foreground hover:text-usap-sang">
+                  {t("pied.mentionsLegales")}
+                </Link>
+              </li>
+              <li>
+                <Link href="/confidentialite" className="text-foreground hover:text-usap-sang">
+                  {t("pied.confidentialite")}
+                </Link>
+              </li>
+            </ul>
           </section>
         </div>
 

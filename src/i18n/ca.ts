@@ -943,11 +943,66 @@ export const ca = {
     donneesEurope: "Copes d'Europa:",
     donneesAvant: "Abans de 2004:",
     mentions: "Avisos legals",
+    mentionsLegales: "Avís legal",
+    confidentialite: "Política de privadesa",
     mentionEcussons:
       "Els escuts dels clubs són marques registrades, propietat dels seus titulars.",
     mentionPortraits:
       "Els retrats pertanyen als seus autors; el crèdit de cada fotografia consta a la fitxa del jugador.",
     mention: "USAP Historia — Dades històriques de la USA Perpinyà des de 1902",
+  },
+  mentions: {
+    titre: "Avís legal",
+    metaTitre: "Avís legal - USAP Historia",
+    metaDescription: "Editor, director de la publicació, allotjament i propietat intel·lectual del lloc USAP Historia.",
+    editeurTitre: "Editor",
+    editeurP1: "El lloc USAP Historia (usaphistoria.cat) és editat per Jérémy Sardà, a títol personal i no professional.",
+    editeurP2: "Director de la publicació : Jérémy Sardà.",
+    editeurP3: "Contacte : jeremsrd@gmail.com.",
+    hebergeurTitre: "Allotjament",
+    hebergeurP1: "El lloc és allotjat per Vercel Inc., 440 N Barranca Ave #4133, Covina, CA 91723, Estats Units — vercel.com.",
+    independanceTitre: "Un lloc independent",
+    independanceP1:
+      "USAP Historia és un lloc d'història independent, sense cap vincle amb la USA Perpinyà, la Lliga nacional de rugbi ni l'EPCR. Res del que publica no compromet aquests organismes.",
+    independanceP2:
+      "El nom USAP, el seu escut i els escuts dels clubs adversaris són marques registrades, propietat dels seus titulars ; es mostren només amb finalitat d'informació històrica.",
+    proprieteTitre: "Propietat intel·lectual",
+    proprieteP1:
+      "Els textos, l'estructura de la base de dades i el codi del lloc són propietat del seu autor. Les dades dels partits vénen de les actes oficials de la LNR i de l'EPCR, la premsa d'època de Gallica (Biblioteca nacional de França), i les biografies són redactades a partir de la Viquipèdia.",
+    proprieteP2:
+      "Els retrats pertanyen als seus autors : els de la plantilla són publicats per la LNR, tots els drets reservats ; els altres vénen de Wikimedia Commons sota llicència lliure, i el crèdit de cadascun figura a la fitxa del jugador.",
+    donneesTitre: "Dades personals",
+    donneesP1: "El tractament de les dades personals és descrit a la política de privadesa.",
+    donneesLien: "Política de privadesa",
+  },
+  confidentialite: {
+    titre: "Política de privadesa",
+    metaTitre: "Política de privadesa - USAP Historia",
+    metaDescription: "El que el lloc USAP Historia recull dels seus visitants — res —, el que publica sobre els jugadors, i els drets de cadascú.",
+    visiteursTitre: "Els visitants",
+    visiteursP1:
+      "El lloc no recull cap dada dels seus visitants : ni compte, ni formulari, ni butlletí, ni mesura d'audiència, ni rastrejador.",
+    visiteursP2:
+      "No desa cap galeta, i per tant no mostra cap bàner de consentiment. La tria del tema clar o fosc es desa al navegador, a l'aparell, i no en surt.",
+    visiteursP3:
+      "L'allotjador, Vercel, pot enregistrar l'adreça IP i dades tècniques de connexió per raons de seguretat i de bon funcionament, sota la seva pròpia política de privadesa.",
+    adminTitre: "L'administració del lloc",
+    adminP1:
+      "Una sola persona administra el lloc, el seu editor. Una galeta de sessió, estrictament necessària, només es desa quan s'hi connecta.",
+    joueursTitre: "Els jugadors, àrbitres, entrenadors i presidents",
+    joueursP1:
+      "El lloc publica dades relatives a l'activitat esportiva pública de les persones que han fet la història del club : nom, posició, partits jugats, anotacions i, quan són conegudes, data i lloc de naixement, alçada, nacionalitat, retrat.",
+    joueursP2:
+      "Aquest tractament té una finalitat d'arxiu històric i d'informació del públic, sobre la base de l'interès legítim (article 6.1.f del RGPD) i de les disposicions pròpies dels tractaments amb finalitats d'arxiu i històriques (article 89).",
+    joueursP3:
+      "Les fonts són públiques : actes oficials de la LNR i de l'EPCR, premsa (L'Indépendant, Gallica), Viquipèdia. Els retrats vénen de la LNR o de Wikimedia Commons sota llicència lliure, amb el crèdit a cada fitxa. No es recull res de les persones mateixes.",
+    droitsTitre: "Els vostres drets",
+    droitsP1:
+      "Tota persona afectada pot demanar l'accés a les dades que la concerneixen, la seva rectificació, la seva supressió o oposar-se a la seva publicació, escrivint a jeremsrd@gmail.com. La demanda rep resposta en el termini d'un mes.",
+    droitsP2:
+      "Es pot adreçar una reclamació a la Commission nationale de l'informatique et des libertés (cnil.fr).",
+    miseAJourTitre: "Actualització",
+    miseAJourP1: "Aquesta política és datada del 14 de setembre de 2026 ; serà revisada si el lloc arribés a recollir qualsevol dada dels seus visitants.",
   },
   theme: {
     versClair: "Passar al mode clar",

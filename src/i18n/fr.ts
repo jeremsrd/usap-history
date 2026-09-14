@@ -992,11 +992,72 @@ export const fr = {
     donneesEurope: "Coupes d'Europe\u00a0:",
     donneesAvant: "Avant 2004\u00a0:",
     mentions: "Mentions",
+    mentionsLegales: "Mentions légales",
+    confidentialite: "Politique de confidentialité",
     mentionEcussons:
       "Les écussons de club sont des marques déposées, propriété de leurs détenteurs.",
     mentionPortraits:
       "Les portraits appartiennent à leurs auteurs ; le crédit de chaque photo figure sur la fiche du joueur.",
     mention: "USAP Historia — Données historiques de l'USA Perpignan depuis 1902",
+  },
+  // Les deux pages légales, écrites le 14 septembre 2026 avec ce que Jérémy
+  // a donné : éditeur et directeur de publication Jérémy Sardà, contact
+  // jeremsrd@gmail.com. L'hébergeur est lu dans les en-têtes du site en
+  // production (`server: Vercel`). Chaque section est un titre et des
+  // paragraphes numérotés — `p1`, `p2`… —, ce qui garde le balisage hors
+  // des phrases.
+  mentions: {
+    titre: "Mentions légales",
+    metaTitre: "Mentions légales - USAP Historia",
+    metaDescription: "Éditeur, directeur de la publication, hébergeur et propriété intellectuelle du site USAP Historia.",
+    editeurTitre: "Éditeur",
+    editeurP1: "Le site USAP Historia (usaphistoria.cat) est édité par Jérémy Sardà, à titre personnel et non professionnel.",
+    editeurP2: "Directeur de la publication : Jérémy Sardà.",
+    editeurP3: "Contact : jeremsrd@gmail.com.",
+    hebergeurTitre: "Hébergement",
+    hebergeurP1: "Le site est hébergé par Vercel Inc., 440 N Barranca Ave #4133, Covina, CA 91723, États-Unis — vercel.com.",
+    independanceTitre: "Un site indépendant",
+    independanceP1:
+      "USAP Historia est un site d'histoire indépendant, sans lien avec l'USA Perpignan, la Ligue nationale de rugby ni l'EPCR. Rien de ce qu'il publie n'engage ces organismes.",
+    independanceP2:
+      "Le nom USAP, son écusson et les écussons des clubs adverses sont des marques déposées, propriété de leurs détenteurs ; ils sont affichés à seule fin d'information historique.",
+    proprieteTitre: "Propriété intellectuelle",
+    proprieteP1:
+      "Les textes, la structure de la base de données et le code du site sont la propriété de leur auteur. Les données de match viennent des feuilles officielles de la LNR et de l'EPCR, la presse d'époque de Gallica (Bibliothèque nationale de France), les biographies sont composées d'après Wikipédia.",
+    proprieteP2:
+      "Les portraits appartiennent à leurs auteurs : ceux de l'effectif sont publiés par la LNR, tous droits réservés ; les autres viennent de Wikimedia Commons sous licence libre, et le crédit de chacun figure sur la fiche du joueur.",
+    donneesTitre: "Données personnelles",
+    donneesP1: "Le traitement des données personnelles est décrit dans la politique de confidentialité.",
+    donneesLien: "Politique de confidentialité",
+  },
+  confidentialite: {
+    titre: "Politique de confidentialité",
+    metaTitre: "Politique de confidentialité - USAP Historia",
+    metaDescription: "Ce que le site USAP Historia collecte de ses visiteurs — rien —, ce qu'il publie sur les joueurs, et les droits de chacun.",
+    visiteursTitre: "Les visiteurs",
+    visiteursP1:
+      "Le site ne collecte aucune donnée sur ses visiteurs : pas de compte, pas de formulaire, pas de lettre d'information, pas de mesure d'audience, pas de traceur.",
+    visiteursP2:
+      "Il ne dépose aucun cookie, et n'affiche donc pas de bandeau de consentement. Le choix du thème clair ou sombre est mémorisé dans le navigateur, sur l'appareil, et n'en sort pas.",
+    visiteursP3:
+      "L'hébergeur, Vercel, peut enregistrer l'adresse IP et des données techniques de connexion à des fins de sécurité et de bon fonctionnement, sous sa propre politique de confidentialité.",
+    adminTitre: "L'administration du site",
+    adminP1:
+      "Une seule personne administre le site, son éditeur. Un cookie de session, strictement nécessaire, n'est posé qu'à sa connexion.",
+    joueursTitre: "Les joueurs, arbitres, entraîneurs et présidents",
+    joueursP1:
+      "Le site publie des données relatives à l'activité sportive publique des personnes qui ont fait l'histoire du club : nom, poste, rencontres jouées, réalisations, et lorsqu'elles sont connues, date et lieu de naissance, taille, nationalité, portrait.",
+    joueursP2:
+      "Ce traitement poursuit une finalité d'archive historique et d'information du public, sur le fondement de l'intérêt légitime (article 6.1.f du RGPD) et des dispositions propres aux traitements à des fins archivistiques et historiques (article 89).",
+    joueursP3:
+      "Les sources sont publiques : feuilles de match officielles de la LNR et de l'EPCR, presse (L'Indépendant, Gallica), Wikipédia. Les portraits viennent de la LNR ou de Wikimedia Commons sous licence libre, crédités sur chaque fiche. Rien n'est collecté auprès des personnes elles-mêmes.",
+    droitsTitre: "Vos droits",
+    droitsP1:
+      "Toute personne concernée peut demander l'accès aux données qui la concernent, leur rectification, leur effacement ou s'opposer à leur publication, en écrivant à jeremsrd@gmail.com. La demande reçoit une réponse dans le mois.",
+    droitsP2:
+      "Une réclamation peut être adressée à la Commission nationale de l'informatique et des libertés (cnil.fr).",
+    miseAJourTitre: "Mise à jour",
+    miseAJourP1: "Cette politique est datée du 14 septembre 2026 ; elle sera revue si le site venait à collecter quoi que ce soit de ses visiteurs.",
   },
   theme: {
     versClair: "Passer en mode clair",
