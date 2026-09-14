@@ -18,6 +18,13 @@
  * aperçoive. Un camp dont les faits ne retombent pas sur le score reste à
  * `null`, et le script le dit.
  *
+ * **Et l'arbitre, depuis le 14 septembre 2026**, lu sur la page de
+ * composition de la feuille — la LNR ne le désigne qu'après le match —, et
+ * seulement si la rencontre n'en a pas : celui que Jérémy a donné avant le
+ * match par `set-arbitre.ts` reste. Rien dans la chaîne ne le posait, et la
+ * deuxième journée 2026-2027 s'est retrouvée sans arbitre, feuille écrite,
+ * chronologie écrite, alors que la LNR le nommait.
+ *
  * Il ne touche ni aux bonus — `fix-bonus-points.ts` les recalcule ensuite —,
  * ni à la mi-temps ni à l'affluence, que la LNR ne donne pas (cf.
  * `set-annexe.ts`).
@@ -28,8 +35,9 @@
  *   npx tsx scripts/set-score.ts --match=2026-09-05 --force   # réécrit un score déjà posé
  */
 
+import { trouverOuCreerArbitre } from "./lib/arbitres";
 import { PrismaClient, MatchResult } from "@prisma/client";
-import { lireCalendrier, lireFeuille, realisationsDepuisFaits, utiliserDivision, type Camp } from "./lib/lnr";
+import { lireCalendrier, lireCompositions, lireFeuille, realisationsDepuisFaits, utiliserDivision, type Camp } from "./lib/lnr";
 
 const prisma = new PrismaClient();
 
@@ -102,8 +110,23 @@ async function main() {
     }
   }
 
+  // L'arbitre, si la rencontre n'en a pas encore.
+  let refereeId: string | null = null;
+  if (!match.refereeId) {
+    const compositions = await lireCompositions(rencontre.url);
+    if (compositions.arbitre) {
+      refereeId = await trouverOuCreerArbitre(prisma, compositions.arbitre, dry);
+      console.log(`  arbitre : ${compositions.arbitre}${refereeId ? "" : dry ? " (fiche à créer)" : ""}`);
+    } else {
+      console.log("  arbitre : la LNR ne le publie pas");
+    }
+  }
+
   if (dry) return;
-  await prisma.match.update({ where: { id: match.id }, data: { scoreUsap, scoreOpponent, result, ...compteurs } });
+  await prisma.match.update({
+    where: { id: match.id },
+    data: { scoreUsap, scoreOpponent, result, ...compteurs, ...(refereeId ? { refereeId } : {}) },
+  });
   console.log("✔ score et compteurs posés ; enchaîner seed-opponent-sheet --usap, seed-chronologie, puis fix-bonus-points.");
 }
 

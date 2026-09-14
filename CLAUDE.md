@@ -172,8 +172,8 @@ Le lendemain, dans cet ordre — chaque étape exige la précédente, et
 score :
 
 ```bash
-npx tsx scripts/set-score.ts --match=AAAA-MM-JJ --dry              # le score du calendrier LNR, et les compteurs
-npx tsx scripts/set-score.ts --match=AAAA-MM-JJ                    #   de réalisations des deux camps
+npx tsx scripts/set-score.ts --match=AAAA-MM-JJ --dry              # le score du calendrier LNR, les compteurs
+npx tsx scripts/set-score.ts --match=AAAA-MM-JJ                    #   des deux camps, et l'arbitre s'il manque
 npx tsx scripts/seed-lineup.ts AAAA-MM-JJ --dry                    # sauf si les 46 lignes sont déjà là
 npx tsx scripts/seed-opponent-sheet.ts AAAA-AAAA --match=AAAA-MM-JJ --usap --dry
 npx tsx scripts/seed-opponent-sheet.ts AAAA-AAAA --match=AAAA-MM-JJ --usap
@@ -197,6 +197,43 @@ retombent sur le score du camp ; sinon `null`, et il le dit. Il ne les
 bonus offensif, et la fiche de match sans détail du score. Découvert en
 refaisant la fiche, pas par un contrôle — un `null` sur ces compteurs se lit
 « la source ne le dit pas » et ne fait échouer personne.
+
+**Et il pose l'arbitre depuis le 14 septembre 2026**, lu sur la page de
+composition de la feuille, si la rencontre n'en a pas — celui que Jérémy a
+donné avant le match reste. Rien ne le faisait : la deuxième journée
+2026-2027 s'est retrouvée feuille et chronologie écrites, sans arbitre,
+quand la LNR nommait Vincent Blasco-Baqué. **Un trou de la chaîne ne se
+voit qu'en la déroulant jusqu'au bout et en relisant la fiche** ; le
+premier passage, sur la J1, avait eu son arbitre par `set-arbitre.ts` et
+n'avait rien montré.
+
+**LA PAGE DE COMPOSITION DE LA LNR PEUT PORTER L'ÉQUIPE ANNONCÉE, NON
+L'ÉQUIPE ALIGNÉE**, et c'est la J2 de 2026-2027 qui l'a montré : elle met
+Bruce Devaux au n°1 catalan, et sa page de faits fait entrer Enzo Forletta
+à la 72ᵉ — un homme absent de ses vingt-trois. *L'Indépendant* du lendemain
+et allrugby donnent tous deux Forletta titulaire, « Forletta
+(Boyer-Gallardo, 72) », et concordent avec la LNR sur les vingt-deux autres
+dossards : Devaux a été remplacé avant le coup d'envoi, la page n'a pas
+suivi, et le changement a glissé d'un cran comme à Pau le 22 février.
+`seed-opponent-sheet --usap` a échoué sur le changement non apparié — c'est
+le garde-fou qui a tout révélé —, et le cas se règle en trois pièces :
+`fix-titulaire-2026-09-12.ts` rend le dossard à Forletta avec son
+attestation `CONCORDANT` ; `CHANGEMENTS_CORRIGES` porte la 72ᵉ redressée ;
+et **la fiche de match lit désormais les attestations posées sur ses lignes
+de composition**, `Provenance` les nommant par le dossard et l'homme — sans
+quoi l'arbitrage était en base et invisible. Cette rencontre rejoint celle
+du 22 février 2026 parmi celles qu'il ne faut pas passer à
+`fix-opponent-lineup.ts --usap --identites`, qui rendrait le n°1 à Devaux.
+
+**Et une fiche fusionnée sous son nom d'usage se refabriquait à chaque
+feuille.** « Thomas STANIFORTH » sur la feuille de Castres, « Tom
+Staniforth » en base depuis la fusion du 30 août : `seed-lineup` allait
+créer le doublon, l'audit l'aurait tenu pour conforme — c'est le nom que la
+feuille écrit —, et seul `detect-duplicate-players.ts` l'aurait sorti après
+coup. La table `VARIANTES_DAFFICHAGE`, qui apparie ces noms **complets deux
+à deux**, ne vivait que dans l'audit, qui constate ; elle vit désormais dans
+`lib/noms.ts`, et `chercherJoueur` la consulte juste après le nom exact —
+sans que le rapprochement des mots, `memeMot`, n'ait bougé d'une ligne.
 
 **La presse complète, elle ne remplace pas.** *L'Indépendant* du lendemain
 donne l'affluence et la mi-temps, que la LNR n'a pas ; `set-annexe.ts` les
@@ -1034,6 +1071,7 @@ doublons.
 | `fix-barrages-access-match.ts` | les deux trous des barrages d'accession — arbitre du 12/06/2022, mi-temps du 03/06/2023 — et la transformation que la chronologie de ce dernier avait perdue |
 | `fix-arbitres-challenge-2022-2023.ts` | les deux arbitres faux de la poule de Challenge 2022-2023 — Christophe Berdos, retraité depuis mai 2015, sur le Perpignan-Bristol du 9 décembre 2022, et Evan Urruzmendi, arbitre français, sur le Perpignan-Glasgow du 14 janvier 2023 —, remplacés par Chris Busby et Craig Evans d'après Wikipédia et rugbyreferee.net, concordants ; attestation `CONCORDANT` sur `Match.refereeId`. Déjà appliqué ; `--dry` |
 | `fix-carton-rouge-dragons-2025.ts` | la minute du carton rouge de Paia'aua, 35ᵉ pour 14ᵉ, dans la chronologie du 7 décembre 2025 ; porte les trois preuves concordantes |
+| `fix-titulaire-2026-09-12.ts` | le n°1 catalan du Perpignan-Castres du 12 septembre 2026, **Enzo Forletta** et non Bruce Devaux : la page de composition de la LNR a gardé l'équipe annoncée, *L'Indépendant* et allrugby concordent contre elle. Rend le dossard et atteste la ligne `CONCORDANT`. Déjà appliqué ; `--dry` |
 
 `fix-duplicate-players.ts` existe aussi mais apparie les prénoms par préfixe et
 par inclusion : trop large pour être lancé sans revue préalable.
@@ -2541,10 +2579,16 @@ disparu, et l'Albi-Perpignan du 3 novembre 2007, dont la feuille LNR ne porte
 aucun fait. `fix-bonus-points` les reconnaît et laisse leur bonus offensif en
 l'état.
 
-**2026-2027 a joué sa première journée** — Stade Français 28-26 USAP le
-5 septembre 2026, bonus défensif, feuille des deux camps, chronologie,
-12 065 spectateurs et mi-temps 6-28 d'après *L'Indépendant*, par la marche
-du « lendemain d'un match » —, **et n'est qu'un calendrier pour le reste** :
+**2026-2027 a joué ses deux premières journées** — Stade Français 28-26
+USAP le 5 septembre 2026, bonus défensif, 12 065 spectateurs et mi-temps
+6-28 ; USAP 43-29 Castres le 12 septembre, six essais dont deux de Yato,
+14 232 spectateurs et mi-temps 24-15, arbitre Vincent Blasco-Baqué —,
+feuille des deux camps, chronologie, affluence et mi-temps d'après
+*L'Indépendant*, par la marche du « lendemain d'un match » ; 5 points au
+classement. Une transformation catalane de la 47ᵉ reste sans buteur dans la
+chronologie, la feuille LNR ne le nommant pas — le journal la donne à
+Aucagne, dont la ligne porte bien ses cinq. **Et n'est qu'un calendrier pour
+le reste** :
 ses 26 journées ont leur date, leur adversaire et leur terrain, sans score. Seules les premières ont un horaire —
 la LNR ne cale les coups d'envoi qu'au fil des désignations télévisées et pose
 d'ici là une date de référence, que `seed-calendrier-2026-2027.ts` rafraîchit

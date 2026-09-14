@@ -16,7 +16,7 @@
 import type { PrismaClient, Position } from "@prisma/client";
 import { Position as Postes } from "@prisma/client";
 import { generatePlayerSlug } from "../../src/lib/slugs";
-import { memeMot, mots, motsOrphelins, motsUtiles, normalize, proximite } from "./noms";
+import { memeMot, mots, motsOrphelins, motsUtiles, nomEnBasePour, normalize, proximite } from "./noms";
 
 /** Poste tenu par un titulaire, déduit de son numéro de maillot. */
 export const POSTE_PAR_NUMERO: Record<number, Position> = {
@@ -93,6 +93,19 @@ export async function chercherJoueur(
     (j) => normalize(`${j.firstName} ${j.lastName}`) === normalize(nomCherche),
   );
   if (exactes.length === 1) return exactes[0].id;
+
+  // Le nom d'usage arbitré : « Thomas Staniforth » sur la feuille désigne
+  // « Tom Staniforth » en base, par `VARIANTES_DAFFICHAGE` — des noms
+  // complets deux à deux, jamais des mots. Sans ce détour, la fiche fusionnée
+  // sous son nom d'usage se refabriquait à chaque feuille.
+  const enBase = nomEnBasePour(nomCherche);
+  if (enBase) {
+    const designees = tous.filter((j) => normalize(`${j.firstName} ${j.lastName}`) === normalize(enBase));
+    if (designees.length === 1) {
+      journal(`  [variante] « ${nomCherche} » → fiche « ${enBase} »`);
+      return designees[0].id;
+    }
+  }
 
   // Tout rapprochement passe par le **nom de famille** : deux mots communs ne
   // suffisent pas si aucun ne vient de là. « Ratu Tevita KURIDRANI », centre

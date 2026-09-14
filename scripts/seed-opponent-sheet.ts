@@ -183,6 +183,17 @@ const CHANGEMENTS_CORRIGES: Record<
   "2008-09-20": [
     { minute: 69, club: "home", entrant: "Goncalo Uva", sortant: "Jacques Bascou" },
   ],
+  // **Perpignan-Castres du 12 septembre 2026.** La feuille enregistre à la
+  // 72ᵉ « entre Enzo FORLETTA, sort Bruce DEVAUX » — mais Forletta n'est sur
+  // aucune de ses listes, où Devaux porte le 1 et Boyer Gallardo le 17.
+  // *L'Indépendant* du lendemain et allrugby donnent tous deux Forletta
+  // titulaire et « Forletta (Boyer-Gallardo, 72) » : la page de composition a
+  // gardé l'équipe annoncée, et le changement a glissé d'un cran, comme à
+  // Pau. Le n°1 est rendu à Forletta par `fix-titulaire-2026-09-12.ts`, avec
+  // son attestation.
+  "2026-09-12": [
+    { minute: 72, club: "home", entrant: "Lorencio Boyer Gallardo", sortant: "Enzo Forletta" },
+  ],
 };
 
 /**

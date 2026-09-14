@@ -105,6 +105,97 @@ const NOMS_DUSAGE: string[][] = [
 ];
 
 /**
+ * Variantes d'affichage vérifiées à la main : la base porte le nom d'usage,
+ * la feuille officielle l'état civil, et ce sont bien deux écritures du même
+ * homme.
+ *
+ * **Pourquoi une table à part**, et non deux lignes dans `NOMS_DUSAGE` : cette table-là nourrit `memeMot`, dont
+ * dépendent `joueurs.ts` pour créer ou retrouver une fiche,
+ * `seed-opponent-sheet.ts` pour apparier une composition et `sync-effectif.ts`.
+ * Y déclarer « tom = thomas », « joe = joseph » ou « nick = nicholas », c'est
+ * rendre équivalents des prénoms parmi les plus répandus du rugby et rouvrir
+ * l'accident Kane Douglas / Wesley Douglas. Ici on ne rapproche pas deux
+ * **mots**, on reconnaît deux **noms complets** appariés : « Tom Staniforth »
+ * ne vaut que pour « Thomas Staniforth », et aucun autre Tom ne s'en trouve
+ * rapproché d'aucun autre Thomas. L'arbitrage d'identité n'est pas touché.
+ *
+ * **Pourquoi elle est nécessaire.** Sans elle le compteur d'ÉCRITURE n'est
+ * plus un signal : la fusion des dix doublons du 30 août 2026 l'a fait passer
+ * de 21 à 31, non parce que la base se dégradait, mais parce qu'un homme
+ * réuni sous son nom d'usage diverge désormais de la LNR sur chacune de ses
+ * feuilles. Un audit dont on apprend à ignorer le total ne garde plus rien —
+ * c'est ainsi que 22 faux hommes ont vécu en ÉCRITURE jusqu'au 30 août.
+ *
+ * **Ce qu'on affirme en y ajoutant une ligne** : que ces deux noms désignent
+ * la même personne, feuille officielle sous les yeux. Rien n'est deviné, et
+ * rien n'est caché : le total des variantes tues figure au récapitulatif de
+ * l'audit, et `--variantes` les affiche une à une.
+ *
+ * **ELLE VIT ICI, ET NON PLUS DANS L'AUDIT, DEPUIS LE 14 SEPTEMBRE 2026**,
+ * parce que l'audit constate quand `joueurs.ts` crée. Tant qu'elle n'était
+ * lue que par l'audit, chaque feuille de Castres allait recréer « Thomas
+ * Staniforth » à côté de « Tom Staniforth » — le doublon fusionné le
+ * 30 août —, l'audit le tenant ensuite pour conforme puisque c'est le nom
+ * que la feuille écrit, et seul `detect-duplicate-players.ts` le sortant
+ * après coup. Vu sur la première feuille venue, la J2 de 2026-2027.
+ * `chercherJoueur` la consulte donc juste après le nom exact : un nom
+ * officiel qui figure en colonne `feuille` désigne la fiche nommée en
+ * colonne `base`, et rien d'autre — le rapprochement des mots n'est
+ * toujours pas touché.
+ */
+export const VARIANTES_DAFFICHAGE: [base: string, feuille: string][] = [
+  // Prénom d'usage en base, état civil sur la feuille.
+  ["Tom Staniforth", "Thomas Staniforth"],
+  ["Tom Willis", "Thomas Daniel Willis"],
+  ["Joe Powell", "Joseph Patrick Powell"],
+  ["Harry Plummer", "Harrison Plummer"],
+  ["Sammy Arnold", "Samuel Arnold"],
+  ["Billy Vunipola", "Viliami Vunipola"],
+  ["Cobus Reinach", "Jacobus Meyer Reinach"],
+  ["Nacho Brex", "Juan Ignacio Brex"],
+  ["Nick Champion de Crespigny", "Richard Nicholas Champion De Crespigny"],
+  // Les quatre Toulonnais du quart de finale de Heineken Cup 2011, qu'ESPN
+  // écrit sous leur nom d'usage : les fiches, nées des feuilles LNR sous
+  // l'état civil, ont été fusionnées sous ce nom-là le 5 septembre 2026.
+  ["Jonny Wilkinson", "Jonathan Wilkinson"],
+  ["Joe Van Niekerk", "Johann Van Niekerk"],
+  ["Rudi Wulf", "Rudolffe Wulf"],
+  ["Gaby Lovobalavu", "Gabiriele Lovobalavu"],
+  // Fusionné le 6 septembre 2026 sur arbitrage de Jérémy : Grenoble puis
+  // Stade Français, jamais sur une même feuille, même n°6.
+  ["Tanginoa Halaifonua", "Tanginoa Palu Halaifonua"],
+  // Le prénom d'usage reprend la fin du patronyme, que la feuille répète.
+  ["Tolu Latu", "Latu Silatolu Latu"],
+  // La LNR ampute l'apostrophe et coupe le nom ailleurs.
+  ["Marvin O'Connor", "Marvin O Connor"],
+  ["Ma'a Nonu", "Ma A Allan Nonu"],
+  // Orthographe : la feuille perd le « h ».
+  ["Sikhumbuzo Notshe", "Sikumbuzo Notshe"],
+  // Apparues le 30 août 2026, quand l'audit a enfin vu les saisons de Pro D2.
+  // La LNR écrit le même talonneur « Cyriel » à Dax en 2017-2018 et « Cyril »
+  // à Vannes ensuite ; une seule fiche, un seul Blanchard par feuille.
+  ["Cyril Blanchard", "Cyriel Blanchard"],
+  ["Eddie Sawailau", "Edward Dratai Sawailau"],
+  ["Napolioni Nalaga", "Naipolioni Vonowale Nalaga"],
+  // Apparues avec 2004-2005, et **la source se contredit elle-même dans les
+  // deux cas**. Thibaut Privat, deuxième ligne de Clermont puis de
+  // Montpellier, porte dix-huit feuilles en base ; la LNR l'écrit « Thibault »
+  // sur celle du 19 février 2005 et « Thibaut » partout ailleurs. Yohann
+  // Authier, lui, est « Yohann » à Grenoble le 21 mai 2005 et « Johann » à
+  // Oyonnax le 12 avril 2014 — neuf ans, deux clubs, un seul homme, deux
+  // orthographes officielles.
+  ["Thibaut Privat", "Thibault Privat"],
+  ["Johann Authier", "Yohann Authier"],
+];
+
+/** La fiche que désigne un nom officiel, d'après `VARIANTES_DAFFICHAGE` ; `null` si aucune ligne ne le porte. */
+export function nomEnBasePour(nomOfficiel: string): string | null {
+  const cle = normalize(nomOfficiel);
+  const ligne = VARIANTES_DAFFICHAGE.find(([, feuille]) => normalize(feuille) === cle);
+  return ligne ? ligne[0] : null;
+}
+
+/**
  * Un mot en vaut un autre s'il en est le début — « Nafi » pour « Nafitalai » —
  * ou s'il en est le nom d'usage déclaré.
  */

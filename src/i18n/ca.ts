@@ -900,6 +900,8 @@ export const ca = {
   provenance: {
     titre: "Fonts i arbitratges",
     intro: "El que aquesta pàgina afirma ve d'una acta oficial, tret del que segueix.",
+    ligneUsap: "el número {numero} català, {nom}",
+    ligneAdverse: "el número {numero} adversari, {nom}",
     degre: {
       OFFICIEL: "Font oficial",
       CONCORDANT: "Font secundària, contrastada",
@@ -919,6 +921,7 @@ export const ca = {
       position: "la posició de referència",
       logoUrl: "l'escut",
       minutesPlayed: "el temps de joc",
+      playerId: "la identitat",
       agregats: "el balanç de la temporada",
     },
     tranchePar: " — decidit per {nom}",

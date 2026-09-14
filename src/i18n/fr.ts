@@ -941,6 +941,10 @@ export const fr = {
     // La section « Sources et arbitrages » au pied des fiches.
     titre: "Sources et arbitrages",
     intro: "Ce que cette page affirme vient d'une feuille officielle, sauf ce qui suit.",
+    // Une attestation posée sur une ligne de composition, lue depuis la fiche
+    // du match : le dossard et l'homme, puis le champ.
+    ligneUsap: "le n°{numero} catalan, {nom}",
+    ligneAdverse: "le n°{numero} adverse, {nom}",
     degre: {
       OFFICIEL: "Source officielle",
       CONCORDANT: "Source secondaire, recoupée",
@@ -960,6 +964,7 @@ export const fr = {
       position: "le poste de référence",
       logoUrl: "l'écusson",
       minutesPlayed: "le temps de jeu",
+      playerId: "l'identité",
       agregats: "le bilan de la saison",
     },
     tranchePar: " — tranché par {nom}",
