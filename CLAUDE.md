@@ -1823,6 +1823,16 @@ devant les titres ont disparu ; la case du portrait reste vide sans
 portrait, ici comme dans les classements. La page est passée au
 dictionnaire (`fiche.*`), et la provenance de ce qu'elle affirme la clôt.
 
+**Un bandeau de chiffres sépare le dos de maillot du bilan depuis le
+14 septembre 2026**, à la demande de Jérémy : matchs, victoires, nuls,
+défaites, points marqués, essais — six nombres dans la voix condensée,
+chacun sous son libellé, entre deux filets sur toute la largeur, les
+victoires en rouge et les défaites en gris. Ce n'est pas une carte, rien
+n'est bordé sur les côtés. Sous le maillot seulement, comme le bilan ; le
+résultat est celui de l'USAP sur les rencontres où l'homme a joué, une
+ligne de composition valant un match comme partout. Clés `fiche.bandeau*`,
+en catalan aussi.
+
 **La fiche de match est refaite le même jour.** Sa seule audace est le
 **tableau d'affichage** : l'affiche en Archivo condensée, l'USAP en rouge,
 l'adversaire en encre et lié à sa fiche, le score énorme entre les deux, et

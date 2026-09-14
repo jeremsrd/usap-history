@@ -262,6 +262,34 @@ export default async function JoueurDetailPage({ params }: Props) {
         </div>
       </header>
 
+      {/* **LE BANDEAU DE CHIFFRES**, demandé par Jérémy le 14 septembre 2026 :
+          ce qu'on veut savoir d'un joueur avant de lire son bilan saison par
+          saison — matchs, victoires, nuls, défaites, points, essais —, en six
+          nombres dans la voix condensée, chacun sous son libellé, entre deux
+          filets. Sous le maillot seulement, comme le bilan : les rencontres
+          contre l'USAP ont leur propre tableau plus bas. Le résultat est celui
+          de l'USAP sur les rencontres où il a joué — une ligne de composition
+          vaut un match, remplaçant non entré compris, comme partout. */}
+      {avec.length > 0 && (
+        <dl className="mb-10 grid grid-cols-3 gap-x-6 gap-y-5 border-y border-border py-6 text-center sm:grid-cols-6">
+          {(
+            [
+              ["fiche.bandeauMatchs", avec.length, "text-foreground"],
+              ["fiche.bandeauVictoires", avec.filter((ma) => ma.match.result === "VICTOIRE").length, "text-usap-sang"],
+              ["fiche.bandeauNuls", avec.filter((ma) => ma.match.result === "NUL").length, "text-foreground"],
+              ["fiche.bandeauDefaites", avec.filter((ma) => ma.match.result === "DEFAITE").length, "text-muted-foreground"],
+              ["fiche.bandeauPoints", total.points, "text-foreground"],
+              ["fiche.bandeauEssais", total.essais, "text-foreground"],
+            ] as const
+          ).map(([cle, valeur, couleur]) => (
+            <div key={cle}>
+              <dd className={`font-display text-4xl leading-none tabular-nums sm:text-5xl ${couleur}`}>{valeur}</dd>
+              <dt className="mt-1 text-xs text-muted-foreground">{t(cle)}</dt>
+            </div>
+          ))}
+        </dl>
+      )}
+
       {/* Le bilan, saison par saison */}
       {bilan.length > 0 && (
         <section className="mb-10">

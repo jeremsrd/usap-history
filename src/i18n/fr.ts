@@ -173,6 +173,14 @@ export const fr = {
     taille: "{cm} cm",
     poids: "{kg} kg",
     photo: "Photo : {auteur}, {licence}.",
+    // Le bandeau de chiffres sous le dos de maillot : six nombres, chacun
+    // sous son libellé, demandé par Jérémy le 14 septembre 2026.
+    bandeauMatchs: "Matchs",
+    bandeauVictoires: "Victoires",
+    bandeauNuls: "Nuls",
+    bandeauDefaites: "Défaites",
+    bandeauPoints: "Points marqués",
+    bandeauEssais: "Essais",
     bilanTitre: "Bilan sous le maillot",
     bilanSaison: "Saison",
     bilanCompetitions: "Compétitions",
