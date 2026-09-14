@@ -4,6 +4,7 @@ import { JoueurCellule } from "@/components/JoueurCellule";
 import { prisma } from "@/lib/prisma";
 import { MATCH_JOUE, estJoue } from "@/lib/matchs";
 import { matchPoints } from "@/lib/scoring";
+import { PALMARES } from "@/lib/constants";
 import { formatDateFR } from "@/lib/utils";
 import { dictionnaire } from "@/i18n/dictionnaire";
 import { LANGUE_PAR_DEFAUT, type Langue } from "@/i18n/langues";
@@ -26,8 +27,9 @@ import type { Metadata } from "next";
  * la saison en cours avec son bilan en chiffres — championnat seul, comme le
  * classement — et ses trois classements courts, les mêmes que sur la page de
  * saison ; ce jour dans l'histoire en trois colonnes — les rencontres du
- * jour, les joueurs nés ce jour, il y a dix, vingt, cinquante, cent ans — ;
- * et six entrées pour explorer.
+ * jour, les anniversaires de la semaine, il y a dix, vingt, cinquante, cent
+ * ans — ; six entrées pour explorer ; et **le bandeau de clôture**, sang et
+ * or comme le hero, cinq nombres lus dans la base.
  *
  * **LE PALMARÈS A QUITTÉ CETTE PAGE LE 10 SEPTEMBRE 2026**, sur décision de
  * Jérémy. Il en était l'audace — les sept années du Bouclier en or condensé,
@@ -253,6 +255,16 @@ export default async function Home({ params }: Props) {
   });
   const saisons = await prisma.season.count();
   const saisonsDocumentees = await prisma.season.count({ where: { matches: { some: MATCH_JOUE } } });
+
+  // **LE BANDEAU DE CLÔTURE**, demandé par Jérémy le 14 septembre 2026 : le
+  // pendant du hero, en bas de page — le hero dit qui on est, celui-ci ce
+  // qu'on a fait, en cinq nombres lus dans la base. Les Boucliers se comptent
+  // sur la table `Trophy` comme sur la page du palmarès, `PALMARES` en repli
+  // si elle était vide ; les autres sont des agrégats des rencontres jouées.
+  const victoires = await prisma.match.count({ where: { ...MATCH_JOUE, result: "VICTOIRE" } });
+  const pointsMarques = (await prisma.match.aggregate({ where: MATCH_JOUE, _sum: { scoreUsap: true } }))._sum.scoreUsap ?? 0;
+  const boucliersEnBase = await prisma.trophy.count({ where: { achievement: "CHAMPION", competition: { contains: "Championnat" } } });
+  const boucliers = boucliersEnBase || PALMARES.titresChampion.length;
 
   // **UN JOUEUR AU HASARD**, demandé par Jérémy le 10 septembre 2026.
   //
@@ -955,6 +967,38 @@ export default async function Home({ params }: Props) {
           </ul>
         </section>
       </div>
+
+      {/* **LE BANDEAU DE CLÔTURE, SANG ET OR** : la page s'est ouverte sur le
+          serment, elle se ferme sur ce que le club a fait — « depuis 1902 »,
+          puis cinq nombres en or vif, chacun sous son libellé en blanc. Hors
+          du conteneur comme le hero, d'un bord à l'autre, sa doublure alignée
+          sur le reste ; même règle d'encre, `usap-or-vif` et
+          `primary-foreground`, les seuls lisibles sur le sang. Ce sont des
+          nombres et non des cartes : une seule ligne, pas de case, pas
+          d'icône. Les Boucliers y sont, et c'est assumé bien que le palmarès
+          ait quitté le haut de page : ici c'est un nombre parmi quatre autres,
+          à l'autre bout de la page, non un bloc qui redit le serment. */}
+      <section className="bg-usap-sang">
+        <div className="mx-auto max-w-6xl px-4 py-10 text-center sm:py-14">
+          <p className="font-display text-2xl uppercase leading-none text-primary-foreground sm:text-3xl">{t("accueil.clotureDepuis")}</p>
+          <dl className="mt-6 grid grid-cols-2 gap-x-6 gap-y-6 sm:grid-cols-5">
+            {(
+              [
+                ["accueil.clotureBoucliers", boucliers],
+                ["accueil.clotureRencontres", matchs],
+                ["accueil.clotureVictoires", victoires],
+                ["accueil.cloturePoints", pointsMarques],
+                ["accueil.clotureJoueurs", joueurs],
+              ] as const
+            ).map(([cle, valeur]) => (
+              <div key={cle}>
+                <dd className="font-display text-5xl leading-none text-usap-or-vif tabular-nums sm:text-6xl">{nombre(valeur)}</dd>
+                <dt className="mt-2 text-sm text-primary-foreground">{t(cle)}</dt>
+              </div>
+            ))}
+          </dl>
+        </div>
+      </section>
     </>
   );
 }

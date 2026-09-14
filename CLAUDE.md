@@ -2023,6 +2023,29 @@ disparaître : les trois gardent leur place d'un jour à l'autre. Les titres
 de colonne sont des h3 en encre, `SousTitre`, partagés avec les classements
 de la saison. Clés `accueil.ceJour*`.
 
+**ET UN BANDEAU SANG ET OR FERME LA PAGE**, depuis le 14 septembre 2026 à
+la demande de Jérémy — le pendant du hero, sous « Explorer » et avant le
+pied de page : le hero dit qui on est, celui-ci ce qu'on a fait. « Depuis
+1902 » en blanc, puis **cinq nombres en or vif** dans la voix condensée,
+chacun sous son libellé en blanc — Boucliers de Brennus, rencontres jouées,
+victoires, points marqués, joueurs —, tous lus dans la base : les Boucliers
+sur la table `Trophy` comme sur la page du palmarès, `PALMARES` en repli, le
+reste en agrégats des rencontres jouées. Hors du conteneur comme le hero,
+d'un bord à l'autre, doublure alignée ; même règle d'encre, `usap-or-vif` et
+`primary-foreground`. Cinq colonnes en `sm`, deux en mobile.
+
+Deux choses à savoir : **ce sont des nombres, non des cartes** — une seule
+ligne, pas de case, pas d'icône, ce qui les distingue des « cartes de
+chiffres » que le chantier design a retirées ; et **les Boucliers y sont
+bien que le palmarès ait quitté le haut de page** — ici c'est un nombre
+parmi quatre autres, à l'autre bout de la page, non un bloc qui redit le
+serment. Trois des cinq nombres paraissent aussi dans la note du chapeau,
+sous « en cours de saisie » ; là ils datent le chantier, ici ils le
+mesurent. **L'effectif en portraits a été écarté** le même jour, Jérémy le
+jugeant trop lourd visuellement — cinquante bustes sous trois classements
+feraient un mur ; s'il revenait, ce serait en une seule rangée à 40 pixels
+ou en une phrase. Clés `accueil.cloture*`.
+
 **ET LE PALMARÈS A QUITTÉ L'ACCUEIL**, le même jour, sur décision de Jérémy.
 Il en était l'audace depuis le 6 septembre — « Sept fois champion de France »
 en rouge et les sept années du Bouclier en or condensé, chacune liée à sa

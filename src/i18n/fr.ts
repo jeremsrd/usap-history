@@ -102,6 +102,15 @@ export const fr = {
     faceADernieres: "Les cinq dernières confrontations",
     faceAPremiere: "Ce sera la première rencontre entre les deux clubs.",
     faceAComplet: "Le tête-à-tête complet",
+    // Le bandeau de clôture, sang et or : « depuis 1902 » puis cinq nombres
+    // lus dans la base, chacun sous son libellé. Les libellés sont au pluriel
+    // fixe — un nombre à quatre chiffres n'a pas besoin d'`Intl.PluralRules`.
+    clotureDepuis: "Depuis 1902",
+    clotureBoucliers: "Boucliers de Brennus",
+    clotureRencontres: "rencontres jouées",
+    clotureVictoires: "victoires",
+    cloturePoints: "points marqués",
+    clotureJoueurs: "joueurs",
     explorerTitre: "Explorer",
     explorerSaisons: "toutes les saisons, de 1902 à aujourd'hui",
     explorerMatchs: "toutes les rencontres, par saison et par adversaire",
