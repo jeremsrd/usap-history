@@ -17,10 +17,10 @@ export default async function Image() {
   return new ImageResponse(
     (
       <div style={{ width: "100%", height: "100%", display: "flex", alignItems: "center", background: SANG, color: BLANC, fontFamily: "Archivo Condensed", padding: "0 72px", gap: 56 }}>
-        {ecusson && <img src={ecusson} width={280} height={280} style={{ width: 280, height: 280, objectFit: "contain", flexShrink: 0 }} />}
+        {ecusson && <img src={ecusson} alt="" width={280} height={280} style={{ width: 280, height: 280, objectFit: "contain", flexShrink: 0 }} />}
         <div style={{ display: "flex", flexDirection: "column", width: 720 }}>
           <div style={{ fontSize: 112, lineHeight: 1, textTransform: "uppercase" }}>USAP Historia</div>
-          <div style={{ fontSize: 42, lineHeight: 1.1, textTransform: "uppercase", color: OR_VIF, marginTop: 20 }}>L'histoire de l'USA Perpignan depuis 1902</div>
+          <div style={{ fontSize: 42, lineHeight: 1.1, textTransform: "uppercase", color: OR_VIF, marginTop: 20 }}>{"L'histoire de l'USA Perpignan depuis 1902"}</div>
           <div style={{ fontFamily: "Archivo", fontSize: 28, lineHeight: 1.3, marginTop: 24, opacity: 0.9 }}>Chaque rencontre, chaque joueur, chaque saison. usaphistoria.cat</div>
         </div>
       </div>

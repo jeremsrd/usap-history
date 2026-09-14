@@ -43,7 +43,7 @@ export default async function Image({ params }: { params: Promise<{ slug: string
   const droite = match?.isHome ? { logo: adverse, nom, score: match.scoreOpponent } : { logo: usap, nom: "USAP", score: match?.scoreUsap };
 
   const ecusson = (src: string | null) =>
-    src ? <img src={src} width={200} height={200} style={{ width: 200, height: 200, objectFit: "contain" }} /> : <div style={{ width: 200, height: 200 }} />;
+    src ? <img src={src} alt="" width={200} height={200} style={{ width: 200, height: 200, objectFit: "contain" }} /> : <div style={{ width: 200, height: 200 }} />;
 
   return new ImageResponse(
     (

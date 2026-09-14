@@ -4596,6 +4596,7 @@ composition de Grenoble au barrage 2024-2025.
 ```bash
 npm run dev                          # serveur de développement (Turbopack)
 npx tsc --noEmit                     # vérification des types — src/ SEULEMENT
+npx next lint                        # ESLint — À PASSER AVANT DE POUSSER, cf. ci-dessous
 npx tsx scripts/<script>.ts          # exécuter un script d'import
 npx tsx scripts/<script>.ts --dry    # simulation, pour les scripts de masse
 
@@ -4603,6 +4604,17 @@ npx tsx scripts/<script>.ts --dry    # simulation, pour les scripts de masse
 npx tsc --noEmit --strict --skipLibCheck --target es2022 --module esnext \
   --moduleResolution bundler --esModuleInterop scripts/<script>.ts
 ```
+
+⚠️ **`tsc` NE SUFFIT PAS AVANT DE POUSSER : VERCEL PASSE ESLINT, ET UNE
+ERREUR ESLINT CASSE LE DÉPLOIEMENT.** Le 14 septembre 2026, le commit des
+images de partage a été refusé en production pour deux apostrophes en clair
+dans du JSX — « L'histoire de l'USA Perpignan » —, que
+`react/no-unescaped-entities` tient pour une erreur et que `tsc --noEmit`
+ne voit pas. Le site est resté sur le commit précédent le temps de corriger.
+Passer `npx next lint` avant chaque poussée, et `npx next build` quand la
+séance a touché à autre chose que des pages — un fichier `opengraph-image`,
+une route de métadonnées. Une chaîne à apostrophe dans du JSX s'écrit
+`{"L'histoire…"}`.
 
 ⚠️ **CE PROJET N'A PAS DE FORMATEUR, ET IL NE FAUT PAS EN LANCER UN.** Ni
 prettier en dépendance, ni `.prettierrc` : le style du dépôt — lignes longues,
