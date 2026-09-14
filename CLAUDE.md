@@ -4787,6 +4787,16 @@ page n'avait d'image de partage.
   texte, il faut une seule chaîne. Les slugs de rencontre n'ont pas de CUID,
   la carte cherche par le slug comme la fiche.
 
+  **ET UN QUATRIÈME, APPRIS EN PRODUCTION** : les deux cartes ont rendu 500
+  sur Vercel le jour de leur mise en ligne, quand elles marchaient en local.
+  Une fonction Vercel n'embarque que ce que le bundle référence, et un
+  `readFile` sur `src/app/fonts/` ou `public/images/` n'est pas une
+  référence. `outputFileTracingIncludes` de `next.config.ts` déclare ces
+  fichiers route par route, et `.next/server/app/**/opengraph-image/
+  route.js.nft.json` dit ce qui est réellement embarqué — c'est là qu'il
+  faut regarder, pas au journal du build, qui ne dit rien. **Ce qu'on lit
+  sur le disque à l'exécution se vérifie sur le déploiement, pas en local.**
+
 Ce qui reste de la phase 5 : les performances et le PWA.
 
 ## L'administration, et ce qui la protège
