@@ -41,6 +41,10 @@ usap-history/
 │   │   ├── records/               # records sur un match, sur une saison, séries
 │   │   ├── palmares/, statistiques/
 │   │   ├── mentions-legales/, confidentialite/   # les deux pages légales
+│   │   ├── opengraph-image.tsx   # la carte de partage du site ; les fiches
+│   │   │                         #   de match ont la leur
+│   ├── robots.ts, sitemap.ts     # hors [locale] : des fichiers, pas des pages
+│   ├── fonts/                    # Archivo, pour les cartes de partage (OFL)
 │   │   ├── login/, auth/callback/, api/upload/
 │   │   └── admin/                # protégé — saisons, matchs (+ [id]), joueurs,
 │   │                             #   adversaires, arbitres, stades, entraineurs,
@@ -4733,6 +4737,45 @@ npx prisma generate
 C'est ainsi qu'`opponent_venues` a été créée le 31 août 2026. **Relire le SQL
 avant de l'exécuter** : `migrate diff` rend tout l'écart entre le schéma et la
 base, dérive comprise, et pas seulement ce qu'on croit ajouter.
+
+## Être trouvé — le SEO technique
+
+**Posé le 14 septembre 2026**, six jours après la mise en ligne du domaine,
+sur le constat que `robots.txt` et `sitemap.xml` rendaient 404 et qu'aucune
+page n'avait d'image de partage.
+
+- **`src/app/robots.ts`** : tout ouvert sauf `/{fr,ca}/admin`,
+  `/{fr,ca}/login`, `/api/` et `/auth/` — la seconde couche sous le `noindex`
+  des layouts —, et le sitemap déclaré. Hors du segment `[locale]` : c'est un
+  fichier, et le middleware laisse passer tout chemin à extension.
+- **`src/app/sitemap.ts`**, lu dans la base : les quinze listes et toutes les
+  fiches — rencontres, saisons, adversaires, stades, arbitres, entraîneurs,
+  présidents, pages légales — dans les deux langues, chacune portant l'autre
+  en `alternates`, le pendant du `hreflang` des pages ; **et les joueurs
+  liés au club seulement**, la condition de la liste des joueurs — les trois
+  mille cinq cents fiches d'adversaires existent mais ne valent pas d'être
+  poussées aux moteurs. Près de trois mille adresses. `lastModified` vient
+  d'`updatedAt` là où le modèle le porte — stades, arbitres et présidents ne
+  l'ont pas.
+- **Les images de partage**, dessinées à la volée par `ImageResponse` de
+  `next/og` : `[locale]/opengraph-image.tsx` pour toute page — l'écusson, le
+  nom du site, la promesse en or vif sur le sang, le hero en une carte —,
+  et `[locale]/matchs/[slug]/opengraph-image.tsx` pour une fiche de match :
+  les deux écussons, le score énorme en or vif, l'affiche et la journée, ce
+  qu'on colle sur WhatsApp ou X. Next.js les déclare de lui-même dans les
+  métadonnées, la fiche remplaçant la carte du site.
+
+  Trois choses apprises en les écrivant, dans `src/lib/og.ts` : **Archivo
+  est dans le dépôt**, `src/app/fonts/`, licence OFL — `next/font` ne laisse
+  pas ses fichiers sur disque, et aller chercher la police chez Google à
+  chaque rendu ferait dépendre chaque carte d'un appel réseau ; **les
+  écussons sont donnés en `data:`**, lus dans `public/`, une adresse absolue
+  désignant `localhost` en développement ; et **Satori exige `display: flex`
+  sur tout nœud à plusieurs enfants** — `{a} – {b}` en JSX fait deux enfants
+  texte, il faut une seule chaîne. Les slugs de rencontre n'ont pas de CUID,
+  la carte cherche par le slug comme la fiche.
+
+Ce qui reste de la phase 5 : les performances et le PWA.
 
 ## L'administration, et ce qui la protège
 
