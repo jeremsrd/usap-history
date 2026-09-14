@@ -9,6 +9,7 @@ import { formatDateFR } from "@/lib/utils";
 import type { Metadata } from "next";
 import VideoEmbed from "@/components/VideoEmbed";
 import ScoreEvolution from "@/components/ScoreEvolution";
+import { IconeFait } from "@/components/IconeFait";
 import { dictionnaire, type Traduire } from "@/i18n/dictionnaire";
 import type { Langue } from "@/i18n/langues";
 import { liensAlternatifs } from "@/lib/seo";
@@ -26,6 +27,8 @@ import { liensAlternatifs } from "@/lib/seo";
  * Ce que la page ne fait plus : une pastille verte ou rouge pour le
  * résultat, un badge bleu pour le bonus défensif, des emojis pour les faits
  * et les cartons, des chips sous le graphe, des icônes devant les titres.
+ * Les faits portent depuis le 14 septembre 2026 une icône dessinée au trait
+ * — `IconeFait` —, ce qui n'est pas un emoji : demandée par Jérémy.
  */
 
 export const dynamic = "force-dynamic";
@@ -81,7 +84,7 @@ export default async function MatchDetailPage({ params }: Props) {
       venue: { select: { name: true, slug: true, city: true } },
       referee: true,
       players: {
-        include: { player: { select: { slug: true, firstName: true, lastName: true } } },
+        include: { player: { select: { slug: true, firstName: true, lastName: true, photoUrl: true } } },
         orderBy: [{ isStarter: "desc" }, { shirtNumber: "asc" }],
       },
       matchEvents: { orderBy: { minute: "asc" } },
@@ -309,8 +312,10 @@ export default async function MatchDetailPage({ params }: Props) {
           <Titre>{t("match.faitsTitre")}</Titre>
           <ol className="max-w-3xl text-sm">
             {match.matchEvents.map((event) => (
-              <li key={event.id} className="flex gap-4 border-b border-border py-1.5">
+              <li key={event.id} className="flex items-center gap-3 border-b border-border py-1.5">
                 <span className="w-10 shrink-0 text-right text-muted-foreground tabular-nums">{event.minute}&apos;</span>
+                {/* L'icône prend la couleur du camp : rouge pour l'USAP, gris pour l'adversaire. */}
+                <IconeFait type={event.type} className={event.isUsap ? "text-usap-sang" : "text-muted-foreground"} />
                 <span className={event.isUsap ? "text-foreground" : "text-muted-foreground"}>
                   {event.description || event.type.replace(/_/g, " ").toLowerCase()}
                 </span>
@@ -337,6 +342,18 @@ export default async function MatchDetailPage({ params }: Props) {
       {/* D'où vient ce que la page affirme, quand ce n'est pas de la feuille */}
       <Provenance entite="Match" id={match.id} langue={locale} />
     </div>
+  );
+}
+
+/** Le portrait d'un joueur dans un XV, à la taille des classements, ou une silhouette au trait quand la base n'en a pas. */
+function Portrait({ photoUrl }: { photoUrl: string | null }) {
+  return photoUrl ? (
+    <Image src={photoUrl} alt="" width={28} height={28} className="h-7 w-7 shrink-0 rounded-xs object-cover" />
+  ) : (
+    <svg width="28" height="28" viewBox="0 0 20 20" aria-hidden className="h-7 w-7 shrink-0 rounded-xs bg-muted text-muted-foreground">
+      <circle cx="10" cy="7.5" r="3.2" fill="currentColor" opacity="0.6" />
+      <path d="M3.5 18.5c.6-3.6 3.3-5.5 6.5-5.5s5.9 1.9 6.5 5.5Z" fill="currentColor" opacity="0.6" />
+    </svg>
   );
 }
 
@@ -400,7 +417,7 @@ type Ligne = {
   orangeCard: boolean;
   redCard: boolean;
   opponentPlayerName: string | null;
-  player: { slug: string; firstName: string; lastName: string } | null;
+  player: { slug: string; firstName: string; lastName: string; photoUrl: string | null } | null;
 };
 
 /**
@@ -416,7 +433,7 @@ function Composition({ lignes, t, adverse = false }: { lignes: Ligne[]; t: Tradu
     l.length > 0 && (
       <tbody className="tabular-nums">
         <tr>
-          <th scope="rowgroup" colSpan={7} className="pt-3 pb-1 text-left text-xs font-medium text-muted-foreground">
+          <th scope="rowgroup" colSpan={8} className="pt-3 pb-1 text-left text-xs font-medium text-muted-foreground">
             {libelle} ({l.length})
           </th>
         </tr>
@@ -435,6 +452,14 @@ function Composition({ lignes, t, adverse = false }: { lignes: Ligne[]; t: Tradu
           return (
             <tr key={mp.id} className="border-b border-border hover:bg-muted">
               <td className={`w-8 py-1 pr-2 text-right font-semibold ${adverse ? "text-foreground" : "text-usap-sang"}`}>{mp.shirtNumber ?? ""}</td>
+              {/* Le portrait, et **une silhouette à défaut** — demandé par Jérémy
+                  le 14 septembre 2026, à rebours des listes où la case reste
+                  vide : dans un XV, un visage inconnu dit « un homme dont on
+                  n'a pas la photo », quand une case vide au milieu de
+                  portraits se lirait comme un trou. */}
+              <td className="py-1 pr-2">
+                <Portrait photoUrl={mp.player?.photoUrl ?? null} />
+              </td>
               <td className="py-1 pr-3">
                 {mp.player ? (
                   <Link href={`/joueurs/${mp.player.slug}`} className="text-foreground hover:text-usap-sang">
@@ -466,6 +491,7 @@ function Composition({ lignes, t, adverse = false }: { lignes: Ligne[]; t: Tradu
         <thead>
           <tr className="border-b border-border text-xs text-muted-foreground">
             <th scope="col" className="py-2 pr-2 text-right font-medium">{t("match.colNumero")}</th>
+            <th scope="col" className="py-2 pr-2 font-medium" />
             <th scope="col" className="py-2 pr-3 text-left font-medium">{t("match.colJoueur")}</th>
             <th scope="col" className="hidden py-2 pr-3 text-left font-medium md:table-cell">{t("match.colPoste")}</th>
             <th scope="col" className="py-2 pr-3 text-right font-medium">{t("match.colMinutes")}</th>

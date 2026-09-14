@@ -1834,7 +1834,30 @@ club sans écusson. En mobile, écussons, score et deux noms ne tiennent pas
 sur 375 pixels : les noms passent au-dessus en une affiche, les écussons
 gardent le score entre eux, et le score descend d'un cran — en 7xl il se
 cassait en deux lignes. C'est une décision, à ne pas reprendre pour un
-oubli de nettoyage : la liste des matchs, elle, reste sans logos. Le titre décidé par le match
+oubli de nettoyage : la liste des matchs, elle, reste sans logos.
+
+**Et les faits portent une icône depuis le même jour**, à la demande de
+Jérémy — `IconeFait`, dans `src/components/`. Ce ne sont pas les emojis que
+le chantier avait retirés : quatre dessins de seize pixels au trait, en
+`currentColor`, qui prennent la couleur de la ligne — rouge pour l'USAP,
+gris pour l'adversaire. Le ballon pour un essai ; les poteaux pour ce qui se
+marque au pied, ballon au sol pour une transformation, en l'air pour un
+drop, seuls pour une pénalité ; un rectangle plein pour un carton ; deux
+flèches pour un remplacement. **Le jaune du carton est une couleur en dur,
+et c'est voulu** : c'est une donnée, comme les couleurs d'un club sur sa
+fiche, non un jeton — un carton jaune est jaune dans les deux thèmes —, et un
+liseré en `currentColor` à faible opacité le détache du fond sombre. Le
+rouge du carton, lui, est `usap-sang`.
+
+**Et les deux XV portent le portrait de chaque homme**, à la taille des
+classements, **avec une silhouette au trait quand la base n'en a pas** — à
+la demande de Jérémy le même jour. C'est à rebours des listes, où la case
+reste vide, et c'est assumé : au milieu d'un XV en portraits, une case vide
+se lirait comme un trou, quand un visage inconnu dit « un homme dont on n'a
+pas la photo ». La silhouette est un dessin en `currentColor` sur
+`bg-muted`, non l'icône Lucide dans un rond gris que le chantier avait
+chassée. Les faits, eux, gardent leurs seules icônes : les portraits y ont
+été posés d'abord, par un malentendu, et retirés le même jour. Le titre décidé par le match
 est une ligne en or sous l'affiche. Tout le reste est dit en phrases puis en
 tableaux : « Défaite, avec le bonus défensif. Mi-temps 6-28. Stade
 Jean-Bouin, Paris, 12 065 spectateurs, arbitre Kévin Bralley. » ; le graphe
