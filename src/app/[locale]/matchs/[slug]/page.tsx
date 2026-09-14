@@ -1,4 +1,5 @@
 import Link from "@/components/Lien";
+import Image from "next/image";
 import Provenance from "@/components/Provenance";
 import { notFound } from "next/navigation";
 import { prisma } from "@/lib/prisma";
@@ -16,8 +17,9 @@ import { liensAlternatifs } from "@/lib/seo";
  * La fiche d'une rencontre, refaite le 6 septembre 2026 dans l'identité posée
  * sur `/joueurs` et la fiche joueur. Sa seule audace est le **tableau
  * d'affichage** : l'affiche en Archivo condensée, l'USAP en rouge,
- * l'adversaire en encre, et le score énorme entre les deux — sans logos,
- * qui sont ailleurs sur le site. Tout ce qui l'entoure est dit en phrases
+ * l'adversaire en encre, et le score énorme entre les deux — encadré des
+ * deux écussons depuis le 14 septembre 2026, sur décision de Jérémy, qui
+ * avait retenu cette disposition sur l'accueil. Tout ce qui l'entoure est dit en phrases
  * puis en tableaux : le résultat et ses bonus, la mi-temps, le stade,
  * l'affluence, l'arbitre ; le graphe du score ; les deux XV ; les faits.
  *
@@ -154,9 +156,40 @@ export default async function MatchDetailPage({ params }: Props) {
         <p className="text-sm text-muted-foreground">
           {intitule}, {quand}.
         </p>
-        <div className="mt-2 grid grid-cols-[1fr_auto_1fr] items-center gap-x-4 sm:gap-x-8">
+        {/* **LES ÉCUSSONS ENCADRENT LE SCORE**, depuis le 14 septembre 2026 à la
+            demande de Jérémy — la disposition qu'il a retenue sur l'accueil,
+            à l'échelle du score de la fiche. La page les avait perdus au
+            chantier design, « ils sont ailleurs sur le site » ; ils sont ici
+            sur décision, à ne pas reprendre pour un oubli. L'écusson adverse
+            porte `logo-club` pour le thème sombre, celui de l'USAP a son
+            propre contour d'or ; un club sans écusson ne laisse pas de case.
+
+            En mobile, écussons, score et deux noms ne tiennent pas sur une
+            ligne de 375 pixels : les noms passent au-dessus en une affiche,
+            et les écussons gardent le score entre eux. */}
+        <p className="mt-2 font-display text-2xl uppercase leading-none sm:hidden">
+          {match.isHome ? (
+            <>
+              <span className="text-usap-sang">USAP</span> <span className="text-muted-foreground">–</span>{" "}
+              <Link href={`/adversaires/${match.opponent.slug}`} className="text-foreground hover:text-usap-sang">
+                {oppName}
+              </Link>
+            </>
+          ) : (
+            <>
+              <Link href={`/adversaires/${match.opponent.slug}`} className="text-foreground hover:text-usap-sang">
+                {oppName}
+              </Link>{" "}
+              <span className="text-muted-foreground">–</span> <span className="text-usap-sang">USAP</span>
+            </>
+          )}
+        </p>
+        <div className="mt-2 grid grid-cols-[auto_1fr_auto] items-center gap-x-4 sm:grid-cols-[1fr_auto_auto_auto_1fr] sm:gap-x-6">
           <Equipe usap={match.isHome} nom={oppName} slug={match.opponent.slug} align="right" />
-          <p className="font-display text-7xl leading-none text-foreground tabular-nums sm:text-9xl">
+          <Ecusson usap={match.isHome} logoUrl={match.opponent.logoUrl} nom={oppName} />
+          {/* 6xl en mobile : entre deux écussons de 56 px, le 7xl se cassait
+              en deux lignes sur 375 pixels. */}
+          <p className="text-center font-display text-6xl leading-none whitespace-nowrap text-foreground tabular-nums sm:text-9xl">
             {joue ? (
               <>
                 {match.isHome ? match.scoreUsap : match.scoreOpponent}
@@ -167,6 +200,7 @@ export default async function MatchDetailPage({ params }: Props) {
               <span className="text-3xl text-muted-foreground sm:text-5xl">{t("match.aVenir")}</span>
             )}
           </p>
+          <Ecusson usap={!match.isHome} logoUrl={match.opponent.logoUrl} nom={oppName} />
           <Equipe usap={!match.isHome} nom={oppName} slug={match.opponent.slug} align="left" />
         </div>
         {trophee && (
@@ -306,9 +340,16 @@ export default async function MatchDetailPage({ params }: Props) {
   );
 }
 
-/** Une équipe du tableau d'affichage : l'USAP en rouge, l'adversaire en encre et lié à sa fiche. */
+/** L'écusson d'un camp, à la taille du score ; l'USAP sans `logo-club`, son contour d'or suffit. */
+function Ecusson({ usap, logoUrl, nom }: { usap: boolean; logoUrl: string | null; nom: string }) {
+  if (usap) return <Image src="/images/usap/logo.png" alt="USAP" width={96} height={96} className="h-14 w-14 shrink-0 sm:h-24 sm:w-24" />;
+  if (!logoUrl) return <span />;
+  return <Image src={logoUrl} alt={nom} width={96} height={96} className="h-14 w-14 shrink-0 sm:h-24 sm:w-24 logo-club" />;
+}
+
+/** Une équipe du tableau d'affichage : l'USAP en rouge, l'adversaire en encre et lié à sa fiche. Cachée en mobile, où l'affiche est au-dessus. */
 function Equipe({ usap, nom, slug, align }: { usap: boolean; nom: string; slug: string; align: "left" | "right" }) {
-  const classes = `font-display text-3xl uppercase leading-none sm:text-5xl ${align === "right" ? "text-right" : "text-left"}`;
+  const classes = `hidden font-display text-3xl uppercase leading-none sm:block sm:text-5xl ${align === "right" ? "text-right" : "text-left"}`;
   return usap ? (
     <p className={`${classes} text-usap-sang`}>USAP</p>
   ) : (

@@ -1826,7 +1826,15 @@ dictionnaire (`fiche.*`), et la provenance de ce qu'elle affirme la clôt.
 **La fiche de match est refaite le même jour.** Sa seule audace est le
 **tableau d'affichage** : l'affiche en Archivo condensée, l'USAP en rouge,
 l'adversaire en encre et lié à sa fiche, le score énorme entre les deux, et
-pas de logos — ils sont ailleurs sur le site. Le titre décidé par le match
+pas de logos — ils sont ailleurs sur le site. **Les écussons y sont revenus
+le 14 septembre 2026**, à la demande de Jérémy, de part et d'autre du score
+comme il l'avait retenu sur l'accueil, à 96 pixels à l'échelle du score ;
+l'adverse en `logo-club`, l'USAP avec son contour d'or, pas de case pour un
+club sans écusson. En mobile, écussons, score et deux noms ne tiennent pas
+sur 375 pixels : les noms passent au-dessus en une affiche, les écussons
+gardent le score entre eux, et le score descend d'un cran — en 7xl il se
+cassait en deux lignes. C'est une décision, à ne pas reprendre pour un
+oubli de nettoyage : la liste des matchs, elle, reste sans logos. Le titre décidé par le match
 est une ligne en or sous l'affiche. Tout le reste est dit en phrases puis en
 tableaux : « Défaite, avec le bonus défensif. Mi-temps 6-28. Stade
 Jean-Bouin, Paris, 12 065 spectateurs, arbitre Kévin Bralley. » ; le graphe
