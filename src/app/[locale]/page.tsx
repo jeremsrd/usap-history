@@ -467,7 +467,15 @@ export default async function Home({ params }: Props) {
         </div>
       </section>
 
-      <div className="mx-auto max-w-6xl px-4 py-10 sm:py-14">
+      {/* **LA PAGE EST EN BANDES**, depuis le 14 septembre 2026 : Jérémy la
+          trouvait dense — « beaucoup d'informations sur peu d'espace ». Chaque
+          bloc est une bande d'un bord à l'autre, sa doublure alignée sur le
+          hero, et les fonds alternent : le fond de la page, puis la surface
+          `usap-carte` — celle du pied de page, gris rosé en clair, sang sombre
+          en sombre —, puis le fond, et le sang pour clore. Ce ne sont pas des
+          cartes, ce sont des bandes, comme le hero ; et l'espacement a doublé,
+          `py-12` puis `py-16` par bande, contre `mb-10` entre les blocs. */}
+      <Bande>
         <header className="mb-12">
           <h1 className="font-display text-4xl uppercase leading-none text-foreground sm:text-6xl">{t("accueil.titre")}</h1>
           <p className="mt-6 max-w-prose text-lg leading-snug text-foreground">{t("accueil.chapeau")}</p>
@@ -490,7 +498,7 @@ export default async function Home({ params }: Props) {
             l'histoire » et « Explorer ». Ce sont les trois choses qu'un
             supporter regarde en premier, et elles tiennent sur une ligne. */}
         {(dernier || prochain || auHasard) && (
-          <section className="mb-10 grid gap-8 md:grid-cols-3">
+          <div className="grid gap-8 md:grid-cols-3">
             {dernier && (
               <div>
                 <Titre>{t("accueil.dernierTitre")}</Titre>
@@ -609,8 +617,9 @@ export default async function Home({ params }: Props) {
                 </div>
               </div>
             )}
-          </section>
+          </div>
         )}
+      </Bande>
 
         {/* **Face au prochain adversaire.** Le bilan en une phrase avec les
             mots de la fiche du club, les cinq dernières confrontations en
@@ -649,7 +658,7 @@ export default async function Home({ params }: Props) {
             </Link>
           );
           return (
-            <section className="mb-10 grid gap-8 md:grid-cols-2">
+            <Bande carte classe="grid gap-8 md:grid-cols-2">
               <div>
               <Titre encre>
                 <Link href={`/adversaires/${prochain.opponent.slug}`} className="hover:text-usap-sang">
@@ -756,13 +765,13 @@ export default async function Home({ params }: Props) {
                   </table>
                 </div>
               )}
-            </section>
+            </Bande>
           );
         })()}
 
-        {/* La saison en cours, et sa frise */}
+        {/* La saison en cours, son bilan et ses classements */}
         {saison && (
-          <section className="mb-10">
+          <Bande>
             <Titre>
               <Link href={`/saisons/${saison.label}`} className="hover:text-usap-or">
                 {t("accueil.saisonTitre", { label: saison.label })}
@@ -818,7 +827,7 @@ export default async function Home({ params }: Props) {
                 {t("accueil.saisonEntiere")}
               </Link>
             </p>
-          </section>
+          </Bande>
         )}
 
         {/* **Ce jour dans l'histoire, en trois colonnes** : les rencontres
@@ -826,7 +835,7 @@ export default async function Home({ params }: Props) {
             avec l'âge fêté, le jour même en gras, et la rencontre la plus proche il y a dix, vingt,
             cinquante et cent ans. Une colonne vide le dit plutôt que de
             disparaître : les trois restent à leur place d'un jour à l'autre. */}
-        <section className="mb-10">
+        <Bande carte>
           <Titre encre>
             {t("accueil.ceJourTitre")}
             {/* La date sous le titre en mobile, à sa suite dès `sm` : à sa
@@ -938,10 +947,10 @@ export default async function Home({ params }: Props) {
               )}
             </div>
           </div>
-        </section>
+        </Bande>
 
         {/* Explorer */}
-        <section>
+        <Bande>
           <Titre>{t("accueil.explorerTitre")}</Titre>
           <ul className="grid gap-x-8 gap-y-2 text-sm sm:grid-cols-2 lg:grid-cols-3">
             {(
@@ -962,8 +971,7 @@ export default async function Home({ params }: Props) {
               </li>
             ))}
           </ul>
-        </section>
-      </div>
+        </Bande>
 
       {/* **LE BANDEAU DE CLÔTURE, SANG ET OR** : la page s'est ouverte sur le
           serment, elle se ferme sur ce que le club a fait — « depuis 1902 »,
@@ -1039,6 +1047,21 @@ function ClassementCourt<C>({
         </tbody>
       </table>
     </div>
+  );
+}
+
+/**
+ * Une bande de la page : d'un bord à l'autre, sa doublure alignée sur le
+ * hero, sur le fond de la page ou sur la surface `usap-carte` — les deux
+ * alternent, et la surface est cernée d'un filet haut et bas : en clair
+ * elle n'est qu'un gris rosé très pâle, et le filet dit où la bande
+ * commence. `classe` s'applique à la doublure, pour une grille.
+ */
+function Bande({ children, carte = false, classe = "" }: { children: React.ReactNode; carte?: boolean; classe?: string }) {
+  return (
+    <section className={carte ? "border-y border-border bg-usap-carte" : ""}>
+      <div className={`mx-auto max-w-6xl px-4 py-12 sm:py-16 ${classe}`}>{children}</div>
+    </section>
   );
 }
 

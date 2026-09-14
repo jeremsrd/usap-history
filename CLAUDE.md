@@ -2046,6 +2046,21 @@ jugeant trop lourd visuellement — cinquante bustes sous trois classements
 feraient un mur ; s'il revenait, ce serait en une seule rangée à 40 pixels
 ou en une phrase. Clés `accueil.cloture*`.
 
+**ET LA PAGE EST EN BANDES**, le même jour, sur une remarque de Jérémy :
+« beaucoup d'informations sur peu d'espace ». Le conteneur unique a cédé la
+place à sept bandes d'un bord à l'autre, chacune avec sa doublure alignée
+sur le hero — `Bande`, dans la page — et **les fonds alternent** : le hero
+sang ; présentation et ligne des trois colonnes sur le fond de la page ;
+tête-à-tête sur la surface `usap-carte` — celle du pied de page, gris rosé
+en clair, sang sombre en sombre —, cernée d'un filet haut et bas parce
+qu'en clair la teinte seule ne se voit presque pas ; la saison sur le
+fond ; « ce jour » sur la surface ; « Explorer » sur le fond ; la clôture
+sang. **L'espacement a doublé** : `py-12` puis `py-16` par bande, contre
+`mb-10` entre les blocs. Ce ne sont pas des cartes — rien n'est bordé
+dans les marges —, ce sont des bandes, comme le hero l'était déjà. Le
+`-mb-16` de la clôture et le `md:-my-5` du joueur au hasard survivent au
+découpage.
+
 **ET LA PAGE A ÉTÉ RELUE D'ENSEMBLE LE 14 SEPTEMBRE 2026**, après trois jours
 où elle a doublé de longueur bloc par bloc. Trois défauts, tous en mobile
 ou à la jointure des blocs, aucun dans un bloc pris seul : un blanc entre
