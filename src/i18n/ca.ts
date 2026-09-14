@@ -8,8 +8,8 @@
  * catalanoparlant d'aquí** ; cap tria dialectal no s'hi ha inventat.
  *
  * Les claus que hi manquen retomben sobre el francès (cf. `dictionnaire.ts`).
- * **`accueil` hi manca a posta** : la pàgina d'inici es refarà al final, i
- * el seu català s'escriurà aleshores.
+ * Cap secció no hi manca des del 14 de setembre de 2026 : `accueil`, l'última,
+ * s'hi ha escrit un cop la pàgina d'inici acabada.
  *
  * Tres convencions, preses una vegada per totes :
  * - les lletres dels resultats són V, E, D — victòria, empat, derrota —, i
@@ -40,6 +40,66 @@ export const ca = {
     menu: "Obrir el menú",
     fermer: "Tancar el menú",
     logo: "Logo de la USAP",
+  },
+  accueil: {
+    // La pàgina d'inici — l'última traduïda, el 14 de setembre de 2026, un
+    // cop la pàgina acabada. **El jurament és traduït**, no citat : el text
+    // francès és el que Jérémy ha donat, i la seva versió catalana és aquí
+    // una traducció, no el text que el club faria servir — a rellegir en
+    // primer lloc.
+    serment:
+      "« Em comprometo a servir la USAP amb fe i devoció per ser digne de l'escut sang i or que em confia i que els meus antics han carregat de glòria »",
+    titre: "La història de la USAP des de 1902",
+    chapeau:
+      "Cada partit, cada jugador i cada temporada de la USA Perpinyà, a partir de les actes de partit oficials i de la premsa de l'època.",
+    reserve:
+      "Les dades s'estan introduint i investigant : {matchs} partits i {joueurs} jugadors a la base, en {saisons} de les {total} temporades del club. La feina remunta el temps, temporada rere temporada.",
+    dernierTitre: "L'últim partit",
+    prochainTitre: "El pròxim partit",
+    saisonTitre: "La temporada {label}",
+    saisonEntiere: "Veure la temporada sencera",
+    bilanNote: "Balanç del campionat sol, com la classificació oficial.",
+    bilanAVenir: { one: "{n} jornada per jugar", other: "{n} jornades per jugar" },
+    bilanJoues: "Jugats",
+    bilanVictoires: "Victòries",
+    bilanNuls: "Empats",
+    bilanDefaites: "Derrotes",
+    bilanPour: "Punts a favor",
+    bilanContre: "Punts en contra",
+    bilanDifference: "Diferència",
+    bilanEssais: "Assaigs a favor/en contra",
+    bilanBonus: "Bonus of./def.",
+    bilanPoints: "Punts a la classificació",
+    ceJourTitre: "Tal dia com avui",
+    ceJourAucun: "Cap partit de la USAP un {date} a la base.",
+    ceJourRencontres: "Els partits",
+    ceJourNes: "Aniversaris de la setmana",
+    ceJourNesAucun: "Cap aniversari de jugador aquesta setmana a la base.",
+    ceJourAge: { one: "{n} any", other: "{n} anys" },
+    ceJourIlYA: "Fa…",
+    ceJourAns: "{n} anys",
+    ceJourIlYAAucun: "Cap partit a aquestes distàncies a la base.",
+    hasardTitre: "Un jugador a l'atzar",
+    hasardMatchs: { one: "{n} partit", other: "{n} partits" },
+    hasardPoints: { one: "{n} punt", other: "{n} punts" },
+    hasardEssais: { one: "{n} assaig", other: "{n} assaigs" },
+    faceATitre: "Cara a cara amb {nom}",
+    faceADernieres: "Els cinc darrers enfrontaments",
+    faceAPremiere: "Serà el primer enfrontament entre els dos clubs.",
+    faceAComplet: "El cara a cara complet",
+    clotureDepuis: "Des de 1902",
+    clotureBoucliers: "Escuts de Brennus",
+    clotureRencontres: "partits jugats",
+    clotureVictoires: "victòries",
+    cloturePoints: "punts marcats",
+    clotureJoueurs: "jugadors",
+    explorerTitre: "Explorar",
+    explorerSaisons: "totes les temporades, de 1902 fins avui",
+    explorerMatchs: "tots els partits, per temporada i per adversari",
+    explorerJoueurs: "tots els jugadors que han passat pel club",
+    explorerStatistiques: "les classificacions i els balanços",
+    explorerAdversaires: "els clubs trobats",
+    explorerStades: "els camps on ha jugat la USAP",
   },
   joueurs: {
     titre: "Jugadors",
@@ -870,7 +930,6 @@ export const ca = {
   },
   langue: {
     choisir: "Canviar de llengua",
-    nonTraduit: "Traducció al català en curs. Aquesta pàgina encara està en francès.",
   },
   pied: {
     couverture: "{rencontres} partits a la base, en {saisons} temporades, de {premiere} a {derniere}.",

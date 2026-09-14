@@ -1013,7 +1013,7 @@ doublons.
 | `seed-season-2021-2022.ts` | crée les rencontres d'une saison entière — date et heure, compétition, adversaire, lieu, score, réalisations, résultat, bonus, arbitre — puis les agrégats de saison. Premier jalon de la phase 4 |
 | `lib/erc.ts` | **les pages de l'ERC dans la Wayback Machine**, source officielle des coupes d'Europe d'avant l'EPCR. Deux lecteurs : les comptes rendus de 2007-2008 (`eng/12_NNNN.php`, en latin-1) — compositions à 22 numérotées, capitaines, cartons, réalisations par joueur, essais de pénalité, affluence, stade — et le **Match Centre** de 2010-2013 (`eng/matchcentre/NNNNN.php`), qui ajoute la mi-temps, l'arbitre et une **chronologie minutée**. Quatre secondes entre deux pages et un cache sur disque : l'archive refuse tout après une centaine de requêtes rapprochées |
 | `lib/attestations.ts` | **le troisième état** : `attester()` pose ou remplace la provenance d'un fait — entité, champ, degré, source, qui a tranché, qui a relu —, `attestationsDe()` la lit. À appeler par tout script qui écrit une valeur venue d'ailleurs que de la feuille officielle |
-| `verifier-dictionnaire.ts` | lecture seule : confronte `ca.ts` à `fr.ts` — clés manquantes, en trop, `{variables}` divergentes. Zéro défaut attendu, `accueil` seule section absente. À passer après toute clé ajoutée |
+| `verifier-dictionnaire.ts` | lecture seule : confronte `ca.ts` à `fr.ts` — clés manquantes, en trop, `{variables}` divergentes. Zéro défaut attendu, aucune section absente depuis le 14 septembre 2026. À passer après toute clé ajoutée |
 | `seed-attestations.ts` | verse dans `attestations` les arbitrages que CLAUDE.md portait : postes tranchés, faits donnés par Jérémy, terrains d'aujourd'hui et terrains neutres, écussons hors LNR et EPCR, scores corrigés, couperets renseignés par Wikipédia, campagnes européennes d'ESPN et de l'ERC, saisons dont le garde-fou n'est pas la LNR. 126 lignes, idempotent. `--dry` |
 | `lib/gallica.ts` | **la presse numérisée de Gallica**, pour l'avant-guerre : le fascicule d'un jour, les pages où un mot figure, l'OCR d'une page en ALTO — césures recousues —, et ce qu'un article dit d'un match : les deux XV par lignes (« Les équipes se présentèrent comme suit »), le capitaine, l'arbitre, le score et la mi-temps d'un titre. Trente secondes entre deux requêtes, cache sur disque : Gallica rend 429 dès la cinquième page rapprochée |
 | `seed-match-gallica.ts` | **une rencontre d'avant-guerre depuis *L'Auto*** — les finales de 1914, 1921, 1925 et 1938 sont dans `MATCHS`, **1914 et 1925 sont écrites**, relues sur l'image et validées par Jérémy (`RELECTURES`, `valide`) ; le script crée la rencontre, les deux XV sans numéro, les réalisations sous le barème de l'époque, la chronologie de 1914 à l'horloge, et une attestation sur chaque fait : retrouve le numéro du lendemain, imprime XV, capitaines, arbitre, score et mi-temps avec les écarts — une ligne qui ne compte pas ses hommes, un club à quatorze —, et confronte chaque nom à la base. Refuse d'écrire tant que la base ne sait pas porter la provenance d'une composition ni le barème de 1925. `--match=AAAA-MM-JJ --dry` ; les rencontres connues sont dans `MATCHS` |
@@ -1584,13 +1584,16 @@ de Barcelone.
 
 ### Le catalan — écrit le 7 septembre 2026, à faire relire
 
-**`src/i18n/ca.ts` répond à `fr.ts` clé pour clé**, 757 clés sur 780, et
-`dictionnaire.ts` le sert : toutes les pages publiques sont en catalan
-sous `/ca`, **sauf l'accueil**, dont la section manque à dessein — la page
-sera refondue en dernier, et son catalan écrit alors. C'est la seule qui
-porte encore le bandeau « Traducció al català en curs », déplacé du layout
-vers la page elle-même : un bandeau global aurait menti sur trente-cinq
-pages traduites.
+**`src/i18n/ca.ts` répond à `fr.ts` clé pour clé**, et `dictionnaire.ts`
+le sert : toutes les pages publiques sont en catalan sous `/ca`. L'accueil
+a été le dernier, **écrit le 14 septembre 2026** une fois la page arrêtée,
+et le bandeau « Traducció al català en curs » est parti avec lui — la clé
+`langue.nonTraduit` aussi, des deux cahiers. **Son serment est traduit, non
+cité** : le texte français est celui que Jérémy a donné, et la version
+catalane est une traduction, non le texte que le club ferait sien — c'est
+la première ligne à faire relire. « Ce jour dans l'histoire » y est « Tal
+dia com avui », « Face à » « Cara a cara amb », et les dates de ce bloc
+passent par `LOCALE_INTL` comme les noms de mois ailleurs.
 
 **Ce qui est écrit est du catalan standard, avec le vocabulaire du rugby
 tel que le Termcat le fixe** — assaig, transformació, cop de càstig, melé,
@@ -1617,8 +1620,7 @@ la Catalunya Nord est en France.
 **`scripts/verifier-dictionnaire.ts` garde les deux cahiers alignés** :
 clés manquantes, clés en trop, et `{variables}` qui divergent — une phrase
 traduite qui perdrait `{n}` l'afficherait en clair. Attendu : zéro défaut,
-la seule section absente étant `accueil`. **À passer après toute clé
-ajoutée à `fr.ts`.**
+aucune section absente. **À passer après toute clé ajoutée à `fr.ts`.**
 
 ### Le dictionnaire — second temps, commencé
 
@@ -1678,20 +1680,18 @@ Le choix a d'abord été deux libellés, « FR » et « CA », au motif qu'un dr
 désigne un État et non une langue. **Arbitré par Jérémy le 4 septembre 2026**
 en faveur des drapeaux.
 
-**Et une langue offerte mais pas traduite doit le dire.** L'accueil, seule
-page sans catalan, porte un bandeau : « Traducció al català en curs. Aquesta
-pàgina encara està en francès. » Sans lui, le sélecteur promettrait du
-catalan et rendrait du français — ce qui vaut moins que pas de sélecteur du
-tout. Il était dans le layout, sur toutes les pages, tant qu'aucune n'était
-traduite ; il est dans la page depuis le 7 septembre 2026, et partira avec
-sa refonte.
-
-**Cette phrase est à faire relire par un catalanophone**, comme tout le
-catalan à venir.
+**Et une langue offerte mais pas traduite doit le dire.** Tant que
+l'accueil n'avait pas de catalan, il portait un bandeau : « Traducció al
+català en curs. Aquesta pàgina encara està en francès. » Sans lui, le
+sélecteur aurait promis du catalan et rendu du français — ce qui vaut moins
+que pas de sélecteur du tout. Il a été dans le layout, sur toutes les pages,
+tant qu'aucune n'était traduite ; dans la page seule du 7 au 14 septembre
+2026 ; et il n'existe plus, la clé avec lui. La règle reste, pour la
+prochaine page qui naîtrait sans sa traduction.
 
 ### Ce qui reste
-- **La relecture par un catalanophone de Catalunya Nord**, de tout `ca.ts`.
-- **L'accueil**, avec sa refonte.
+- **La relecture par un catalanophone de Catalunya Nord**, de tout `ca.ts`,
+  le serment de l'accueil en premier.
 - **Les textes de la base** — bilans de saison, biographies — sont un chantier
   à part, et le plus lourd : ils grossissent à chaque saison reprise. Une
   traduction manquante devra se voir, comme se voit une donnée que la source ne
@@ -1859,8 +1859,8 @@ Trois choses arbitrées au passage :
 - **l'écusson y est à 160 pixels**, et c'est ce qui a fait découvrir que
   celui du dépôt n'en faisait que 151 — cf. « Logos des clubs ».
 
-L'accueil reste la seule page sans catalan : le serment y paraît en français
-sous `/ca`, sous le bandeau qui le dit déjà.
+L'accueil a eu son catalan le 14 septembre 2026, serment compris — traduit,
+et à faire relire en premier.
 
 **ET LE HERO EST PASSÉ SANG ET OR LE 10 SEPTEMBRE 2026**, à la demande de
 Jérémy : bandeau rouge d'un bord à l'autre, écusson à gauche, serment en or.
@@ -2045,6 +2045,19 @@ mesurent. **L'effectif en portraits a été écarté** le même jour, Jérémy l
 jugeant trop lourd visuellement — cinquante bustes sous trois classements
 feraient un mur ; s'il revenait, ce serait en une seule rangée à 40 pixels
 ou en une phrase. Clés `accueil.cloture*`.
+
+**ET LA PAGE A ÉTÉ RELUE D'ENSEMBLE LE 14 SEPTEMBRE 2026**, après trois jours
+où elle a doublé de longueur bloc par bloc. Trois défauts, tous en mobile
+ou à la jointure des blocs, aucun dans un bloc pris seul : un blanc entre
+le bandeau de clôture et le pied de page — le `Footer` porte un `mt-16`
+pour toutes les pages, et le bandeau le mange par `-mb-16` plutôt que de
+retirer la marge aux trente-cinq autres ; « 381 joueurs » seul à gauche
+sur sa ligne en mobile, cinq nombres sur deux colonnes — le dernier prend
+la ligne et se centre ; et « 14 septembre » coupé sous « Ce jour dans
+l'histoire » sur 375 pixels — la date passe sous le titre en mobile, à sa
+suite dès `sm`. **Relire l'ensemble après une série de blocs, pas seulement
+chaque bloc** : c'est aux jointures que ça casse. L'ordre des sections et
+le rythme rouge / encre des titres n'ont pas eu à bouger.
 
 **ET LE PALMARÈS A QUITTÉ L'ACCUEIL**, le même jour, sur décision de Jérémy.
 Il en était l'audace depuis le 6 septembre — « Sept fois champion de France »

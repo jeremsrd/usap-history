@@ -7,7 +7,7 @@ import { matchPoints } from "@/lib/scoring";
 import { PALMARES } from "@/lib/constants";
 import { formatDateFR } from "@/lib/utils";
 import { dictionnaire } from "@/i18n/dictionnaire";
-import { LANGUE_PAR_DEFAUT, type Langue } from "@/i18n/langues";
+import { LOCALE_INTL, type Langue } from "@/i18n/langues";
 import { Prisma } from "@prisma/client";
 import { liensAlternatifs } from "@/lib/seo";
 import type { Metadata } from "next";
@@ -317,7 +317,8 @@ export default async function Home({ params }: Props) {
   } catch {
     // La requête brute échoue en silence : la section dit alors « aucune ».
   }
-  const aujourdhui = now.toLocaleDateString("fr-FR", { day: "numeric", month: "long" });
+  // Le jour et le mois dans la langue de la page — `ca-FR` pour le catalan.
+  const aujourdhui = now.toLocaleDateString(LOCALE_INTL[locale], { day: "numeric", month: "long" });
 
   // **« CE JOUR » EN TROIS COLONNES**, demandé par Jérémy le 11 septembre
   // 2026 : le bloc était un tableau de trois lignes, souvent vide. S'y
@@ -435,12 +436,6 @@ export default async function Home({ params }: Props) {
 
   return (
     <>
-      {/* **L'accueil est la dernière page sans catalan** : elle sera refondue en
-          dernier, et son dictionnaire écrit alors. D'ici là, le dire. Le
-          bandeau reste au-dessus du hero : il avertit sur la page entière. */}
-      {locale !== LANGUE_PAR_DEFAUT && (
-        <p className="border-b border-border bg-usap-or/10 px-4 py-2 text-center text-sm text-foreground">{t("langue.nonTraduit")}</p>
-      )}
       {/* **LE SERMENT, SANG ET OR**, demandé par Jérémy le 10 septembre 2026 :
           l'écusson d'un côté, de l'autre les mots que le club fait siens, dans
           la voix condensée des titres. Deux colonnes dès `sm`, l'une et l'autre
@@ -834,7 +829,9 @@ export default async function Home({ params }: Props) {
         <section className="mb-10">
           <Titre encre>
             {t("accueil.ceJourTitre")}
-            <span className="ml-3 text-xl text-muted-foreground">{aujourdhui}</span>
+            {/* La date sous le titre en mobile, à sa suite dès `sm` : à sa
+                suite sur 375 pixels, « septembre » tombait seul à la ligne. */}
+            <span className="block text-xl text-muted-foreground sm:ml-3 sm:inline">{aujourdhui}</span>
           </Titre>
           <div className="grid gap-8 md:grid-cols-3">
             <div>
@@ -884,7 +881,7 @@ export default async function Home({ params }: Props) {
                       return (
                         <tr key={j.id} className={`border-b border-border hover:bg-muted ${j.ecart === 0 ? "font-semibold" : ""}`}>
                           <td className="py-1.5 pr-3 text-muted-foreground whitespace-nowrap">
-                            {j.birthDate!.toLocaleDateString("fr-FR", { day: "numeric", month: "short", timeZone: "UTC" })}
+                            {j.birthDate!.toLocaleDateString(LOCALE_INTL[locale], { day: "numeric", month: "short", timeZone: "UTC" })}
                           </td>
                           <td className="py-1.5 pr-3">
                             <JoueurCellule slug={j.slug} firstName={j.firstName} lastName={j.lastName} photoUrl={j.photoUrl} isActive={j.isActive} libelleActuel={t("joueurs.actuel")} />
@@ -977,8 +974,15 @@ export default async function Home({ params }: Props) {
           nombres et non des cartes : une seule ligne, pas de case, pas
           d'icône. Les Boucliers y sont, et c'est assumé bien que le palmarès
           ait quitté le haut de page : ici c'est un nombre parmi quatre autres,
-          à l'autre bout de la page, non un bloc qui redit le serment. */}
-      <section className="bg-usap-sang">
+          à l'autre bout de la page, non un bloc qui redit le serment.
+
+          **Il touche le pied de page** : le `Footer` porte un `mt-16` pour
+          toutes les pages, qui laissait ici un blanc entre le sang et le
+          pied — la clôture cassée. Le bandeau le mange (`-mb-16`) plutôt que
+          de retirer la marge aux trente-cinq autres pages, qui en ont besoin.
+          En mobile, le cinquième nombre prend la ligne entière et se centre,
+          au lieu de rester seul à gauche. */}
+      <section className="-mb-16 bg-usap-sang">
         <div className="mx-auto max-w-6xl px-4 py-10 text-center sm:py-14">
           <p className="font-display text-2xl uppercase leading-none text-primary-foreground sm:text-3xl">{t("accueil.clotureDepuis")}</p>
           <dl className="mt-6 grid grid-cols-2 gap-x-6 gap-y-6 sm:grid-cols-5">
@@ -991,7 +995,7 @@ export default async function Home({ params }: Props) {
                 ["accueil.clotureJoueurs", joueurs],
               ] as const
             ).map(([cle, valeur]) => (
-              <div key={cle}>
+              <div key={cle} className="last:col-span-2 sm:last:col-span-1">
                 <dd className="font-display text-5xl leading-none text-usap-or-vif tabular-nums sm:text-6xl">{nombre(valeur)}</dd>
                 <dt className="mt-2 text-sm text-primary-foreground">{t(cle)}</dt>
               </div>

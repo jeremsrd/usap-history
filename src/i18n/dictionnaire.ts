@@ -29,7 +29,7 @@ export type Entree = string | { one: string; other: string };
 const PAR_LANGUE: Record<Langue, () => Promise<{ default: unknown }>> = {
   fr: async () => ({ default: fr }),
   // Le catalan : ce qui lui manque retombe sur le français, section par
-  // section — l'accueil, refondu en dernier, n'y est pas encore.
+  // section — rien n'y manque depuis le 14 septembre 2026.
   ca: async () => ({ default: ca }),
 };
 

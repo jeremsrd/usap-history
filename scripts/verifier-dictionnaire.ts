@@ -8,13 +8,14 @@
  * lit —, et lesquelles ne portent pas les mêmes `{variables}`, sans quoi
  * une phrase traduite afficherait `{n}` en clair.
  *
- * Attendu : seule la section `accueil` manque, tant que la page d'accueil
- * n'est pas refondue. Lecture seule ; sort en erreur s'il y a autre chose.
+ * Attendu : aucun défaut — `accueil` était la seule section absente, tant
+ * que la page d'accueil n'était pas refondue ; son catalan est écrit depuis
+ * le 14 septembre 2026. Lecture seule ; sort en erreur s'il y a autre chose.
  */
 import { fr } from "../src/i18n/fr";
 import { ca } from "../src/i18n/ca";
 
-const SECTIONS_ATTENDUES_ABSENTES = ["accueil"];
+const SECTIONS_ATTENDUES_ABSENTES: string[] = [];
 
 type Feuilles = Map<string, string>;
 
