@@ -705,6 +705,8 @@ export const ca = {
     bonusOffensifs: { one: "{n} bonus ofensiu", other: "{n} bonus ofensius" },
     bonusDefensifs: { one: "{n} defensiu", other: "{n} defensius" },
     pointsClassement: { one: "{n} punt a la classificació", other: "{n} punts a la classificació" },
+    bandeauDomicile: "A casa, {resultats}, {pour} punts a favor i {contre} en contra.",
+    bandeauExterieur: "A fora, {resultats}, {pour} punts a favor i {contre} en contra.",
     reserveChampionnat:
       "El balanç és el del campionat sol, com la classificació oficial ; cada competició porta el seu més avall.",
     roleEntraineur: "entrenador",

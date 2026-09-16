@@ -4,6 +4,7 @@ import { JoueurCellule } from "@/components/JoueurCellule";
 import { notFound } from "next/navigation";
 import { prisma } from "@/lib/prisma";
 import { estCouperet, estJoue } from "@/lib/matchs";
+import { matchPoints } from "@/lib/scoring";
 import { POSITIONS } from "@/lib/constants";
 import { formatDateFR } from "@/lib/utils";
 import { dictionnaire, type Traduire } from "@/i18n/dictionnaire";
@@ -20,9 +21,17 @@ import { liensAlternatifs } from "@/lib/seo";
  * rencontres, et elle se lit d'un coup d'œil : la série de quinze défaites
  * de 2018-2019 s'y voit sans qu'on la nomme.
  *
- * Tout le reste est dit en phrases puis en tableaux : le classement et le
- * bilan du championnat en une phrase, le titre décidé en or, le staff, le
- * bilan rédigé ; les rencontres par compétition, phase finale à part ; trois
+ * **Un bandeau de chiffres suit l'en-tête depuis le 16 septembre 2026**, à
+ * la demande de Jérémy — la forme de celui de la fiche joueur, le contenu du
+ * bilan de l'accueil : joués, victoires, nuls, défaites, points pour et
+ * contre, différence, essais, bonus, points au classement, en dix nombres
+ * condensés entre deux filets, puis le partage domicile / extérieur en une
+ * ligne. Championnat seul, phase régulière, comme le classement officiel ;
+ * les phrases de chiffres que l'en-tête portait redisaient la même chose et
+ * sont parties, le classement restant en phrase.
+ *
+ * Tout le reste est dit en phrases puis en tableaux : le classement en une
+ * phrase, le titre décidé en or, le staff, le bilan rédigé ; les rencontres par compétition, phase finale à part ; trois
  * classements courts — réalisateurs, essais, plus utilisés — ; et
  * **l'effectif en un seul tableau**, chaque homme avec ses matchs, ses
  * titularisations, ses minutes, ses réalisations et ses cartons, à la
@@ -54,6 +63,8 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
 }
 
 const nombre = (n: number) => n.toLocaleString("fr-FR");
+/** Une différence signée, avec le vrai signe moins et non le trait d'union. */
+const signe = (n: number) => (n > 0 ? `+${n}` : n < 0 ? `−${-n}` : "0");
 const majuscule = (s: string) => s.charAt(0).toUpperCase() + s.slice(1);
 const ORDRE_POSTES = Object.keys(POSITIONS);
 const rangPoste = (poste: string | null) => (poste ? ORDRE_POSTES.indexOf(poste) : ORDRE_POSTES.length);
@@ -96,7 +107,7 @@ export default async function SaisonDetailPage({ params }: Props) {
       matches: {
         orderBy: { date: "asc" },
         include: {
-          competition: { select: { name: true, shortName: true } },
+          competition: { select: { name: true, shortName: true, type: true } },
           opponent: { select: { name: true, shortName: true, slug: true } },
           venue: { select: { name: true, slug: true } },
         },
@@ -233,22 +244,42 @@ export default async function SaisonDetailPage({ params }: Props) {
       .filter(Boolean)
       .join(", "),
   );
-  const bilan: string[] = [rang ? t("saison.classement", { division, rang }) : division];
-  if (season.matchesPlayed != null) {
-    bilan.push(
-      `${t("saison.matchsJoues", { n: season.matchesPlayed })} : ${phraseResultats({
-        victoires: season.wins ?? 0,
-        nuls: season.draws ?? 0,
-        defaites: season.losses ?? 0,
-      })}`,
-    );
-    const chiffres = [
-      season.pointsFor != null && season.pointsAgainst != null && t("saison.pointsMarques", { pour: season.pointsFor, contre: season.pointsAgainst }),
-      season.bonusOffensif != null && season.bonusDefensif != null && `${t("saison.bonusOffensifs", { n: season.bonusOffensif })}${t("commun.et")}${t("saison.bonusDefensifs", { n: season.bonusDefensif })}`,
-      season.totalPoints != null && t("saison.pointsClassement", { n: season.totalPoints }),
-    ].filter(Boolean) as string[];
-    if (chiffres.length) bilan.push(majuscule(chiffres.join(", ")));
-  }
+  const classementPhrase = rang ? t("saison.classement", { division, rang }) : division;
+
+  // ---- Le bandeau de chiffres : championnat seul, phase régulière ----
+  // Les rencontres de type CHAMPIONNAT qui portent une journée, jouées —
+  // le périmètre du classement officiel et de l'en-tête de l'accueil. Tout
+  // est compté sur les rencontres, non lu dans les agrégats de `Season` : la
+  // saison en cours n'a pas encore les siens, et pour les saisons closes le
+  // garde-fou de leur script a vérifié que les deux concordent. Deux
+  // valeurs se taisent quand la source ne les dit pas : les essais, s'il
+  // manque le compteur d'une seule rencontre ; les bonus et les points de
+  // classement, quand la saison n'a pas de total écrit — 2004-2005, dont
+  // les neuf bonus offensifs sont introuvables, afficherait sinon un 0/3 et
+  // un total faux avec le même aplomb que les autres.
+  const championnat = joues.filter((m) => m.competition.type === "CHAMPIONNAT" && m.matchday != null);
+  const aVenir = season.matches.filter((m) => !estJoue(m) && m.competition.type === "CHAMPIONNAT" && m.matchday != null).length;
+  const compter = (matchs: typeof championnat) => ({
+    joues: matchs.length,
+    victoires: matchs.filter((m) => m.result === "VICTOIRE").length,
+    nuls: matchs.filter((m) => m.result === "NUL").length,
+    defaites: matchs.filter((m) => m.result === "DEFAITE").length,
+    pour: matchs.reduce((s, m) => s + m.scoreUsap, 0),
+    contre: matchs.reduce((s, m) => s + m.scoreOpponent, 0),
+  });
+  const bandeau = {
+    ...compter(championnat),
+    essaisPour: championnat.every((m) => m.triesUsap != null) ? championnat.reduce((s, m) => s + (m.triesUsap ?? 0), 0) : null,
+    essaisContre: championnat.every((m) => m.triesOpponent != null) ? championnat.reduce((s, m) => s + (m.triesOpponent ?? 0), 0) : null,
+    bonusOffensifs: season.totalPoints == null ? null : championnat.filter((m) => m.bonusOffensif).length,
+    bonusDefensifs: season.totalPoints == null ? null : championnat.filter((m) => m.bonusDefensif).length,
+    points:
+      season.totalPoints == null
+        ? null
+        : championnat.reduce((s, m) => s + (m.result ? matchPoints(m.result, m.bonusOffensif, m.bonusDefensif, season.startYear) : 0), 0),
+  };
+  const domicile = compter(championnat.filter((m) => m.isHome));
+  const exterieur = compter(championnat.filter((m) => !m.isHome));
 
   const roles: Record<string, string> = {
     ENTRAINEUR_PRINCIPAL: t("saison.roleEntraineur"),
@@ -350,10 +381,10 @@ export default async function SaisonDetailPage({ params }: Props) {
             {titre}
           </p>
         )}
-        <p className="mt-4 max-w-prose text-lg leading-snug text-foreground">{bilan.join(". ")}.</p>
-        {season.matchesPlayed != null && groupes.size > 1 && (
-          <p className="mt-1 max-w-prose text-sm text-muted-foreground">{t("saison.reserveChampionnat")}</p>
-        )}
+        <p className="mt-4 max-w-prose text-lg leading-snug text-foreground">
+          {classementPhrase}
+          {aVenir > 0 && `, ${t("accueil.bilanAVenir", { n: aVenir })}`}.
+        </p>
         {staff.length > 0 && (
           <p className="mt-2 max-w-prose text-sm leading-relaxed text-muted-foreground">
             {staff.map((s, i) => (
@@ -370,6 +401,49 @@ export default async function SaisonDetailPage({ params }: Props) {
         )}
         {season.notes && <p className="mt-4 max-w-prose text-sm leading-relaxed text-foreground">{season.notes}</p>}
       </header>
+
+      {/* **LE BANDEAU DE CHIFFRES**, demandé par Jérémy le 16 septembre 2026 :
+          ce que le classement officiel dit d'une saison, dans son ordre, en
+          dix nombres dans la voix condensée, chacun sous son libellé, entre
+          deux filets — la forme du bandeau de la fiche joueur, le contenu du
+          bilan de l'accueil, dont il reprend les libellés. Les points au
+          classement sont en rouge, c'est le chiffre qu'on vient chercher. Un
+          tiret quand la source ne le dit pas. Dessous, le partage domicile /
+          extérieur en une ligne, et la réserve quand la saison compte
+          d'autres compétitions, qui portent leur bilan plus bas. */}
+      {bandeau.joues > 0 && (
+        <section className="mb-10 border-y border-border py-6">
+          <dl className="grid grid-cols-3 gap-x-6 gap-y-5 text-center sm:grid-cols-5 lg:grid-cols-10">
+            {(
+              [
+                ["accueil.bilanJoues", bandeau.joues],
+                ["accueil.bilanVictoires", bandeau.victoires],
+                ["accueil.bilanNuls", bandeau.nuls],
+                ["accueil.bilanDefaites", bandeau.defaites],
+                ["accueil.bilanPour", bandeau.pour],
+                ["accueil.bilanContre", bandeau.contre],
+                ["accueil.bilanDifference", signe(bandeau.pour - bandeau.contre)],
+                ["accueil.bilanEssais", bandeau.essaisPour != null && bandeau.essaisContre != null ? `${bandeau.essaisPour}/${bandeau.essaisContre}` : null],
+                ["accueil.bilanBonus", bandeau.bonusOffensifs != null && bandeau.bonusDefensifs != null ? `${bandeau.bonusOffensifs}/${bandeau.bonusDefensifs}` : null],
+                ["accueil.bilanPoints", bandeau.points],
+              ] as const
+            ).map(([cle, valeur]) => (
+              // Dix nombres sur trois colonnes en mobile : le dixième prend la ligne et se centre.
+              <div key={cle} className={cle === "accueil.bilanPoints" ? "col-span-3 sm:col-span-1" : ""}>
+                <dd className={`font-display text-4xl leading-none tabular-nums ${cle === "accueil.bilanPoints" ? "text-usap-sang" : "text-foreground"}`}>
+                  {valeur ?? "–"}
+                </dd>
+                <dt className="mt-1 text-xs text-muted-foreground">{t(cle)}</dt>
+              </div>
+            ))}
+          </dl>
+          <p className="mt-5 text-center text-sm text-muted-foreground">
+            {t("saison.bandeauDomicile", { resultats: phraseResultats(domicile), pour: domicile.pour, contre: domicile.contre })}{" "}
+            {t("saison.bandeauExterieur", { resultats: phraseResultats(exterieur), pour: exterieur.pour, contre: exterieur.contre })}
+          </p>
+          {groupes.size > 1 && <p className="mt-1 text-center text-sm text-muted-foreground">{t("saison.reserveChampionnat")}</p>}
+        </section>
+      )}
 
       {season.matches.length === 0 && effectif.length === 0 && (
         <p className="text-muted-foreground">{t("saison.aucuneDonnee")}</p>

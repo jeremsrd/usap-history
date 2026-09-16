@@ -743,6 +743,8 @@ export const fr = {
     bonusOffensifs: { one: "{n} bonus offensif", other: "{n} bonus offensifs" },
     bonusDefensifs: { one: "{n} défensif", other: "{n} défensifs" },
     pointsClassement: { one: "{n} point au classement", other: "{n} points au classement" },
+    bandeauDomicile: "À domicile, {resultats}, {pour} points pour {contre}.",
+    bandeauExterieur: "À l'extérieur, {resultats}, {pour} points pour {contre}.",
     reserveChampionnat:
       "Le bilan est celui du championnat seul, comme le classement officiel ; chaque compétition porte le sien plus bas.",
     roleEntraineur: "entraîneur",

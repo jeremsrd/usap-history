@@ -805,7 +805,8 @@ export default async function Home({ params }: Props) {
                     ["accueil.bilanPoints", bilanSaison.points],
                   ] as const
                 ).map(([cle, valeur]) => (
-                  <div key={cle}>
+                  // Dix nombres sur trois colonnes en mobile : le dixième prend la ligne et se centre.
+                  <div key={cle} className={cle === "accueil.bilanPoints" ? "col-span-3 sm:col-span-1" : ""}>
                     <dd className={`font-display text-4xl leading-none tabular-nums ${cle === "accueil.bilanPoints" ? "text-usap-sang" : "text-foreground"}`}>
                       {valeur == null ? "–" : cle === "accueil.bilanDifference" ? signe(valeur as number) : valeur}
                     </dd>

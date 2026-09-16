@@ -1905,6 +1905,34 @@ des minutes disparaît quand la source n'en publie aucune, 2004-2005 et
 et la descente, plus de neuf cases de chiffres centrés. Page passée au
 dictionnaire (`saison.*`), provenance en pied, saisons voisines en tête.
 
+**Et un bandeau de chiffres suit son en-tête depuis le 16 septembre 2026**,
+à la demande de Jérémy — la forme de celui de la fiche joueur, dix nombres
+condensés entre deux filets, et le contenu du bilan de l'accueil, dont il
+reprend les libellés `accueil.bilan*` : joués, victoires, nuls, défaites,
+points pour et contre, différence, essais, bonus, points au classement en
+rouge. Dessous, **le partage domicile / extérieur** en une ligne
+(`saison.bandeauDomicile`, `bandeauExterieur`), que la page ne disait pas.
+Championnat seul, phase régulière, comme le classement officiel ; la
+réserve suit quand la saison compte d'autres compétitions. Trois choses à
+savoir :
+
+- **tout est compté sur les rencontres, non lu dans les agrégats de
+  `Season`** : la saison en cours n'a pas encore les siens, et les saisons
+  closes ont vérifié par leur garde-fou que les deux concordent ;
+- **deux valeurs se taisent quand la source ne les dit pas** — les essais
+  s'il manque le compteur d'une seule rencontre, les bonus et les points de
+  classement quand `Season.totalPoints` est `null`. Sans cette garde,
+  2004-2005, dont les neuf bonus offensifs sont introuvables, afficherait
+  « 0/3 » et un total faux avec le même aplomb que les autres ;
+- **les phrases de chiffres de l'en-tête sont parties** — matchs joués,
+  points marqués, bonus, points au classement — puisqu'elles redisaient
+  ligne pour ligne ce que le bandeau montre juste dessous. Le classement
+  reste en phrase, avec le compte des journées à venir.
+
+En mobile, dix nombres sur trois colonnes laissent le dixième seul à
+gauche : il prend la ligne et se centre, ici comme sur le bilan de
+l'accueil, qui avait le même orphelin.
+
 **L'accueil est refait le même jour.** Sa seule audace est le **palmarès
 écrit en grand** : sous le titre, « Sept fois champion de France » en rouge
 et les sept années du Bouclier en or condensé, chacune liée à sa saison —
