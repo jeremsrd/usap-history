@@ -1,5 +1,6 @@
 import Link from "@/components/Lien";
 import Provenance from "@/components/Provenance";
+import Signalement from "@/components/Signalement";
 import Image from "next/image";
 import { notFound, redirect } from "next/navigation";
 import { prisma } from "@/lib/prisma";
@@ -447,6 +448,7 @@ export default async function JoueurDetailPage({ params }: Props) {
 
       {/* D'où vient ce que la fiche affirme, quand ce n'est pas d'une feuille */}
       <Provenance entite="Player" id={player.id} langue={locale} />
+      <Signalement langue={locale} sujet={`${player.firstName} ${player.lastName}`} />
     </div>
   );
 }

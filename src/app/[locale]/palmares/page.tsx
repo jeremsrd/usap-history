@@ -5,6 +5,7 @@ import { dictionnaire } from "@/i18n/dictionnaire";
 import type { Langue } from "@/i18n/langues";
 import type { Metadata } from "next";
 import { liensAlternatifs } from "@/lib/seo";
+import Signalement from "@/components/Signalement";
 
 /**
  * Le palmarès, refait le 6 septembre 2026 dans l'identité posée sur les
@@ -214,6 +215,7 @@ export default async function PalmaresPage({ params }: Props) {
           </div>
         </section>
       ))}
+      <Signalement langue={locale} sujet={t("palmares.titre")} />
     </div>
   );
 }

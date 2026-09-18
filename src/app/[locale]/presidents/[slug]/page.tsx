@@ -1,5 +1,6 @@
 import Link from "@/components/Lien";
 import Provenance from "@/components/Provenance";
+import Signalement from "@/components/Signalement";
 import Image from "next/image";
 import { notFound, redirect } from "next/navigation";
 import { prisma } from "@/lib/prisma";
@@ -285,6 +286,7 @@ export default async function PresidentDetailPage({ params }: Props) {
       )}
 
       <Provenance entite="President" id={president.id} langue={locale} />
+      <Signalement langue={locale} sujet={`${president.firstName} ${president.lastName}`} />
     </div>
   );
 }

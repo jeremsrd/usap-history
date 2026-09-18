@@ -137,3 +137,16 @@ export const PALMARES = {
   challengeDuManoir: [1935, 1955, 1994],
   finaleCoupeEurope: [2003],
 } as const;
+
+// =============================================================================
+// Le contact du site
+// =============================================================================
+
+/**
+ * L'adresse à laquelle on écrit à l'éditeur — celle des mentions légales et de
+ * la politique de confidentialité, qui la portent en toutes lettres dans leurs
+ * phrases. Elle est ici pour le composant `Signalement`, qui la met en lien au
+ * pied des vingt-quatre pages publiques : un `mailto:` ne se recopie pas
+ * dans autant de fichiers.
+ */
+export const COURRIEL_CONTACT = "jeremsrd@gmail.com";

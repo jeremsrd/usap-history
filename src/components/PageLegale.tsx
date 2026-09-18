@@ -1,4 +1,5 @@
 import Link from "@/components/Lien";
+import Signalement from "@/components/Signalement";
 import { dictionnaire } from "@/i18n/dictionnaire";
 import type { Langue } from "@/i18n/langues";
 
@@ -14,6 +15,11 @@ import type { Langue } from "@/i18n/langues";
  * `editeurP1` à `editeurP3`. Le nombre est dit plutôt que sondé — une clé
  * absente est une faute pour le dictionnaire, qui la signale. Un `lien`
  * facultatif clôt la section d'un lien interne.
+ *
+ * **Elles portent le signalement d'erreur comme les autres pages**, demandé
+ * par Jérémy le 18 septembre 2026 : elles n'affichent rien qui vienne de la
+ * base, mais le lecteur qui arrive là cherche justement à qui écrire — et
+ * l'adresse y est noyée dans un paragraphe de loi.
  */
 export default async function PageLegale({
   langue,
@@ -48,6 +54,7 @@ export default async function PageLegale({
           )}
         </section>
       ))}
+      <Signalement langue={langue} sujet={t(`${section}.titre`)} />
     </div>
   );
 }

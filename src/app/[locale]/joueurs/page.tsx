@@ -7,6 +7,7 @@ import type { Langue } from "@/i18n/langues";
 import type { Metadata } from "next";
 import type { Position } from "@prisma/client";
 import { liensAlternatifs } from "@/lib/seo";
+import Signalement from "@/components/Signalement";
 
 export const dynamic = "force-dynamic";
 
@@ -63,7 +64,8 @@ export default async function JoueursPage({
   params: Params;
   searchParams: Recherche;
 }) {
-  const t = await dictionnaire((await params).locale);
+  const { locale } = await params;
+  const t = await dictionnaire(locale);
   const filtres = await searchParams;
   const positionFilter =
     filtres.poste && filtres.poste in POSITIONS ? filtres.poste : undefined;
@@ -347,6 +349,7 @@ export default async function JoueursPage({
           )}
         </p>
       )}
+      <Signalement langue={locale} sujet={t("joueurs.titre")} />
     </div>
   );
 }

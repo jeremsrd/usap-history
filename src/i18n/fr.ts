@@ -974,6 +974,26 @@ export const fr = {
     reluPar: " — relu par {nom}",
     le: " le {date}",
   },
+  signalement: {
+    // « Une erreur ? Écrivez-moi » — au pied des pages de données, demandé
+    // par Jérémy le 18 septembre 2026.
+    //
+    // **Trois clés et non une phrase** : le titre, le texte et le lien sont
+    // séparés parce que le lien est une balise, et que le balisage n'entre
+    // pas dans une chaîne à traduire — c'est la règle du projet, et elle a
+    // déjà fait retirer un `<strong>` de la page des records.
+    //
+    // Le ton est une invitation, non un avertissement : le site n'a pas à
+    // s'excuser d'être un chantier, il a à dire qu'on peut le corriger.
+    titre: "Une erreur ?",
+    texte:
+      "Ces pages sont saisies à la main, feuille de match après feuille de match, et les sources elles-mêmes se trompent parfois : un score qui cloche, un nom mal orthographié, un joueur qui manque, cela arrive.",
+    lien: "Écrivez-moi, je corrige",
+    // L'objet du courriel. Il porte la page, faute de quoi un signalement
+    // arrive sans dire de quoi il parle.
+    sujet: "USAP Historia — une erreur sur « {page} »",
+    sujetSeul: "USAP Historia — une erreur",
+  },
   commun: {
     // Les mots de jointure que les pages écrivaient en dur.
     et: " et ",

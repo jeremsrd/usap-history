@@ -11,6 +11,7 @@ import { LOCALE_INTL, type Langue } from "@/i18n/langues";
 import { Prisma } from "@prisma/client";
 import { liensAlternatifs } from "@/lib/seo";
 import type { Metadata } from "next";
+import Signalement from "@/components/Signalement";
 
 /**
  * L'accueil, refait le 6 septembre 2026 dans l'identité posée sur les fiches
@@ -492,6 +493,10 @@ export default async function Home({ params }: Props) {
               total: saisons,
             })}
           </p>
+          {/* Et la main tendue, juste sous la note : la réserve dit ce qui
+              manque, le signalement dit que ce qui est là peut être faux —
+              l'une borne l'étendue, l'autre la confiance. */}
+          <Signalement langue={locale} sansFilet />
         </header>
 
         {/* **Le dernier match, le prochain, un joueur au hasard** — trois

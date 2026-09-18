@@ -8,6 +8,7 @@ import { dictionnaire } from "@/i18n/dictionnaire";
 import type { Langue } from "@/i18n/langues";
 import type { Metadata } from "next";
 import { liensAlternatifs } from "@/lib/seo";
+import Signalement from "@/components/Signalement";
 
 /**
  * La liste des entraîneurs, refaite le 7 septembre 2026 sur le modèle de
@@ -193,6 +194,7 @@ export default async function EntraineursPage({ params }: Props) {
           ))}
         </table>
       </div>
+      <Signalement langue={locale} sujet={t("entraineurs.titre")} />
     </div>
   );
 }

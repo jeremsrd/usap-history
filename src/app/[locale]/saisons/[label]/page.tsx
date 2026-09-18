@@ -1,5 +1,6 @@
 import Link from "@/components/Lien";
 import Provenance from "@/components/Provenance";
+import Signalement from "@/components/Signalement";
 import { JoueurCellule } from "@/components/JoueurCellule";
 import { notFound } from "next/navigation";
 import { prisma } from "@/lib/prisma";
@@ -7,7 +8,7 @@ import { estCouperet, estJoue } from "@/lib/matchs";
 import { matchPoints } from "@/lib/scoring";
 import { POSITIONS } from "@/lib/constants";
 import { formatDateFR } from "@/lib/utils";
-import { dictionnaire, type Traduire } from "@/i18n/dictionnaire";
+import { dictionnaire } from "@/i18n/dictionnaire";
 import { LOCALE_INTL, type Langue } from "@/i18n/langues";
 import type { Metadata } from "next";
 import { liensAlternatifs } from "@/lib/seo";
@@ -616,6 +617,7 @@ export default async function SaisonDetailPage({ params }: Props) {
       )}
 
       <Provenance entite="Season" id={season.id} langue={locale} />
+      <Signalement langue={locale} sujet={`${t("saison.surtitre")} ${season.label}`} />
     </div>
   );
 }

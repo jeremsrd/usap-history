@@ -5,6 +5,7 @@ import { dictionnaire, type Traduire } from "@/i18n/dictionnaire";
 import type { Langue } from "@/i18n/langues";
 import type { Metadata } from "next";
 import { liensAlternatifs } from "@/lib/seo";
+import Signalement from "@/components/Signalement";
 
 /**
  * Trois classements de ce qui se marque, sur une seule page. Ils ne se
@@ -65,7 +66,8 @@ interface Bilan {
 }
 
 export default async function RealisateursPage({ params }: Props) {
-  const t = await dictionnaire((await params).locale);
+  const { locale } = await params;
+  const t = await dictionnaire(locale);
   const libelleActuel = t("classement.actuel");
 
   // Mêmes conventions que la page des centurions : le camp catalan, les
@@ -192,6 +194,7 @@ export default async function RealisateursPage({ params }: Props) {
           detail: [bilan.transformations, bilan.penalites, bilan.drops],
         }))}
       />
+      <Signalement langue={locale} sujet={t("realisateurs.titre")} />
     </div>
   );
 }

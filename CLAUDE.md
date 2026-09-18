@@ -1551,6 +1551,40 @@ et **ne s'affiche pas quand il n'y en a aucune** : l'absence se lit
 d'Amituanai que son poste est tranché par Jérémy, celle de Dax que son
 terrain est celui d'aujourd'hui.
 
+**ET TOUTES LES PAGES PUBLIQUES INVITENT À SIGNALER UNE ERREUR**, depuis le
+18 septembre 2026 à la demande de Jérémy. `Signalement`
+(`src/components/`) pose au pied de chacune une ligne sous un filet : « Une
+erreur ? Ces pages sont saisies à la main, feuille de match après feuille de
+match, et les sources elles-mêmes se trompent parfois… » puis un lien
+`mailto:` vers l'adresse de contact, `COURRIEL_CONTACT` de
+`lib/constants.ts` — la même que les mentions légales. Les vingt-quatre le
+portent, **les deux pages légales comprises** : elles n'affichent rien qui
+vienne de la base, mais c'est là qu'on arrive quand on cherche à qui écrire,
+et l'adresse y est noyée dans un paragraphe de loi — `PageLegale` l'appelle
+pour les deux. Sur l'accueil il suit la note de couverture, sans filet
+(`sansFilet`), au fil du chapeau.
+
+Trois choses arbitrées :
+
+- **ce n'est ni la réserve de couverture, ni `Provenance`**, et les trois se
+  suivent sans se recopier : la réserve dit ce que la base n'a pas encore,
+  `Provenance` d'où vient ce qu'une fiche affirme quand ce n'est pas d'une
+  feuille officielle, le signalement que ce qui est là peut être faux.
+  L'une borne l'étendue, l'autre la provenance, le troisième la confiance ;
+- **l'objet du courriel porte la page** — le nom du joueur, l'affiche de la
+  rencontre, le titre de la liste —, faute de quoi un signalement arrive
+  sans dire de quoi il parle. Le **chemin n'y est pas**, et c'est délibéré :
+  le lire demanderait `headers()`, qui rendrait dynamiques les trente-six
+  pages du site pour une ligne de courriel ;
+- **le ton est une invitation, non un avertissement encadré.** Pas de carte,
+  pas d'icône, pas de fond jaune — le chantier design a débarrassé le site de
+  tout cela ; le titre est dans la voix condensée, le lien souligné d'or
+  comme ceux de `Provenance`. Le site n'a pas à s'excuser d'être un
+  chantier, il a à dire qu'on peut le corriger.
+
+Clés `signalement.*` dans les deux cahiers. **Une page publique nouvelle doit
+le porter** : rien ne le signalera, comme pour `hreflang`.
+
 **Fiche de match — le titre qu'elle a décidé.** Une finale affiche une
 bannière « Champion » ou « Finaliste » avec un lien vers le palmarès. Le
 rapprochement avec `Trophy` se fait sur l'**année de fin de saison** et la
