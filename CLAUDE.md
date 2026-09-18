@@ -1896,16 +1896,20 @@ résultat est celui de l'USAP sur les rencontres où l'homme a joué, une
 ligne de composition valant un match comme partout. Clés `fiche.bandeau*`,
 en catalan aussi.
 
-**ET SES LISTES DE RENCONTRES PORTENT L'ÉCUSSON DU CLUB ADVERSE**, depuis
-le 18 septembre 2026 à la demande de Jérémy : vingt pixels à gauche du nom,
-dans les deux tableaux — « avec l'USAP » et « contre l'USAP » —, l'écusson
-étant celui de l'adversaire de la rencontre dans le premier et celui du club
-du joueur dans le second. Trois règles du projet s'y appliquent, et aucune
-ne se voit au journal d'exécution : **`logo-club`**, sans quoi une marque
-sombre disparaît en thème sombre ; **pas de case vide** pour un club sans
-écusson, le nom se suffit, comme sur l'accueil et à rebours des portraits
-des deux XV d'une fiche de match ; et `alt=""`, l'image étant décorative
-puisque le nom la suit.
+**ET SES LISTES DE RENCONTRES PORTENT LES DEUX ÉCUSSONS**, depuis le
+18 septembre 2026 à la demande de Jérémy : vingt pixels à gauche de chaque
+nom, dans les deux tableaux — « avec l'USAP » et « contre l'USAP » —, et
+**dans l'ordre de l'affiche**, l'écusson suivant son camp selon `isHome`.
+L'écusson adverse n'y a d'abord été posé seul, et Jérémy a demandé le
+catalan avec : une affiche à un seul blason se lit de travers.
+
+Trois règles du projet s'y appliquent, et aucune ne se voit au journal
+d'exécution : **l'écusson adverse porte `logo-club`, celui de l'USAP non** —
+sans la classe une marque sombre disparaît en thème sombre, et le blason
+catalan a son propre contour d'or, comme dans le Header et sur une fiche de
+match ; **pas de case vide** pour un club sans écusson, le nom se suffit,
+comme sur l'accueil et à rebours des portraits des deux XV d'une fiche de
+match ; et `alt=""`, l'image étant décorative puisque le nom la suit.
 
 **C'est une exception de plus à « les écussons sont ailleurs sur le site »**,
 après le bloc « dernier match / prochain » de l'accueil et le tableau
