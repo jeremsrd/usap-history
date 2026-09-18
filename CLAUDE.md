@@ -51,8 +51,14 @@ usap-history/
 │   │                             #   presidents, competitions, pays, palmares
 │   ├── components/
 │   │   ├── Header.tsx, Footer.tsx, ThemeProvider.tsx, ThemeToggle.tsx
+│   │   ├── Lien.tsx              # next/link qui préfixe la langue — cf. bilingue
+│   │   ├── SelecteurLangue.tsx   # les deux drapeaux, sans quitter la page
 │   │   ├── JoueurCellule.tsx     # portrait + nom + badge, pour les classements
 │   │   ├── ScoreEvolution.tsx    # graphe d'évolution du score d'un match
+│   │   ├── IconeFait.tsx         # les quatre dessins des faits d'un match
+│   │   ├── Provenance.tsx        # « Sources et arbitrages » au pied d'une fiche
+│   │   ├── Signalement.tsx       # « Une erreur ? Écrivez-moi » — toutes les pages
+│   │   ├── PageLegale.tsx        # les deux pages légales, tirées du dictionnaire
 │   │   ├── VideoEmbed.tsx        # résumé YouTube/Dailymotion en click-to-play
 │   │   └── ui/ImageUpload.tsx
 │   ├── i18n/                     # langues.ts — les langues et le préfixe d'URL
@@ -1564,7 +1570,7 @@ et l'adresse y est noyée dans un paragraphe de loi — `PageLegale` l'appelle
 pour les deux. Sur l'accueil il suit la note de couverture, sans filet
 (`sansFilet`), au fil du chapeau.
 
-Trois choses arbitrées :
+Quatre choses arbitrées :
 
 - **ce n'est ni la réserve de couverture, ni `Provenance`**, et les trois se
   suivent sans se recopier : la réserve dit ce que la base n'a pas encore,
@@ -1590,6 +1596,18 @@ Trois choses arbitrées :
 
 Clés `signalement.*` dans les deux cahiers. **Une page publique nouvelle doit
 le porter** : rien ne le signalera, comme pour `hreflang`.
+
+**C'est en ligne depuis le 18 septembre 2026**, et vérifié sur le site
+lui-même plutôt qu'au journal d'un déploiement : l'accueil, une liste et une
+fiche joueur, dans les deux langues, le `mailto:` décodé pour lire son objet
+— « USAP Historia — une erreur sur « Adrien Plante » », « … un error a
+«Adrien Plante» ». C'est la règle des écussons et des portraits, étendue à
+une page : **ce qui s'affiche ne se valide pas au journal d'exécution.**
+
+Une chose qu'aucune vérification de ce côté-ci ne couvre : **qu'un clic
+ouvre réellement un client de messagerie.** Cela ne dépend plus du site mais
+du poste du lecteur, et c'est précisément pourquoi l'adresse est aussi en
+clair.
 
 **Fiche de match — le titre qu'elle a décidé.** Une finale affiche une
 bannière « Champion » ou « Finaliste » avec un lien vers le palmarès. Le
