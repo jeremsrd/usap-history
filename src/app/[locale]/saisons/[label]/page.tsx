@@ -8,7 +8,7 @@ import { estCouperet, estJoue } from "@/lib/matchs";
 import { matchPoints } from "@/lib/scoring";
 import { POSITIONS } from "@/lib/constants";
 import { formatDateFR } from "@/lib/utils";
-import { dictionnaire, type Traduire } from "@/i18n/dictionnaire";
+import { dictionnaire } from "@/i18n/dictionnaire";
 import { LOCALE_INTL, type Langue } from "@/i18n/langues";
 import type { Metadata } from "next";
 import { liensAlternatifs } from "@/lib/seo";
