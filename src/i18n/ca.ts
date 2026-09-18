@@ -934,7 +934,7 @@ export const ca = {
     // Els dos punts no porten espai en català, a diferència del francès.
     titre: "Heu vist un error?",
     texte:
-      "Aquestes pàgines s'escriuen a mà, acta rere acta, i les fonts mateixes s'equivoquen de tant en tant: un marcador que no quadra, un nom mal escrit, un jugador que hi falta. Passa.",
+      "Aquestes pàgines s'escriuen a mà, acta rere acta, i les fonts mateixes s'equivoquen de tant en tant: un marcador que no quadra, un nom mal escrit, un jugador que hi falta. És normal.",
     lien: "Escriviu-me i ho corregeixo",
     sujet: "USAP Historia — un error a «{page}»",
     sujetSeul: "USAP Historia — un error",
