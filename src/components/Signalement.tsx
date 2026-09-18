@@ -3,7 +3,7 @@ import type { Langue } from "@/i18n/langues";
 import { COURRIEL_CONTACT } from "@/lib/constants";
 
 /**
- * « Une erreur ? Écrivez-moi » — au pied des pages qui affichent des données.
+ * « Une erreur ? Écrivez-moi » — au pied de chaque page publique.
  *
  * Demandé par Jérémy le 18 septembre 2026. Le site affirme des scores, des
  * compositions et des noms avec le même aplomb partout, et une partie de
@@ -11,6 +11,11 @@ import { COURRIEL_CONTACT } from "@/lib/constants";
  * tout ce fichier de conventions le raconte. Le lecteur, lui, n'a nulle part
  * où le dire : le pied de page porte bien une adresse dans les mentions
  * légales, mais il faut la chercher, et rien n'invite à écrire.
+ *
+ * **Les deux pages légales le portent aussi**, depuis le même jour : elles
+ * n'affichent rien qui vienne de la base, mais c'est là qu'on arrive quand
+ * on cherche à qui écrire, et l'adresse y est noyée dans un paragraphe de
+ * loi. `PageLegale` l'appelle pour les deux.
  *
  * **Ce n'est pas la réserve de couverture, et les deux ne se remplacent
  * pas** : celle-ci dit ce que la base n'a pas encore (« en cours de

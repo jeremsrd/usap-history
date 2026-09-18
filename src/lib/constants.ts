@@ -146,7 +146,7 @@ export const PALMARES = {
  * L'adresse à laquelle on écrit à l'éditeur — celle des mentions légales et de
  * la politique de confidentialité, qui la portent en toutes lettres dans leurs
  * phrases. Elle est ici pour le composant `Signalement`, qui la met en lien au
- * pied des vingt-deux pages de données : un `mailto:` ne se recopie pas dans
- * vingt-deux fichiers.
+ * pied des vingt-quatre pages publiques : un `mailto:` ne se recopie pas
+ * dans autant de fichiers.
  */
 export const COURRIEL_CONTACT = "jeremsrd@gmail.com";

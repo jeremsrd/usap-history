@@ -1551,15 +1551,18 @@ et **ne s'affiche pas quand il n'y en a aucune** : l'absence se lit
 d'Amituanai que son poste est tranché par Jérémy, celle de Dax que son
 terrain est celui d'aujourd'hui.
 
-**ET LES VINGT-DEUX PAGES DE DONNÉES INVITENT À SIGNALER UNE ERREUR**,
-depuis le 18 septembre 2026 à la demande de Jérémy. `Signalement`
+**ET TOUTES LES PAGES PUBLIQUES INVITENT À SIGNALER UNE ERREUR**, depuis le
+18 septembre 2026 à la demande de Jérémy. `Signalement`
 (`src/components/`) pose au pied de chacune une ligne sous un filet : « Une
 erreur ? Ces pages sont saisies à la main, feuille de match après feuille de
 match, et les sources elles-mêmes se trompent parfois… » puis un lien
 `mailto:` vers l'adresse de contact, `COURRIEL_CONTACT` de
-`lib/constants.ts` — la même que les mentions légales. Toutes les pages
-publiques le portent sauf les deux pages légales ; sur l'accueil il suit la
-note de couverture, sans filet (`sansFilet`), au fil du chapeau.
+`lib/constants.ts` — la même que les mentions légales. Les vingt-quatre le
+portent, **les deux pages légales comprises** : elles n'affichent rien qui
+vienne de la base, mais c'est là qu'on arrive quand on cherche à qui écrire,
+et l'adresse y est noyée dans un paragraphe de loi — `PageLegale` l'appelle
+pour les deux. Sur l'accueil il suit la note de couverture, sans filet
+(`sansFilet`), au fil du chapeau.
 
 Trois choses arbitrées :
 
