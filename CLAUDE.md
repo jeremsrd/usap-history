@@ -1576,6 +1576,12 @@ Trois choses arbitrées :
   sans dire de quoi il parle. Le **chemin n'y est pas**, et c'est délibéré :
   le lire demanderait `headers()`, qui rendrait dynamiques les trente-six
   pages du site pour une ligne de courriel ;
+- **l'adresse est répétée en clair à côté du lien** : un `mailto:` n'ouvre
+  rien chez qui n'a pas de client de messagerie associé — cas courant sur un
+  ordinateur de bureau —, et le lecteur resterait devant un lien mort sans
+  savoir à qui écrire. Les parenthèses sont dans le composant et non dans le
+  dictionnaire, à la différence des deux-points du pied de page : les deux
+  langues les écrivent pareil ;
 - **le ton est une invitation, non un avertissement encadré.** Pas de carte,
   pas d'icône, pas de fond jaune — le chantier design a débarrassé le site de
   tout cela ; le titre est dans la voix condensée, le lien souligné d'or
