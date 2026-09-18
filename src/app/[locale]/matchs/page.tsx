@@ -7,6 +7,7 @@ import type { Langue } from "@/i18n/langues";
 import type { Metadata } from "next";
 import type { Prisma } from "@prisma/client";
 import { liensAlternatifs } from "@/lib/seo";
+import Signalement from "@/components/Signalement";
 
 /**
  * La liste des rencontres, refaite le 6 septembre 2026 dans l'identité
@@ -306,6 +307,7 @@ export default async function MatchsPage({ params, searchParams }: Props) {
           )}
         </nav>
       )}
+      <Signalement langue={locale} sujet={t("matchs.titre")} />
     </div>
   );
 }

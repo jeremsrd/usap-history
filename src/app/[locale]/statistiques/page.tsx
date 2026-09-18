@@ -8,6 +8,7 @@ import { dictionnaire } from "@/i18n/dictionnaire";
 import type { Langue } from "@/i18n/langues";
 import type { Metadata } from "next";
 import { liensAlternatifs } from "@/lib/seo";
+import Signalement from "@/components/Signalement";
 
 /**
  * La page des statistiques, refaite le 6 septembre 2026 dans l'identité
@@ -435,6 +436,7 @@ export default async function StatistiquesPage({ params }: Props) {
           </table>
         </section>
       )}
+      <Signalement langue={locale} sujet={t("statistiques.titre")} />
     </div>
   );
 }

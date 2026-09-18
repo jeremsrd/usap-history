@@ -1,5 +1,6 @@
 import Link from "@/components/Lien";
 import Provenance from "@/components/Provenance";
+import Signalement from "@/components/Signalement";
 import Image from "next/image";
 import { notFound, redirect } from "next/navigation";
 import { prisma } from "@/lib/prisma";
@@ -294,6 +295,7 @@ export default async function ArbitreDetailPage({ params }: Props) {
       )}
 
       <Provenance entite="Referee" id={referee.id} langue={locale} />
+      <Signalement langue={locale} sujet={`${referee.firstName} ${referee.lastName}`} />
     </div>
   );
 }

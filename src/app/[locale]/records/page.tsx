@@ -6,6 +6,7 @@ import { dictionnaire, type Traduire } from "@/i18n/dictionnaire";
 import type { Langue } from "@/i18n/langues";
 import type { Metadata } from "next";
 import { liensAlternatifs } from "@/lib/seo";
+import Signalement from "@/components/Signalement";
 
 /**
  * Les records, refaits le 7 septembre 2026 — la dernière page de l'ancien
@@ -68,7 +69,8 @@ interface Ligne {
 }
 
 export default async function RecordsPage({ params }: Props) {
-  const t = await dictionnaire((await params).locale);
+  const { locale } = await params;
+  const t = await dictionnaire(locale);
   const nombre = (n: number) => n.toLocaleString("fr-FR");
 
   const matchs = await prisma.match.findMany({
@@ -350,6 +352,7 @@ export default async function RecordsPage({ params }: Props) {
       {blocs.map((b) => (
         <Tableau key={b.id} id={b.id} niveau={3} titre={b.nom} chapeau={b.contexte} lignes={b.lignes} t={t} note={b.affluences > 0 ? t("records.affluenceNote", { n: b.affluences }) : undefined} />
       ))}
+      <Signalement langue={locale} sujet={t("records.titre")} />
     </div>
   );
 }

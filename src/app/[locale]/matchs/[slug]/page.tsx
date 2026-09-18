@@ -1,6 +1,7 @@
 import Link from "@/components/Lien";
 import Image from "next/image";
 import Provenance from "@/components/Provenance";
+import Signalement from "@/components/Signalement";
 import { notFound } from "next/navigation";
 import { prisma } from "@/lib/prisma";
 import { estJoue } from "@/lib/matchs";
@@ -341,6 +342,7 @@ export default async function MatchDetailPage({ params }: Props) {
 
       {/* D'où vient ce que la page affirme, quand ce n'est pas de la feuille */}
       <Provenance entite="Match" id={match.id} langue={locale} />
+      <Signalement langue={locale} sujet={affiche} />
     </div>
   );
 }

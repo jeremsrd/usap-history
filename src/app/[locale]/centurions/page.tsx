@@ -4,6 +4,7 @@ import { dictionnaire } from "@/i18n/dictionnaire";
 import type { Langue } from "@/i18n/langues";
 import type { Metadata } from "next";
 import { liensAlternatifs } from "@/lib/seo";
+import Signalement from "@/components/Signalement";
 
 /**
  * Les centurions, refaits le 7 septembre 2026 dans l'identité des listes.
@@ -36,7 +37,8 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
 }
 
 export default async function CenturionsPage({ params }: Props) {
-  const t = await dictionnaire((await params).locale);
+  const { locale } = await params;
+  const t = await dictionnaire(locale);
   const libelleActuel = t("classement.actuel");
 
   // Un « match » se compte comme sur la fiche joueur : une ligne de
@@ -140,6 +142,7 @@ export default async function CenturionsPage({ params }: Props) {
           </tbody>
         </table>
       </div>
+      <Signalement langue={locale} sujet={t("centurions.titre")} />
     </div>
   );
 }

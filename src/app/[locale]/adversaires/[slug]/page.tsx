@@ -1,5 +1,6 @@
 import Link from "@/components/Lien";
 import Provenance from "@/components/Provenance";
+import Signalement from "@/components/Signalement";
 import { JoueurCellule } from "@/components/JoueurCellule";
 import Image from "next/image";
 import { notFound, redirect } from "next/navigation";
@@ -415,6 +416,7 @@ export default async function AdversaireDetailPage({ params }: Props) {
       </div>
 
       <Provenance entite="Opponent" id={opponent.id} langue={locale} />
+      <Signalement langue={locale} sujet={nom} />
     </div>
   );
 }

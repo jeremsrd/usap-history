@@ -1,5 +1,6 @@
 import Link from "@/components/Lien";
 import Provenance from "@/components/Provenance";
+import Signalement from "@/components/Signalement";
 import { JoueurCellule } from "@/components/JoueurCellule";
 import { notFound } from "next/navigation";
 import { prisma } from "@/lib/prisma";
@@ -616,6 +617,7 @@ export default async function SaisonDetailPage({ params }: Props) {
       )}
 
       <Provenance entite="Season" id={season.id} langue={locale} />
+      <Signalement langue={locale} sujet={`${t("saison.surtitre")} ${season.label}`} />
     </div>
   );
 }

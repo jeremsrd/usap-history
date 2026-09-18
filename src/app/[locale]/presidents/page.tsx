@@ -7,6 +7,7 @@ import { dictionnaire } from "@/i18n/dictionnaire";
 import type { Langue } from "@/i18n/langues";
 import type { Metadata } from "next";
 import { liensAlternatifs } from "@/lib/seo";
+import Signalement from "@/components/Signalement";
 
 /**
  * La liste des présidents, refaite le 7 septembre 2026. Quatre hommes
@@ -142,6 +143,7 @@ export default async function PresidentsPage({ params }: Props) {
           </tbody>
         </table>
       </div>
+      <Signalement langue={locale} sujet={t("presidents.titre")} />
     </div>
   );
 }

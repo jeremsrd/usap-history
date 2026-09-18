@@ -6,6 +6,7 @@ import { dictionnaire } from "@/i18n/dictionnaire";
 import type { Langue } from "@/i18n/langues";
 import type { Metadata } from "next";
 import { liensAlternatifs } from "@/lib/seo";
+import Signalement from "@/components/Signalement";
 
 /**
  * La liste des saisons, refaite le 6 septembre 2026 dans l'identité posée
@@ -182,6 +183,7 @@ export default async function SaisonsPage({ params }: Props) {
           ))}
         </table>
       </div>
+      <Signalement langue={locale} sujet={t("saisons.titre")} />
     </div>
   );
 }
