@@ -58,6 +58,7 @@ usap-history/
 │   │   ├── IconeFait.tsx         # les quatre dessins des faits d'un match
 │   │   ├── Provenance.tsx        # « Sources et arbitrages » au pied d'une fiche
 │   │   ├── Signalement.tsx       # « Une erreur ? Écrivez-moi » — toutes les pages
+│   │   ├── Ecusson.tsx           # l'écusson d'un camp dans une ligne de tableau
 │   │   ├── PageLegale.tsx        # les deux pages légales, tirées du dictionnaire
 │   │   ├── VideoEmbed.tsx        # résumé YouTube/Dailymotion en click-to-play
 │   │   └── ui/ImageUpload.tsx
@@ -1911,12 +1912,22 @@ match ; **pas de case vide** pour un club sans écusson, le nom se suffit,
 comme sur l'accueil et à rebours des portraits des deux XV d'une fiche de
 match ; et `alt=""`, l'image étant décorative puisque le nom la suit.
 
-**C'est une exception de plus à « les écussons sont ailleurs sur le site »**,
-après le bloc « dernier match / prochain » de l'accueil et le tableau
-d'affichage d'une fiche de match. **La liste des matchs (`/matchs`) reste
-sans écussons** — cinquante lignes par page, l'écusson y encombrerait ce
-qu'ici il illustre. À ne pas prendre pour un oubli de nettoyage dans un
-sens ni dans l'autre.
+**ET LA LISTE DES MATCHS LES PORTE AUSSI**, depuis le même jour et à la
+demande de Jérémy. Ce fichier disait le contraire deux heures plus tôt —
+« cinquante lignes par page, l'écusson y encombrerait ce qu'ici il
+illustre » —, et c'était mon estimation, non une règle : elle est tombée
+devant la page rendue. **Le composant vit donc dans
+`src/components/Ecusson.tsx`**, sorti de la fiche joueur dès qu'une seconde
+page l'a demandé ; les grands écussons — 96 pixels sur une fiche de match,
+48 sur l'accueil — gardent leur code, ils portent une mise en page et pas
+seulement une image.
+
+Ce qui reste vrai de l'ancienne note : « les écussons sont ailleurs sur le
+site » n'est plus une règle du chantier design mais un souvenir de son
+point de départ. Les pages qui **listent ou affichent une rencontre** les
+portent toutes — accueil, fiche de match, fiche joueur, liste des matchs —
+et c'est désormais la règle ; une page nouvelle qui montre une affiche
+devrait faire de même.
 
 **La fiche de match est refaite le même jour.** Sa seule audace est le
 **tableau d'affichage** : l'affiche en Archivo condensée, l'USAP en rouge,
@@ -2339,7 +2350,13 @@ Béziers ». **Un piège pris au passage** : le bilan se calcule sur
 `{ AND: [where, MATCH_JOUE] }` et non sur un étalement — `MATCH_JOUE` porte
 `result`, qu'un filtre de résultat porte aussi, et le second écrasait le
 premier en silence, le filtre « victoires » annonçant 311 défaites. Plus de
-logos dans les lignes, plus de pastilles. Dictionnaire `matchs.*`.
+pastilles. Dictionnaire `matchs.*`.
+
+**Les deux écussons sont revenus dans ses lignes le 18 septembre 2026**, à
+la demande de Jérémy et par `Ecusson` — vingt pixels devant chaque nom,
+dans l'ordre de l'affiche, comme sur la fiche joueur. La page les avait
+perdus au chantier design, et ce fichier a soutenu deux heures durant
+qu'ils y encombreraient : la page rendue a tranché l'inverse.
 
 **La fiche adversaire est refaite le même jour.** Sa seule audace est la
 **frise des confrontations** sous le nom du club, la même que sur la page

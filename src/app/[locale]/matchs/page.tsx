@@ -8,6 +8,7 @@ import type { Metadata } from "next";
 import type { Prisma } from "@prisma/client";
 import { liensAlternatifs } from "@/lib/seo";
 import Signalement from "@/components/Signalement";
+import Ecusson from "@/components/Ecusson";
 
 /**
  * La liste des rencontres, refaite le 6 septembre 2026 dans l'identité
@@ -79,7 +80,7 @@ export default async function MatchsPage({ params, searchParams }: Props) {
       matchday: true,
       round: true,
       competition: { select: { name: true, shortName: true } },
-      opponent: { select: { name: true, shortName: true } },
+      opponent: { select: { name: true, shortName: true, logoUrl: true } },
       venue: { select: { name: true, slug: true } },
       season: { select: { label: true } },
     },
@@ -254,14 +255,22 @@ export default async function MatchsPage({ params, searchParams }: Props) {
                       <td className="py-1.5 pr-3 whitespace-nowrap text-muted-foreground">{formatDateFR(m.date)}</td>
                       <td className="hidden py-1.5 pr-3 whitespace-nowrap text-muted-foreground sm:table-cell">{intitule(m)}</td>
                       <td className="py-1.5 pr-3">
-                        <Link href={`/matchs/${m.slug}`} className="text-foreground hover:text-usap-sang">
+                        <Link href={`/matchs/${m.slug}`} className="inline-flex items-center gap-1.5 whitespace-nowrap text-foreground hover:text-usap-sang">
                           {m.isHome ? (
                             <>
-                              <span className="font-semibold text-usap-sang">USAP</span> – {opp}
+                              <Ecusson usap />
+                              <span className="font-semibold text-usap-sang">USAP</span>
+                              <span aria-hidden="true">–</span>
+                              <Ecusson logoUrl={m.opponent.logoUrl} />
+                              <span>{opp}</span>
                             </>
                           ) : (
                             <>
-                              {opp} – <span className="font-semibold text-usap-sang">USAP</span>
+                              <Ecusson logoUrl={m.opponent.logoUrl} />
+                              <span>{opp}</span>
+                              <span aria-hidden="true">–</span>
+                              <Ecusson usap />
+                              <span className="font-semibold text-usap-sang">USAP</span>
                             </>
                           )}
                         </Link>
