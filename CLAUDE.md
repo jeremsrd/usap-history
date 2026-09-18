@@ -1896,6 +1896,24 @@ résultat est celui de l'USAP sur les rencontres où l'homme a joué, une
 ligne de composition valant un match comme partout. Clés `fiche.bandeau*`,
 en catalan aussi.
 
+**ET SES LISTES DE RENCONTRES PORTENT L'ÉCUSSON DU CLUB ADVERSE**, depuis
+le 18 septembre 2026 à la demande de Jérémy : vingt pixels à gauche du nom,
+dans les deux tableaux — « avec l'USAP » et « contre l'USAP » —, l'écusson
+étant celui de l'adversaire de la rencontre dans le premier et celui du club
+du joueur dans le second. Trois règles du projet s'y appliquent, et aucune
+ne se voit au journal d'exécution : **`logo-club`**, sans quoi une marque
+sombre disparaît en thème sombre ; **pas de case vide** pour un club sans
+écusson, le nom se suffit, comme sur l'accueil et à rebours des portraits
+des deux XV d'une fiche de match ; et `alt=""`, l'image étant décorative
+puisque le nom la suit.
+
+**C'est une exception de plus à « les écussons sont ailleurs sur le site »**,
+après le bloc « dernier match / prochain » de l'accueil et le tableau
+d'affichage d'une fiche de match. **La liste des matchs (`/matchs`) reste
+sans écussons** — cinquante lignes par page, l'écusson y encombrerait ce
+qu'ici il illustre. À ne pas prendre pour un oubli de nettoyage dans un
+sens ni dans l'autre.
+
 **La fiche de match est refaite le même jour.** Sa seule audace est le
 **tableau d'affichage** : l'affiche en Archivo condensée, l'USAP en rouge,
 l'adversaire en encre et lié à sa fiche, le score énorme entre les deux, et

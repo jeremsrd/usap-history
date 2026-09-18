@@ -44,7 +44,7 @@ type PlayerAppearance = {
     result: MatchResult;
     isHome: boolean;
     competition: { shortName: string | null; name: string };
-    opponent: { shortName: string | null; name: string };
+    opponent: { shortName: string | null; name: string; logoUrl: string | null };
     season: { label: string };
   };
 };
@@ -107,7 +107,7 @@ export default async function JoueurDetailPage({ params }: Props) {
               result: true,
               isHome: true,
               competition: { select: { shortName: true, name: true } },
-              opponent: { select: { shortName: true, name: true } },
+              opponent: { select: { shortName: true, name: true, logoUrl: true } },
               season: { select: { label: true } },
             },
           },
@@ -470,6 +470,28 @@ function Titre({ children, compte }: { children: React.ReactNode; compte?: numbe
  * adversaire, une défaite catalane. Pas de vert ni de rouge : les couleurs
  * du site sont le Sang et l'Or, et elles ne disent pas un résultat.
  */
+/**
+ * L'écusson du club adverse dans la liste des rencontres, demandé par Jérémy
+ * le 18 septembre 2026 — vingt pixels, à gauche du nom du club.
+ *
+ * Deux règles du projet s'appliquent ici, et aucune des deux ne se voit au
+ * journal d'exécution :
+ *
+ * - **`logo-club`**, sans quoi une marque sombre — le tigre de Leicester, le
+ *   masque des Ospreys — disparaît dans le fond en thème sombre ;
+ * - **un club sans écusson ne laisse pas de case vide**, le nom se suffit.
+ *   C'est ce que fait l'accueil, et le contraire de ce que font les
+ *   portraits des deux XV d'une fiche de match, où une case vide au milieu
+ *   d'une colonne de visages se lirait comme un trou.
+ *
+ * L'image est décorative — `alt=""` — puisque le nom du club la suit
+ * immédiatement : le lire deux fois n'apprendrait rien à personne.
+ */
+function Ecusson({ logoUrl }: { logoUrl: string | null }) {
+  if (!logoUrl) return null;
+  return <Image src={logoUrl} alt="" width={40} height={40} className="h-5 w-5 shrink-0 logo-club" />;
+}
+
 function MatchHistoryTable({ appearances, isOpponent = false, t }: { appearances: PlayerAppearance[]; isOpponent?: boolean; t: Traduire }) {
   return (
     <div className="overflow-x-auto">
@@ -497,14 +519,20 @@ function MatchHistoryTable({ appearances, isOpponent = false, t }: { appearances
                 <td className="py-1.5 pr-3 whitespace-nowrap text-muted-foreground">{formatDateFR(m.date)}</td>
                 <td className="hidden py-1.5 pr-3 whitespace-nowrap text-muted-foreground sm:table-cell">{m.competition.shortName || m.competition.name}</td>
                 <td className="py-1.5 pr-3">
-                  <Link href={`/matchs/${m.slug}`} className="text-foreground hover:text-usap-sang">
+                  <Link href={`/matchs/${m.slug}`} className="inline-flex items-center gap-1.5 whitespace-nowrap text-foreground hover:text-usap-sang">
                     {m.isHome ? (
                       <>
-                        <span className="font-semibold">USAP</span> – {oppName}
+                        <span className="font-semibold">USAP</span>
+                        <span aria-hidden="true">–</span>
+                        <Ecusson logoUrl={m.opponent.logoUrl} />
+                        <span>{oppName}</span>
                       </>
                     ) : (
                       <>
-                        {oppName} – <span className="font-semibold">USAP</span>
+                        <Ecusson logoUrl={m.opponent.logoUrl} />
+                        <span>{oppName}</span>
+                        <span aria-hidden="true">–</span>
+                        <span className="font-semibold">USAP</span>
                       </>
                     )}
                   </Link>
