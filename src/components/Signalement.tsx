@@ -33,6 +33,14 @@ import { COURRIEL_CONTACT } from "@/lib/constants";
  * — le lire demanderait `headers()`, qui rendrait dynamiques les
  * trente-six pages du site pour une ligne de courriel.
  *
+ * **L'adresse est répétée en clair à côté du lien**, depuis le 18 septembre
+ * 2026 : un `mailto:` n'ouvre rien chez qui n'a pas de client de messagerie
+ * associé — cas courant sur un ordinateur de bureau —, et le lecteur se
+ * retrouverait alors devant un lien mort sans savoir à qui écrire. En clair,
+ * l'adresse se copie. Les parenthèses sont dans le composant et non dans le
+ * dictionnaire, à la différence des deux-points du pied de page : le
+ * français et le catalan les écrivent pareil, sans espace intérieure.
+ *
  * Le ton est celui d'une invitation, non d'un avertissement encadré : une
  * ligne sous un filet, le titre dans la voix condensée, le lien souligné
  * d'or comme ceux de `Provenance`. Pas de carte, pas d'icône, pas de fond
@@ -69,7 +77,9 @@ export default async function Signalement({
           className="font-medium text-foreground underline decoration-usap-or underline-offset-2 hover:text-usap-sang"
         >
           {t("signalement.lien")}
-        </a>
+        </a>{" ("}
+        <span className="break-all">{COURRIEL_CONTACT}</span>
+        {")"}
       </p>
     </aside>
   );
