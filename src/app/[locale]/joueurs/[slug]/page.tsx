@@ -1,6 +1,7 @@
 import Link from "@/components/Lien";
 import Provenance from "@/components/Provenance";
 import Signalement from "@/components/Signalement";
+import Ecusson from "@/components/Ecusson";
 import Image from "next/image";
 import { notFound, redirect } from "next/navigation";
 import { prisma } from "@/lib/prisma";
@@ -470,32 +471,6 @@ function Titre({ children, compte }: { children: React.ReactNode; compte?: numbe
  * adversaire, une défaite catalane. Pas de vert ni de rouge : les couleurs
  * du site sont le Sang et l'Or, et elles ne disent pas un résultat.
  */
-/**
- * L'écusson d'un camp dans la liste des rencontres, demandé par Jérémy le
- * 18 septembre 2026 — vingt pixels, à gauche du nom, **des deux côtés** : le
- * club adverse et l'USAP.
- *
- * Trois règles du projet s'appliquent ici, et aucune ne se voit au journal
- * d'exécution :
- *
- * - **l'écusson adverse porte `logo-club`, celui de l'USAP non.** Sans cette
- *   classe, une marque sombre — le tigre de Leicester, le masque des
- *   Ospreys — disparaît dans le fond en thème sombre ; le blason catalan,
- *   lui, a son propre contour d'or, comme dans le Header, dans le hero et
- *   sur une fiche de match ;
- * - **un club sans écusson ne laisse pas de case vide**, le nom se suffit.
- *   C'est ce que fait l'accueil, et le contraire de ce que font les
- *   portraits des deux XV d'une fiche de match, où une case vide au milieu
- *   d'une colonne de visages se lirait comme un trou ;
- * - **l'image est décorative** — `alt=""` —, le nom du camp la suivant
- *   immédiatement : le lire deux fois n'apprendrait rien à personne.
- */
-function Ecusson({ logoUrl, usap = false }: { logoUrl?: string | null; usap?: boolean }) {
-  if (usap) return <Image src="/images/usap/logo.png" alt="" width={40} height={40} className="h-5 w-5 shrink-0" />;
-  if (!logoUrl) return null;
-  return <Image src={logoUrl} alt="" width={40} height={40} className="h-5 w-5 shrink-0 logo-club" />;
-}
-
 function MatchHistoryTable({ appearances, isOpponent = false, t }: { appearances: PlayerAppearance[]; isOpponent?: boolean; t: Traduire }) {
   return (
     <div className="overflow-x-auto">
