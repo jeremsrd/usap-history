@@ -2,6 +2,7 @@ import Link from "@/components/Lien";
 import Provenance from "@/components/Provenance";
 import Signalement from "@/components/Signalement";
 import { JoueurCellule } from "@/components/JoueurCellule";
+import Ecusson from "@/components/Ecusson";
 import { notFound } from "next/navigation";
 import { prisma } from "@/lib/prisma";
 import { estCouperet, estJoue } from "@/lib/matchs";
@@ -41,10 +42,23 @@ import { liensAlternatifs } from "@/lib/seo";
  * transformations, drops, minutes, et une par couleur de carton — y tiennent
  * en douze colonnes.
  *
+ * **Et les deux écussons sont revenus dans ses lignes de rencontre le
+ * 19 septembre 2026**, à la demande de Jérémy et par `Ecusson`, comme sur
+ * la fiche joueur et la liste des matchs la veille. Le chantier design les
+ * avait retirés de partout — « des logos dans les lignes de match »
+ * figurait ici même parmi ce que la page ne faisait plus — et la règle
+ * s'est renversée sur pièce : une page qui **liste ou affiche une
+ * rencontre** les porte. Trois précautions suivent le composant et ne se
+ * voient pas au journal d'exécution : `logo-club` sur l'écusson adverse et
+ * non sur le blason catalan, qui a son propre contour d'or ; pas de case
+ * vide pour un club sans écusson, le nom se suffit ; et l'ordre de
+ * l'affiche, lu sur `isHome` au même endroit que les noms, pour que
+ * l'écusson et le camp ne se désynchronisent pas.
+ *
  * Ce que la page ne fait plus : des icônes devant les titres, des flèches
  * vertes et rouges pour la montée et la descente, neuf cases de chiffres
- * centrés, des pastilles de score, des logos dans les lignes de match, des
- * ronds gris pour les joueurs sans portrait.
+ * centrés, des pastilles de score, des ronds gris pour les joueurs sans
+ * portrait.
  */
 
 export const dynamic = "force-dynamic";
@@ -109,7 +123,7 @@ export default async function SaisonDetailPage({ params }: Props) {
         orderBy: { date: "asc" },
         include: {
           competition: { select: { name: true, shortName: true, type: true } },
-          opponent: { select: { name: true, shortName: true, slug: true } },
+          opponent: { select: { name: true, shortName: true, slug: true, logoUrl: true } },
           venue: { select: { name: true, slug: true } },
         },
       },
@@ -491,14 +505,22 @@ export default async function SaisonDetailPage({ params }: Props) {
                             <td className="py-1.5 pr-3 whitespace-nowrap text-muted-foreground">{formatDateFR(m.date)}</td>
                             <td className="py-1.5 pr-3 whitespace-nowrap text-muted-foreground">{m.matchday ? `J${m.matchday}` : m.round || ""}</td>
                             <td className="py-1.5 pr-3">
-                              <Link href={`/matchs/${m.slug}`} className="text-foreground hover:text-usap-sang">
+                              <Link href={`/matchs/${m.slug}`} className="inline-flex items-center gap-1.5 whitespace-nowrap text-foreground hover:text-usap-sang">
                                 {m.isHome ? (
                                   <>
-                                    <span className="font-semibold text-usap-sang">USAP</span> – {opp}
+                                    <Ecusson usap />
+                                    <span className="font-semibold text-usap-sang">USAP</span>
+                                    <span aria-hidden="true">–</span>
+                                    <Ecusson logoUrl={m.opponent.logoUrl} />
+                                    <span>{opp}</span>
                                   </>
                                 ) : (
                                   <>
-                                    {opp} – <span className="font-semibold text-usap-sang">USAP</span>
+                                    <Ecusson logoUrl={m.opponent.logoUrl} />
+                                    <span>{opp}</span>
+                                    <span aria-hidden="true">–</span>
+                                    <Ecusson usap />
+                                    <span className="font-semibold text-usap-sang">USAP</span>
                                   </>
                                 )}
                               </Link>

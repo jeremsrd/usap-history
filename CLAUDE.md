@@ -1925,9 +1925,9 @@ seulement une image.
 Ce qui reste vrai de l'ancienne note : « les écussons sont ailleurs sur le
 site » n'est plus une règle du chantier design mais un souvenir de son
 point de départ. Les pages qui **listent ou affichent une rencontre** les
-portent toutes — accueil, fiche de match, fiche joueur, liste des matchs —
-et c'est désormais la règle ; une page nouvelle qui montre une affiche
-devrait faire de même.
+portent toutes — accueil, fiche de match, fiche joueur, liste des matchs,
+page de saison — et c'est désormais la règle ; une page nouvelle qui montre
+une affiche devrait faire de même.
 
 **La fiche de match est refaite le même jour.** Sa seule audace est le
 **tableau d'affichage** : l'affiche en Archivo condensée, l'USAP en rouge,
@@ -1940,7 +1940,9 @@ club sans écusson. En mobile, écussons, score et deux noms ne tiennent pas
 sur 375 pixels : les noms passent au-dessus en une affiche, les écussons
 gardent le score entre eux, et le score descend d'un cran — en 7xl il se
 cassait en deux lignes. C'est une décision, à ne pas reprendre pour un
-oubli de nettoyage : la liste des matchs, elle, reste sans logos.
+oubli de nettoyage. **La réserve qui suivait ici — « la liste des matchs,
+elle, reste sans logos » — ne vaut plus** : cette liste les porte depuis le
+18 septembre, et la page de saison depuis le 19.
 
 **Et les faits portent une icône depuis le même jour**, à la demande de
 Jérémy — `IconeFait`, dans `src/components/`. Ce ne sont pas les emojis que
@@ -1983,7 +1985,8 @@ de l'automne 2018 s'y voient sans qu'on les nomme. Le titre décidé est une lig
 de Pro D2, promu » —, et une relégation seule s'écrit en gris, l'or n'étant
 pas pour elle. Le classement et le bilan du championnat tiennent en une
 phrase, le staff en une autre, le bilan rédigé suit ; les rencontres par
-compétition, phase finale à part, en tableaux serrés sans logos ; trois
+compétition, phase finale à part, en tableaux serrés — **avec les deux
+écussons depuis le 19 septembre 2026**, cf. plus bas ; trois
 classements courts — réalisateurs, essais, plus utilisés — ; et
 **l'effectif en un seul tableau**, chaque homme avec ses matchs,
 titularisations et brassards, minutes, réalisations et cartons en mots. Les
@@ -2023,6 +2026,27 @@ savoir :
 En mobile, dix nombres sur trois colonnes laissent le dixième seul à
 gauche : il prend la ligne et se centre, ici comme sur le bilan de
 l'accueil, qui avait le même orphelin.
+
+**ET SES LIGNES DE RENCONTRE PORTENT LES DEUX ÉCUSSONS DEPUIS LE
+19 SEPTEMBRE 2026**, à la demande de Jérémy — vingt pixels devant chaque
+nom, dans l'ordre de l'affiche, par `Ecusson` comme la fiche joueur et la
+liste des matchs la veille. Ils valent pour **tous** les tableaux de la
+page, la phase finale et les coupes comme le championnat, le même code les
+rendant tous.
+
+Ce fichier portait le contraire à trois endroits — « en tableaux serrés
+sans logos » ici, « des logos dans les lignes de match » parmi ce que la
+page ne fait plus, et « la liste des matchs, elle, reste sans logos »
+sur la fiche de match, phrase déjà fausse depuis la veille. Les trois sont
+corrigés du même geste : **une règle qui se renverse laisse ses traces
+ailleurs que là où on la renverse**, et une note fausse se lit comme une
+note à jour.
+
+Les trois précautions du composant s'appliquent, et aucune ne se voit au
+journal d'exécution : `logo-club` sur l'adverse et non sur le blason
+catalan, pas de case vide pour un club sans écusson, `alt=""` puisque le
+nom suit. La requête gagne `logoUrl` sur `opponent`, sans quoi les
+écussons manqueraient en silence.
 
 **L'accueil est refait le même jour.** Sa seule audace est le **palmarès
 écrit en grand** : sous le titre, « Sept fois champion de France » en rouge
