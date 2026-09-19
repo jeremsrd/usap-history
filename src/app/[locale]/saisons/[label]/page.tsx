@@ -414,16 +414,26 @@ export default async function SaisonDetailPage({ params }: Props) {
             ))}
           </p>
         )}
-        {/* Le bilan rédigé est le cœur éditorial de la page, et il était en
-            `text-sm max-w-prose` — or `prose` vaut 65 **caractères**, donc
-            455 pixels à cette taille : 40 % du conteneur, une colonne étroite
-            au milieu de tableaux pleine page. Relevé par Jérémy le
-            19 septembre 2026. Il passe en `text-base` sur 56 rem, soit 78 %
-            de la page et une mesure d'environ 110 signes — la limite haute
-            du lisible, et le prix à payer pour qu'un paragraphe de deux à
-            quatre lignes ne se lise pas comme une colonne cassée. Pleine
-            largeur ferait 144 signes par ligne, ce qui ne se lit plus. */}
-        {season.notes && <p className="mt-4 max-w-4xl text-base leading-relaxed text-foreground">{season.notes}</p>}
+        {/* Le bilan rédigé est le cœur éditorial de la page, et il va **d'un
+            bord à l'autre**, sans mesure — arbitré par Jérémy le 19 septembre
+            2026, contre l'avis que j'avais donné.
+
+            Il portait `max-w-prose text-sm`, et `prose` vaut 65 **caractères**
+            et non une largeur : à 14 pixels la mesure tombait à quelque
+            455 pixels sur un conteneur de 1 152, soit 40 % de la page — une
+            colonne étroite au milieu de tableaux pleine largeur, ce que
+            Jérémy a relevé. J'ai proposé 56 rem, 78 % de la page ; il a
+            tranché la pleine largeur, et c'est cohérent avec le reste de la
+            page, dont chaque tableau va d'un bord à l'autre.
+
+            Ce que cela coûte, et c'est assumé : environ 144 signes par ligne
+            sur un grand écran, là où la typographie en recommande 65 à 75.
+            `text-base` reste, et sert précisément à cela — une police plus
+            grande fait moins de signes par ligne, et `leading-relaxed` aide
+            l'œil à retrouver le début de la suivante. **Ne pas y remettre une
+            mesure au nom de la typographie** : ce serait défaire une
+            décision, non corriger un oubli. */}
+        {season.notes && <p className="mt-4 text-base leading-relaxed text-foreground">{season.notes}</p>}
       </header>
 
       {/* **LE BANDEAU DE CHIFFRES**, demandé par Jérémy le 16 septembre 2026 :
