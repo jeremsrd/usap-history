@@ -1,3 +1,5 @@
+import type { Traduire } from "@/i18n/dictionnaire";
+
 import type { Prisma } from "@prisma/client";
 
 /**
@@ -42,4 +44,40 @@ export function estCouperet(match: {
   round: string | null;
 }): boolean {
   return match.matchday == null && !(match.round ?? "").startsWith("Poule");
+}
+
+/**
+ * La lettre d'un résultat et sa couleur — **V en or, N en encre, D en gris**,
+ * arbitré par Jérémy le 19 septembre 2026.
+ *
+ * Elle était en **sang** jusque-là, et c'est ce qui a fait tomber la règle :
+ * le sang est la couleur de l'USAP partout ailleurs sur le site — le titre
+ * d'une page, un nom de joueur, un lien au survol. Dans une frise il ne
+ * disait donc pas « gagné », il disait « nous », et le lecteur n'avait aucun
+ * moyen de le savoir. L'or, lui, ne sert qu'à ce qui est acquis — un titre
+ * sous une saison, une distinction —, et il garde ce sens ici.
+ *
+ * `usap-or` et non `usap-or-vif` : la frise vit sur le fond de la page, qui
+ * suit le thème, et c'est le jeton qui suit le thème avec elle. `usap-or-vif`
+ * ne s'emploie que sur du sang, cf. CLAUDE.md.
+ *
+ * **Une seule définition pour tout le site.** Elle était recopiée dans huit
+ * pages — saison, adversaire, stade, arbitre, entraîneur, président, liste
+ * des matchs, accueil —, et deux des huit rendaient la défaite là où les
+ * autres rendaient `null`, si bien qu'une rencontre sans résultat s'y serait
+ * affichée « D ». Un code couleur qui vit en huit exemplaires ne se change
+ * pas, il se réécrit sept fois et on en oublie une.
+ *
+ * Rend `null` quand la rencontre n'a pas de résultat — elle n'est pas encore
+ * jouée —, jamais une lettre par défaut : `null` se lit « pas de résultat »,
+ * comme partout ailleurs dans ce projet.
+ */
+export function lettreResultat(
+  result: string | null | undefined,
+  t: Traduire,
+): { texte: string; classe: string } | null {
+  if (result === "VICTOIRE") return { texte: t("saison.lettreVictoire"), classe: "text-usap-or" };
+  if (result === "NUL") return { texte: t("saison.lettreNul"), classe: "text-foreground" };
+  if (result === "DEFAITE") return { texte: t("saison.lettreDefaite"), classe: "text-muted-foreground" };
+  return null;
 }

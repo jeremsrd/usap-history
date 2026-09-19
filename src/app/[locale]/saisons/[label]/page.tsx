@@ -5,7 +5,7 @@ import { JoueurCellule } from "@/components/JoueurCellule";
 import Ecusson from "@/components/Ecusson";
 import { notFound } from "next/navigation";
 import { prisma } from "@/lib/prisma";
-import { estCouperet, estJoue } from "@/lib/matchs";
+import { estCouperet, estJoue, lettreResultat } from "@/lib/matchs";
 import { matchPoints } from "@/lib/scoring";
 import { POSITIONS } from "@/lib/constants";
 import { formatDateFR } from "@/lib/utils";
@@ -336,14 +336,7 @@ export default async function SaisonDetailPage({ params }: Props) {
     const opp = m.opponent.shortName || m.opponent.name;
     return m.isHome ? `USAP – ${opp}` : `${opp} – USAP`;
   };
-  const lettre = (m: (typeof season.matches)[number]) =>
-    m.result === "VICTOIRE"
-      ? { texte: t("saison.lettreVictoire"), classe: "text-usap-sang" }
-      : m.result === "NUL"
-        ? { texte: t("saison.lettreNul"), classe: "text-foreground" }
-        : m.result === "DEFAITE"
-          ? { texte: t("saison.lettreDefaite"), classe: "text-muted-foreground" }
-          : null;
+  const lettre = (m: (typeof season.matches)[number]) => lettreResultat(m.result, t);
 
   return (
     <div className="mx-auto max-w-6xl px-4 py-10 sm:py-14">

@@ -4,7 +4,7 @@ import Signalement from "@/components/Signalement";
 import Image from "next/image";
 import { notFound, redirect } from "next/navigation";
 import { prisma } from "@/lib/prisma";
-import { MATCH_JOUE, estJoue } from "@/lib/matchs";
+import { MATCH_JOUE, estJoue, lettreResultat } from "@/lib/matchs";
 import { PALMARES } from "@/lib/constants";
 import { passagesDe, sequences, sousSonBanc, type Passage } from "@/lib/staff";
 import { formatDateFR } from "@/lib/utils";
@@ -175,12 +175,7 @@ export default async function EntraineurDetailPage({ params }: Props) {
   });
 
   const nomClub = (o: { name: string; shortName: string | null }) => o.shortName || o.name;
-  const lettre = (result: string | null) =>
-    result === "VICTOIRE"
-      ? { texte: t("saison.lettreVictoire"), classe: "text-usap-sang" }
-      : result === "NUL"
-        ? { texte: t("saison.lettreNul"), classe: "text-foreground" }
-        : { texte: t("saison.lettreDefaite"), classe: "text-muted-foreground" };
+  const lettre = (result: string | null) => lettreResultat(result, t);
   const affiche = (m: (typeof sous)[number]) => (m.isHome ? `USAP – ${nomClub(m.opponent)}` : `${nomClub(m.opponent)} – USAP`);
   const premiere = sous[0];
   const derniere = sous[sous.length - 1];
@@ -222,9 +217,9 @@ export default async function EntraineurDetailPage({ params }: Props) {
                     <Link
                       href={`/matchs/${m.slug}`}
                       title={`${formatDateFR(m.date)}, ${affiche(m)}, ${m.isHome ? m.scoreUsap : m.scoreOpponent}-${m.isHome ? m.scoreOpponent : m.scoreUsap}`}
-                      className={`${l.classe} hover:text-usap-or`}
+                      className={`${l?.classe ?? ""} hover:text-usap-or`}
                     >
-                      {l.texte}
+                      {l?.texte ?? ""}
                     </Link>
                   </li>
                 );

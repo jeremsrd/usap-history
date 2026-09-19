@@ -5,7 +5,7 @@ import { JoueurCellule } from "@/components/JoueurCellule";
 import Image from "next/image";
 import { notFound, redirect } from "next/navigation";
 import { prisma } from "@/lib/prisma";
-import { estJoue } from "@/lib/matchs";
+import { estJoue, lettreResultat } from "@/lib/matchs";
 import { formatDateFR } from "@/lib/utils";
 import { dictionnaire } from "@/i18n/dictionnaire";
 import { cheminLocalise, type Langue } from "@/i18n/langues";
@@ -169,14 +169,7 @@ export default async function AdversaireDetailPage({ params }: Props) {
       {m.scoreUsap}-{m.scoreOpponent} {t("match.le", { date: formatDateFR(m.date) })}
     </Link>
   );
-  const lettre = (result: string | null) =>
-    result === "VICTOIRE"
-      ? { texte: t("saison.lettreVictoire"), classe: "text-usap-sang" }
-      : result === "NUL"
-        ? { texte: t("saison.lettreNul"), classe: "text-foreground" }
-        : result === "DEFAITE"
-          ? { texte: t("saison.lettreDefaite"), classe: "text-muted-foreground" }
-          : null;
+  const lettre = (result: string | null) => lettreResultat(result, t);
   const intitule = (m: (typeof opponent.matches)[number]) => {
     const c = m.competition.shortName || m.competition.name;
     return m.matchday ? `${c}, J${m.matchday}` : m.round ? `${c}, ${m.round}` : c;

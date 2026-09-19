@@ -519,7 +519,7 @@ function MatchHistoryTable({ appearances, isOpponent = false, t }: { appearances
                   </Link>
                 </td>
                 <td className="py-1.5 pr-3 text-right whitespace-nowrap">
-                  <span className={`mr-2 ${favorable ? "font-bold text-usap-sang" : "text-muted-foreground"}`}>{lettre}</span>
+                  <span className={`mr-2 ${favorable ? "font-bold text-usap-or" : "text-muted-foreground"}`}>{lettre}</span>
                   <span className="text-foreground">{m.isHome ? `${m.scoreUsap}-${m.scoreOpponent}` : `${m.scoreOpponent}-${m.scoreUsap}`}</span>
                 </td>
                 <td className="py-1.5 pr-3 text-right text-muted-foreground">

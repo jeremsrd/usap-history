@@ -4,7 +4,7 @@ import Signalement from "@/components/Signalement";
 import Image from "next/image";
 import { notFound, redirect } from "next/navigation";
 import { prisma } from "@/lib/prisma";
-import { estJoue } from "@/lib/matchs";
+import { estJoue, lettreResultat } from "@/lib/matchs";
 import { formatDateFR } from "@/lib/utils";
 import { dictionnaire } from "@/i18n/dictionnaire";
 import { cheminLocalise, type Langue } from "@/i18n/langues";
@@ -161,14 +161,7 @@ export default async function StadeDetailPage({ params, searchParams }: Props) {
     )),
   ].filter(Boolean) as (string | React.ReactElement)[];
 
-  const lettre = (result: string | null) =>
-    result === "VICTOIRE"
-      ? { texte: t("saison.lettreVictoire"), classe: "text-usap-sang" }
-      : result === "NUL"
-        ? { texte: t("saison.lettreNul"), classe: "text-foreground" }
-        : result === "DEFAITE"
-          ? { texte: t("saison.lettreDefaite"), classe: "text-muted-foreground" }
-          : null;
+  const lettre = (result: string | null) => lettreResultat(result, t);
   const affiche = (m: { isHome: boolean; opponent: { name: string; shortName: string | null } }) =>
     m.isHome ? `USAP – ${nomClub(m.opponent)}` : `${nomClub(m.opponent)} – USAP`;
   const intitule = (m: (typeof venue.matches)[number]) => {

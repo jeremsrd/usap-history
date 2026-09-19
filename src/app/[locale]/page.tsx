@@ -2,7 +2,7 @@ import Link from "@/components/Lien";
 import Image from "next/image";
 import { JoueurCellule } from "@/components/JoueurCellule";
 import { prisma } from "@/lib/prisma";
-import { MATCH_JOUE, estJoue } from "@/lib/matchs";
+import { MATCH_JOUE, estJoue, lettreResultat } from "@/lib/matchs";
 import { matchPoints } from "@/lib/scoring";
 import { PALMARES } from "@/lib/constants";
 import { formatDateFR } from "@/lib/utils";
@@ -430,12 +430,7 @@ export default async function Home({ params }: Props) {
         ? t("match.tour", { competition, tour: m.round })
         : competition;
   };
-  const lettre = (result: string | null) =>
-    result === "VICTOIRE"
-      ? { texte: t("saison.lettreVictoire"), classe: "text-usap-sang" }
-      : result === "NUL"
-        ? { texte: t("saison.lettreNul"), classe: "text-foreground" }
-        : { texte: t("saison.lettreDefaite"), classe: "text-muted-foreground" };
+  const lettre = (result: string | null) => lettreResultat(result, t);
 
   return (
     <>
@@ -704,7 +699,7 @@ export default async function Home({ params }: Props) {
                           <td className="py-1.5 pr-3 text-right font-semibold text-foreground whitespace-nowrap">
                             {m.isHome ? m.scoreUsap : m.scoreOpponent} – {m.isHome ? m.scoreOpponent : m.scoreUsap}
                           </td>
-                          <td className={`py-1.5 text-center font-bold ${l.classe}`}>{l.texte}</td>
+                          <td className={`py-1.5 text-center font-bold ${l?.classe ?? ""}`}>{l?.texte ?? ""}</td>
                         </tr>
                       );
                     })}
@@ -878,7 +873,7 @@ export default async function Home({ params }: Props) {
                           <td className="py-1.5 pr-2 text-right font-semibold text-foreground whitespace-nowrap">
                             {m.is_home ? m.score_usap : m.score_opponent} – {m.is_home ? m.score_opponent : m.score_usap}
                           </td>
-                          <td className={`py-1.5 text-center font-bold ${l.classe}`}>{l.texte}</td>
+                          <td className={`py-1.5 text-center font-bold ${l?.classe ?? ""}`}>{l?.texte ?? ""}</td>
                         </tr>
                       );
                     })}
@@ -944,7 +939,7 @@ export default async function Home({ params }: Props) {
                           <td className="py-1.5 pr-2 text-right font-semibold text-foreground whitespace-nowrap">
                             {m.isHome ? m.scoreUsap : m.scoreOpponent} – {m.isHome ? m.scoreOpponent : m.scoreUsap}
                           </td>
-                          <td className={`py-1.5 text-center font-bold ${l.classe}`}>{l.texte}</td>
+                          <td className={`py-1.5 text-center font-bold ${l?.classe ?? ""}`}>{l?.texte ?? ""}</td>
                         </tr>
                       );
                     })}
