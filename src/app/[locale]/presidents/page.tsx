@@ -129,7 +129,7 @@ export default async function PresidentsPage({ params }: Props) {
                   </td>
                   <td className="hidden py-3 pr-3 text-right text-muted-foreground sm:table-cell">{f.seasons.length || ""}</td>
                   <td className="py-3 pr-3 text-right font-semibold text-foreground">{f.matchs || ""}</td>
-                  <td className="py-3 pr-3 text-right text-usap-sang">{f.victoires || ""}</td>
+                  <td className="py-3 pr-3 text-right text-usap-or">{f.victoires || ""}</td>
                   <td className="py-3 pr-3 text-right text-foreground">{f.nuls || ""}</td>
                   <td className="py-3 pr-3 text-right text-muted-foreground">{f.defaites || ""}</td>
                   <td className="hidden py-3 md:table-cell">

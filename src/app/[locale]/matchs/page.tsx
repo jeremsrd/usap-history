@@ -1,6 +1,6 @@
 import Link from "@/components/Lien";
 import { prisma } from "@/lib/prisma";
-import { MATCH_JOUE, estJoue } from "@/lib/matchs";
+import { MATCH_JOUE, estJoue, lettreResultat } from "@/lib/matchs";
 import { formatDateFR } from "@/lib/utils";
 import { dictionnaire } from "@/i18n/dictionnaire";
 import type { Langue } from "@/i18n/langues";
@@ -130,14 +130,7 @@ export default async function MatchsPage({ params, searchParams }: Props) {
   const groupes = new Map<string, typeof matches>();
   for (const m of matches) groupes.set(m.season.label, [...(groupes.get(m.season.label) ?? []), m]);
 
-  const lettre = (result: string | null) =>
-    result === "VICTOIRE"
-      ? { texte: t("saison.lettreVictoire"), classe: "text-usap-sang" }
-      : result === "NUL"
-        ? { texte: t("saison.lettreNul"), classe: "text-foreground" }
-        : result === "DEFAITE"
-          ? { texte: t("saison.lettreDefaite"), classe: "text-muted-foreground" }
-          : null;
+  const lettre = (result: string | null) => lettreResultat(result, t);
   const intitule = (m: (typeof matches)[number]) => {
     const c = m.competition.shortName || m.competition.name;
     return m.matchday ? `${c}, J${m.matchday}` : m.round ? `${c}, ${m.round}` : c;

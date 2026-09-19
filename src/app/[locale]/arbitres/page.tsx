@@ -178,7 +178,7 @@ export default async function ArbitresPage({ params }: Props) {
                       {b ? (b.premiere === b.derniere ? b.premiere : `${b.premiere.slice(0, 4)}-${b.derniere.slice(5)}`) : ""}
                     </td>
                     <td className="py-1.5 pr-3 text-right font-semibold text-foreground">{b?.matchs ?? ""}</td>
-                    <td className="py-1.5 pr-3 text-right text-usap-sang">{b?.victoires || ""}</td>
+                    <td className="py-1.5 pr-3 text-right text-usap-or">{b?.victoires || ""}</td>
                     <td className="py-1.5 pr-3 text-right text-foreground">{b?.nuls || ""}</td>
                     <td className="py-1.5 pr-3 text-right text-muted-foreground">{b?.defaites || ""}</td>
                     <td className="hidden py-1.5 pr-3 text-right text-foreground sm:table-cell">{b?.jaunes || ""}</td>

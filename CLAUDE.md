@@ -1880,8 +1880,10 @@ cœur de la page n'est plus quatre gros chiffres centrés mais le **bilan
 saison par saison**, à la manière de lfchistory.net : matchs, titularisations,
 brassards quand il y en a eu, essais, points, minutes — un tiret quand la
 source ne les publie pas —, et la ligne de total sous un filet rouge. Les
-résultats des rencontres sont une lettre, V, N ou D, en gras rouge quand
-elle est favorable au joueur, à la place du vert et du rouge de Tailwind ;
+résultats des rencontres sont une lettre, V, N ou D, en gras **or** quand
+elle est favorable au joueur — rouge jusqu'au 19 septembre 2026, cf. le
+code couleur des résultats plus bas —, à la place du vert et du rouge de
+Tailwind ;
 les sélections et distinctions sont des lignes, plus des cartes ; les icônes
 devant les titres ont disparu ; la case du portrait reste vide sans
 portrait, ici comme dans les classements. La page est passée au
@@ -1978,7 +1980,7 @@ au dictionnaire (`match.*`), provenance en pied.
 
 **La page de saison est refaite le même jour.** Sa seule audace est la
 **frise des résultats** : sous le millésime en rouge condensé, la saison
-entière en une ligne de lettres — V en rouge, N en encre, D en gris —,
+entière en une ligne de lettres — **V en or**, N en encre, D en gris —,
 chacune liée à sa rencontre. C'est la structure réelle d'une saison, et
 elle se lit d'un coup d'œil : les vingt défaites en vingt et une rencontres
 de l'automne 2018 s'y voient sans qu'on les nomme. Le titre décidé est une ligne en or — « Champion
@@ -2026,6 +2028,45 @@ savoir :
 En mobile, dix nombres sur trois colonnes laissent le dixième seul à
 gauche : il prend la ligne et se centre, ici comme sur le bilan de
 l'accueil, qui avait le même orphelin.
+
+**ET LE CODE COULEUR DES RÉSULTATS EST PASSÉ À L'OR LE 19 SEPTEMBRE
+2026**, arbitré par Jérémy : **V en or, N en encre, D en gris**, là où la
+victoire était en sang depuis le chantier design.
+
+La raison vaut au-delà de ce cas : **le sang est la couleur de l'USAP
+partout ailleurs sur le site** — le titre d'une page, un nom de joueur, un
+lien au survol. Dans une frise il ne disait donc pas « gagné », il disait
+« nous », et rien ne permettait au lecteur de le deviner. L'or ne sert,
+lui, qu'à ce qui est acquis — un titre sous une saison, une distinction en
+haut d'une fiche —, et il garde ce sens ici. C'est `usap-or` et non
+`usap-or-vif` : la frise vit sur le fond de la page, qui suit le thème.
+
+**Et le code vivait en huit exemplaires.** La fonction `lettre()` était
+recopiée dans la page de saison, la fiche adversaire, la fiche stade, la
+fiche arbitre, la fiche entraîneur, la fiche président, la liste des
+matchs et l'accueil — huit fois les mêmes trois lignes et les mêmes trois
+classes. Elle vit désormais dans `lettreResultat()` de `src/lib/matchs.ts`,
+et les huit pages l'appellent ; la fiche joueur, qui colorait sa lettre
+selon qu'elle est favorable à l'homme, suit la même couleur. **Un code
+couleur en huit exemplaires ne se change pas : il se réécrit sept fois et
+on en oublie une.**
+
+Le regroupement a fait tomber une divergence que personne n'avait vue :
+**trois des huit rendaient la défaite par défaut** — accueil, présidents,
+entraîneurs — quand les cinq autres rendaient `null`. Une rencontre sans
+résultat s'y serait affichée « D », c'est-à-dire « perdue » pour un match
+pas encore joué. La fonction partagée rend `null`, comme partout ailleurs
+dans ce projet, et les trois appels s'en accommodent.
+
+**Et les comptes de victoires ont suivi le même jour**, sur la même
+décision : les colonnes des tableaux de liste — adversaires, stades,
+arbitres, entraîneurs, présidents, statistiques — et le bandeau de la
+fiche joueur, neuf endroits en tout. Ils étaient en sang, et la question
+se posait dès lors que la lettre passait à l'or : une page qui dit la
+victoire en or dans sa frise et en rouge dans sa colonne n'a pas de code
+couleur, elle en a deux. Les trois couleurs sont donc les mêmes partout et
+sur les deux objets, la lettre comme le nombre — **or, encre, gris**.
+
 
 **ET SES LIGNES DE RENCONTRE PORTENT LES DEUX ÉCUSSONS DEPUIS LE
 19 SEPTEMBRE 2026**, à la demande de Jérémy — vingt pixels devant chaque

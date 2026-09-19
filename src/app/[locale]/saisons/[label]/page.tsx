@@ -5,7 +5,7 @@ import { JoueurCellule } from "@/components/JoueurCellule";
 import Ecusson from "@/components/Ecusson";
 import { notFound } from "next/navigation";
 import { prisma } from "@/lib/prisma";
-import { estCouperet, estJoue } from "@/lib/matchs";
+import { estCouperet, estJoue, lettreResultat } from "@/lib/matchs";
 import { matchPoints } from "@/lib/scoring";
 import { POSITIONS } from "@/lib/constants";
 import { formatDateFR } from "@/lib/utils";
@@ -336,14 +336,7 @@ export default async function SaisonDetailPage({ params }: Props) {
     const opp = m.opponent.shortName || m.opponent.name;
     return m.isHome ? `USAP – ${opp}` : `${opp} – USAP`;
   };
-  const lettre = (m: (typeof season.matches)[number]) =>
-    m.result === "VICTOIRE"
-      ? { texte: t("saison.lettreVictoire"), classe: "text-usap-sang" }
-      : m.result === "NUL"
-        ? { texte: t("saison.lettreNul"), classe: "text-foreground" }
-        : m.result === "DEFAITE"
-          ? { texte: t("saison.lettreDefaite"), classe: "text-muted-foreground" }
-          : null;
+  const lettre = (m: (typeof season.matches)[number]) => lettreResultat(m.result, t);
 
   return (
     <div className="mx-auto max-w-6xl px-4 py-10 sm:py-14">
@@ -414,7 +407,26 @@ export default async function SaisonDetailPage({ params }: Props) {
             ))}
           </p>
         )}
-        {season.notes && <p className="mt-4 max-w-prose text-sm leading-relaxed text-foreground">{season.notes}</p>}
+        {/* Le bilan rédigé est le cœur éditorial de la page, et il va **d'un
+            bord à l'autre**, sans mesure — arbitré par Jérémy le 19 septembre
+            2026, contre l'avis que j'avais donné.
+
+            Il portait `max-w-prose text-sm`, et `prose` vaut 65 **caractères**
+            et non une largeur : à 14 pixels la mesure tombait à quelque
+            455 pixels sur un conteneur de 1 152, soit 40 % de la page — une
+            colonne étroite au milieu de tableaux pleine largeur, ce que
+            Jérémy a relevé. J'ai proposé 56 rem, 78 % de la page ; il a
+            tranché la pleine largeur, et c'est cohérent avec le reste de la
+            page, dont chaque tableau va d'un bord à l'autre.
+
+            Ce que cela coûte, et c'est assumé : environ 144 signes par ligne
+            sur un grand écran, là où la typographie en recommande 65 à 75.
+            `text-base` reste, et sert précisément à cela — une police plus
+            grande fait moins de signes par ligne, et `leading-relaxed` aide
+            l'œil à retrouver le début de la suivante. **Ne pas y remettre une
+            mesure au nom de la typographie** : ce serait défaire une
+            décision, non corriger un oubli. */}
+        {season.notes && <p className="mt-4 text-base leading-relaxed text-foreground">{season.notes}</p>}
       </header>
 
       {/* **LE BANDEAU DE CHIFFRES**, demandé par Jérémy le 16 septembre 2026 :

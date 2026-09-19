@@ -277,7 +277,7 @@ export default async function JoueurDetailPage({ params }: Props) {
           {(
             [
               ["fiche.bandeauMatchs", avec.length, "text-foreground"],
-              ["fiche.bandeauVictoires", avec.filter((ma) => ma.match.result === "VICTOIRE").length, "text-usap-sang"],
+              ["fiche.bandeauVictoires", avec.filter((ma) => ma.match.result === "VICTOIRE").length, "text-usap-or"],
               ["fiche.bandeauNuls", avec.filter((ma) => ma.match.result === "NUL").length, "text-foreground"],
               ["fiche.bandeauDefaites", avec.filter((ma) => ma.match.result === "DEFAITE").length, "text-muted-foreground"],
               ["fiche.bandeauPoints", total.points, "text-foreground"],
@@ -519,7 +519,7 @@ function MatchHistoryTable({ appearances, isOpponent = false, t }: { appearances
                   </Link>
                 </td>
                 <td className="py-1.5 pr-3 text-right whitespace-nowrap">
-                  <span className={`mr-2 ${favorable ? "font-bold text-usap-sang" : "text-muted-foreground"}`}>{lettre}</span>
+                  <span className={`mr-2 ${favorable ? "font-bold text-usap-or" : "text-muted-foreground"}`}>{lettre}</span>
                   <span className="text-foreground">{m.isHome ? `${m.scoreUsap}-${m.scoreOpponent}` : `${m.scoreOpponent}-${m.scoreUsap}`}</span>
                 </td>
                 <td className="py-1.5 pr-3 text-right text-muted-foreground">

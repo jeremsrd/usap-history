@@ -180,7 +180,7 @@ export default async function EntraineursPage({ params }: Props) {
                   <td className="py-1.5 pr-4 whitespace-nowrap text-muted-foreground">{f.sequences}</td>
                   <td className="hidden py-1.5 pr-3 text-right text-muted-foreground md:table-cell">{f.saisons || ""}</td>
                   <td className="py-1.5 pr-3 text-right font-semibold text-foreground">{f.matchs || ""}</td>
-                  <td className="py-1.5 pr-3 text-right text-usap-sang">{f.victoires || ""}</td>
+                  <td className="py-1.5 pr-3 text-right text-usap-or">{f.victoires || ""}</td>
                   <td className="py-1.5 pr-3 text-right text-foreground">{f.nuls || ""}</td>
                   <td className="py-1.5 pr-3 text-right text-muted-foreground">{f.defaites || ""}</td>
                   <td className="hidden py-1.5 lg:table-cell">
