@@ -414,7 +414,16 @@ export default async function SaisonDetailPage({ params }: Props) {
             ))}
           </p>
         )}
-        {season.notes && <p className="mt-4 max-w-prose text-sm leading-relaxed text-foreground">{season.notes}</p>}
+        {/* Le bilan rédigé est le cœur éditorial de la page, et il était en
+            `text-sm max-w-prose` — or `prose` vaut 65 **caractères**, donc
+            455 pixels à cette taille : 40 % du conteneur, une colonne étroite
+            au milieu de tableaux pleine page. Relevé par Jérémy le
+            19 septembre 2026. Il passe en `text-base` sur 56 rem, soit 78 %
+            de la page et une mesure d'environ 110 signes — la limite haute
+            du lisible, et le prix à payer pour qu'un paragraphe de deux à
+            quatre lignes ne se lise pas comme une colonne cassée. Pleine
+            largeur ferait 144 signes par ligne, ce qui ne se lit plus. */}
+        {season.notes && <p className="mt-4 max-w-4xl text-base leading-relaxed text-foreground">{season.notes}</p>}
       </header>
 
       {/* **LE BANDEAU DE CHIFFRES**, demandé par Jérémy le 16 septembre 2026 :
