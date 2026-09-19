@@ -2058,11 +2058,14 @@ résultat s'y serait affichée « D », c'est-à-dire « perdue » pour un match
 pas encore joué. La fonction partagée rend `null`, comme partout ailleurs
 dans ce projet, et les trois appels s'en accommodent.
 
-**Ce qui n'a pas été repeint, et c'est à arbitrer** : les colonnes de
-**victoires** des tableaux de liste — adversaires, stades, arbitres,
-entraîneurs, présidents, statistiques — sont encore en sang. Ce sont des
-nombres et non des lettres, et le rouge y pèse moins ; mais si la victoire
-est en or dans une frise, la question se pose.
+**Et les comptes de victoires ont suivi le même jour**, sur la même
+décision : les colonnes des tableaux de liste — adversaires, stades,
+arbitres, entraîneurs, présidents, statistiques — et le bandeau de la
+fiche joueur, neuf endroits en tout. Ils étaient en sang, et la question
+se posait dès lors que la lettre passait à l'or : une page qui dit la
+victoire en or dans sa frise et en rouge dans sa colonne n'a pas de code
+couleur, elle en a deux. Les trois couleurs sont donc les mêmes partout et
+sur les deux objets, la lettre comme le nombre — **or, encre, gris**.
 
 
 **ET SES LIGNES DE RENCONTRE PORTENT LES DEUX ÉCUSSONS DEPUIS LE

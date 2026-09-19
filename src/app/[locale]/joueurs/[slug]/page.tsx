@@ -277,7 +277,7 @@ export default async function JoueurDetailPage({ params }: Props) {
           {(
             [
               ["fiche.bandeauMatchs", avec.length, "text-foreground"],
-              ["fiche.bandeauVictoires", avec.filter((ma) => ma.match.result === "VICTOIRE").length, "text-usap-sang"],
+              ["fiche.bandeauVictoires", avec.filter((ma) => ma.match.result === "VICTOIRE").length, "text-usap-or"],
               ["fiche.bandeauNuls", avec.filter((ma) => ma.match.result === "NUL").length, "text-foreground"],
               ["fiche.bandeauDefaites", avec.filter((ma) => ma.match.result === "DEFAITE").length, "text-muted-foreground"],
               ["fiche.bandeauPoints", total.points, "text-foreground"],

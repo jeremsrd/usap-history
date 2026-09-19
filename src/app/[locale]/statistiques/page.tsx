@@ -252,7 +252,7 @@ export default async function StatistiquesPage({ params }: Props) {
               <tr key={cle} className={`border-b border-border ${gras ? "font-semibold" : ""}`}>
                 <td className="py-1.5 pr-4 text-foreground">{t(cle)}</td>
                 <td className="py-1.5 pr-3 text-right text-foreground">{nombre(b.joues)}</td>
-                <td className="py-1.5 pr-3 text-right text-usap-sang">{b.victoires}</td>
+                <td className="py-1.5 pr-3 text-right text-usap-or">{b.victoires}</td>
                 <td className="py-1.5 pr-3 text-right text-foreground">{b.nuls}</td>
                 <td className="py-1.5 pr-3 text-right text-muted-foreground">{b.defaites}</td>
                 <td className="hidden py-1.5 pr-3 text-right text-foreground sm:table-cell">{nombre(b.pour)}</td>
@@ -289,7 +289,7 @@ export default async function StatistiquesPage({ params }: Props) {
                 </td>
                 <td className="hidden py-1.5 pr-4 whitespace-nowrap text-muted-foreground md:table-cell">{c.periode}</td>
                 <td className="py-1.5 pr-3 text-right text-foreground">{nombre(c.joues)}</td>
-                <td className="py-1.5 pr-3 text-right text-usap-sang">{c.victoires || ""}</td>
+                <td className="py-1.5 pr-3 text-right text-usap-or">{c.victoires || ""}</td>
                 <td className="py-1.5 pr-3 text-right text-foreground">{c.nuls || ""}</td>
                 <td className="py-1.5 pr-3 text-right text-muted-foreground">{c.defaites || ""}</td>
                 <td className="hidden py-1.5 pr-3 text-right text-foreground sm:table-cell">{nombre(c.pour)}</td>
@@ -424,7 +424,7 @@ export default async function StatistiquesPage({ params }: Props) {
                     </Link>
                   </td>
                   <td className="py-1.5 pr-3 text-right font-semibold text-foreground">{o.matchs}</td>
-                  <td className="py-1.5 pr-3 text-right text-usap-sang">{o.victoires || ""}</td>
+                  <td className="py-1.5 pr-3 text-right text-usap-or">{o.victoires || ""}</td>
                   <td className="py-1.5 pr-3 text-right text-foreground">{o.nuls || ""}</td>
                   <td className="py-1.5 pr-3 text-right text-muted-foreground">{o.defaites || ""}</td>
                   <td className="hidden py-1.5 pr-3 text-right text-foreground sm:table-cell">{o.pour}</td>
