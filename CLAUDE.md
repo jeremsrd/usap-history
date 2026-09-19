@@ -4922,6 +4922,38 @@ page n'avait d'image de partage.
   faut regarder, pas au journal du build, qui ne dit rien. **Ce qu'on lit
   sur le disque à l'exécution se vérifie sur le déploiement, pas en local.**
 
+**ET UN DÉPLOIEMENT PEUT TARDER UNE HEURE ET DEMIE SANS QUE RIEN NE LE
+DISE**, constaté le 18 septembre 2026 au soir et **soldé le lendemain
+matin**. La PR des écussons de la liste des matchs n'a reçu **aucun statut
+Vercel** — ni vert ni rouge, `total_count: 0` sur la tête de la branche
+comme sur le commit fusionné —, et la production a continué de servir la
+version précédente en répondant 200. Puis les deux déploiements sont
+partis d'eux-mêmes, sans que rien ne soit relancé : « Deployment has
+completed » à 21 h 38 UTC pour la poussée de 20 h 48, à 21 h 51 pour la
+fusion de 20 h 23. `1237e2e` est en ligne, vérifié le 19 septembre sur le
+site — la liste des matchs sert bien ses écussons, dans les deux langues.
+
+Deux choses à en retenir, et la seconde a coûté une soirée :
+
+- **l'absence de statut se lit « pas encore parti », non « ne partira
+  pas ».** Il y a trois états et non deux : le build qui a échoué, qui
+  laisse un statut rouge et un journal ; celui qui ne partira pas ; et
+  celui qui n'est pas **encore** parti — et les deux derniers ne
+  montrent exactement rien. Ils se lisent sur le **commit** et non sur le
+  site, par `api.github.com/repos/{dépôt}/commits/{sha}/status`, qui donne
+  `total_count`, `state` et `created_at` ; et le troisième ne se distingue
+  du deuxième que **par le temps**, c'est-à-dire par la même page relue
+  une heure plus tard ;
+- **le diagnostic est parti avant l'attente.** Trois causes ont été
+  vérifiées sur pièce ce soir-là — l'installation GitHub de Vercel, le
+  branchement du projet, la suppression automatique des branches après
+  fusion —, toutes trois saines, et pour cause : il n'y avait rien à
+  réparer. Devant un déploiement qui ne part pas, **attendre et relire le
+  statut du commit** avant de soupçonner la configuration. Une session de
+  Claude Code n'a de toute façon aucun accès à Vercel — ni jeton, ni CLI —
+  et ne peut que nommer l'état, puis vérifier le site plutôt que le
+  journal, comme pour un écusson ou un portrait.
+
 Ce qui reste de la phase 5 : les performances et le PWA.
 
 ## L'administration, et ce qui la protège
