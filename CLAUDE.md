@@ -4849,8 +4849,24 @@ commande par le port **6543**, mode transaction, en surchargeant la variable
 qui a suffi pour toute la chaîne. **Le remède de fond est le cache des
 pages**, posé le lendemain — cf. « Le cache des pages » — : les fonctions
 qui tenaient les quinze connexions n'ont plus lieu de s'exécuter à chaque
-visite. Passer Vercel ou les scripts sur 6543 reste possible si ça se
-reproduit.
+visite.
+
+**Si l'erreur revenait, la correction est dans Vercel, pas dans le code** :
+passer `DATABASE_URL` du site sur le mode transaction du même pooler —
+`:6543/postgres?pgbouncer=true` à la place de `:5432/postgres`, Settings →
+Environment Variables, puis redéployer. Le mode session prête une connexion
+à une fonction pour toute sa durée ; le mode transaction la rend après
+chaque requête et en sert des centaines — c'est celui fait pour des
+fonctions éphémères, et c'est celui par lequel toute la chaîne de scripts
+est passée le 20 septembre, feuilles et transactions comprises. Monter
+`pool_size` serait reculer le mur, pas le retirer.
+
+**La base est sur le plan Pro de Supabase depuis le 20 septembre 2026**,
+pris pour les **sauvegardes quotidiennes** — sept jours de rétention,
+restaurables depuis le tableau de bord —, que le plan gratuit ne fait pas.
+Il rend aussi `pool_size` réglable et supprime la mise en pause après sept
+jours sans activité. La sauvegarde est dans Supabase : un `pg_dump` local
+avant une grosse reprise reste une habitude à prendre, pas une urgence.
 
 ⚠️ **La base est distante, et elle coupe les connexions oisives.** Un script
 qui tient une connexion Prisma pendant une longue moisson HTTP la voit tomber
