@@ -5092,6 +5092,17 @@ fiches et les listes dans l'heure. Il n'y a pas de purge à la demande — si
 elle devient nécessaire, ce sera une route qui appelle `revalidatePath`, pas
 un retour à `force-dynamic`.
 
+**Et les deux images de partage sont en cache un jour**, depuis le même
+jour — c'était le premier consommateur de CPU restant : sans `revalidate`,
+chaque robot ou messagerie qui demandait une carte la faisait redessiner,
+Satori, police et écussons, plus une requête Prisma pour un match. Deux
+choses à savoir : **une route d'image n'hérite pas du `generateStaticParams`
+du layout** — celle du site a le sien, avec les deux langues, et elle est
+dessinée au build ; celle d'un match a un `generateStaticParams` vide, comme
+les fiches, et se dessine à la première demande. Une rencontre jouée dans
+la journée garde sa carte « À venir » jusqu'au lendemain de son premier
+partage, ce qui est accepté : le score est sur la fiche.
+
 **Et les fonctions tournent à Francfort depuis le même jour**, par le
 `regions: ["fra1"]` de `vercel.json`. L'en-tête `x-vercel-id` disait `iad1`
 — la Virginie, région par défaut de Vercel —, quand la base est sur
