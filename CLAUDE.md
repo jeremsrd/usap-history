@@ -5024,6 +5024,24 @@ séance a touché à autre chose que des pages — un fichier `opengraph-image`,
 une route de métadonnées. Une chaîne à apostrophe dans du JSX s'écrit
 `{"L'histoire…"}`.
 
+⚠️ **ET `npm run lint` N'EST PAS `npx next lint`.** Le script du dépôt lance
+`eslint` nu, qui balaie tout le dépôt : il rend **539 erreurs, toutes dans
+`scripts/`**, et **zéro dans `src/`**. `npx next lint` se limite à
+l'application et rend trois avertissements sans une seule erreur. C'est
+cohérent — `tsconfig.json` exclut déjà `scripts/`, et Vercel ne construit que
+`src/` —, mais c'est `npm run lint` qu'on tape d'instinct avant de pousser, et
+il alarme pour rien. **Un compteur dont on apprend à ignorer le total ne garde
+plus rien** : c'est ainsi que 22 faux hommes ont vécu en ÉCRITURE jusqu'au
+30 août 2026.
+
+⚠️ **ET LA COMMANDE RECOMMANDÉE CI-DESSUS A UNE DATE DE PÉREMPTION.**
+`next lint` est **déprécié et disparaît avec Next.js 16**, ce qu'il annonce
+lui-même à chaque exécution. Le jour de la montée de version, la seule
+commande qui restera sera celle du dépôt — il faudra donc qu'elle signifie
+la bonne chose, `eslint src` et non `eslint`, faute de quoi elle héritera
+des 539 erreurs de `scripts/` au moment précis où elle devient le seul
+garde-fou avant une poussée.
+
 ⚠️ **CE PROJET N'A PAS DE FORMATEUR, ET IL NE FAUT PAS EN LANCER UN.** Ni
 prettier en dépendance, ni `.prettierrc` : le style du dépôt — lignes longues,
 `select` d'une seule traite — est tenu à la main, et il est cohérent. Un
