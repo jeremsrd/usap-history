@@ -1015,7 +1015,7 @@ doublons.
 
 | Script | Rôle |
 |---|---|
-| `sauvegarde-base.sh` | **la copie locale de la base** : un `pg_dump` du schéma `public` — les 25 tables de Prisma, 1,7 Mo — dans `~/Sauvegardes/usap-history/`, daté du jour, restaurable table par table avec `pg_restore`. La seule pièce du site qui ne soit pas sur l'ordinateur ; Supabase fait la sienne chaque jour depuis le plan Pro, mais chez lui. À passer avant une grosse reprise. Demande `brew install libpq` |
+| `sauvegarde-base.sh` | **la copie locale de la base** : un `pg_dump` du schéma `public` — les 25 tables de Prisma, 1,7 Mo — dans `~/Sauvegardes/usap-history/`, daté du jour, restaurable table par table avec `pg_restore`. La seule pièce du site qui ne soit pas sur l'ordinateur ; Supabase fait la sienne chaque jour depuis le plan Pro, mais chez lui. **macOS le lance chaque lundi à 10 h** par le LaunchAgent `scripts/launchd/cat.usaphistoria.sauvegarde.plist` — installé le 20 septembre 2026, chargement et retrait dans son en-tête —, journal dans `journal.log`, douze sauvegardes gardées ; cinq essais à deux minutes si le pooler est plein. Demande `brew install libpq`, sur Mac Intel en `/usr/local/opt/libpq/bin` |
 | `etat-couverture.ts` | lecture seule : l'état de la couverture saison par saison, ce que les tableaux de CLAUDE.md faisaient à la main |
 | `fix-bonus-points.ts` | recalcule tous les bonus et les totaux de saison, refuse d'écrire si un classement officiel connu diverge |
 | `fix-broken-slugs.ts` | réécrit les slugs dont le suffixe ne permet plus de retrouver l'entité (fiche en 404) |
@@ -4852,15 +4852,36 @@ pages**, posé le lendemain — cf. « Le cache des pages » — : les fonctions
 qui tenaient les quinze connexions n'ont plus lieu de s'exécuter à chaque
 visite.
 
-**Si l'erreur revenait, la correction est dans Vercel, pas dans le code** :
-passer `DATABASE_URL` du site sur le mode transaction du même pooler —
-`:6543/postgres?pgbouncer=true` à la place de `:5432/postgres`, Settings →
-Environment Variables, puis redéployer. Le mode session prête une connexion
-à une fonction pour toute sa durée ; le mode transaction la rend après
-chaque requête et en sert des centaines — c'est celui fait pour des
-fonctions éphémères, et c'est celui par lequel toute la chaîne de scripts
-est passée le 20 septembre, feuilles et transactions comprises. Monter
-`pool_size` serait reculer le mur, pas le retirer.
+**ELLE EST REVENUE LE SOIR MÊME, CACHE EN PLACE, ET LA CAUSE EST VUE.** À
+19 h, la première course de la sauvegarde automatique a trouvé le guichet
+plein ; `pg_stat_activity` montrait **quatorze connexions oisives**, jusqu'à
+neuf minutes sans une requête, toutes tenues par Supavisor pour le compte
+des instances Vercel. Le cache a réduit les rendus, pas les instances
+restées chaudes : chacune garde sa connexion Prisma ouverte en mode
+session, sans s'en servir, et à quinze instances le guichet est plein pour
+tout le monde — scripts et sauvegarde compris.
+
+**La correction est dans Vercel, pas dans le code** : passer `DATABASE_URL`
+du site sur le mode transaction du même pooler —
+`:6543/postgres?pgbouncer=true&connection_limit=1` à la place de
+`:5432/postgres`, Settings → Environment Variables, puis redéployer. Le mode
+session prête une connexion à une instance pour toute sa vie ; le mode
+transaction la rend après chaque requête et en sert des centaines — c'est
+celui fait pour des fonctions éphémères, celui que Supabase et Prisma
+recommandent l'un et l'autre pour Vercel, et celui par lequel toute la
+chaîne de scripts est passée le 20 septembre, feuilles et transactions
+comprises. `connection_limit=1` retient Prisma d'en ouvrir plusieurs par
+instance. Le mode session, et ses quinze places, reviennent alors
+entièrement aux scripts et à `pg_dump`, qui ne sait pas passer par l'autre.
+Monter `pool_size` serait reculer le mur, pas le retirer.
+
+**FAIT PAR JÉRÉMY LE 20 SEPTEMBRE 2026 AU SOIR**, et mesuré : quatorze
+connexions oisives avant le redéploiement, **trois** après — celles que le
+pooler garde pour lui en mode transaction. Le site répond sur les pages
+dynamiques et sur un rendu neuf. Le `.env` local, lui, reste sur 5432 : les
+scripts et `pg_dump` ont besoin du mode session, et il est désormais à eux.
+La variable est passée en « Secret » dans Vercel par la même occasion, elle
+était lisible en clair.
 
 **La base est sur le plan Pro de Supabase depuis le 20 septembre 2026**,
 pris pour les **sauvegardes quotidiennes** — sept jours de rétention,

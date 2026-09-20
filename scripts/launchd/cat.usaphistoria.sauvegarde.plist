@@ -1,0 +1,43 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<!--
+  La sauvegarde locale de la base, chaque lundi à 10 h, par launchd — le
+  planificateur de macOS. Posé le 20 septembre 2026, sur la demande de Jérémy.
+
+  Installer (une fois, le fichier est copié dans ~/Library/LaunchAgents) :
+    cp scripts/launchd/cat.usaphistoria.sauvegarde.plist ~/Library/LaunchAgents/
+    launchctl bootstrap gui/$(id -u) ~/Library/LaunchAgents/cat.usaphistoria.sauvegarde.plist
+  Lancer tout de suite, pour vérifier :
+    launchctl kickstart -k gui/$(id -u)/cat.usaphistoria.sauvegarde
+  Retirer :
+    launchctl bootout gui/$(id -u)/cat.usaphistoria.sauvegarde
+    rm ~/Library/LaunchAgents/cat.usaphistoria.sauvegarde.plist
+
+  Mac fermé à 10 h, launchd rattrape la course au réveil suivant. La sortie et
+  les erreurs vont dans journal.log, à côté des sauvegardes. Les chemins sont
+  absolus, comme launchd l'exige : ce fichier vaut pour cette machine.
+-->
+<plist version="1.0">
+<dict>
+  <key>Label</key>
+  <string>cat.usaphistoria.sauvegarde</string>
+  <key>ProgramArguments</key>
+  <array>
+    <string>/bin/bash</string>
+    <string>/Users/jeremysarda/DevSites/usap-history/scripts/sauvegarde-base.sh</string>
+  </array>
+  <key>StartCalendarInterval</key>
+  <dict>
+    <key>Weekday</key>
+    <integer>1</integer>
+    <key>Hour</key>
+    <integer>10</integer>
+    <key>Minute</key>
+    <integer>0</integer>
+  </dict>
+  <key>StandardOutPath</key>
+  <string>/Users/jeremysarda/Sauvegardes/usap-history/journal.log</string>
+  <key>StandardErrorPath</key>
+  <string>/Users/jeremysarda/Sauvegardes/usap-history/journal.log</string>
+</dict>
+</plist>

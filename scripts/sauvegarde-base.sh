@@ -10,6 +10,14 @@
 #
 #   ./scripts/sauvegarde-base.sh            # écrit usap-history-AAAA-MM-JJ.dump
 #
+# **Et macOS le lance chaque lundi à 10 h**, par le LaunchAgent
+# `scripts/launchd/cat.usaphistoria.sauvegarde.plist`, installé le 20 septembre
+# 2026 — cf. son en-tête pour le charger ou le retirer. Mac fermé à cette
+# heure-là, launchd rattrape au réveil suivant. Sa sortie va dans
+# `journal.log`, à côté des sauvegardes : un automatisme silencieux ne dit pas
+# quand il cesse de tourner. Les douze dernières sauvegardes sont gardées, les
+# plus vieilles effacées — trois mois d'histoire, pas un disque qui se remplit.
+#
 # Le format est celui de pg_dump « custom » (-Fc) : compressé, et restaurable
 # table par table avec pg_restore — `pg_restore -l fichier.dump` en liste le
 # contenu, `pg_restore -d "$DATABASE_URL" -t players fichier.dump` n'en rend
@@ -47,8 +55,31 @@ if [ -z "$URL" ]; then
 fi
 
 mkdir -p "$DOSSIER"
-echo "→ $FICHIER"
-"$PG_DUMP" "$URL" --schema=public --no-owner --no-privileges --format=custom --file="$FICHIER"
+echo "$(date "+%Y-%m-%d %H:%M") → $FICHIER"
+
+# Le pooler n'a que quinze places en mode session, et les instances Vercel
+# restées chaudes en gardent une chacune sans s'en servir : la première course
+# du 20 septembre 2026 a trouvé le guichet plein — quatorze connexions oisives.
+# On réessaie cinq fois, à deux minutes d'intervalle ; une place se libère
+# quand une instance s'éteint. Si les cinq échouent, le journal le dit.
+for essai in 1 2 3 4 5; do
+  if "$PG_DUMP" "$URL" --schema=public --no-owner --no-privileges --format=custom --file="$FICHIER"; then
+    break
+  fi
+  rm -f "$FICHIER"
+  if [ "$essai" = 5 ]; then
+    echo "✘ cinq essais, pas de sauvegarde ce jour" >&2
+    exit 1
+  fi
+  echo "  ↻ essai $essai refusé, nouvel essai dans deux minutes"
+  sleep 120
+done
 ls -lh "$FICHIER" | awk '{print "✔ " $5 " écrits"}'
+
+# Rotation : les douze plus récentes restent, par ordre de nom — donc de date.
+# `tail -n +13` et non `head -n -12`, que le head de macOS ne connaît pas.
+ls -1 "$DOSSIER"/usap-history-*.dump | sort -r | tail -n +13 | while read -r vieux; do
+  rm -f "$vieux" && echo "  effacé : $(basename "$vieux")"
+done
 echo "Sauvegardes présentes :"
-ls -1 "$DOSSIER" | tail -5
+ls -1 "$DOSSIER"/usap-history-*.dump | xargs -n1 basename | tail -5
