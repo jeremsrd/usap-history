@@ -5004,7 +5004,7 @@ composition de Grenoble au barrage 2024-2025.
 ```bash
 npm run dev                          # serveur de développement (Turbopack)
 npx tsc --noEmit                     # vérification des types — src/ SEULEMENT
-npx next lint                        # ESLint — À PASSER AVANT DE POUSSER, cf. ci-dessous
+npm run lint                         # ESLint sur src/ — À PASSER AVANT DE POUSSER
 npx tsx scripts/<script>.ts          # exécuter un script d'import
 npx tsx scripts/<script>.ts --dry    # simulation, pour les scripts de masse
 
@@ -5019,28 +5019,30 @@ images de partage a été refusé en production pour deux apostrophes en clair
 dans du JSX — « L'histoire de l'USA Perpignan » —, que
 `react/no-unescaped-entities` tient pour une erreur et que `tsc --noEmit`
 ne voit pas. Le site est resté sur le commit précédent le temps de corriger.
-Passer `npx next lint` avant chaque poussée, et `npx next build` quand la
+Passer `npm run lint` avant chaque poussée, et `npx next build` quand la
 séance a touché à autre chose que des pages — un fichier `opengraph-image`,
 une route de métadonnées. Une chaîne à apostrophe dans du JSX s'écrit
 `{"L'histoire…"}`.
 
-⚠️ **ET `npm run lint` N'EST PAS `npx next lint`.** Le script du dépôt lance
-`eslint` nu, qui balaie tout le dépôt : il rend **539 erreurs, toutes dans
-`scripts/`**, et **zéro dans `src/`**. `npx next lint` se limite à
-l'application et rend trois avertissements sans une seule erreur. C'est
-cohérent — `tsconfig.json` exclut déjà `scripts/`, et Vercel ne construit que
-`src/` —, mais c'est `npm run lint` qu'on tape d'instinct avant de pousser, et
-il alarme pour rien. **Un compteur dont on apprend à ignorer le total ne garde
-plus rien** : c'est ainsi que 22 faux hommes ont vécu en ÉCRITURE jusqu'au
-30 août 2026.
+⚠️ **`npm run lint` NE VOIT QUE `src/`, ET C'EST VOULU.** Le script vaut
+`eslint src` depuis le 20 septembre 2026 ; il valait `eslint` nu, qui balayait
+tout le dépôt et rendait **539 erreurs, toutes dans `scripts/`** pour zéro
+dans `src/`. C'est pourtant la commande qu'on tape d'instinct avant de
+pousser, et elle alarmait pour rien — **un compteur dont on apprend à ignorer
+le total ne garde plus rien**, c'est ainsi que 22 faux hommes ont vécu en
+ÉCRITURE jusqu'au 30 août 2026. Elle rend désormais quatre avertissements et
+aucune erreur.
 
-⚠️ **ET LA COMMANDE RECOMMANDÉE CI-DESSUS A UNE DATE DE PÉREMPTION.**
-`next lint` est **déprécié et disparaît avec Next.js 16**, ce qu'il annonce
-lui-même à chaque exécution. Le jour de la montée de version, la seule
-commande qui restera sera celle du dépôt — il faudra donc qu'elle signifie
-la bonne chose, `eslint src` et non `eslint`, faute de quoi elle héritera
-des 539 erreurs de `scripts/` au moment précis où elle devient le seul
-garde-fou avant une poussée.
+**Le changement était dû, et non confortable** : `next lint`, que ce fichier
+recommandait, est **déprécié et disparaît avec Next.js 16** — il l'annonce à
+chaque exécution. La commande recommandée allait donc cesser d'exister, et
+celle qui reste devait d'abord signifier la bonne chose.
+
+**Et `scripts/` n'est plus regardé par personne** : `tsconfig.json` l'exclut,
+`npm run lint` ne le voit plus, Vercel ne le construit pas. Ses 539 erreurs
+ESLint sont toujours là. Le seul contrôle d'un script reste donc le `tsc`
+explicite ci-dessus, à passer sur les fichiers touchés — et il ne dit rien du
+lint.
 
 ⚠️ **CE PROJET N'A PAS DE FORMATEUR, ET IL NE FAUT PAS EN LANCER UN.** Ni
 prettier en dépendance, ni `.prettierrc` : le style du dépôt — lignes longues,
