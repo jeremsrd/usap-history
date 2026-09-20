@@ -4506,9 +4506,29 @@ d'un siècle, c'est la règle qu'on connaîtra le moins bien.
   quel que soit le lieu écrit. Devant une affiche qui a pu remplir plus grand
   qu'Aimé-Giral, aller voir plutôt que déduire.
 
-  Deux clubs ont **changé de nom de stade sans déménager**, et n'ont rien à y
-  faire : Montpellier (Yves-du-Manoir → Altrad Stadium → GGL Stadium) et
-  Castres (Pierre-Antoine → Pierre-Fabre).
+  **UN STADE EST UNE LIGNE ET UN NOM, CELUI D'AUJOURD'HUI.** Le modèle ne date
+  aucun nom de terrain, et la base le montre d'elle-même : Castres y figure
+  sous « Stade Pierre Fabre », son nom courant, et non sous Pierre-Antoine.
+  Deux clubs ont ainsi **changé de nom sans déménager** — Montpellier
+  (Yves-du-Manoir → Altrad Stadium → GGL Stadium → Septeo Stadium) et Castres
+  (Pierre-Antoine → Pierre-Fabre) —, et cela ne relève pas d'`OpponentVenue`,
+  qui ne décrit que les déménagements.
+
+  **Le nom est donc rétroactif, et c'est assumé** : une rencontre jouée là en
+  2012 porte le nom de 2026. C'est l'inverse de ce que le projet fait
+  ailleurs — l'écusson d'Auch, les terrains de Dax —, et la raison est qu'un
+  nom daté exigerait ses dates : elles ne sont publiées nulle part de sûr, et
+  Jérémy ne les a pas. Une table de noms datés serait le bon modèle le jour
+  où les dates existeraient ; sans elles, elle n'écrirait que des suppositions.
+
+  **Montpellier est en retard d'un nom au 20 septembre 2026** : sa ligne porte
+  encore « GGL Stadium » quand *L'Indépendant* écrit « Septeo Stadium » sur le
+  Montpellier-USAP du 19 septembre. La convention étant le nom courant, la
+  ligne est à reprendre par l'admin — Jérémy ne sait pas depuis quand le
+  terrain a changé de nom, **et cela n'empêche rien**, puisque le modèle ne
+  date aucun nom. **Un renommage ne casse pas la fiche**, le slug portant le
+  CUID par lequel la page retrouve le stade ; il laisse seulement l'ancien
+  libellé dans l'URL jusqu'à ce que `generateVenueSlug` soit réappliqué.
 
   Aucune de ces dates ne vient d'une source officielle : ni la LNR ni l'EPCR
   ne donnent le stade d'une rencontre, et le calendrier de la LNR ne porte
