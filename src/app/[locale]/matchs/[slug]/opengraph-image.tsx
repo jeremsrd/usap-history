@@ -17,6 +17,19 @@ export const alt = "USAP Historia";
 export const size = { width: OG_LARGEUR, height: OG_HAUTEUR };
 export const contentType = "image/png";
 
+/**
+ * **En cache un jour par rencontre**, depuis le 20 septembre 2026 — même
+ * raison que la carte du site : chaque partage refaisait le dessin et la
+ * requête. Le `generateStaticParams` vide est ce qui rend la route cachable,
+ * comme sur les fiches ; rien n'est dessiné au build. Une rencontre jouée
+ * dans la journée garde « À venir » jusqu'au lendemain de son partage le
+ * plus ancien : acceptable, le score est sur la fiche.
+ */
+export const revalidate = 86400;
+export function generateStaticParams() {
+  return [];
+}
+
 export default async function Image({ params }: { params: Promise<{ slug: string }> }) {
   const { slug } = await params;
   // Le slug d'une rencontre est unique et sans CUID, comme sur la fiche.

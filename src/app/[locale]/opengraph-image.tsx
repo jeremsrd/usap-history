@@ -1,5 +1,6 @@
 import { ImageResponse } from "next/og";
 import { BLANC, OG_HAUTEUR, OG_LARGEUR, OR_VIF, SANG, imagePublique, policesOg } from "@/lib/og";
+import { LANGUES } from "@/i18n/langues";
 
 /**
  * L'image de partage du site, pour toute page qui n'a pas la sienne : le hero
@@ -11,6 +12,21 @@ import { BLANC, OG_HAUTEUR, OG_LARGEUR, OR_VIF, SANG, imagePublique, policesOg }
 export const alt = "USAP Historia";
 export const size = { width: OG_LARGEUR, height: OG_HAUTEUR };
 export const contentType = "image/png";
+
+/**
+ * **En cache un jour**, depuis le 20 septembre 2026. Sans `revalidate`, la
+ * carte était redessinée — Satori, la police, l'écusson — à chaque fois qu'un
+ * robot ou une messagerie la demandait, et ils la demandent sans relâche :
+ * c'était le premier consommateur de CPU restant après le cache des pages,
+ * pour une image identique d'un jour à l'autre. Une route d'image n'hérite
+ * pas du `generateStaticParams` du layout : sans le sien, elle restait
+ * dynamique quoi que `revalidate` déclare. Avec les deux langues, elle est
+ * dessinée au build, une fois pour toutes.
+ */
+export const revalidate = 86400;
+export function generateStaticParams() {
+  return LANGUES.map((locale) => ({ locale }));
+}
 
 export default async function Image() {
   const [polices, ecusson] = await Promise.all([policesOg(), imagePublique("/images/usap/logo.png")]);
