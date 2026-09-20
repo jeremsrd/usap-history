@@ -1015,6 +1015,7 @@ doublons.
 
 | Script | Rôle |
 |---|---|
+| `sauvegarde-base.sh` | **la copie locale de la base** : un `pg_dump` du schéma `public` — les 25 tables de Prisma, 1,7 Mo — dans `~/Sauvegardes/usap-history/`, daté du jour, restaurable table par table avec `pg_restore`. La seule pièce du site qui ne soit pas sur l'ordinateur ; Supabase fait la sienne chaque jour depuis le plan Pro, mais chez lui. À passer avant une grosse reprise. Demande `brew install libpq` |
 | `etat-couverture.ts` | lecture seule : l'état de la couverture saison par saison, ce que les tableaux de CLAUDE.md faisaient à la main |
 | `fix-bonus-points.ts` | recalcule tous les bonus et les totaux de saison, refuse d'écrire si un classement officiel connu diverge |
 | `fix-broken-slugs.ts` | réécrit les slugs dont le suffixe ne permet plus de retrouver l'entité (fiche en 404) |
@@ -4865,8 +4866,9 @@ est passée le 20 septembre, feuilles et transactions comprises. Monter
 pris pour les **sauvegardes quotidiennes** — sept jours de rétention,
 restaurables depuis le tableau de bord —, que le plan gratuit ne fait pas.
 Il rend aussi `pool_size` réglable et supprime la mise en pause après sept
-jours sans activité. La sauvegarde est dans Supabase : un `pg_dump` local
-avant une grosse reprise reste une habitude à prendre, pas une urgence.
+jours sans activité. La sauvegarde est dans Supabase : la copie locale est
+`scripts/sauvegarde-base.sh`, passée une première fois le 20 septembre —
+à refaire avant une grosse reprise, c'est une habitude, pas une urgence.
 
 ⚠️ **La base est distante, et elle coupe les connexions oisives.** Un script
 qui tient une connexion Prisma pendant une longue moisson HTTP la voit tomber
