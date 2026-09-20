@@ -2944,12 +2944,14 @@ USAP le 5 septembre 2026, bonus défensif, 12 065 spectateurs et mi-temps
 6-28 ; USAP 43-29 Castres le 12 septembre, six essais dont deux de Yato,
 14 232 spectateurs et mi-temps 24-15, arbitre Vincent Blasco-Baqué ;
 Montpellier 50-13 USAP le 19 septembre, huit essais encaissés dont six en
-seconde période, 11 151 spectateurs et mi-temps 3-12, arbitre Pierre Bru —,
-feuille des deux camps, chronologie, affluence et mi-temps d'après
-*L'Indépendant*, par la marche du « lendemain d'un match » ; 5 points au
-classement. **Les compositions de la J3 n'étaient pas entrées la veille**,
-et `seed-lineup.ts` les a créées le lendemain sans que la chaîne en souffre :
-c'est le premier temps facultatif de la marche, pas une étape sautée. Une transformation catalane de la 47ᵉ reste sans buteur dans la
+seconde période, deux de Delibes et deux d'Anyanwu, 11 151 spectateurs et
+mi-temps 3-12, arbitre Pierre Bru —, feuille des deux camps, chronologie,
+affluence et mi-temps d'après *L'Indépendant*, par la marche du « lendemain
+d'un match » ; 5 points au classement, le déplacement à Montpellier n'en
+rapportant aucun. **Les compositions de la J3 n'étaient pas entrées la
+veille**, et `seed-lineup.ts` les a créées le lendemain sans que la chaîne
+en souffre : c'est le premier temps facultatif de la marche, pas une étape
+sautée. Une transformation catalane de la 47ᵉ reste sans buteur dans la
 chronologie, la feuille LNR ne le nommant pas — le journal la donne à
 Aucagne, dont la ligne porte bien ses cinq. **Les trois ont leur résumé
 vidéo** depuis le 21 septembre 2026, liens donnés par Jérémy et posés par
@@ -2963,6 +2965,11 @@ Bloemfontein —, par `seed-calendrier-europe-2026-2027.ts` ; la phase finale
 n'existe pas encore dans le flux. **L'arbitre de la première journée, Kévin
 Bralley, vient de Jérémy** et non d'une feuille, par `set-arbitre.ts` : la LNR
 ne désigne l'arbitre sur sa feuille qu'après le match.
+
+**Le piège de la J2 ne s'est pas reproduit à la J3** : les quarante-six
+dossards de la LNR concordent un à un avec ceux de *L'Indépendant*, et les
+seize changements s'apparient tous. Il est donc occasionnel — ce qui se
+vérifie feuille à feuille, et ne se présume pas.
 
 **L'effectif 2026-2027 est inscrit à sa saison** depuis le 2 septembre 2026 :
 50 lignes `SeasonPlayer`, écrites par `sync-effectif.ts`, qui s'en charge
@@ -3005,8 +3012,20 @@ servir. **Riccioni est sourcé** — la Wikipédia française le dit « pilier
 droit » aux Saracens. **Amituanai ne l'est pas** : la LNR s'arrête à
 « 1ère ligne », la Wikipédia anglophone à « Prop », et il n'avait aucune
 feuille dont le dossard aurait tranché. C'est **Jérémy qui a décidé**, comme
-pour l'écusson d'Auch ou les stades de Dax et de Massy. Sa première feuille de
-Top 14 le confirmera ou l'infirmera — un n°1 vaudrait correction.
+pour l'écusson d'Auch ou les stades de Dax et de Massy.
+
+**LES TROIS PREMIÈRES JOURNÉES DE 2026-2027 LE CORROBORENT, SANS LE
+DÉMONTRER.** Ce fichier attendait sa première feuille de Top 14 ; il en a
+trois, toujours au n°23, et il entre chaque fois **pour Pietro Ceccarelli, le
+n°3** — 74ᵉ à Paris le 5 septembre, 64ᵉ contre Castres le 12, 58ᵉ à
+Montpellier le 19. Jamais pour le n°1.
+
+**La nuance vaut d'être tenue** : un dossard de 16 à 23 ne désigne aucune
+place, c'est la règle du projet, et seul un dossard de titulaire trancherait.
+Trois entrées du même côté sont une concordance, non une feuille : le poste
+reste **tranché par Jérémy**, son attestation le dit, et un n°1 titulaire
+vaudrait toujours correction. Relevé le 20 septembre 2026 sur les feuilles des
+trois journées.
 
 **Le côté ne se déduit pas de la morphologie**, quoi qu'en suggèrent les
 180 cm pour 125 kg d'Amituanai : c'est une inférence, et le projet n'en écrit
