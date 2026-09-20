@@ -5092,6 +5092,15 @@ fiches et les listes dans l'heure. Il n'y a pas de purge à la demande — si
 elle devient nécessaire, ce sera une route qui appelle `revalidatePath`, pas
 un retour à `force-dynamic`.
 
+**Et les fonctions tournent à Francfort depuis le même jour**, par le
+`regions: ["fra1"]` de `vercel.json`. L'en-tête `x-vercel-id` disait `iad1`
+— la Virginie, région par défaut de Vercel —, quand la base est sur
+`aws-1-eu-central-1` : chaque requête Prisma traversait l'Atlantique. Ça ne
+comptait pas dans l'Active CPU, l'attente réseau n'étant pas du calcul, mais
+chaque premier rendu d'une fiche le payait. La région est dans le dépôt
+plutôt que dans les réglages du projet, pour la même raison que le domaine
+est dans `seo.ts` : un fait du site se relit dans le code.
+
 **Vérifié avant de pousser**, et c'est la méthode à reprendre : `next build`
 par le port 6543 du pooler, puis `next start` et deux `curl` sur chaque type
 de page en lisant `x-nextjs-cache` — `MISS` puis `HIT`, `s-maxage=3600` —,
