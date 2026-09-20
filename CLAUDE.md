@@ -4846,8 +4846,11 @@ ne tourne en local : les fonctions du site, sous le trafic d'après-match,
 tenaient les quinze. Le contournement, sans toucher aux fichiers : passer la
 commande par le port **6543**, mode transaction, en surchargeant la variable
 — `DATABASE_URL="…:6543/postgres?pgbouncer=true" npx tsx scripts/…` —, ce
-qui a suffi pour toute la chaîne. Le remède durable — Vercel ou les scripts
-sur 6543 — n'est pas tranché.
+qui a suffi pour toute la chaîne. **Le remède de fond est le cache des
+pages**, posé le lendemain — cf. « Le cache des pages » — : les fonctions
+qui tenaient les quinze connexions n'ont plus lieu de s'exécuter à chaque
+visite. Passer Vercel ou les scripts sur 6543 reste possible si ça se
+reproduit.
 
 ⚠️ **La base est distante, et elle coupe les connexions oisives.** Un script
 qui tient une connexion Prisma pendant une longue moisson HTTP la voit tomber
@@ -5036,6 +5039,65 @@ Deux choses à en retenir, et la seconde a coûté une soirée :
   journal, comme pour un écusson ou un portrait.
 
 Ce qui reste de la phase 5 : les performances et le PWA.
+
+## Le cache des pages — et ce que coûtait de ne pas en avoir
+
+**Posé le 20 septembre 2026**, sur le constat que le plan Hobby de Vercel
+arrivait au bout de ses **quatre heures mensuelles d'Active CPU**, et sur
+celui de la veille : le pooler Supabase saturé par le site en production le
+lendemain d'un match. Les deux avaient la même cause. **Les vingt-quatre
+pages publiques portaient `export const dynamic = "force-dynamic"`** —
+rendues depuis zéro, requêtes Prisma comprises, à chaque visite —, pour des
+données qui bougent une fois par semaine. La page des joueurs chargeait à
+chaque visiteur les treize mille lignes de composition catalanes pour
+compter les matchs de chacun.
+
+**Ce qui est en place :**
+
+- **`export const revalidate = 3600`** sur toute page sans `searchParams`,
+  listes et fiches — une heure —, et **600** sur l'accueil, pour le joueur au
+  hasard et « ce jour dans l'histoire ». Le sitemap aussi. Vercel sert la
+  page depuis son cache et ne rend qu'une fois par heure et par adresse.
+- **Les fiches exportent un `generateStaticParams` vide**, et c'est
+  nécessaire : sans lui, l'App Router rend une route à segment dynamique à la
+  demande **sans cache**, quel que soit `revalidate` — le tableau de build la
+  marque `ƒ` au lieu de `●`. Avec lui, même vide, la fiche est rendue à sa
+  première visite puis servie du cache ; rien n'est pré-rendu au build, et
+  c'est voulu : trois mille fiches y interrogeraient la base pour rien.
+- **`dynamicParams` du layout `[locale]` est passé de `false` à `true`.** À
+  `false`, il redescendait sur les segments `[slug]` et toute fiche demandée
+  à l'improviste répondait **404, cache compris** — trouvé en testant, pas en
+  lisant. Le layout n'a rien perdu : une langue inconnue tombe sur son
+  `notFound()`, et le middleware redirige de toute façon `/es/…` vers
+  `/fr/es/…`, qui rend 404.
+- **Les quatre pages qui lisent `searchParams`** — `/matchs`, `/joueurs`,
+  `/adversaires`, la fiche stade — restent dynamiques quoi qu'on déclare :
+  lire `searchParams` rend la page dynamique. Ce sont donc **leurs requêtes**
+  qui sont en `unstable_cache`, une heure, comme le pied de page le faisait
+  déjà — les repères communs à toute sélection d'un côté, la sélection par
+  jeu de filtres de l'autre, les arguments faisant la clé. **Le cache ne
+  conserve que du JSON** : une `Date` en revient chaîne ISO sans le dire, une
+  `Map` objet vide. Les dates y sont converties explicitement, les bilans
+  rendus en `Record`, et `formatDateFR` accepte une chaîne.
+- **Les `revalidatePath` de l'admin pointaient sur `/matchs`, `/joueurs`…** —
+  les chemins d'avant la langue dans l'adresse, sans effet depuis le
+  4 septembre. Sans cache ça ne se voyait pas ; avec, une modification dans
+  l'admin serait restée invisible une heure. Ils pointent désormais sur
+  `/[locale]/matchs` et `/[locale]/matchs/[slug]` avec `"page"`, qui purgent
+  les deux langues.
+
+**Ce que ça change à la marche du lendemain de match** : les scripts écrivent
+dans la base, pas dans le cache. L'accueil rattrape dans les dix minutes, les
+fiches et les listes dans l'heure. Il n'y a pas de purge à la demande — si
+elle devient nécessaire, ce sera une route qui appelle `revalidatePath`, pas
+un retour à `force-dynamic`.
+
+**Vérifié avant de pousser**, et c'est la méthode à reprendre : `next build`
+par le port 6543 du pooler, puis `next start` et deux `curl` sur chaque type
+de page en lisant `x-nextjs-cache` — `MISS` puis `HIT`, `s-maxage=3600` —,
+un slug inconnu pour le 404, `/fr/admin` pour la redirection, et **le rendu
+des pages à `unstable_cache`** : ce sont les dates et les bilans qui cassent
+en silence, pas le build.
 
 ## L'administration, et ce qui la protège
 

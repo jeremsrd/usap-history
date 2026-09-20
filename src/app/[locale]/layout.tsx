@@ -44,15 +44,25 @@ export const metadata: Metadata = {
 };
 
 /**
- * Les deux langues sont pré-rendues. `dynamicParams` reste à `false` : une
- * adresse comme `/es/joueurs` doit rendre 404, non se rabattre en silence sur
- * le français — une langue qu'on n'a pas ne s'invente pas plus qu'un score.
+ * Les deux langues sont pré-rendues, et une adresse comme `/es/joueurs` rend
+ * 404, non un repli silencieux sur le français — une langue qu'on n'a pas ne
+ * s'invente pas plus qu'un score. C'est le `notFound()` du layout qui le
+ * garantit, pas `dynamicParams`.
+ *
+ * **`dynamicParams` a été à `false` jusqu'au 20 septembre 2026**, et c'est ce
+ * qui a empêché les fiches d'entrer en cache le jour où les pages ont quitté
+ * `force-dynamic` : ce réglage redescend sur les segments `[slug]`, dont les
+ * pages n'ont pas de `generateStaticParams` — et une fiche demandée à
+ * l'improviste répondait alors 404, cache compris, quoi que la page déclare.
+ * Il vaut `true` désormais, ce qui est la valeur par défaut, et le layout
+ * n'a rien perdu : une langue inconnue tombe sur `notFound()` trois lignes
+ * plus bas.
  */
 export function generateStaticParams() {
   return LANGUES.map((locale) => ({ locale }));
 }
 
-export const dynamicParams = false;
+export const dynamicParams = true;
 
 export default async function RootLayout({
   children,

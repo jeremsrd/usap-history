@@ -127,7 +127,8 @@ export async function createPlayer(
   }
 
   revalidatePath("/admin/joueurs");
-  revalidatePath("/joueurs");
+  revalidatePath("/[locale]/joueurs", "page");
+  revalidatePath("/[locale]/joueurs/[slug]", "page");
   return { success: true };
 }
 
@@ -208,7 +209,8 @@ export async function updatePlayer(
   }
 
   revalidatePath("/admin/joueurs");
-  revalidatePath("/joueurs");
+  revalidatePath("/[locale]/joueurs", "page");
+  revalidatePath("/[locale]/joueurs/[slug]", "page");
   return { success: true };
 }
 

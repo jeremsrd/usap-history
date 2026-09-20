@@ -1,5 +1,6 @@
 import Link from "@/components/Lien";
 import Provenance from "@/components/Provenance";
+import { unstable_cache } from "next/cache";
 import Signalement from "@/components/Signalement";
 import Image from "next/image";
 import { notFound, redirect } from "next/navigation";
@@ -31,7 +32,48 @@ import { liensAlternatifs } from "@/lib/seo";
  * des pastilles pour les scores.
  */
 
-export const dynamic = "force-dynamic";
+/**
+ * **La page lit `searchParams`, ce qui la rend dynamique quoi qu'on déclare** :
+ * c'est la lecture du stade et de ses rencontres qui est en cache, une heure
+ * par stade, depuis le 20 septembre 2026 — les filtres s'appliquent ensuite
+ * en mémoire, comme avant. Les dates en reviennent chaînes, le cache ne
+ * conservant que du JSON ; `formatDateFR` les accepte telles quelles.
+ */
+const stade = unstable_cache(
+  async (id: string) =>
+    prisma.venue.findUnique({
+      where: { id },
+      include: {
+        country: { select: { name: true } },
+        opponents: { select: { name: true, shortName: true, slug: true } },
+        opponentStints: {
+          orderBy: { untilSeason: "desc" },
+          select: { fromSeason: true, untilSeason: true, opponent: { select: { name: true, shortName: true, slug: true } } },
+        },
+        matches: {
+          orderBy: { date: "desc" },
+          select: {
+            id: true,
+            slug: true,
+            date: true,
+            scoreUsap: true,
+            scoreOpponent: true,
+            result: true,
+            isHome: true,
+            matchday: true,
+            round: true,
+            attendance: true,
+            competition: { select: { id: true, shortName: true, name: true } },
+            opponent: { select: { shortName: true, name: true } },
+            season: { select: { label: true } },
+            referee: { select: { firstName: true, lastName: true, slug: true } },
+          },
+        },
+      },
+    }),
+  ["stade-fiche"],
+  { revalidate: 3600 },
+);
 
 type Props = {
   params: Promise<{ locale: Langue; slug: string }>;
@@ -62,36 +104,7 @@ export default async function StadeDetailPage({ params, searchParams }: Props) {
   const id = extractIdFromSlug(slug);
   if (!id) notFound();
 
-  const venue = await prisma.venue.findUnique({
-    where: { id },
-    include: {
-      country: { select: { name: true } },
-      opponents: { select: { name: true, shortName: true, slug: true } },
-      opponentStints: {
-        orderBy: { untilSeason: "desc" },
-        select: { fromSeason: true, untilSeason: true, opponent: { select: { name: true, shortName: true, slug: true } } },
-      },
-      matches: {
-        orderBy: { date: "desc" },
-        select: {
-          id: true,
-          slug: true,
-          date: true,
-          scoreUsap: true,
-          scoreOpponent: true,
-          result: true,
-          isHome: true,
-          matchday: true,
-          round: true,
-          attendance: true,
-          competition: { select: { id: true, shortName: true, name: true } },
-          opponent: { select: { shortName: true, name: true } },
-          season: { select: { label: true } },
-          referee: { select: { firstName: true, lastName: true, slug: true } },
-        },
-      },
-    },
-  });
+  const venue = await stade(id);
   if (!venue) notFound();
   if (venue.slug !== slug) redirect(cheminLocalise(`/stades/${venue.slug}`, locale));
 

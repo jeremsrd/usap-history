@@ -312,7 +312,8 @@ export async function createMatch(
   }
 
   revalidatePath("/admin/matchs");
-  revalidatePath("/matchs");
+  revalidatePath("/[locale]/matchs", "page");
+  revalidatePath("/[locale]/matchs/[slug]", "page");
   return { success: true };
 }
 
@@ -404,7 +405,8 @@ export async function updateMatch(
   }
 
   revalidatePath("/admin/matchs");
-  revalidatePath("/matchs");
+  revalidatePath("/[locale]/matchs", "page");
+  revalidatePath("/[locale]/matchs/[slug]", "page");
   return { success: true };
 }
 

@@ -82,7 +82,7 @@ export async function createTrophy(
   }
 
   revalidatePath("/admin/palmares");
-  revalidatePath("/palmares");
+  revalidatePath("/[locale]/palmares", "page");
   return { success: true };
 }
 
@@ -135,7 +135,7 @@ export async function updateTrophy(
   }
 
   revalidatePath("/admin/palmares");
-  revalidatePath("/palmares");
+  revalidatePath("/[locale]/palmares", "page");
   return { success: true };
 }
 
@@ -155,6 +155,6 @@ export async function deleteTrophy(
   }
 
   revalidatePath("/admin/palmares");
-  revalidatePath("/palmares");
+  revalidatePath("/[locale]/palmares", "page");
   return { success: true };
 }

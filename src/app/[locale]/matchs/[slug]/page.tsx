@@ -32,7 +32,18 @@ import { liensAlternatifs } from "@/lib/seo";
  * — `IconeFait` —, ce qui n'est pas un emoji : demandée par Jérémy.
  */
 
-export const dynamic = "force-dynamic";
+export const revalidate = 3600;
+
+/**
+ * **Vide, et nécessaire.** Sans `generateStaticParams`, l'App Router rend une
+ * route à segment dynamique à la demande et sans cache, quel que soit
+ * `revalidate` ; avec lui, même vide, chaque fiche est rendue à sa première
+ * visite puis servie du cache une heure. Rien n'est pré-rendu au build : trois
+ * mille fiches y interrogeraient la base pour rien.
+ */
+export function generateStaticParams() {
+  return [];
+}
 
 type Props = {
   params: Promise<{ locale: Langue; slug: string }>;

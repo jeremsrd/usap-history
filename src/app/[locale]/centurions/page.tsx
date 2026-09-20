@@ -23,7 +23,7 @@ import Signalement from "@/components/Signalement";
  * encadré gris, un tableau bordé et arrondi.
  */
 
-export const dynamic = "force-dynamic";
+export const revalidate = 3600;
 
 /** Nombre de matchs à partir duquel un joueur entre au tableau. */
 const SEUIL = 100;

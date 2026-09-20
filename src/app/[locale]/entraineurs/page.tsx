@@ -34,7 +34,7 @@ import Signalement from "@/components/Signalement";
  * sous la même icône Lucide dans un rond gris.
  */
 
-export const dynamic = "force-dynamic";
+export const revalidate = 3600;
 
 type Props = { params: Promise<{ locale: Langue }> };
 

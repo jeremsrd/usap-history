@@ -45,7 +45,7 @@ import Signalement from "@/components/Signalement";
  * libellé en capitales espacées.
  */
 
-export const dynamic = "force-dynamic";
+export const revalidate = 3600;
 
 /** En deçà, un « record » n'est plus qu'une rencontre prise au hasard. */
 const SEUIL_COMPETITION = 10;

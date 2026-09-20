@@ -19,7 +19,7 @@ import { LANGUES } from "@/i18n/langues";
  * `lastModified` vient de `updatedAt` quand le modèle le porte ; les listes
  * bougent à chaque match, elles prennent la date du jour.
  */
-export const dynamic = "force-dynamic";
+export const revalidate = 3600;
 
 const LISTES = [
   "",

@@ -25,7 +25,7 @@ import Signalement from "@/components/Signalement";
  * badges d'années, des ronds d'icône, une frise à pastilles.
  */
 
-export const dynamic = "force-dynamic";
+export const revalidate = 3600;
 
 type Props = { params: Promise<{ locale: Langue }> };
 

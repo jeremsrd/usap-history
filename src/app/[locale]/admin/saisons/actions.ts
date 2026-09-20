@@ -80,7 +80,8 @@ export async function createSeason(
   }
 
   revalidatePath("/admin/saisons");
-  revalidatePath("/saisons");
+  revalidatePath("/[locale]/saisons", "page");
+  revalidatePath("/[locale]/saisons/[label]", "page");
   return { success: true };
 }
 
@@ -134,7 +135,8 @@ export async function updateSeason(
   }
 
   revalidatePath("/admin/saisons");
-  revalidatePath("/saisons");
+  revalidatePath("/[locale]/saisons", "page");
+  revalidatePath("/[locale]/saisons/[label]", "page");
   return { success: true };
 }
 
@@ -168,6 +170,7 @@ export async function deleteSeason(id: string): Promise<SeasonActionState> {
   }
 
   revalidatePath("/admin/saisons");
-  revalidatePath("/saisons");
+  revalidatePath("/[locale]/saisons", "page");
+  revalidatePath("/[locale]/saisons/[label]", "page");
   return { success: true };
 }

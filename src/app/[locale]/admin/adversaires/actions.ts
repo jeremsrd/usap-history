@@ -95,7 +95,8 @@ export async function createOpponent(
   }
 
   revalidatePath("/admin/adversaires");
-  revalidatePath("/adversaires");
+  revalidatePath("/[locale]/adversaires", "page");
+  revalidatePath("/[locale]/adversaires/[slug]", "page");
   return { success: true };
 }
 
@@ -161,7 +162,8 @@ export async function updateOpponent(
   }
 
   revalidatePath("/admin/adversaires");
-  revalidatePath("/adversaires");
+  revalidatePath("/[locale]/adversaires", "page");
+  revalidatePath("/[locale]/adversaires/[slug]", "page");
   return { success: true };
 }
 
@@ -197,6 +199,7 @@ export async function deleteOpponent(
   }
 
   revalidatePath("/admin/adversaires");
-  revalidatePath("/adversaires");
+  revalidatePath("/[locale]/adversaires", "page");
+  revalidatePath("/[locale]/adversaires/[slug]", "page");
   return { success: true };
 }

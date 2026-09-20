@@ -100,7 +100,8 @@ export async function addMatchPlayer(
   }
 
   revalidatePath(`/admin/matchs/${matchId}`);
-  revalidatePath("/matchs");
+  revalidatePath("/[locale]/matchs", "page");
+  revalidatePath("/[locale]/matchs/[slug]", "page");
   return { success: true };
 }
 
@@ -185,7 +186,8 @@ export async function updateMatchPlayer(
   }
 
   revalidatePath(`/admin/matchs/${matchId}`);
-  revalidatePath("/matchs");
+  revalidatePath("/[locale]/matchs", "page");
+  revalidatePath("/[locale]/matchs/[slug]", "page");
   return { success: true };
 }
 
@@ -204,7 +206,8 @@ export async function removeMatchPlayer(
   }
 
   revalidatePath(`/admin/matchs/${matchId}`);
-  revalidatePath("/matchs");
+  revalidatePath("/[locale]/matchs", "page");
+  revalidatePath("/[locale]/matchs/[slug]", "page");
   return { success: true };
 }
 
@@ -256,7 +259,8 @@ export async function addMatchEvent(
   }
 
   revalidatePath(`/admin/matchs/${matchId}`);
-  revalidatePath("/matchs");
+  revalidatePath("/[locale]/matchs", "page");
+  revalidatePath("/[locale]/matchs/[slug]", "page");
   return { success: true };
 }
 
@@ -275,6 +279,7 @@ export async function removeMatchEvent(
   }
 
   revalidatePath(`/admin/matchs/${matchId}`);
-  revalidatePath("/matchs");
+  revalidatePath("/[locale]/matchs", "page");
+  revalidatePath("/[locale]/matchs/[slug]", "page");
   return { success: true };
 }

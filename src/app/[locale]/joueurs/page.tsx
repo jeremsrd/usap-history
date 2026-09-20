@@ -8,8 +8,17 @@ import type { Metadata } from "next";
 import type { Position } from "@prisma/client";
 import { liensAlternatifs } from "@/lib/seo";
 import Signalement from "@/components/Signalement";
+import { unstable_cache } from "next/cache";
 
-export const dynamic = "force-dynamic";
+/**
+ * **La page lit `searchParams`, ce qui la rend dynamique quoi qu'on déclare** :
+ * elle ne peut pas être mise en cache entière comme les autres. Ce sont donc
+ * ses requêtes qui le sont, une heure, comme celles du pied de page — et
+ * c'était la page la plus coûteuse du site : elle chargeait à chaque visite
+ * les treize mille lignes de composition catalanes pour compter les matchs
+ * de chaque homme. Depuis le 20 septembre 2026, ce compte se fait une fois
+ * par heure pour tout le monde, et la liste filtrée une fois par filtre.
+ */
 
 /**
  * L'annuaire des joueurs — une liste dense, à la façon de lfchistory.net et
@@ -57,6 +66,91 @@ function lettreDe(nom: string): string {
   return ALPHABET.includes(premiere) ? premiere : "#";
 }
 
+// Uniquement les joueurs liés à l'USAP : un passage, une carrière, un match
+// sous le maillot ou une ligne d'effectif de saison. La recherche s'ajoute à
+// cette condition, elle ne la remplace pas : une version précédente écrasait
+// le `OR` et rendait aussi les adversaires.
+const USAP_CONDITION = {
+  OR: [
+    { usapStints: { some: {} } },
+    { careerClubs: { some: { isUsap: true } } },
+    { matchAppearances: { some: { isOpponent: false } } },
+    { seasonSquads: { some: {} } },
+  ],
+};
+
+/** La liste, pour un jeu de filtres donné — les arguments font la clé du cache. */
+const joueursFiltres = unstable_cache(
+  async (positionFilter: string | undefined, activeFilter: string | undefined, searchQuery: string | undefined) =>
+    prisma.player.findMany({
+      where: {
+        AND: [
+          USAP_CONDITION,
+          ...(positionFilter ? [{ position: positionFilter as Position }] : []),
+          ...(activeFilter ? [{ isActive: true }] : []),
+          ...(searchQuery
+            ? [
+                {
+                  OR: [
+                    { firstName: { contains: searchQuery, mode: "insensitive" as const } },
+                    { lastName: { contains: searchQuery, mode: "insensitive" as const } },
+                  ],
+                },
+              ]
+            : []),
+        ],
+      },
+      orderBy: [{ lastName: "asc" }, { firstName: "asc" }],
+      select: {
+        id: true,
+        slug: true,
+        firstName: true,
+        lastName: true,
+        position: true,
+        photoUrl: true,
+        isActive: true,
+        nationality: { select: { name: true, code: true } },
+      },
+    }),
+  ["joueurs-liste"],
+  { revalidate: 3600 },
+);
+
+/**
+ * Les deux compteurs du chapeau et le bilan de chaque homme — matchs, première
+ * et dernière année —, indépendants des filtres. Un match se compte comme sur
+ * la fiche du joueur : une feuille sur une rencontre jouée, sous le maillot
+ * catalan. Rendu en objet et non en `Map`, le cache ne conservant que du JSON.
+ */
+const comptesEtBilans = unstable_cache(
+  async () => {
+    const [totalCount, activeCount, lignes] = await Promise.all([
+      prisma.player.count({ where: USAP_CONDITION }),
+      prisma.player.count({ where: { ...USAP_CONDITION, isActive: true } }),
+      prisma.matchPlayer.findMany({
+        where: {
+          isOpponent: false,
+          playerId: { not: null },
+          match: { result: { not: null } },
+        },
+        select: { playerId: true, match: { select: { date: true } } },
+      }),
+    ]);
+    const bilans: Record<string, { matchs: number; premier: number; dernier: number }> = {};
+    for (const l of lignes) {
+      const annee = l.match.date.getUTCFullYear();
+      const b = bilans[l.playerId!] ?? { matchs: 0, premier: annee, dernier: annee };
+      b.matchs++;
+      if (annee < b.premier) b.premier = annee;
+      if (annee > b.dernier) b.dernier = annee;
+      bilans[l.playerId!] = b;
+    }
+    return { totalCount, activeCount, bilans };
+  },
+  ["joueurs-comptes-bilans"],
+  { revalidate: 3600 },
+);
+
 export default async function JoueursPage({
   params,
   searchParams,
@@ -72,75 +166,10 @@ export default async function JoueursPage({
   const activeFilter = filtres.actif === "oui" ? "oui" : undefined;
   const searchQuery = filtres.q?.trim() || undefined;
 
-  // Uniquement les joueurs liés à l'USAP : un passage, une carrière, un match
-  // sous le maillot ou une ligne d'effectif de saison.
-  const usapCondition = {
-    OR: [
-      { usapStints: { some: {} } },
-      { careerClubs: { some: { isUsap: true } } },
-      { matchAppearances: { some: { isOpponent: false } } },
-      { seasonSquads: { some: {} } },
-    ],
-  };
-
-  // La recherche s'ajoute à la condition USAP, elle ne la remplace pas : la
-  // version précédente écrasait le `OR` et rendait aussi les adversaires.
-  const where = {
-    AND: [
-      usapCondition,
-      ...(positionFilter ? [{ position: positionFilter as Position }] : []),
-      ...(activeFilter ? [{ isActive: true }] : []),
-      ...(searchQuery
-        ? [
-            {
-              OR: [
-                { firstName: { contains: searchQuery, mode: "insensitive" as const } },
-                { lastName: { contains: searchQuery, mode: "insensitive" as const } },
-              ],
-            },
-          ]
-        : []),
-    ],
-  };
-
-  const [players, totalCount, activeCount, lignes] = await Promise.all([
-    prisma.player.findMany({
-      where,
-      orderBy: [{ lastName: "asc" }, { firstName: "asc" }],
-      select: {
-        id: true,
-        slug: true,
-        firstName: true,
-        lastName: true,
-        position: true,
-        photoUrl: true,
-        isActive: true,
-        nationality: { select: { name: true, code: true } },
-      },
-    }),
-    prisma.player.count({ where: usapCondition }),
-    prisma.player.count({ where: { ...usapCondition, isActive: true } }),
-    // Un match se compte comme sur la fiche du joueur : une feuille sur une
-    // rencontre jouée, sous le maillot catalan.
-    prisma.matchPlayer.findMany({
-      where: {
-        isOpponent: false,
-        playerId: { not: null },
-        match: { result: { not: null } },
-      },
-      select: { playerId: true, match: { select: { date: true } } },
-    }),
+  const [players, { totalCount, activeCount, bilans }] = await Promise.all([
+    joueursFiltres(positionFilter, activeFilter, searchQuery),
+    comptesEtBilans(),
   ]);
-
-  const bilans = new Map<string, { matchs: number; premier: number; dernier: number }>();
-  for (const l of lignes) {
-    const annee = l.match.date.getUTCFullYear();
-    const b = bilans.get(l.playerId!) ?? { matchs: 0, premier: annee, dernier: annee };
-    b.matchs++;
-    if (annee < b.premier) b.premier = annee;
-    if (annee > b.dernier) b.dernier = annee;
-    bilans.set(l.playerId!, b);
-  }
 
   // Les groupes, dans l'ordre des noms — une lettre absente n'a pas d'ancre.
   const groupes = new Map<string, typeof players>();
@@ -291,7 +320,7 @@ export default async function JoueursPage({
                   </th>
                 </tr>
                 {joueurs.map((p) => {
-                  const b = bilans.get(p.id);
+                  const b = bilans[p.id];
                   return (
                     <tr key={p.id} className="border-b border-border hover:bg-muted">
                       <td className="w-9 py-1.5 pr-2 align-middle">

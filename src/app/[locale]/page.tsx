@@ -47,7 +47,16 @@ import Signalement from "@/components/Signalement";
  * à icône pour la navigation que le Header porte déjà.
  */
 
-export const dynamic = "force-dynamic";
+/**
+ * **EN CACHE DIX MINUTES**, depuis le 20 septembre 2026. Toutes les pages
+ * publiques étaient `force-dynamic` — rendues depuis zéro, requêtes Prisma
+ * comprises, à chaque visite —, et c'est ce qui épuisait les quatre heures
+ * d'Active CPU du plan Hobby de Vercel et saturait le pooler Supabase le
+ * lendemain d'un match. Les autres pages sont à une heure ; l'accueil est
+ * plus court pour le joueur au hasard et « ce jour dans l'histoire », qui
+ * change à minuit.
+ */
+export const revalidate = 600;
 
 type Props = { params: Promise<{ locale: Langue }> };
 
@@ -276,8 +285,10 @@ export default async function Home({ params }: Props) {
   // liées au club : une recrue sans match afficherait trois zéros, ce qui
   // n'est pas un portrait.
   //
-  // La page est `force-dynamic`, donc le tirage est refait à chaque
-  // chargement : c'est ce qu'on attend d'un « au hasard ». `orderBy` est
+  // Le tirage est refait à chaque rendu, c'est-à-dire **toutes les dix
+  // minutes** depuis le 20 septembre 2026, et non plus à chaque chargement :
+  // la page est en cache (`revalidate = 600`, cf. l'en-tête), et un tirage
+  // par visiteur coûtait le rendu entier de l'accueil à chacun. `orderBy` est
   // nécessaire, faute de quoi le `skip` porterait sur un ordre indéfini.
   const ELIGIBLE = { matchAppearances: { some: { isOpponent: false, match: MATCH_JOUE } } };
   const tirables = await prisma.player.count({ where: ELIGIBLE });

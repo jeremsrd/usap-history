@@ -9,6 +9,7 @@ import type { Prisma } from "@prisma/client";
 import { liensAlternatifs } from "@/lib/seo";
 import Signalement from "@/components/Signalement";
 import Ecusson from "@/components/Ecusson";
+import { unstable_cache } from "next/cache";
 
 /**
  * La liste des rencontres, refaite le 6 septembre 2026 dans l'identité
@@ -27,7 +28,87 @@ import Ecusson from "@/components/Ecusson";
  * que l'épine remplace.
  */
 
-export const dynamic = "force-dynamic";
+/**
+ * **La page lit `searchParams`, ce qui la rend dynamique quoi qu'on déclare** :
+ * elle ne peut pas être mise en cache entière comme les autres. Ce sont donc
+ * ses requêtes qui le sont, une heure, depuis le 20 septembre 2026 — la
+ * sélection par jeu de filtres et de page, et les repères communs à toutes.
+ * Les dates y passent en chaînes ISO : le cache ne conserve que du JSON, et
+ * une `Date` en reviendrait chaîne sans le dire.
+ */
+
+/** La sélection : les rencontres de la page, leur compte et leur bilan. */
+const selection = unstable_cache(
+  async (page: number, saison?: string, competition?: string, adversaire?: string, resultat?: string) => {
+    const where: Prisma.MatchWhereInput = {};
+    if (saison) where.season = { label: saison };
+    if (competition) where.competitionId = competition;
+    if (adversaire) where.opponentId = adversaire;
+    if (resultat === "victoire") where.result = "VICTOIRE";
+    else if (resultat === "defaite") where.result = "DEFAITE";
+    else if (resultat === "nul") where.result = "NUL";
+    else if (resultat === "a-venir") where.result = null;
+
+    // Requêtes séquentielles : le pool de Supabase est étroit.
+    const matches = (
+      await prisma.match.findMany({
+        where,
+        orderBy: { date: "desc" },
+        skip: (page - 1) * PAR_PAGE,
+        take: PAR_PAGE,
+        select: {
+          id: true,
+          slug: true,
+          date: true,
+          scoreUsap: true,
+          scoreOpponent: true,
+          result: true,
+          isHome: true,
+          matchday: true,
+          round: true,
+          competition: { select: { name: true, shortName: true } },
+          opponent: { select: { name: true, shortName: true, logoUrl: true } },
+          venue: { select: { name: true, slug: true } },
+          season: { select: { label: true } },
+        },
+      })
+    ).map((m) => ({ ...m, date: m.date.toISOString() }));
+    const total = await prisma.match.count({ where });
+    // Le bilan de la sélection, sur ses rencontres jouées. `AND` et non un
+    // étalement : `MATCH_JOUE` porte `result`, qu'un filtre de résultat porte
+    // aussi, et le second écraserait le premier.
+    const jouees: Prisma.MatchWhereInput = { AND: [where, MATCH_JOUE] };
+    const bilan = await prisma.match.aggregate({
+      where: jouees,
+      _count: { id: true },
+      _sum: { scoreUsap: true, scoreOpponent: true },
+    });
+    const parResultat = await prisma.match.groupBy({ by: ["result"], where: jouees, _count: { id: true } });
+    return { matches, total, bilan, parResultat };
+  },
+  ["matchs-selection"],
+  { revalidate: 3600 },
+);
+
+/** Les repères communs à toute sélection : l'étendue de la base et les menus. */
+const reperes = unstable_cache(
+  async () => {
+    // De quand à quand, sur toute la base.
+    const premiere = await prisma.match.findFirst({ orderBy: { date: "asc" }, select: { season: { select: { label: true } } } });
+    const derniere = await prisma.match.findFirst({ where: MATCH_JOUE, orderBy: { date: "desc" }, select: { season: { select: { label: true } } } });
+    const totalBase = await prisma.match.count();
+
+    const seasons = await prisma.season.findMany({ where: { matches: { some: {} } }, orderBy: { startYear: "desc" }, select: { label: true } });
+    const competitions = await prisma.competition.findMany({ where: { matches: { some: {} } }, orderBy: { name: "asc" }, select: { id: true, name: true, shortName: true } });
+    // Triés sur le nom affiché : « Béziers » et non « AS Béziers ».
+    const opponents = (await prisma.opponent.findMany({ where: { matches: { some: {} } }, select: { id: true, name: true, shortName: true } })).sort((a, b) =>
+      (a.shortName || a.name).localeCompare(b.shortName || b.name, "fr"),
+    );
+    return { premiere, derniere, totalBase, seasons, competitions, opponents };
+  },
+  ["matchs-reperes"],
+  { revalidate: 3600 },
+);
 
 const PAR_PAGE = 50;
 
@@ -54,62 +135,10 @@ export default async function MatchsPage({ params, searchParams }: Props) {
   const adversaire = q.adversaire || undefined;
   const resultat = q.resultat || undefined;
 
-  const where: Prisma.MatchWhereInput = {};
-  if (saison) where.season = { label: saison };
-  if (competition) where.competitionId = competition;
-  if (adversaire) where.opponentId = adversaire;
-  if (resultat === "victoire") where.result = "VICTOIRE";
-  else if (resultat === "defaite") where.result = "DEFAITE";
-  else if (resultat === "nul") where.result = "NUL";
-  else if (resultat === "a-venir") where.result = null;
-
-  // Requêtes séquentielles : le pool de Supabase est étroit.
-  const matches = await prisma.match.findMany({
-    where,
-    orderBy: { date: "desc" },
-    skip: (page - 1) * PAR_PAGE,
-    take: PAR_PAGE,
-    select: {
-      id: true,
-      slug: true,
-      date: true,
-      scoreUsap: true,
-      scoreOpponent: true,
-      result: true,
-      isHome: true,
-      matchday: true,
-      round: true,
-      competition: { select: { name: true, shortName: true } },
-      opponent: { select: { name: true, shortName: true, logoUrl: true } },
-      venue: { select: { name: true, slug: true } },
-      season: { select: { label: true } },
-    },
-  });
-  const total = await prisma.match.count({ where });
-  // Le bilan de la sélection, sur ses rencontres jouées. `AND` et non un
-  // étalement : `MATCH_JOUE` porte `result`, qu'un filtre de résultat porte
-  // aussi, et le second écraserait le premier.
-  const jouees: Prisma.MatchWhereInput = { AND: [where, MATCH_JOUE] };
-  const bilan = await prisma.match.aggregate({
-    where: jouees,
-    _count: { id: true },
-    _sum: { scoreUsap: true, scoreOpponent: true },
-  });
-  const parResultat = await prisma.match.groupBy({ by: ["result"], where: jouees, _count: { id: true } });
+  const { matches, total, bilan, parResultat } = await selection(page, saison, competition, adversaire, resultat);
   const compte = (r: "VICTOIRE" | "NUL" | "DEFAITE") => parResultat.find((x) => x.result === r)?._count.id ?? 0;
   const aVenir = total - bilan._count.id;
-
-  // De quand à quand, sur toute la base.
-  const premiere = await prisma.match.findFirst({ orderBy: { date: "asc" }, select: { season: { select: { label: true } } } });
-  const derniere = await prisma.match.findFirst({ where: MATCH_JOUE, orderBy: { date: "desc" }, select: { season: { select: { label: true } } } });
-  const totalBase = await prisma.match.count();
-
-  const seasons = await prisma.season.findMany({ where: { matches: { some: {} } }, orderBy: { startYear: "desc" }, select: { label: true } });
-  const competitions = await prisma.competition.findMany({ where: { matches: { some: {} } }, orderBy: { name: "asc" }, select: { id: true, name: true, shortName: true } });
-  // Triés sur le nom affiché : « Béziers » et non « AS Béziers ».
-  const opponents = (await prisma.opponent.findMany({ where: { matches: { some: {} } }, select: { id: true, name: true, shortName: true } })).sort((a, b) =>
-    (a.shortName || a.name).localeCompare(b.shortName || b.name, "fr"),
-  );
+  const { premiere, derniere, totalBase, seasons, competitions, opponents } = await reperes();
 
   const lien = (modif: Partial<{ page: number; resultat: string | undefined }> = {}) => {
     const qs = new URLSearchParams();

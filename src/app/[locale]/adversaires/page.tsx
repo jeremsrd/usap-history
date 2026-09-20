@@ -8,6 +8,7 @@ import type { Metadata } from "next";
 import type { Prisma } from "@prisma/client";
 import { liensAlternatifs } from "@/lib/seo";
 import Signalement from "@/components/Signalement";
+import { unstable_cache } from "next/cache";
 
 /**
  * La liste des clubs adverses, refaite le 6 septembre 2026 dans l'identité
@@ -25,7 +26,80 @@ import Signalement from "@/components/Signalement";
  * pastilles pour le nombre de matchs, des puces de filtre.
  */
 
-export const dynamic = "force-dynamic";
+/**
+ * **La page lit `searchParams`, ce qui la rend dynamique quoi qu'on déclare** :
+ * ce sont ses requêtes qui sont en cache, une heure, depuis le 20 septembre
+ * 2026 — la liste par jeu de filtres, et les comptes et tête-à-tête communs
+ * à toutes. Les dates des bilans y passent en saison dès le cache, qui ne
+ * conserve que du JSON.
+ */
+
+/** La liste des clubs, pour une recherche et un filtre donnés. */
+const clubsFiltres = unstable_cache(
+  async (recherche?: string, filtre?: string) => {
+    const where: Prisma.OpponentWhereInput = {};
+    if (filtre === "rencontres") where.matches = { some: {} };
+    if (filtre === "disparus") where.isActive = false;
+    if (recherche) {
+      where.OR = [
+        { name: { contains: recherche, mode: "insensitive" } },
+        { shortName: { contains: recherche, mode: "insensitive" } },
+        { city: { contains: recherche, mode: "insensitive" } },
+      ];
+    }
+    return prisma.opponent.findMany({
+      where,
+      select: {
+        id: true,
+        slug: true,
+        name: true,
+        shortName: true,
+        city: true,
+        logoUrl: true,
+        isActive: true,
+        country: { select: { name: true } },
+      },
+    });
+  },
+  ["adversaires-liste"],
+  { revalidate: 3600 },
+);
+
+/** Les trois comptes des filtres et le tête-à-tête de chaque club, sur les rencontres jouées. */
+const comptesEtBilans = unstable_cache(
+  async () => {
+    // Requêtes séquentielles : le pool de Supabase est étroit.
+    const total = await prisma.opponent.count();
+    const rencontres = await prisma.opponent.count({ where: { matches: { some: {} } } });
+    const disparus = await prisma.opponent.count({ where: { isActive: false } });
+    const groupes = await prisma.match.groupBy({
+      by: ["opponentId"],
+      where: MATCH_JOUE,
+      _count: { id: true },
+      _sum: { scoreUsap: true, scoreOpponent: true },
+      _min: { date: true },
+      _max: { date: true },
+    });
+    const parResultat = await prisma.match.groupBy({ by: ["opponentId", "result"], where: MATCH_JOUE, _count: { id: true } });
+    const bilans: Record<string, { matchs: number; victoires: number; nuls: number; defaites: number; pour: number; contre: number; premiere: string; derniere: string }> = {};
+    for (const b of groupes) {
+      const compte = (r: string) => parResultat.find((x) => x.opponentId === b.opponentId && x.result === r)?._count.id ?? 0;
+      bilans[b.opponentId] = {
+        matchs: b._count.id,
+        victoires: compte("VICTOIRE"),
+        nuls: compte("NUL"),
+        defaites: compte("DEFAITE"),
+        pour: b._sum.scoreUsap ?? 0,
+        contre: b._sum.scoreOpponent ?? 0,
+        premiere: saisonDe(b._min.date!),
+        derniere: saisonDe(b._max.date!),
+      };
+    }
+    return { total, rencontres, disparus, bilans };
+  },
+  ["adversaires-comptes-bilans"],
+  { revalidate: 3600 },
+);
 
 type Props = {
   params: Promise<{ locale: Langue }>;
@@ -51,60 +125,9 @@ export default async function AdversairesPage({ params, searchParams }: Props) {
   const recherche = q.q?.trim() || undefined;
   const filtre = q.filtre === "rencontres" || q.filtre === "disparus" ? q.filtre : undefined;
 
-  const where: Prisma.OpponentWhereInput = {};
-  if (filtre === "rencontres") where.matches = { some: {} };
-  if (filtre === "disparus") where.isActive = false;
-  if (recherche) {
-    where.OR = [
-      { name: { contains: recherche, mode: "insensitive" } },
-      { shortName: { contains: recherche, mode: "insensitive" } },
-      { city: { contains: recherche, mode: "insensitive" } },
-    ];
-  }
-
-  // Requêtes séquentielles : le pool de Supabase est étroit.
-  const opponents = await prisma.opponent.findMany({
-    where,
-    select: {
-      id: true,
-      slug: true,
-      name: true,
-      shortName: true,
-      city: true,
-      logoUrl: true,
-      isActive: true,
-      country: { select: { name: true } },
-    },
-  });
-  const total = await prisma.opponent.count();
-  const rencontres = await prisma.opponent.count({ where: { matches: { some: {} } } });
-  const disparus = await prisma.opponent.count({ where: { isActive: false } });
-
-  // Le tête-à-tête de chaque club, sur les rencontres jouées.
-  const bilans = await prisma.match.groupBy({
-    by: ["opponentId"],
-    where: MATCH_JOUE,
-    _count: { id: true },
-    _sum: { scoreUsap: true, scoreOpponent: true },
-    _min: { date: true },
-    _max: { date: true },
-  });
-  const parResultat = await prisma.match.groupBy({ by: ["opponentId", "result"], where: MATCH_JOUE, _count: { id: true } });
-  const bilanDe = (id: string) => {
-    const b = bilans.find((x) => x.opponentId === id);
-    if (!b) return null;
-    const compte = (r: string) => parResultat.find((x) => x.opponentId === id && x.result === r)?._count.id ?? 0;
-    return {
-      matchs: b._count.id,
-      victoires: compte("VICTOIRE"),
-      nuls: compte("NUL"),
-      defaites: compte("DEFAITE"),
-      pour: b._sum.scoreUsap ?? 0,
-      contre: b._sum.scoreOpponent ?? 0,
-      premiere: saisonDe(b._min.date!),
-      derniere: saisonDe(b._max.date!),
-    };
-  };
+  const opponents = await clubsFiltres(recherche, filtre);
+  const { total, rencontres, disparus, bilans } = await comptesEtBilans();
+  const bilanDe = (id: string) => bilans[id] ?? null;
 
   // Par pays, la France en tête ; puis les clubs par leur nom affiché.
   const nom = (o: (typeof opponents)[number]) => o.shortName || o.name;

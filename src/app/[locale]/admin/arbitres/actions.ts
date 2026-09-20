@@ -57,7 +57,8 @@ export async function createReferee(
   }
 
   revalidatePath("/admin/arbitres");
-  revalidatePath("/arbitres");
+  revalidatePath("/[locale]/arbitres", "page");
+  revalidatePath("/[locale]/arbitres/[slug]", "page");
   return { success: true };
 }
 
@@ -94,7 +95,8 @@ export async function updateReferee(
   }
 
   revalidatePath("/admin/arbitres");
-  revalidatePath("/arbitres");
+  revalidatePath("/[locale]/arbitres", "page");
+  revalidatePath("/[locale]/arbitres/[slug]", "page");
   return { success: true };
 }
 
@@ -119,6 +121,7 @@ export async function deleteReferee(id: string): Promise<RefereeActionState> {
   }
 
   revalidatePath("/admin/arbitres");
-  revalidatePath("/arbitres");
+  revalidatePath("/[locale]/arbitres", "page");
+  revalidatePath("/[locale]/arbitres/[slug]", "page");
   return { success: true };
 }

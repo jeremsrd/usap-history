@@ -32,7 +32,7 @@ const SEUIL_POINTS = 50;
 const SEUIL_ESSAIS = 10;
 const SEUIL_AU_PIED = 50;
 
-export const dynamic = "force-dynamic";
+export const revalidate = 3600;
 
 type Props = { params: Promise<{ locale: Langue }> };
 

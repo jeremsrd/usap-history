@@ -60,7 +60,8 @@ export async function createCoach(
   }
 
   revalidatePath("/admin/entraineurs");
-  revalidatePath("/entraineurs");
+  revalidatePath("/[locale]/entraineurs", "page");
+  revalidatePath("/[locale]/entraineurs/[slug]", "page");
   return { success: true };
 }
 
@@ -99,7 +100,8 @@ export async function updateCoach(
   }
 
   revalidatePath("/admin/entraineurs");
-  revalidatePath("/entraineurs");
+  revalidatePath("/[locale]/entraineurs", "page");
+  revalidatePath("/[locale]/entraineurs/[slug]", "page");
   return { success: true };
 }
 
@@ -124,6 +126,7 @@ export async function deleteCoach(id: string): Promise<CoachActionState> {
   }
 
   revalidatePath("/admin/entraineurs");
-  revalidatePath("/entraineurs");
+  revalidatePath("/[locale]/entraineurs", "page");
+  revalidatePath("/[locale]/entraineurs/[slug]", "page");
   return { success: true };
 }

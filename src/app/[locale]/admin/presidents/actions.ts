@@ -65,7 +65,8 @@ export async function createPresident(
   }
 
   revalidatePath("/admin/presidents");
-  revalidatePath("/presidents");
+  revalidatePath("/[locale]/presidents", "page");
+  revalidatePath("/[locale]/presidents/[slug]", "page");
   return { success: true };
 }
 
@@ -107,7 +108,8 @@ export async function updatePresident(
   }
 
   revalidatePath("/admin/presidents");
-  revalidatePath("/presidents");
+  revalidatePath("/[locale]/presidents", "page");
+  revalidatePath("/[locale]/presidents/[slug]", "page");
   return { success: true };
 }
 
@@ -136,6 +138,7 @@ export async function deletePresident(
   }
 
   revalidatePath("/admin/presidents");
-  revalidatePath("/presidents");
+  revalidatePath("/[locale]/presidents", "page");
+  revalidatePath("/[locale]/presidents/[slug]", "page");
   return { success: true };
 }
