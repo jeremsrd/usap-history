@@ -2845,13 +2845,17 @@ disparu, et l'Albi-Perpignan du 3 novembre 2007, dont la feuille LNR ne porte
 aucun fait. `fix-bonus-points` les reconnaît et laisse leur bonus offensif en
 l'état.
 
-**2026-2027 a joué ses deux premières journées** — Stade Français 28-26
+**2026-2027 a joué ses trois premières journées** — Stade Français 28-26
 USAP le 5 septembre 2026, bonus défensif, 12 065 spectateurs et mi-temps
 6-28 ; USAP 43-29 Castres le 12 septembre, six essais dont deux de Yato,
-14 232 spectateurs et mi-temps 24-15, arbitre Vincent Blasco-Baqué —,
+14 232 spectateurs et mi-temps 24-15, arbitre Vincent Blasco-Baqué ;
+Montpellier 50-13 USAP le 19 septembre, huit essais encaissés dont six en
+seconde période, 11 151 spectateurs et mi-temps 3-12, arbitre Pierre Bru —,
 feuille des deux camps, chronologie, affluence et mi-temps d'après
 *L'Indépendant*, par la marche du « lendemain d'un match » ; 5 points au
-classement. Une transformation catalane de la 47ᵉ reste sans buteur dans la
+classement. **Les compositions de la J3 n'étaient pas entrées la veille**,
+et `seed-lineup.ts` les a créées le lendemain sans que la chaîne en souffre :
+c'est le premier temps facultatif de la marche, pas une étape sautée. Une transformation catalane de la 47ᵉ reste sans buteur dans la
 chronologie, la feuille LNR ne le nommant pas — le journal la donne à
 Aucagne, dont la ligne porte bien ses cinq. **Et n'est qu'un calendrier pour
 le reste** :
@@ -4832,6 +4836,18 @@ scripts touchés. Deux erreurs préexistantes subsistent dans
 ⚠️ `DATABASE_URL` pointe sur la base Supabase **de production** : un script
 lancé écrit directement sur les données du site. Toujours passer par `--dry`
 d'abord quand le script modifie de l'existant.
+
+⚠️ **ET ELLE PARTAGE SES QUINZE CONNEXIONS AVEC LE SITE EN PRODUCTION.**
+`DATABASE_URL` pointe sur le port **5432** du pooler Supabase — mode session,
+`pool_size: 15` —, et c'est le même URL que Vercel utilise. Le 20 septembre
+2026, lendemain de Montpellier-USAP, le premier script de la chaîne a rendu
+`FATAL: (EMAXCONNSESSION) max clients reached in session mode` sans que rien
+ne tourne en local : les fonctions du site, sous le trafic d'après-match,
+tenaient les quinze. Le contournement, sans toucher aux fichiers : passer la
+commande par le port **6543**, mode transaction, en surchargeant la variable
+— `DATABASE_URL="…:6543/postgres?pgbouncer=true" npx tsx scripts/…` —, ce
+qui a suffi pour toute la chaîne. Le remède durable — Vercel ou les scripts
+sur 6543 — n'est pas tranché.
 
 ⚠️ **La base est distante, et elle coupe les connexions oisives.** Un script
 qui tient une connexion Prisma pendant une longue moisson HTTP la voit tomber
