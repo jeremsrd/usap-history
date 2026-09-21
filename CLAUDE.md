@@ -198,6 +198,8 @@ npx tsx scripts/set-annexe.ts --match=AAAA-MM-JJ --affluence=N --mi-temps=U-A \
   --source="L'Indépendant du …" --dry                              # ce que la LNR ne donne pas
 npx tsx scripts/audit-opponent-lineups.ts AAAA-AAAA                # 0 anomalie attendue
 npx tsx scripts/detect-duplicate-players.ts                        # 0 / 0 / 0 attendu
+npx tsx scripts/set-video.ts --match=AAAA-MM-JJ --url="…" --dry    # le résumé de « TOP 14 - Officiel »,
+npx tsx scripts/set-video.ts --match=AAAA-MM-JJ --url="…"          #   quand la chaîne l'a publié
 ```
 
 **`set-score.ts` écrit aussi les compteurs de réalisations** — `triesUsap`,
@@ -1061,6 +1063,7 @@ doublons.
 | `set-score.ts` | pose le **score, le résultat et les compteurs de réalisations des deux camps** d'une rencontre du calendrier en cours, depuis le calendrier et la feuille de la LNR — le premier temps du lendemain de match, sans lequel la feuille et la chronologie refusent d'écrire. Un camp dont les faits ne retombent pas sur le score garde ses compteurs à `null`. `--match=AAAA-MM-JJ`, `--dry`, `--force` ; les bonus viennent ensuite de `fix-bonus-points.ts` |
 | `set-annexe.ts` | pose l'**affluence** et la **mi-temps**, que la LNR ne donne pas, depuis une source nommée — *L'Indépendant* du lendemain — avec leur attestation ; refuse une mi-temps par laquelle la chronologie ne passe pas avant la 50ᵉ, arrêts de jeu compris. `--match=`, `--affluence=`, `--mi-temps=U-A`, `--source=`, `--dry`, `--force` |
 | `set-photo-saison.ts` | pose la **photo officielle de l'équipe** d'une saison et son crédit — `Season.photoUrl`, `Season.photoCredit` —, depuis un fichier déposé dans `public/images/saisons/AAAA-AAAA.jpg`, dont il vérifie l'existence. Exige le crédit, refuse d'écraser sans `--force`, `--retirer` efface. L'admin téléverse dans Supabase par `ImageUpload` ; ce script sert aux photos hébergées par le dépôt, comme les écussons. `--saison=`, `--credit=`, `--fichier=`, `--dry` |
+| `set-video.ts` | pose le **résumé vidéo** d'une rencontre, `Match.videoUrl`, depuis un lien donné par Jérémy — la chaîne YouTube « TOP 14 - Officiel ». Vérifie l'identifiant par `oembed` et **confronte le titre à la rencontre** — saison, journée, Perpignan — avant d'écrire l'adresse nettoyée de ses paramètres de liste ; un lien de la journée d'à côté est refusé, titre affiché. Remplace les listes en dur d'`add-video-urls*.ts`. `--match=AAAA-MM-JJ --url=`, `--dry`, `--force` |
 | `set-arbitre.ts` | pose l'arbitre d'une rencontre quand il vient d'ailleurs que d'une feuille — la désignation de la semaine, donnée par Jérémy. `--match=AAAA-MM-JJ --nom="Prénom Nom"`, `--dry`, `--force` pour remplacer un arbitre déjà posé ; passe par `lib/arbitres.ts`, jamais par un slug refait à la main |
 | `seed-season-2021-2022.ts` | crée les rencontres d'une saison entière — date et heure, compétition, adversaire, lieu, score, réalisations, résultat, bonus, arbitre — puis les agrégats de saison. Premier jalon de la phase 4 |
 | `lib/erc.ts` | **les pages de l'ERC dans la Wayback Machine**, source officielle des coupes d'Europe d'avant l'EPCR. Deux lecteurs : les comptes rendus de 2007-2008 (`eng/12_NNNN.php`, en latin-1) — compositions à 22 numérotées, capitaines, cartons, réalisations par joueur, essais de pénalité, affluence, stade — et le **Match Centre** de 2010-2013 (`eng/matchcentre/NNNNN.php`), qui ajoute la mi-temps, l'arbitre et une **chronologie minutée**. Quatre secondes entre deux pages et un cache sur disque : l'archive refuse tout après une centaine de requêtes rapprochées |
@@ -2885,8 +2888,9 @@ classement. **Les compositions de la J3 n'étaient pas entrées la veille**,
 et `seed-lineup.ts` les a créées le lendemain sans que la chaîne en souffre :
 c'est le premier temps facultatif de la marche, pas une étape sautée. Une transformation catalane de la 47ᵉ reste sans buteur dans la
 chronologie, la feuille LNR ne le nommant pas — le journal la donne à
-Aucagne, dont la ligne porte bien ses cinq. **Et n'est qu'un calendrier pour
-le reste** :
+Aucagne, dont la ligne porte bien ses cinq. **Les trois ont leur résumé
+vidéo** depuis le 21 septembre 2026, liens donnés par Jérémy et posés par
+`set-video.ts`. **Et n'est qu'un calendrier pour le reste** :
 ses 26 journées ont leur date, leur adversaire et leur terrain, sans score. Seules les premières ont un horaire —
 la LNR ne cale les coups d'envoi qu'au fil des désignations télévisées et pose
 d'ici là une date de référence, que `seed-calendrier-2026-2027.ts` rafraîchit
