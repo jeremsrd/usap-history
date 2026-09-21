@@ -3,6 +3,7 @@ import Provenance from "@/components/Provenance";
 import Signalement from "@/components/Signalement";
 import { JoueurCellule } from "@/components/JoueurCellule";
 import Ecusson from "@/components/Ecusson";
+import Image from "next/image";
 import { notFound } from "next/navigation";
 import { prisma } from "@/lib/prisma";
 import { estCouperet, estJoue, lettreResultat } from "@/lib/matchs";
@@ -54,6 +55,16 @@ import { liensAlternatifs } from "@/lib/seo";
  * vide pour un club sans écusson, le nom se suffit ; et l'ordre de
  * l'affiche, lu sur `isHome` au même endroit que les noms, pour que
  * l'écusson et le camp ne se désynchronisent pas.
+ *
+ * **Et la photo officielle de l'équipe suit l'en-tête depuis le
+ * 21 septembre 2026**, à la demande de Jérémy — une par saison pour
+ * l'instant, `Season.photoUrl` et `Season.photoCredit`, la première étant
+ * celle de 2008-2009 au Stade de France, avant la finale. Elle va d'un bord
+ * à l'autre comme les tableaux, sans cadre ; dessous, la légende dit ce
+ * qu'on voit et **le crédit nomme le photographe** — une photo d'équipe est
+ * une œuvre, et son auteur s'affiche comme celui d'un portrait de joueur.
+ * Rien ne s'affiche sans photo : pas de case vide, la page est celle
+ * d'avant.
  *
  * Ce que la page ne fait plus : des icônes devant les titres, des flèches
  * vertes et rouges pour la montée et la descente, neuf cases de chiffres
@@ -439,6 +450,29 @@ export default async function SaisonDetailPage({ params }: Props) {
             décision, non corriger un oubli. */}
         {season.notes && <p className="mt-4 text-base leading-relaxed text-foreground">{season.notes}</p>}
       </header>
+
+      {/* La photo officielle de l'équipe, quand la saison en a une. Pleine
+          largeur comme les tableaux ; la légende et le crédit du photographe
+          dessous, en petit. `sizes` dit au navigateur la largeur réelle —
+          le conteneur fait 1 152 pixels au plus —, sans quoi il prendrait la
+          plus grande variante. */}
+      {season.photoUrl && (
+        <figure className="mb-10">
+          <Image
+            src={season.photoUrl}
+            alt={t("saison.photoLegende", { label: season.label })}
+            width={2000}
+            height={1327}
+            sizes="(min-width: 1200px) 1152px, 100vw"
+            className="h-auto w-full rounded-xs"
+            priority
+          />
+          <figcaption className="mt-2 flex flex-wrap justify-between gap-x-6 gap-y-1 text-sm text-muted-foreground">
+            <span>{t("saison.photoLegende", { label: season.label })}</span>
+            {season.photoCredit && <span>{t("saison.photoCredit", { auteur: season.photoCredit })}</span>}
+          </figcaption>
+        </figure>
+      )}
 
       {/* **LE BANDEAU DE CHIFFRES**, demandé par Jérémy le 16 septembre 2026 :
           ce que le classement officiel dit d'une saison, dans son ordre, en

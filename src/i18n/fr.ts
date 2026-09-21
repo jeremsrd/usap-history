@@ -727,6 +727,8 @@ export const fr = {
     surtitre: "Saison",
     precedente: "Saison précédente",
     suivante: "Saison suivante",
+    photoLegende: "L'équipe de la saison {label}",
+    photoCredit: "Photo {auteur}",
     friseAria: "Les résultats de la saison, dans l'ordre des rencontres",
     champion: "Champion de France",
     championProD2: "Champion de Pro D2",

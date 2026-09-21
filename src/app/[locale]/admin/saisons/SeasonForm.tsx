@@ -5,6 +5,7 @@ import { X } from "lucide-react";
 import { createSeason, updateSeason } from "./actions";
 import type { SeasonActionState } from "./actions";
 import { DIVISIONS } from "@/lib/constants";
+import ImageUpload from "@/components/ui/ImageUpload";
 
 interface CoachOption {
   id: string;
@@ -26,6 +27,8 @@ interface SeasonData {
   division: string;
   coachId: string | null;
   presidentId: string | null;
+  photoUrl: string | null;
+  photoCredit: string | null;
 }
 
 interface SeasonFormProps {
@@ -185,6 +188,33 @@ export default function SeasonForm({ season, coaches, presidents, onClose }: Sea
                 </option>
               ))}
             </select>
+          </div>
+
+          {/* La photo officielle de l'équipe, et son crédit. L'image part
+              dans Supabase par `ImageUpload` ; une photo déjà dans le dépôt
+              (`/images/saisons/AAAA-AAAA.jpg`) s'y affiche aussi. */}
+          <ImageUpload
+            value={season?.photoUrl}
+            onChange={() => {}}
+            folder="saisons"
+            label="Photo officielle de l'équipe"
+            name="photoUrl"
+          />
+          <div>
+            <label
+              htmlFor="photoCredit"
+              className="mb-1 block text-sm font-medium text-muted-foreground"
+            >
+              Crédit de la photo
+            </label>
+            <input
+              id="photoCredit"
+              name="photoCredit"
+              type="text"
+              defaultValue={season?.photoCredit ?? ""}
+              placeholder="Le photographe, tel qu'il sera affiché"
+              className="w-full rounded-md border border-border bg-card px-3 py-2 text-foreground placeholder:text-muted-foreground focus:border-usap-sang focus:outline-none focus:ring-1 focus:ring-usap-sang"
+            />
           </div>
 
           {/* Erreur */}

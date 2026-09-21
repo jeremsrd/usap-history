@@ -29,6 +29,8 @@ export default async function AdminSaisonsPage() {
         division: true,
         coachId: true,
         presidentId: true,
+        photoUrl: true,
+        photoCredit: true,
         _count: { select: { matches: true, seasonPlayers: true } },
       },
     }),

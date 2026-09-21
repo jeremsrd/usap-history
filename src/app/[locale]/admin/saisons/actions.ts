@@ -43,6 +43,8 @@ export async function createSeason(
   const division = formData.get("division") as string;
   const coachId = (formData.get("coachId") as string) || null;
   const presidentId = (formData.get("presidentId") as string) || null;
+  const photoUrl = ((formData.get("photoUrl") as string) || "").trim() || null;
+  const photoCredit = ((formData.get("photoCredit") as string) || "").trim() || null;
 
   if (!startYear || !endYear || !division) {
     return { error: "L'année de début, de fin et la division sont obligatoires." };
@@ -67,6 +69,8 @@ export async function createSeason(
         division: division as Division,
         coachId,
         presidentId,
+        photoUrl,
+        photoCredit,
       },
     });
   } catch (e: unknown) {
@@ -97,6 +101,8 @@ export async function updateSeason(
   const division = formData.get("division") as string;
   const coachId = (formData.get("coachId") as string) || null;
   const presidentId = (formData.get("presidentId") as string) || null;
+  const photoUrl = ((formData.get("photoUrl") as string) || "").trim() || null;
+  const photoCredit = ((formData.get("photoCredit") as string) || "").trim() || null;
 
   if (!id || !startYear || !endYear || !division) {
     return { error: "L'année de début, de fin et la division sont obligatoires." };
@@ -122,6 +128,8 @@ export async function updateSeason(
         division: division as Division,
         coachId,
         presidentId,
+        photoUrl,
+        photoCredit,
       },
     });
   } catch (e: unknown) {

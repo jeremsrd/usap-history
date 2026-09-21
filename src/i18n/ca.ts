@@ -689,6 +689,8 @@ export const ca = {
     surtitre: "Temporada",
     precedente: "Temporada anterior",
     suivante: "Temporada següent",
+    photoLegende: "L'equip de la temporada {label}",
+    photoCredit: "Foto {auteur}",
     friseAria: "Els resultats de la temporada, en l'ordre dels partits",
     champion: "Campió de França",
     championProD2: "Campió de Pro D2",

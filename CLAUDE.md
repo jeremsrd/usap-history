@@ -28,7 +28,8 @@ usap-history/
 ├── src/
 │   ├── app/                      # App Router — 36 pages, sous `[locale]`
 │   │   ├── page.tsx              # Accueil
-│   │   ├── saisons/              # page.tsx + [label]/page.tsx
+│   │   ├── saisons/              # page.tsx + [label]/page.tsx — la photo de l'équipe
+│   │   │                         #   vit dans public/images/saisons/AAAA-AAAA.jpg
 │   │   ├── matchs/               # page.tsx + [slug]/page.tsx
 │   │   ├── joueurs/              # page.tsx + [slug]/page.tsx
 │   │   ├── adversaires/          # page.tsx + [slug]/page.tsx
@@ -1059,6 +1060,7 @@ doublons.
 | `seed-calendrier-europe-2026-2027.ts` | le pendant pour la **coupe d'Europe** : les quatre matchs de poule de Challenge Cup depuis le flux de l'EPCR, sans score. Crée l'Ulster, et pose deux terrains à la main avec leur source — Ravenhill à Belfast, Rodney Parade à Newport —, l'USAP n'y ayant jamais joué. `--dry` |
 | `set-score.ts` | pose le **score, le résultat et les compteurs de réalisations des deux camps** d'une rencontre du calendrier en cours, depuis le calendrier et la feuille de la LNR — le premier temps du lendemain de match, sans lequel la feuille et la chronologie refusent d'écrire. Un camp dont les faits ne retombent pas sur le score garde ses compteurs à `null`. `--match=AAAA-MM-JJ`, `--dry`, `--force` ; les bonus viennent ensuite de `fix-bonus-points.ts` |
 | `set-annexe.ts` | pose l'**affluence** et la **mi-temps**, que la LNR ne donne pas, depuis une source nommée — *L'Indépendant* du lendemain — avec leur attestation ; refuse une mi-temps par laquelle la chronologie ne passe pas avant la 50ᵉ, arrêts de jeu compris. `--match=`, `--affluence=`, `--mi-temps=U-A`, `--source=`, `--dry`, `--force` |
+| `set-photo-saison.ts` | pose la **photo officielle de l'équipe** d'une saison et son crédit — `Season.photoUrl`, `Season.photoCredit` —, depuis un fichier déposé dans `public/images/saisons/AAAA-AAAA.jpg`, dont il vérifie l'existence. Exige le crédit, refuse d'écraser sans `--force`, `--retirer` efface. L'admin téléverse dans Supabase par `ImageUpload` ; ce script sert aux photos hébergées par le dépôt, comme les écussons. `--saison=`, `--credit=`, `--fichier=`, `--dry` |
 | `set-arbitre.ts` | pose l'arbitre d'une rencontre quand il vient d'ailleurs que d'une feuille — la désignation de la semaine, donnée par Jérémy. `--match=AAAA-MM-JJ --nom="Prénom Nom"`, `--dry`, `--force` pour remplacer un arbitre déjà posé ; passe par `lib/arbitres.ts`, jamais par un slug refait à la main |
 | `seed-season-2021-2022.ts` | crée les rencontres d'une saison entière — date et heure, compétition, adversaire, lieu, score, réalisations, résultat, bonus, arbitre — puis les agrégats de saison. Premier jalon de la phase 4 |
 | `lib/erc.ts` | **les pages de l'ERC dans la Wayback Machine**, source officielle des coupes d'Europe d'avant l'EPCR. Deux lecteurs : les comptes rendus de 2007-2008 (`eng/12_NNNN.php`, en latin-1) — compositions à 22 numérotées, capitaines, cartons, réalisations par joueur, essais de pénalité, affluence, stade — et le **Match Centre** de 2010-2013 (`eng/matchcentre/NNNNN.php`), qui ajoute la mi-temps, l'arbitre et une **chronologie minutée**. Quatre secondes entre deux pages et un cache sur disque : l'archive refuse tout après une centaine de requêtes rapprochées |
@@ -2068,6 +2070,31 @@ victoire en or dans sa frise et en rouge dans sa colonne n'a pas de code
 couleur, elle en a deux. Les trois couleurs sont donc les mêmes partout et
 sur les deux objets, la lettre comme le nombre — **or, encre, gris**.
 
+
+**ET LA PHOTO OFFICIELLE DE L'ÉQUIPE SUIT SON EN-TÊTE DEPUIS LE
+21 SEPTEMBRE 2026**, à la demande de Jérémy — une par saison pour
+l'instant, deux colonnes sur `Season`, `photoUrl` et `photoCredit`,
+migration `20260921100000_season_photo` posée à la main. La première est
+celle de 2008-2009, l'équipe au Stade de France devant le panneau
+« Finale 2009 », donnée par Jérémy comme provisoire — « pas géniale, j'en
+trouverai une meilleure ». Elle va d'un bord à l'autre comme les tableaux,
+entre l'en-tête et le bandeau de chiffres, sans cadre ; dessous, la
+légende (`saison.photoLegende`) et **le crédit du photographe**
+(`saison.photoCredit`, « Photo Tonton Jo », lu sur l'image même). Une
+photo d'équipe est une œuvre : le crédit s'affiche comme celui d'un
+portrait de joueur, et `set-photo-saison.ts` l'exige. Sans photo, rien ne
+s'affiche — pas de case vide.
+
+Deux chemins pour en poser une : **l'admin**, où le formulaire de saison a
+gagné `ImageUpload` (dossier `saisons`, dans Supabase, dont l'hôte est déjà
+admis par `next.config.ts`) et un champ de crédit — la limite de 2 Mo de
+`/api/upload` vaut aussi pour elle ; ou **le dépôt**, `public/images/
+saisons/AAAA-AAAA.jpg` puis `set-photo-saison.ts`, comme pour les écussons.
+`width` et `height` de la balise sont ceux de la première photo, 2000 × 1327,
+et `h-auto` laisse l'image suivre son propre rapport : une photo d'un autre
+format s'affiche juste, au prix d'un léger décalage au chargement. Le jour
+où il faudra plusieurs photos par saison, ce sera une table
+`season_photos`, et les deux colonnes y migreront.
 
 **ET SES LIGNES DE RENCONTRE PORTENT LES DEUX ÉCUSSONS DEPUIS LE
 19 SEPTEMBRE 2026**, à la demande de Jérémy — vingt pixels devant chaque

@@ -27,6 +27,8 @@ interface SeasonData {
   division: string;
   coachId: string | null;
   presidentId: string | null;
+  photoUrl: string | null;
+  photoCredit: string | null;
   _count: { matches: number; seasonPlayers: number };
 }
 

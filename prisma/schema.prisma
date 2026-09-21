@@ -354,6 +354,13 @@ model Season {
   champion     Boolean  @default(false)
   notes        String?  @db.Text
 
+  // La photo officielle de l'équipe — une par saison, pour l'instant. Un
+  // chemin local (`/images/saisons/AAAA-AAAA.jpg`) ou une adresse Supabase
+  // téléversée depuis l'admin ; le crédit est celui du photographe, et il
+  // s'affiche sous la photo comme celui d'un portrait de joueur.
+  photoUrl    String? @map("photo_url")
+  photoCredit String? @map("photo_credit")
+
   // Stats agrégées
   matchesPlayed Int? @map("matches_played")
   wins          Int?
