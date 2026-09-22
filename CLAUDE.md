@@ -1263,9 +1263,10 @@ propriétaire du site.
 
 ## Photos des joueurs
 
-**65 fiches sur 319 sont illustrées**, dont **46 des 50 joueurs de l'effectif
-professionnel**. Les images sont servies par le site lui-même depuis
-`public/images/players/{slug}.webp` — 1,3 Mo au total, carrés de 400 pixels,
+**80 fiches sur 382 sont illustrées**, dont **48 des 50 joueurs de l'effectif
+professionnel** — seize portraits de plus le 22 septembre 2026, cf. « La
+reprise du 22 septembre 2026 » à la fin de cette section. Les images sont servies par le site lui-même depuis
+`public/images/players/{slug}.webp` — 1,7 Mo au total, carrés de 400 pixels,
 le plus grand affichage du site en faisant 160.
 
 **Deux sources, et c'est l'époque du joueur qui tranche.**
@@ -1364,14 +1365,21 @@ clair ou sombre, sans rectangle rapporté.
 
 ### Ce qui manque, et pourquoi
 
-**Cinq joueurs de l'effectif n'ont aucun portrait** : Bradley Amituanai, Simon
-Taty, Luke McGrath, Aisea Kubunakaravi et Diego Mascarenc — la LNR n'a que
-leur silhouette, et Wikipédia soit ne leur consacre pas d'article, soit n'en
-illustre pas. À reprendre quand la LNR aura photographié ses recrues : une
-simple relance les servira.
+**Deux joueurs de l'effectif n'ont aucun portrait** : Aisea Kubunakaravi et
+Diego Mascarenc — la LNR n'a que leur silhouette, et Wikipédia ne les
+illustre pas. **ET « UNE SIMPLE RELANCE LES SERVIRA » N'ÉTAIT PAS UNE FIGURE
+DE STYLE** : ils étaient cinq, et le 22 septembre 2026 la relance en a servi
+quatre — Amituanai, Taty, McGrath et Coulon, que la LNR avait photographiés
+depuis. **Devant une lacune imputée à la LNR, relancer avant de chercher
+ailleurs** : son CDN se remplit au fil des semaines, et le journal du jour
+ne vaut que pour ce jour-là.
 
-**Six anciens n'ont aucune photo libre** : Alan Brazo, Guillaume Vilaceca,
-Sadek Deghmache, Genesis Mamea Lemalu, Sione Piukala et Lifeimi Mafi. Ils sont
+**Treize anciens n'ont aucune photo libre** : Alan Brazo, Guillaume Vilaceca,
+Sadek Deghmache, Genesis Mamea Lemalu, Sione Piukala, Lifeimi Mafi, et les
+sept partants de 2025-2026 — Akato Fakatika, Gabin Kretchmann, Sacha
+Lotrian, Nemo Roelofse, Tavite Veredamu, Thomas Serezat et Simon Sol. Cinq
+de ces derniers ont bien un article francophone qui les dit à Perpignan,
+simplement pas illustré ; Serezat et Sol n'ont pas d'article. Ils sont
 nommés dans `SANS_PORTRAIT` pour que le récapitulatif les compte — une
 omission dite valant mieux qu'une omission tue. **N'y inscrire qu'un joueur
 hors de l'effectif** : Lucas Dubois et Tristan Tedder y ont figuré une
@@ -1395,6 +1403,61 @@ l'avait pas remplacée de lui-même : **une photo téléversée à la main est u
 choix, et il le signale au lieu de l'écraser** (« photo hébergée ailleurs, la
 LNR en a une »). C'est `--joueur="…" --force` qui tranche, et c'est bien ainsi
 que celle-ci a été remplacée, sur décision de Jérémy.
+
+### La reprise du 22 septembre 2026
+
+**Seize portraits posés**, sur les vingt-cinq fiches sans photo des effectifs
+2026-2027 et 2025-2026 : la couverture passe de 65 à 80, et l'effectif du
+jour de 46 à 48 sur 50. Quatre viennent de la LNR — Amituanai, Taty, McGrath
+et Coulon, que son CDN ne servait pas trois semaines plus tôt —, douze de
+Commons.
+
+**Les deux sources se partagent le travail selon que le joueur est parti ou
+non, et c'est nouveau.** La règle écrite plus haut — la LNR pour l'effectif,
+Commons pour les anciens — vaut d'une saison à l'autre : **la LNR ne garde
+pas le portrait d'un joueur qui a quitté le club**, et les vingt et un
+manquants de 2025-2026 étaient donc tous hors de sa portée. Commons en a
+servi douze.
+
+**LA DISPENSE DE PERPIGNAN SE POSE AUSSI À L'AUTRE BOUT DU SÉJOUR.**
+`ARTICLES_HORS_PERPIGNAN` n'existait que pour les recrues que Wikipédia
+n'avait pas encore enregistrées ; le même retard se retrouve chez les
+partants, dont l'article est réécrit autour du club où ils sont
+**aujourd'hui**. Kieran Brookes y est toulonnais, Gela Aprasidze bayonnais,
+Mahamadou Diaby bordelais — et les trois ont bien porté le maillot. La
+dispense ne vaut, là encore, **que parce que l'identité est établie
+autrement** : la date de naissance de l'article et celle de la fiche
+concordent au jour près, le poste concorde, et chacun a de vraies feuilles
+catalanes — 45 pour Brookes, 35 pour Aprasidze, 14 pour Diaby.
+
+**ET LE SEUIL DES 300 PIXELS FAIT DES FAUX POSITIFS.** Il est là pour qu'un
+logo ou un drapeau ne passe pas pour un visage — son message le dit, « sans
+doute pas un portrait » —, et c'est un garde-fou de **nature**, non de
+qualité. Cinq portraits avérés tombaient dessous : Beria 296×313, Lam
+235×333, Hicks 235×307, Duguivalu 208×307, Poulet 175×261. Ce sont des
+recadrages d'une même série — les photos du Zebre Parma-USAP de Challenge
+Cup 2024-2025, versées en CC BY-SA 2.0 —, dont un contributeur a tiré un
+buste par joueur : ils sont petits parce qu'ils sont **découpés dans une
+photo de match**, non parce qu'ils seraient autre chose qu'un visage.
+
+**Arbitré par Jérémy le 22 septembre 2026** en faveur d'une table nominative,
+`PORTRAITS_PETITS`, plutôt que d'un seuil abaissé : descendre le seuil à 170
+aurait tenu en une ligne et désarmé le contrôle pour tout le monde — le
+prochain écusson de 200 pixels serait entré sans que personne ne le nomme.
+C'est le raisonnement de `NOMS_DUSAGE` et de `SOURCES_HORS_LNR`, une
+exception nommée plutôt qu'un relâchement de la règle générale. Y inscrire un
+nom, c'est affirmer qu'on a **regardé l'image**.
+
+**ET LE CADRAGE A DEMANDÉ TROIS ESSAIS, TOUJOURS SUR LA MÊME ERREUR.** Quatre
+photos de match — Paia'aua, Petaia, Reus, Brookes — ont dû passer par
+`CADRAGES`, et les deux premiers relevés ont **coupé le menton**. Le front et
+les yeux sautent aux yeux quand on lit une grille, et l'on sous-estime la
+mâchoire, la barbe et le cou, qui descendent d'un bon quart de plus que l'œil
+ne le croit. Le geste juste est de cadrer **large, puis de resserrer** : un
+carré trop grand se voit et se corrige, un menton coupé passe pour un cadrage
+serré. **Aucun journal d'exécution ne signalait rien** — les trois essais ont
+rendu « ✔ » avec la même assurance ; c'est la planche contact qui a arrêté
+les deux premiers, et c'est exactement ce à quoi elle sert.
 
 ## Ce que les pages affichent
 
@@ -2200,8 +2263,8 @@ cela. Trois choses arbitrées :
   une rencontre jouée, non sur les 381 fiches liées au club : une recrue sans
   match afficherait trois zéros, ce qui n'est pas un portrait ;
 - **la case du portrait reste vide sans photo**, comme sur `/joueurs`. Ne
-  tirer que parmi les 65 fiches illustrées aurait été plus joli et **faux** :
-  46 d'entre elles sont l'effectif du jour, et « au hasard » aurait presque
+  tirer que parmi les 80 fiches illustrées aurait été plus joli et **faux** :
+  48 d'entre elles sont l'effectif du jour, et « au hasard » aurait presque
   toujours rendu un joueur de cette saison ;
 - **les compteurs suivent la règle de la fiche joueur et de `/centurions`** —
   une ligne de composition sur une rencontre jouée vaut un match, remplaçant
@@ -3842,8 +3905,8 @@ Par ordre de valeur.
    paires de frères — Thomas, Sidoli, Olaeta —, chacun nommé par sa propre
    feuille, sont entrées dans `DISTINCTS`.
 3. **Le fond** : affluences (36 matchs sur 573 joués), les 137 fiches joueur
-   que Wikipédia ne documente pas, les onze joueurs sans portrait — six
-   anciens et cinq recrues que la LNR n'a pas encore photographiées, cf.
+   que Wikipédia ne documente pas, les quinze joueurs sans portrait — treize
+   anciens et deux recrues que la LNR n'a pas encore photographiées, cf.
    « Photos des joueurs » —, et les saisons sans aucun match.
 
 4. **L'avant-guerre, quand Jérémy le décidera.** La chaîne existe et a
@@ -4533,9 +4596,9 @@ d'un siècle, c'est la règle qu'on connaîtra le moins bien.
   pas davantage ; et trente-six rencontres européennes de 2007-2008 à
   2018-2019, ESPN ne donnant jamais l'arbitre et l'ERC seulement sur ses
   pages Match Centre. C'est une lacune qui s'aggrave en remontant, et la
-  liste des arbitres en donne le compte, lu dans la base. **65 fiches sur
-  319 sont illustrées** — dont
-46 des 50 joueurs de l'effectif, cf. « Photos des joueurs ».
+  liste des arbitres en donne le compte, lu dans la base. **80 fiches sur
+  382 sont illustrées** — dont 48 des 50 joueurs de l'effectif, cf.
+  « Photos des joueurs ».
 
   **Et un arbitre posé peut être faux, sans que rien ne le signale.** Le
   9 septembre 2026, Jérémy a relevé Christophe Berdos sur le Perpignan-Bristol

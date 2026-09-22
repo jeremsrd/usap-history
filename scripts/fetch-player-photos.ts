@@ -109,6 +109,22 @@ const PORTRAITS: Record<string, string> = {
   "Sevu Reece": "Sevu Reece",
   "Braydon Ennor": "Braydon Ennor",
   "Marco Riccioni": "Marco Riccioni",
+  // Sept joueurs de l'effectif 2025-2026, dont six partis depuis : la LNR
+  // ne garde pas les portraits de ceux qui ont quitté le club, Commons si.
+  "Duncan Paia'aua": "Duncan Paia'aua",
+  "Jordan Petaia": "Jordan Petaia",
+  "Hugo Reus": "Hugo Reus",
+  "Jamie Ritchie": "Jamie Ritchie",
+  "Gela Aprasidze": "Gela Aprasidze",
+  "Kieran Brookes": "Kieran Brookes",
+  "Mahamadou Diaby": "Mahamadou Diaby",
+  // Les cinq de `PORTRAITS_PETITS` : leur article est illustré, mais d'un
+  // buste découpé dans une photo de match, sous les 300 pixels du seuil.
+  "Giorgi Beria": "Giorgi Beria",
+  "Seilala Lam": "Seilala Lam",
+  "Maxwell Hicks": "Max Hicks",
+  "Alivereti Duguivalu": "Alivereti Duguivalu",
+  "Job Poulet": "Job Poulet",
 };
 
 /**
@@ -124,10 +140,66 @@ const PORTRAITS: Record<string, string> = {
  * poste, et il n'existe pas d'autre joueur de rugby de ce nom. L'article est
  * en retard, pas faux.
  */
-const ARTICLES_HORS_PERPIGNAN = new Set(["Marco Riccioni"]);
+const ARTICLES_HORS_PERPIGNAN = new Set([
+  "Marco Riccioni",
+  // ET LE MÊME RETARD SE RETROUVE À L'AUTRE BOUT DU SÉJOUR. Wikipédia écrit
+  // souvent l'article d'un joueur autour du club où il est **aujourd'hui**,
+  // et un passage catalan d'une ou deux saisons peut n'y laisser aucune
+  // trace — Brookes y est toulonnais, Aprasidze bayonnais, Diaby bordelais,
+  // alors que les trois ont bien porté le maillot. Le garde-fou visait un
+  // homonyme ; ici il écarterait un article juste, faute qu'il soit complet.
+  //
+  // LA DISPENSE NE VAUT, LÀ ENCORE, QUE PARCE QUE L'IDENTITÉ EST ÉTABLIE
+  // AUTREMENT, et chacune de ces trois lignes a été vérifiée sur la base :
+  // la date de naissance de l'article et celle de la fiche concordent **au
+  // jour près**, le poste concorde, et le joueur a de vraies feuilles sous
+  // le maillot. Kieran Brookes, né le 29 août 1990, pilier droit, 45
+  // feuilles de 2024-2025 à 2025-2026 aux dossards 3, 18 et 23 — et
+  // l'article anglophone, lui, le dit bien à Perpignan. Gela Aprasidze, né
+  // le 14 janvier 1998, demi de mêlée géorgien, 35 feuilles dont le n°9.
+  // Mahamadou Diaby, né le 15 août 1990, troisième ligne aile, 14 feuilles
+  // sur la seule saison 2025-2026. Trois dates exactes, trois postes, trois
+  // carrières catalanes : l'article est lacunaire, pas faux.
+  "Kieran Brookes",
+  "Gela Aprasidze",
+  "Mahamadou Diaby",
+]);
 
 /**
- * Anciens que Wikipédia n'illustre pas, au 2 septembre 2026.
+ * Portraits avérés que le seuil des 300 pixels écarterait, et eux seuls.
+ *
+ * LE SEUIL EST UN GARDE-FOU DE NATURE, NON DE QUALITÉ : il est là pour
+ * qu'un logo de club ou un drapeau ne passe pas pour un visage, et son
+ * message le dit — « sans doute pas un portrait ». Sur ces cinq-là il se
+ * trompe, et la nature est établie autrement : l'article est nommé à la
+ * main, il parle de Perpignan, et l'image est le portrait de cet article.
+ *
+ * Les cinq sont des **recadrages d'une même série** — les photos du
+ * Zebre Parma-USAP de Challenge Cup 2024-2025, versées sur Commons en
+ * CC BY-SA 2.0 —, dont un contributeur a tiré un buste par joueur. Ils
+ * sont petits parce qu'ils sont découpés dans une photo de match, non
+ * parce qu'ils seraient autre chose qu'un visage : Beria 296×313, Lam
+ * 235×333, Hicks 235×307, Duguivalu 208×307, Poulet 175×261.
+ *
+ * POURQUOI UNE TABLE PLUTÔT QU'UN SEUIL PLUS BAS, arbitré par Jérémy le
+ * 22 septembre 2026 : descendre le seuil à 170 aurait tenu en une ligne et
+ * désarmé le contrôle pour tout le monde — le prochain écusson de 200
+ * pixels serait entré sans que personne ne le nomme. C'est le raisonnement
+ * de `NOMS_DUSAGE` et de `SOURCES_HORS_LNR` : une exception nommée, jamais
+ * un relâchement de la règle générale. Y inscrire un nom, c'est affirmer
+ * qu'on a **regardé l'image** — les cinq l'ont été sur la planche contact,
+ * et les visages y sont nets à la taille où le site les affiche.
+ */
+const PORTRAITS_PETITS = new Set([
+  "Giorgi Beria",
+  "Seilala Lam",
+  "Maxwell Hicks",
+  "Alivereti Duguivalu",
+  "Job Poulet",
+]);
+
+/**
+ * Anciens que Wikipédia n'illustre pas, au 22 septembre 2026.
  *
  * Leur article existe pour la plupart, sans photo ; les fiches LNR de leur
  * époque n'en portent pas davantage. Ils sont nommés ici pour que le
@@ -149,6 +221,24 @@ const SANS_PORTRAIT = [
   // l'image ne montre pas le visage du joueur. Écartée délibérément, une
   // absence valant mieux qu'une photo qui n'illustre personne.
   "Lifeimi Mafi",
+  // Sept partants de l'effectif 2025-2026, relevés le 22 septembre 2026.
+  // Cinq ont bien un article francophone, qui les dit à Perpignan — Akato
+  // Fakatika, Gabin Kretchmann, Sacha Lotrian, Nemo Roelofse, Tavite
+  // Veredamu — mais aucun n'est illustré ; Thomas Serezat et Simon Sol
+  // n'ont pas d'article du tout. La LNR, elle, ne garde pas le portrait
+  // d'un joueur parti. Ils reviendront si Commons les illustre un jour.
+  //
+  // Une recherche par nom sur Commons ne rend pour eux que les photos du
+  // Zebre Parma-USAP de 2024-2025, où ils figurent parmi vingt autres :
+  // aucun cadrage n'en tire un portrait, et c'est le cas Lifeimi Mafi —
+  // une absence vaut mieux qu'une image qui ne montre personne.
+  "Akato Fakatika",
+  "Gabin Kretchmann",
+  "Sacha Lotrian",
+  "Nemo Roelofse",
+  "Tavite Veredamu",
+  "Thomas Serezat",
+  "Simon Sol",
 ];
 
 /**
@@ -185,6 +275,28 @@ const CADRAGES: Record<string, { x: number; y: number; cote: number }> = {
   "Tristan Labouteley": { x: 0.29, y: 0.065, cote: 0.4 },
   "James Hook": { x: 0.07, y: 0.04, cote: 0.55 },
   "Jean-Pierre Pérez": { x: 0.3, y: 0.074, cote: 0.4 },
+  // Cinq portraits de 2025-2026, relevés sur la même grille au dixième le
+  // 22 septembre 2026. Ce sont tous des photos de match ou d'entraînement,
+  // où le joueur est pris en pied : la bande supérieure laisse le visage
+  // dans un coin, et deux fois sur cinq c'est un morceau de tribune que
+  // l'attention retenait. Brookes est le cas extrême — un plan large où la
+  // tête ne fait qu'un cinquième de la largeur ; le carré est à la limite
+  // de ce que 400 pixels demandent, et c'est le mieux que l'image donne.
+  //
+  // ET IL A FALLU TROIS ESSAIS, TOUJOURS LA MÊME ERREUR : un carré posé sur
+  // la tête telle qu'on la lit à la grille coupe le menton. Le front et les
+  // yeux sautent aux yeux, et l'on sous-estime la mâchoire, la barbe et le
+  // cou — qui, sur ces quatre-là, descendent d'un bon quart de plus que
+  // l'œil ne le croit. Le geste juste est de cadrer **large, puis de
+  // resserrer** : un carré trop grand se voit et se corrige, un menton
+  // coupé passe pour un cadrage serré. Ces quatre lignes sont le troisième
+  // essai, et chacun a été regardé — c'est la planche contact qui a arrêté
+  // les deux premiers, aucun journal d'exécution ne les signalait.
+  "Duncan Paia'aua": { x: 0.206, y: 0.048, cote: 0.42 },
+  "Jordan Petaia": { x: 0.215, y: 0.021, cote: 0.48 },
+  "Hugo Reus": { x: 0.078, y: 0.228, cote: 0.52 },
+  "Gela Aprasidze": { x: 0.23, y: 0.086, cote: 0.52 },
+  "Kieran Brookes": { x: 0.345, y: 0.05, cote: 0.3 },
 };
 
 /**
@@ -314,6 +426,7 @@ interface Trouvaille {
 async function portraitDeLArticle(
   titre: string,
   dispense = false,
+  petitAdmis = false,
 ): Promise<Trouvaille | string> {
   const page = (
     await api("https://fr.wikipedia.org/w/api.php", {
@@ -349,7 +462,9 @@ async function portraitDeLArticle(
   const meta = info.extmetadata ?? {};
   const licence = texte(meta.LicenseShortName) || "inconnue";
   if (!licenceLibre(licence)) return `licence refusée : ${licence}`;
-  if (info.width < 300) return `image trop petite (${info.width}×${info.height}), sans doute pas un portrait`;
+  if (!petitAdmis && info.width < 300) {
+    return `image trop petite (${info.width}×${info.height}), sans doute pas un portrait`;
+  }
 
   return {
     fichier: page.pageimage,
@@ -588,7 +703,11 @@ async function main() {
       continue;
     }
 
-    const trouve = await portraitDeLArticle(titre, ARTICLES_HORS_PERPIGNAN.has(nom));
+    const trouve = await portraitDeLArticle(
+      titre,
+      ARTICLES_HORS_PERPIGNAN.has(nom),
+      PORTRAITS_PETITS.has(nom),
+    );
     if (typeof trouve === "string") {
       refuses.push(`${nom} — ${trouve}`);
       continue;
