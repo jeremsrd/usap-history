@@ -5,6 +5,7 @@ import { NAV_LINKS_MAIN, NAV_LINKS_MORE } from "@/lib/constants";
 import { dictionnaire } from "@/i18n/dictionnaire";
 import type { Langue } from "@/i18n/langues";
 import { unstable_cache } from "next/cache";
+import { TAG_CONTENU } from "@/lib/cache";
 
 /**
  * Le pied de page, refait le 10 septembre 2026 à la demande de Jérémy — le
@@ -75,7 +76,9 @@ const couverture = unstable_cache(
     };
   },
   ["pied-couverture"],
-  { revalidate: 3600 },
+  // Sept jours et le tag de purge : cf. `HISTORIQUE` et `TAG_CONTENU`
+  // de `@/lib/cache`. Un cache plus court que la page la plafonne.
+  { revalidate: 604800, tags: [TAG_CONTENU] },
 );
 
 /** Le titre d'une colonne : la voix condensée des pages, sous son filet. */

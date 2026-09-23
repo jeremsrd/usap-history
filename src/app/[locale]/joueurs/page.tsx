@@ -9,6 +9,7 @@ import type { Position } from "@prisma/client";
 import { liensAlternatifs } from "@/lib/seo";
 import Signalement from "@/components/Signalement";
 import { unstable_cache } from "next/cache";
+import { TAG_CONTENU } from "@/lib/cache";
 
 /**
  * **La page lit `searchParams`, ce qui la rend dynamique quoi qu'on déclare** :
@@ -113,7 +114,9 @@ const joueursFiltres = unstable_cache(
       },
     }),
   ["joueurs-liste"],
-  { revalidate: 3600 },
+  // Sept jours et le tag de purge : cf. `HISTORIQUE` et `TAG_CONTENU`
+  // de `@/lib/cache`. Un cache plus court que la page la plafonne.
+  { revalidate: 604800, tags: [TAG_CONTENU] },
 );
 
 /**
@@ -148,7 +151,9 @@ const comptesEtBilans = unstable_cache(
     return { totalCount, activeCount, bilans };
   },
   ["joueurs-comptes-bilans"],
-  { revalidate: 3600 },
+  // Sept jours et le tag de purge : cf. `HISTORIQUE` et `TAG_CONTENU`
+  // de `@/lib/cache`. Un cache plus court que la page la plafonne.
+  { revalidate: 604800, tags: [TAG_CONTENU] },
 );
 
 export default async function JoueursPage({

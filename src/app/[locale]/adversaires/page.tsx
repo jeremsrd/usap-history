@@ -9,6 +9,7 @@ import type { Prisma } from "@prisma/client";
 import { liensAlternatifs } from "@/lib/seo";
 import Signalement from "@/components/Signalement";
 import { unstable_cache } from "next/cache";
+import { TAG_CONTENU } from "@/lib/cache";
 
 /**
  * La liste des clubs adverses, refaite le 6 septembre 2026 dans l'identité
@@ -62,7 +63,9 @@ const clubsFiltres = unstable_cache(
     });
   },
   ["adversaires-liste"],
-  { revalidate: 3600 },
+  // Sept jours et le tag de purge : cf. `HISTORIQUE` et `TAG_CONTENU`
+  // de `@/lib/cache`. Un cache plus court que la page la plafonne.
+  { revalidate: 604800, tags: [TAG_CONTENU] },
 );
 
 /** Les trois comptes des filtres et le tête-à-tête de chaque club, sur les rencontres jouées. */
@@ -98,7 +101,9 @@ const comptesEtBilans = unstable_cache(
     return { total, rencontres, disparus, bilans };
   },
   ["adversaires-comptes-bilans"],
-  { revalidate: 3600 },
+  // Sept jours et le tag de purge : cf. `HISTORIQUE` et `TAG_CONTENU`
+  // de `@/lib/cache`. Un cache plus court que la page la plafonne.
+  { revalidate: 604800, tags: [TAG_CONTENU] },
 );
 
 type Props = {

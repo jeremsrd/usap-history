@@ -200,7 +200,8 @@ npx tsx scripts/audit-opponent-lineups.ts AAAA-AAAA                # 0 anomalie 
 npx tsx scripts/detect-duplicate-players.ts                        # 0 / 0 / 0 attendu
 npx tsx scripts/set-video.ts --match=AAAA-MM-JJ --url="…" --dry    # le résumé de « TOP 14 - Officiel »,
 npx tsx scripts/set-video.ts --match=AAAA-MM-JJ --url="…"          #   quand la chaîne l'a publié
-```
+npx tsx scripts/purger-cache.ts                                    # SANS QUOI RIEN NE PARAÎT AVANT
+```                                                                #   sept jours — cf. « Le cache des pages »
 
 **`set-score.ts` écrit aussi les compteurs de réalisations** — `triesUsap`,
 `conversionsUsap` et les leurs, des deux camps —, lus sur les faits de la
@@ -1018,6 +1019,7 @@ doublons.
 
 | Script | Rôle |
 |---|---|
+| `purger-cache.ts` | **purge le cache des pages en production**, dernier temps de la marche du lendemain de match. Les fiches sont en cache sept jours depuis le 23 septembre 2026 — une revalidation horaire sur les 2 948 pages du site épuisait le quota Vercel en moins de trois jours : sans cette purge, une fiche saisie resterait périmée une semaine. Appelle `/api/revalidate`, qui purge 22 routes et le tag `contenu` ; `REVALIDATE_SECRET` attendu dans `.env`. `--dry`, `--url=` |
 | `sauvegarde-base.sh` | **la copie locale de la base** : un `pg_dump` du schéma `public` — les 25 tables de Prisma, 1,7 Mo — dans `~/Sauvegardes/usap-history/`, daté du jour, restaurable table par table avec `pg_restore`. La seule pièce du site qui ne soit pas sur l'ordinateur ; Supabase fait la sienne chaque jour depuis le plan Pro, mais chez lui. **macOS le lance chaque lundi à 10 h** par le LaunchAgent `scripts/launchd/cat.usaphistoria.sauvegarde.plist` — installé le 20 septembre 2026, chargement et retrait dans son en-tête —, journal dans `journal.log`, douze sauvegardes gardées ; cinq essais à deux minutes si le pooler est plein. Demande `brew install libpq`, sur Mac Intel en `/usr/local/opt/libpq/bin` |
 | `etat-couverture.ts` | lecture seule : l'état de la couverture saison par saison, ce que les tableaux de CLAUDE.md faisaient à la main |
 | `fix-bonus-points.ts` | recalcule tous les bonus et les totaux de saison, refuse d'écrire si un classement officiel connu diverge |
@@ -5422,10 +5424,72 @@ compter les matchs de chacun.
   les deux langues.
 
 **Ce que ça change à la marche du lendemain de match** : les scripts écrivent
-dans la base, pas dans le cache. L'accueil rattrape dans les dix minutes, les
-fiches et les listes dans l'heure. Il n'y a pas de purge à la demande — si
-elle devient nécessaire, ce sera une route qui appelle `revalidatePath`, pas
-un retour à `force-dynamic`.
+dans la base, pas dans le cache. **Le dernier temps de la marche est désormais
+`purger-cache.ts`** — cf. ci-dessous.
+
+### L'heure était trop courte, et le quota a sauté
+
+**Posé le 20 septembre, dépassé le 23.** `ISR Writes` à 213 000 pour 200 000,
+`Fluid Active CPU` à 4 h 22 pour 4 h. Les deux compteurs crèvent ensemble
+parce qu'ils mesurent la même chose sous deux angles : chaque régénération est
+une écriture **et** du temps de calcul.
+
+La cause n'est pas le cache, c'est son **uniformité**. `revalidate = 3600`
+traitait une finale de 1914 comme l'accueil, sur un site dont le contenu est
+clos depuis des années. L'arithmétique est sans appel :
+
+```
+2 948 pages (1 474 fiches × 2 langues) × 24 h = 70 752 écritures par jour
+quota mensuel Vercel Hobby                    =    200 000
+```
+
+— le quota du mois en moins de trois jours. Le déclencheur a été le
+**sitemap**, posé le 14 septembre : il a ouvert 2 948 adresses aux moteurs,
+quand ils n'en connaissaient qu'une poignée.
+
+**Les fiches et les listes sont donc à sept jours**, l'accueil reste à dix
+minutes — il tire un joueur au hasard et affiche « ce jour dans l'histoire ».
+`src/lib/cache.ts` porte les durées et la démonstration.
+
+**MAIS LA VALEUR DES PAGES NE SUFFISAIT PAS, ET LE CORRECTIF A FAILLI ÊTRE
+LIVRÉ INOPÉRANT.** `unstable_cache` a sa propre durée, et **la plus courte
+l'emporte** : le pied de page comptait les rencontres dans un cache d'une
+heure, et il paraît sur les trente-six pages. Le tableau du build affichait
+donc « 1h » quand les fichiers disaient sept jours. Les huit
+`unstable_cache` du site sont passés à la même durée. **Relire le tableau du
+build après avoir changé un `revalidate`** : c'est lui qui dit la durée
+réelle, pas le fichier.
+
+**Et Next.js exige un littéral pour `revalidate`** — il refuse une constante
+importée, « Unknown identifier "HISTORIQUE" at "revalidate" », dix-huit fois
+au build. Les pages portent donc la valeur en dur avec un commentaire qui
+renvoie à `lib/cache.ts`. C'est l'inverse de ce que ce projet fait
+d'ordinaire — fournir la fonction plutôt que demander de faire attention — et
+ce n'est pas un choix : le cadre l'interdit.
+
+### La purge, et pourquoi elle n'est plus facultative
+
+À sept jours, une fiche saisie le lendemain d'un match resterait périmée une
+semaine. `/api/revalidate` et `scripts/purger-cache.ts` existent donc pour ça,
+et **la purge est le dernier temps de la marche du lendemain de match**.
+
+- La route purge les 22 routes qu'une saisie peut toucher — la fiche, mais
+  aussi les classements, les records, la saison, l'adversaire, le stade,
+  l'arbitre et l'accueil —, **dans leur forme de route**, segments
+  dynamiques compris, ce qui couvre les deux langues d'un coup.
+- **Elle purge aussi le tag `contenu`**, sans quoi la moitié du travail
+  resterait faite : les pages qui lisent `searchParams` sont dynamiques, et
+  c'est leur `unstable_cache` qui porte la donnée — un cache sans tag survit
+  à la purge de la page qui l'emploie.
+- **Le secret vit dans `REVALIDATE_SECRET`**, côté Vercel et dans le `.env`
+  local, jamais dans le dépôt. Sans lui la route refuse tout : une purge
+  ouverte serait un moyen commode de faire recalculer le site entier à
+  volonté, c'est-à-dire le gaspillage qu'on vient de corriger. Sans secret
+  configuré elle rend 503, avec un mauvais 401, sur un corps invalide 400.
+
+**Oublier la purge est le seul moyen de se tromper avec ce réglage**, et c'est
+le plus vicieux : le quota se voit tout de suite, une fiche périmée ne se voit
+pas.
 
 **Et les deux images de partage sont en cache un jour**, depuis le même
 jour — c'était le premier consommateur de CPU restant : sans `revalidate`,

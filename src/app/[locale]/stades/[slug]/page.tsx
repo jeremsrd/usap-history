@@ -11,6 +11,7 @@ import { dictionnaire } from "@/i18n/dictionnaire";
 import { cheminLocalise, type Langue } from "@/i18n/langues";
 import type { Metadata } from "next";
 import { liensAlternatifs } from "@/lib/seo";
+import { TAG_CONTENU } from "@/lib/cache";
 
 /**
  * La fiche d'un stade, refaite le 6 septembre 2026 dans l'identité posée
@@ -72,7 +73,9 @@ const stade = unstable_cache(
       },
     }),
   ["stade-fiche"],
-  { revalidate: 3600 },
+  // Sept jours et le tag de purge : cf. `HISTORIQUE` et `TAG_CONTENU`
+  // de `@/lib/cache`. Un cache plus court que la page la plafonne.
+  { revalidate: 604800, tags: [TAG_CONTENU] },
 );
 
 type Props = {
