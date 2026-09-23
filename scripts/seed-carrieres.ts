@@ -72,10 +72,63 @@
  * réécriture, reconnues à leur `notes`.
  *
  * Usage : npx tsx scripts/seed-carrieres.ts [--dry] [--joueur="Prénom Nom"]
+ *
+ * `--joueur` restreint la lecture des feuilles **et** l'effacement des lignes
+ * dérivées. Les deux, et c'est le point : tant qu'il ne portait que sur la
+ * lecture, il vidait la table entière pour réécrire un seul joueur.
  */
-import { PrismaClient, Position } from "@prisma/client";
+import { PrismaClient, Position, Prisma } from "@prisma/client";
 
 const prisma = new PrismaClient();
+
+const CONNEXION_PERDUE = new Set(["P1001", "P1002", "P1008", "P1017", "P2024"]);
+
+/** Cette erreur dit-elle « la connexion a lâché » ? Le code à afficher, ou `null`. */
+function connexionPerdue(erreur: unknown): string | null {
+  // Serveur injoignable : Prisma lève une erreur d'initialisation, qui ne
+  // porte pas de `code` — on la reconnaît au type, seul moyen sûr.
+  if (erreur instanceof Prisma.PrismaClientInitializationError) {
+    return erreur.errorCode ?? "serveur injoignable";
+  }
+  const code = (erreur as { code?: unknown }).code;
+  return typeof code === "string" && CONNEXION_PERDUE.has(code) ? code : null;
+}
+
+/**
+ * Rejoue une écriture que le serveur a fait échouer en fermant la connexion.
+ *
+ * **CE SCRIPT ÉCRIT SIX MILLE LIGNES UNE PAR UNE**, et il y met une bonne
+ * demi-heure : la base est distante, chaque `create` est un aller-retour, et
+ * la connexion finit par lâcher. Le 22 septembre 2026 elle a lâché à la
+ * 2 344ᵉ — `P1017` —, laissant la table **à moitié reconstruite**, ce qui est
+ * pire que vide : les lignes écrites ont l'air justes, et rien ne dit que les
+ * trois mille sept cents suivantes manquent.
+ *
+ * C'est le défaut qu'`audit-opponent-lineups.ts` a connu le 1er septembre
+ * 2026, et le remède est le sien, recopié : Prisma rouvre de lui-même à la
+ * requête suivante, il suffit donc de rejouer après une attente croissante.
+ * **La reprise est annoncée par une ligne `↻`** — une connexion qui lâche à
+ * répétition dit quelque chose du réseau, un script qui s'en remet en
+ * silence le cacherait.
+ */
+async function avecReconnexion<T>(quoi: string, requete: () => Promise<T>): Promise<T> {
+  const TENTATIVES = 4;
+  for (let essai = 1; ; essai++) {
+    try {
+      return await requete();
+    } catch (erreur) {
+      const code = connexionPerdue(erreur);
+      if (code === null || essai >= TENTATIVES) throw erreur;
+      const attente = 1000 * 2 ** (essai - 1);
+      console.log(
+        `  ↻ connexion perdue (${code}) sur ${quoi} — reprise ${essai}/${TENTATIVES - 1} ` +
+          `dans ${attente / 1000}s`,
+      );
+      await prisma.$disconnect().catch(() => undefined);
+      await new Promise((r) => setTimeout(r, attente));
+    }
+  }
+}
 
 const DRY_RUN = process.argv.includes("--dry");
 const JOUEUR = process.argv.find((a) => a.startsWith("--joueur="))?.slice("--joueur=".length);
@@ -212,6 +265,8 @@ async function main() {
     });
   }
 
+  /** Les carrières à poser, accumulées puis écrites par lots. */
+  const aEcrire: Prisma.CareerClubCreateManyInput[] = [];
   let ecrites = 0;
   let stints = 0;
   let ecarteesBorne = 0;
@@ -224,20 +279,45 @@ async function main() {
     // les carrières d'abord laisserait des passages orphelins, pointant une
     // ligne disparue. Une relance en a laissé trois cent douze avant que ce
     // ne soit corrigé.
+    // **ET L'EFFACEMENT SUIT `--joueur`, SANS QUOI IL VIDE LA TABLE.** Le
+    // filtre ne portait que sur la **lecture** des feuilles : un
+    // `--joueur="Sacha Lotrian"` effaçait les 4 931 lignes dérivées de toute
+    // la base et n'en réécrivait que deux. Le script annonçait bien « 4931
+    // carrière(s) … effacé(s) » puis « 2 ligne(s) de carrière pour 1
+    // joueur(s) », et les deux nombres côte à côte disent la perte — mais
+    // on lit le second, qui est celui qu'on attendait. Arrivé le
+    // 22 septembre 2026 ; les lignes se reconstruisent d'une relance sans
+    // argument, puisqu'elles sont déduites des feuilles, et c'est la seule
+    // raison pour laquelle ce n'était pas grave.
+    //
+    // La leçon vaut au-delà de ce script : **un script idempotent qui
+    // efface avant d'écrire doit restreindre son effacement exactement
+    // comme son écriture.** Un filtre posé sur la moitié du cycle ne réduit
+    // pas le périmètre, il le déséquilibre.
+    const vises = JOUEUR ? { playerId: { in: [...parJoueur.keys()] } } : {};
     const derivees = await prisma.careerClub.findMany({
-      where: { notes: PROVENANCE },
+      where: { notes: PROVENANCE, ...vises },
       select: { id: true },
     });
-    const orphelins = await prisma.playerStint.deleteMany({
+    const orphelins = await avecReconnexion("l'effacement des passages", () =>
+      prisma.playerStint.deleteMany({
       where: {
         OR: [
           { careerClubId: { in: derivees.map((c) => c.id) } },
-          // Les orphelins d'avant la correction : leur lien ne mène nulle part.
-          { careerClubId: { notIn: derivees.map((c) => c.id) }, arrivalType: null },
+          // Les orphelins d'avant la correction : leur lien ne mène nulle
+          // part. Ce ménage-là est global et ne se fait donc que sur un
+          // passage complet — sur un seul joueur, il emporterait les
+          // passages des autres.
+          ...(JOUEUR
+            ? []
+            : [{ careerClubId: { notIn: derivees.map((c) => c.id) }, arrivalType: null }]),
         ],
       },
-    });
-    const efface = await prisma.careerClub.deleteMany({ where: { notes: PROVENANCE } });
+      }),
+    );
+    const efface = await avecReconnexion("l'effacement des carrières", () =>
+      prisma.careerClub.deleteMany({ where: { notes: PROVENANCE, ...vises } }),
+    );
     if (efface.count > 0 || orphelins.count > 0) {
       console.log(
         `  ${efface.count} carrière(s) et ${orphelins.count} passage(s) dérivé(s) effacé(s)\n`,
@@ -286,45 +366,80 @@ async function main() {
       const poste =
         [...passage.postes].sort((a, b) => b[1] - a[1])[0]?.[0] ?? null;
 
-      if (DRY_RUN) {
-        ecrites++;
-        if (isUsap) stints++;
-        continue;
-      }
-
-      const cree = await prisma.careerClub.create({
-        data: {
-          playerId,
-          clubName: isUsap ? "USA Perpignan" : (opponent?.name ?? "?"),
-          opponentId: opponent?.id ?? null,
-          isUsap,
-          countryId: isUsap ? france.id : (opponent?.countryId ?? null),
-          city: isUsap ? "Perpignan" : (opponent?.city ?? null),
-          startYear: passage.debut.startYear,
-          endYear: encore ? null : passage.fin.endYear,
-          startDate: passage.debut.date,
-          endDate: encore ? null : passage.fin.date,
-          displayOrder: ordre,
-          // Cf. règle 1 : ces compteurs ne disent vrai que du côté catalan.
-          appearances: isUsap ? passage.matchs : null,
-          tries: isUsap ? passage.essais : null,
-          position: poste,
-          notes: PROVENANCE,
-        },
+      aEcrire.push({
+        playerId,
+        clubName: isUsap ? "USA Perpignan" : (opponent?.name ?? "?"),
+        opponentId: opponent?.id ?? null,
+        isUsap,
+        countryId: isUsap ? france.id : (opponent?.countryId ?? null),
+        city: isUsap ? "Perpignan" : (opponent?.city ?? null),
+        startYear: passage.debut.startYear,
+        endYear: encore ? null : passage.fin.endYear,
+        startDate: passage.debut.date,
+        endDate: encore ? null : passage.fin.date,
+        displayOrder: ordre,
+        // Cf. règle 1 : ces compteurs ne disent vrai que du côté catalan.
+        appearances: isUsap ? passage.matchs : null,
+        tries: isUsap ? passage.essais : null,
+        position: poste,
+        notes: PROVENANCE,
       });
       ecrites++;
+      if (isUsap) stints++;
+    }
+  }
 
-      if (isUsap) {
-        await prisma.playerStint.create({
-          data: {
-            playerId,
-            arrivalDate: passage.debut.date,
-            departureDate: encore ? null : passage.fin.date,
-            careerClubId: cree.id,
-          },
-        });
-        stints++;
-      }
+  if (!DRY_RUN) {
+    // **LES LIGNES PARTENT PAR LOTS, ET C'EST LA LEÇON DU 22 SEPTEMBRE 2026.**
+    // Elles s'écrivaient une par une : six mille allers-retours sur une base
+    // distante, une bonne demi-heure d'exécution, et deux échecs le même
+    // jour — la connexion coupée par Supabase à la 2 344ᵉ ligne, puis la
+    // mise en veille de l'ordinateur pendant la nuit. Chaque fois la table
+    // restait **à moitié reconstruite**, ce qui ne se voit pas : les lignes
+    // écrites sont justes, et rien ne dit que les autres manquent.
+    //
+    // `createMany` ramène les 6 082 lignes à sept requêtes et l'exécution à
+    // quelques secondes. Ce n'est pas qu'une affaire de vitesse : **une
+    // fenêtre de panne d'une demi-heure disparaît**, et avec elle la
+    // question de savoir ce qu'on retrouvera si elle se referme au milieu.
+    // Un script qui efface avant d'écrire doit réécrire vite.
+    const LOT = 1000;
+    for (let i = 0; i < aEcrire.length; i += LOT) {
+      const lot = aEcrire.slice(i, i + LOT);
+      await avecReconnexion(`les carrières ${i + 1}–${i + lot.length}`, () =>
+        prisma.careerClub.createMany({ data: lot }),
+      );
+    }
+
+    // **Les passages se déduisent des carrières écrites, par relecture.**
+    // `createMany` ne rend pas les identifiants, et `PlayerStint` a besoin
+    // du `careerClubId` ; on relit donc les carrières catalanes qu'on vient
+    // de poser. Leurs `startDate` et `endDate` sont exactement l'arrivée et
+    // le départ du passage — c'est la même donnée, pas une approximation.
+    const catalanes = await avecReconnexion("la relecture des carrières USAP", () =>
+      prisma.careerClub.findMany({
+        where: { notes: PROVENANCE, isUsap: true },
+        select: { id: true, playerId: true, startDate: true, endDate: true },
+      }),
+    );
+    // Le compte doit retomber sur ce que la boucle a prévu, sinon une ligne
+    // s'est perdue en route et il vaut mieux le dire que l'ignorer.
+    if (catalanes.length !== stints) {
+      throw new Error(
+        `${catalanes.length} carrière(s) catalane(s) relue(s) pour ${stints} attendue(s) — ` +
+          "l'écriture est incomplète, relancer",
+      );
+    }
+    for (let i = 0; i < catalanes.length; i += LOT) {
+      const lot = catalanes.slice(i, i + LOT).map((c) => ({
+        playerId: c.playerId,
+        arrivalDate: c.startDate,
+        departureDate: c.endDate,
+        careerClubId: c.id,
+      }));
+      await avecReconnexion(`les passages ${i + 1}–${i + lot.length}`, () =>
+        prisma.playerStint.createMany({ data: lot }),
+      );
     }
   }
 

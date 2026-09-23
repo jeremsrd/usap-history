@@ -1037,7 +1037,7 @@ doublons.
 | `seed-lineup.ts` | crée les **deux compositions** d'un match depuis la LNR quand il n'en a aucune — dossards, titulaires, capitaine, poste déduit du numéro. Premier temps de la reprise d'une rencontre ancienne ; `--dry`, `--force` pour réécrire |
 | `seed-fiches-joueurs.ts` | complète les fiches joueur depuis **Wikipédia** : date, ville et pays de naissance, taille, surnom, et une **biographie composée** — jamais recopiée, CC BY-SA exigeant l'attribution. **L'identité tient à la catégorie, pas au titre** : l'article doit porter une catégorie citant Perpignan, faute de quoi il est refusé, et les pages d'homonymie sortent d'elles-mêmes. Le poste de l'infobox ne sert qu'à la phrase, **jamais à `Player.position`** — celui-là se déduit du numéro de maillot. `--dry`, `--joueur=`, `--introuvables` |
 | `seed-selections-distinctions.ts` | écrit `PlayerInternational` et `PlayerAward` depuis **Wikipédia**, seule source : 51 sélections et 7 distinctions. Tables figées dans le script, appariées au **nom exact** — `memeJoueur` est taillé pour les vingt-trois d'une feuille, pas pour 3 900 fiches, et rapprochait « Chris Cusiter » de Christophe Manas. Crée les pays et sélections manquants. 43 des 92 internationaux listés n'ont pas de fiche, la base commençant en 2004-2005 ; les Lions britanniques n'entrent pas, `NationalTeam` exigeant un pays. `--dry` |
-| `seed-carrieres.ts` | déduit `CareerClub` et `PlayerStint` des feuilles de match : un passage par club, l'USAP comprise. **Trois règles arbitrées**, toutes dans son en-tête : les compteurs de matchs et d'essais ne sont écrits que du côté catalan, où ils disent vrai ; un joueur dont un passage commence en 2004-2005 n'a **aucune** carrière, la base ne sachant pas depuis quand il était là ; et un second passage ne s'ouvre qu'après trois **occasions manquées** — les saisons où ce club-là a bien rencontré l'USAP —, faute de quoi les quatre saisons de Pro D2 feraient déménager tout le Top 14. `--dry`, `--joueur=` |
+| `seed-carrieres.ts` | déduit `CareerClub` et `PlayerStint` des feuilles de match : un passage par club, l'USAP comprise. **Trois règles arbitrées**, toutes dans son en-tête : les compteurs de matchs et d'essais ne sont écrits que du côté catalan, où ils disent vrai ; un joueur dont un passage commence en 2004-2005 n'a **aucune** carrière, la base ne sachant pas depuis quand il était là ; et un second passage ne s'ouvre qu'après trois **occasions manquées** — les saisons où ce club-là a bien rencontré l'USAP —, faute de quoi les quatre saisons de Pro D2 feraient déménager tout le Top 14. `--dry`, `--joueur=` — **qui restreint la lecture *et* l'effacement** : tant qu'il ne portait que sur la lecture, il vidait les 4 931 lignes dérivées de toute la base pour en réécrire deux (corrigé le 22 septembre 2026, et les lignes se reconstruisent d'une relance sans argument) |
 | `seed-cloture-saisons.ts` | **la clôture éditoriale** : entraîneur, président et bilan de chaque saison, de 2004-2005 à 2024-2025. Écrit `Season.coachId`, `presidentId`, `notes` et le détail `SeasonCoach` — plusieurs entraîneurs par saison, avec rôle et dates. Source entière : Wikipédia, seule à publier le staff d'un club. `--dry`, `--saison=` ; n'écrase jamais un bilan existant |
 | `seed-season-2004-2005.ts` | crée les 30 matchs de la **plus ancienne saison en base**, la dernière du Top 16 et la dernière que la LNR archive. Modèle pour une saison dont la source ne publie **aucun fait** : compteurs à `null` partout, bonus défensif calculé sur le seul score, bonus offensif introuvable — et **agrégats délibérément non écrits**. Porte le second `SCORES_CORRIGES` du projet, démontré deux fois |
 | `seed-season-2005-2006.ts` | crée les 27 matchs de la saison suivante — 26 journées et une demi-finale, la première du Top 14. Modèle pour une saison dont la LNR ne publie ni changement ni composition fiable, et dont cinq journées sont hors calendrier |
@@ -4746,6 +4746,30 @@ d'un siècle, c'est la règle qu'on connaîtra le moins bien.
   autre contrôle ne l'aurait vu : les scores retombaient, les minutes aussi,
   les points par joueur également.
 
+  **ET LE PIÈGE DU FRÈRE SE REFERME AUSSI DANS LE CAMP CATALAN**, où aucun
+  audit ne passe. Quatre feuilles de 2025-2026 donnaient **Sacha Lotrian**
+  sous le maillot de l'USAP — n°16 contre Benetton et Newcastle, n°16 à Pau,
+  n°2 au Stade Français — alors qu'il est à **Clermont depuis 2024**. Ce sont
+  les feuilles de son frère **Mathys**, talonneur du club. Les quatre sources
+  officielles le disent sans exception, et l'EPCR par le **dossard**, donc
+  sans appariement de noms : identifiant Opta 251178, « Mathys Lotrian ».
+  Corrigé par `reassign-match-player.ts` sur les quatre dossards, le
+  22 septembre 2026.
+
+  **Deux signaux le trahissaient, et aucun contrôle ne les lit.** Le premier
+  est le **poste** : ces quatre lignes portent `TALONNEUR` quand la fiche de
+  Sacha est `PILIER_GAUCHE` — un poste qui détonne, comme le pilier aligné
+  en centre de Carlu Johann Sadie. Le second est plus fort encore : le
+  20 décembre 2025, Sacha figure **dans le camp adverse** de Clermont, n°17.
+  Un homme ne joue pas des deux côtés dans la même saison, et la base le
+  disait en toutes lettres à qui regardait les deux listes ensemble.
+
+  **`audit-opponent-lineups.ts` ne pouvait rien voir : il n'examine que
+  l'adversaire.** C'est la même lacune qui avait laissé quatre saisons sans
+  `--usap`, et elle vaut d'être retenue — **le camp catalan n'a pas
+  d'audit**, et c'est de là que viennent les erreurs qui durent. Celle-ci a
+  été relevée par Jérémy, en lisant une liste de joueurs sans portrait.
+
   **Et un doublon peut en cacher un troisième homme.** « Carlu Johann Sadie »
   portait quatre feuilles : trois fois le pilier droit de l'UBB, que la LNR
   écrit ainsi en toutes lettres, et une fois le n°13 d'Agen du 2 septembre
@@ -4998,6 +5022,39 @@ croissante et **annonce la reprise** par une ligne `↻` — une connexion qui
 lâche à répétition dit quelque chose du réseau, un script qui s'en remet en
 silence le cacherait. Tout script long qui interroge la base entre deux
 appels réseau est exposé de la même façon ; le remède est là, à recopier.
+
+**ET IL N'Y A PAS BESOIN D'APPELS RÉSEAU POUR Y AVOIR DROIT.** Ce fichier
+disait « entre deux appels réseau », et c'était trop étroit :
+`seed-carrieres.ts` ne sort pas de la base, il écrivait seulement **six mille
+lignes une par une** — chaque `create` un aller-retour, une bonne demi-heure
+d'exécution. Ce qui expose un script, c'est sa **durée**, pas ce qu'il fait
+pendant, et le 22 septembre 2026 il a échoué deux fois dans la journée : la
+connexion coupée à la 2 344ᵉ ligne, puis l'ordinateur mis en veille pour la
+nuit. Deux causes sans rapport, une seule vraie raison — la fenêtre était
+ouverte trente-cinq minutes.
+
+**Et l'état laissé derrière est pire que vide** : la table à moitié
+reconstruite a l'air normale — les lignes écrites sont justes, aucun
+compteur ne manque —, et rien ne dit que les trois mille sept cents
+suivantes n'existent pas. Une table vidée se voit ; une table à moitié
+remplie se lit comme une table.
+
+**LE REMÈDE N'EST DONC PAS DE MIEUX ENCAISSER LA PANNE, C'EST DE FERMER LA
+FENÊTRE.** `avecReconnexion()` a été posé d'abord, et il ne servait à rien
+contre une veille : il rejoue une requête, il ne rejoue pas une demi-heure.
+L'écriture passe désormais par **`createMany` par lots de mille** — sept
+requêtes au lieu de six mille, **1 min 07 au lieu de trente-cinq minutes**,
+et la fenêtre disparaît avec le temps d'exécution. Les passages, qui ont
+besoin des identifiants que `createMany` ne rend pas, se déduisent d'une
+**relecture** des carrières catalanes, dont le compte est confronté à ce que
+la boucle avait prévu : un écart lève plutôt que de laisser une table
+incomplète passer pour complète.
+
+La règle, pour tout script qui efface avant d'écrire : **il doit réécrire
+vite**. Une reconstruction qui dure est une reconstruction qu'on retrouvera
+un jour à moitié faite. Et après un script long, **compter ce qu'il devait
+écrire** plutôt que lire son code de sortie — celui de la première tentative
+valait zéro, le `tail` du pipe ayant avalé le plantage.
 
 ⚠️ **LA LNR PLAFONNE LE DÉBIT, et `lirePage` attend entre ses tentatives.**
 Elle réessayait trois fois **sans aucune attente** — trois requêtes de plus

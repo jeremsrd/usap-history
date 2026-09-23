@@ -221,12 +221,19 @@ const SANS_PORTRAIT = [
   // l'image ne montre pas le visage du joueur. Écartée délibérément, une
   // absence valant mieux qu'une photo qui n'illustre personne.
   "Lifeimi Mafi",
-  // Sept partants de l'effectif 2025-2026, relevés le 22 septembre 2026.
-  // Cinq ont bien un article francophone, qui les dit à Perpignan — Akato
-  // Fakatika, Gabin Kretchmann, Sacha Lotrian, Nemo Roelofse, Tavite
-  // Veredamu — mais aucun n'est illustré ; Thomas Serezat et Simon Sol
-  // n'ont pas d'article du tout. La LNR, elle, ne garde pas le portrait
-  // d'un joueur parti. Ils reviendront si Commons les illustre un jour.
+  // Sept anciens relevés le 22 septembre 2026, six partis à l'issue de
+  // 2025-2026. Cinq ont bien un article francophone, qui les dit à
+  // Perpignan — Akato Fakatika, Gabin Kretchmann, Sacha Lotrian, Nemo
+  // Roelofse, Tavite Veredamu — mais aucun n'est illustré ; Thomas Serezat
+  // et Simon Sol n'ont pas d'article du tout. La LNR, elle, ne garde pas le
+  // portrait d'un joueur parti. Ils reviendront si Commons les illustre.
+  //
+  // **Sacha Lotrian n'est pas de 2025-2026**, et c'est la relecture de
+  // Jérémy qui l'a dit : il est à Clermont depuis 2024, et la base lui
+  // attribuait quatre feuilles catalanes qui sont celles de son frère
+  // **Mathys**, talonneur — le piège du frère, cf. CLAUDE.md. Il reste
+  // ici parce qu'il a bien porté le maillot de 2019 à 2024, 103 feuilles,
+  // et que rien ne l'illustre ; seule la saison changeait.
   //
   // Une recherche par nom sur Commons ne rend pour eux que les photos du
   // Zebre Parma-USAP de 2024-2025, où ils figurent parmi vingt autres :
