@@ -664,7 +664,21 @@ async function main() {
     for (const a of arbitrees) console.log(`  · ${a}`);
   }
   if (horsPerimetre.length > 0) {
-    console.log(`\n${horsPerimetre.length} match(s) hors périmètre LNR (coupes d'Europe).`);
+    // **NE PAS PRÉSUMER LA RAISON.** Ce message disait « (coupes d'Europe) »,
+    // ce qui était vrai tant que la base commençait en 2004-2005 ; les deux
+    // finales d'avant-guerre venues de Gallica s'y rangent désormais, et la
+    // LNR ne les couvre pas pour une tout autre raison — elle n'existait
+    // pas. La compétition est donc affichée, pas devinée.
+    const parCompetition = new Map<string, number>();
+    for (const h of horsPerimetre) {
+      const nom = h.slice(h.lastIndexOf("(") + 1, h.lastIndexOf(")"));
+      parCompetition.set(nom, (parCompetition.get(nom) ?? 0) + 1);
+    }
+    const detail = [...parCompetition]
+      .sort((a, b) => b[1] - a[1])
+      .map(([nom, n]) => `${nom} ${n}`)
+      .join(", ");
+    console.log(`\n${horsPerimetre.length} match(s) hors périmètre LNR — ${detail}.`);
   }
 
   // Ce contrôle-là ne dépend d'aucune source : il tourne toujours, y compris
