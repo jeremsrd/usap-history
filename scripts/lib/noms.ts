@@ -171,6 +171,39 @@ export const VARIANTES_DAFFICHAGE: [base: string, feuille: string][] = [
   ["Ma'a Nonu", "Ma A Allan Nonu"],
   // Orthographe : la feuille perd le « h ».
   ["Sikhumbuzo Notshe", "Sikumbuzo Notshe"],
+  // LES TROIS PREMIÈRES DU CAMP CATALAN, sorties le 23 septembre 2026 par
+  // le premier passage de l'audit sur `--usap`. Chacune se répète sur
+  // *toutes* les feuilles de son homme — treize fois pour Ritchie,
+  // quatorze pour Ugena —, ce qui est la signature d'une variante
+  // d'écriture et non d'une erreur de saisie : une faute se fait une fois.
+  //
+  // Deux étaient déjà connues et assumées, CLAUDE.md les porte : « Mathieu
+  // Ugena » en base pour « Matthieu » sur les feuilles, et le prénom
+  // d'usage de Jamie Ritchie, que Wikipédia donne « James Thomas Ritchie ».
+  //
+  // UNE TROISIÈME N'ÉTAIT PAS UNE VARIANTE DU TOUT : « Jean-Pascal
+  // Baraque » était un **doublon** de « Jean-Pascal Barraqué », dix-huit
+  // feuilles, Biarritz puis Clermont puis l'USAP. Fusionné le 23 septembre
+  // 2026, et la ligne de variante n'a donc pas lieu d'être — la fiche
+  // conservée porte l'accent, que `normalize` retire avant de comparer.
+  //
+  // LE DÉTOUR A COÛTÉ UN DOUBLON, ET LA LEÇON EST DÉJÀ DANS CE FICHIER.
+  // La fiche fautive a d'abord été *renommée* « Barraque », sur la foi
+  // d'une recherche `lastName contains "araque"` qui n'avait rendu qu'une
+  // fiche — un `contains` SQL est littéral, et « Barraqué » ne contient pas
+  // « araque », l'accent final faisant un autre caractère. C'est
+  // exactement l'accident que ce fichier documente depuis le début :
+  // **chercher sur le nom normalisé, jamais sur une sous-chaîne brute**,
+  // et `detect-duplicate-players.ts` l'a sorti en CERTAIN dès le passage
+  // suivant.
+  //
+  // Le renommage était faux deux fois : il perdait aussi l'accent, alors
+  // que **la LNR ampute les accents** et que sa feuille écrivait
+  // « Barraque » pour cette seule raison. Avant de corriger une
+  // orthographe sur une feuille officielle, se demander laquelle de ses
+  // amputations connues on est en train de recopier.
+  ["Jamie Ritchie", "James Thomas Ritchie"],
+  ["Mathieu Ugena", "Matthieu Ugena"],
   // Apparues le 30 août 2026, quand l'audit a enfin vu les saisons de Pro D2.
   // La LNR écrit le même talonneur « Cyriel » à Dax en 2017-2018 et « Cyril »
   // à Vannes ensuite ; une seule fiche, un seul Blanchard par feuille.

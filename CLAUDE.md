@@ -1074,7 +1074,7 @@ doublons.
 | `seed-match-gallica.ts` | **une rencontre d'avant-guerre depuis *L'Auto*** — les finales de 1914, 1921, 1925 et 1938 sont dans `MATCHS`, **1914 et 1925 sont écrites**, relues sur l'image et validées par Jérémy (`RELECTURES`, `valide`) ; le script crée la rencontre, les deux XV sans numéro, les réalisations sous le barème de l'époque, la chronologie de 1914 à l'horloge, et une attestation sur chaque fait : retrouve le numéro du lendemain, imprime XV, capitaines, arbitre, score et mi-temps avec les écarts — une ligne qui ne compte pas ses hommes, un club à quatorze —, et confronte chaque nom à la base. Refuse d'écrire tant que la base ne sait pas porter la provenance d'une composition ni le barème de 1925. `--match=AAAA-MM-JJ --dry` ; les rencontres connues sont dans `MATCHS` |
 | `seed-cup-espn.ts` | **une campagne européenne d'avant 2020-2021, depuis ESPN** — rencontres, compositions des deux camps et réalisations par joueur, par `lib/espn.ts`. Rien ne s'écrit sans le classement de poule de Wikipédia, en dur par saison dans `CAMPAGNES`, et les réalisations d'un camp ne s'écrivent que si leur somme retombe sur son score. Minutes, minutes de carton, arbitre, affluence et chronologie restent à `null` : la source ne les donne pas. `<saison>`, `--dry`, `--match=` |
 | `seed-cup-sheet.ts` | **le pendant pour les coupes d'Europe**, depuis l'EPCR : réalisations, cartons et temps de jeu des **deux camps**, plus l'arbitre, l'affluence et la mi-temps. Sans argument il reprend les dix-huit matchs européens ; `--dry`, `--detail`, `--match=AAAA-MM-JJ` comme le précédent |
-| `audit-opponent-lineups.ts` | confronte les compositions adverses aux feuilles officielles LNR — les deux divisions, phases finales comprises ; lecture seule, à lancer sur une saison ou sur tout. **Zéro anomalie est l'état attendu** ; les variantes d'affichage arbitrées sont tues par sa table `VARIANTES_DAFFICHAGE`, comptées au récapitulatif et listées par `--variantes` |
+| `audit-opponent-lineups.ts` | confronte les compositions aux feuilles officielles LNR — les deux divisions, phases finales comprises ; lecture seule, à lancer sur une saison ou sur tout. **`--usap` ajoute le camp catalan**, qui n'avait aucun audit jusqu'au 23 septembre 2026 : 14 692 lignes que rien ne relisait, contre 14 666 adverses relues. Ne coûte aucune requête de plus, la page `/compositions` portant les deux camps. **Zéro anomalie est l'état attendu** ; les variantes d'affichage arbitrées sont tues par `VARIANTES_DAFFICHAGE` de `lib/noms.ts`, comptées au récapitulatif et listées par `--variantes`, et les compositions délibérément divergentes par `COMPOSITIONS_ARBITREES`. Porte enfin le contrôle des **camps entrelacés**, qui ne dépend d'aucune source et couvre donc aussi les coupes d'Europe |
 | `fix-opponent-lineup.ts` | remet une composition en accord avec la feuille officielle — LNR pour le championnat, EPCR pour les coupes — (identités, dossards, titulaires, capitaine) ; `--usap` traite aussi le camp catalan |
 | `fetch-player-photos.ts` | rapatrie les portraits dans `public/images/players/`, renseigne `photoUrl` et consigne auteur et licence dans `credits.json` : **la LNR pour l'effectif, Wikimedia Commons pour les anciens**. `--dry`, `--effectif` ou `--commons` pour n'en faire qu'une, `--images` pour n'écrire que les fichiers, `--planche` pour la planche contact, `--force` pour réécrire |
 | `fetch-club-logos.ts` | rapatrie les logos officiels des clubs dans `public/images/logos/`, depuis les CDN de la LNR et de l'EPCR, et renseigne `Opponent.logoUrl` |
@@ -4764,11 +4764,86 @@ d'un siècle, c'est la règle qu'on connaîtra le moins bien.
   Un homme ne joue pas des deux côtés dans la même saison, et la base le
   disait en toutes lettres à qui regardait les deux listes ensemble.
 
-  **`audit-opponent-lineups.ts` ne pouvait rien voir : il n'examine que
+  **`audit-opponent-lineups.ts` ne pouvait rien voir : il n'examinait que
   l'adversaire.** C'est la même lacune qui avait laissé quatre saisons sans
-  `--usap`, et elle vaut d'être retenue — **le camp catalan n'a pas
-  d'audit**, et c'est de là que viennent les erreurs qui durent. Celle-ci a
+  `--usap`, et c'est de là que venaient les erreurs qui durent. Celle-ci a
   été relevée par Jérémy, en lisant une liste de joueurs sans portrait.
+
+  **LE CAMP CATALAN A SON AUDIT DEPUIS LE 23 SEPTEMBRE 2026**, à la demande
+  de Jérémy, et c'est l'option `--usap` du même script. Le chiffre qui le
+  justifiait : **14 666 lignes adverses relues, 14 692 lignes catalanes
+  jamais** — la moitié de la table, et celle qui porte les fiches joueur,
+  les centurions, les réalisateurs et les records.
+
+  **Il ne coûte aucune requête de plus**, et c'est pourquoi il vit dans ce
+  script plutôt que dans un autre : la page `/compositions` de la LNR porte
+  les vingt-trois de chaque camp, le script la téléchargeait déjà en entier
+  et en jetait la moitié. Mesuré sur 2025-2026 — 44 s pour le seul camp
+  adverse, 33 s pour les deux, le surcoût est dans le bruit de mesure.
+
+  **Son premier passage a rendu ce qu'on pouvait en espérer** : le camp
+  catalan est conforme, et ses anomalies sont des variantes d'écriture
+  répétées sur *toutes* les feuilles d'un même homme — treize fois « Jamie
+  Ritchie » pour « James Thomas Ritchie », quatorze fois « Mathieu Ugena »
+  pour « Matthieu ». C'est la signature d'une variante et non d'une erreur :
+  **une faute de saisie se fait une fois**. Deux sont entrées dans
+  `VARIANTES_DAFFICHAGE` ; **la troisième n'était pas une variante mais un
+  doublon** — « Jean-Pascal Baraque », deux feuilles, doublait « Jean-Pascal
+  Barraqué », dix-huit feuilles, Biarritz puis Clermont puis l'USAP. Fusionné
+  le 23 septembre 2026.
+
+  **ET LE CHEMIN POUR Y ARRIVER A COÛTÉ UN DOUBLON DE PLUS, PAR L'ERREUR QUE
+  CE FICHIER DOCUMENTE DEPUIS LE DÉBUT.** La fiche a d'abord été *renommée*
+  « Barraque », sur la foi d'une recherche `lastName contains "araque"` qui
+  n'avait rendu qu'une fiche : un `contains` SQL est **littéral**, et
+  « Barraqué » ne contient pas « araque », l'accent final étant un autre
+  caractère. C'est mot pour mot l'accident déjà consigné — « un filtre SQL
+  `lastName equals` ne suffit pas, il rate Bécognée vs Becognee ; construire
+  un index en mémoire et chercher dedans ». `detect-duplicate-players.ts`
+  l'a sorti en CERTAIN au passage suivant, ce qui est exactement son office.
+
+  Le renommage était faux deux fois, car il perdait aussi l'accent — et
+  **la LNR ampute les accents**, sa feuille écrivant « Barraque » pour cette
+  seule raison. Avant de corriger une orthographe d'après une feuille
+  officielle, se demander laquelle de ses amputations connues on est en
+  train de recopier : accents, apostrophes, ponctuation. Ce qu'elle
+  n'ampute pas — une consonne doublée, une voyelle en trop — reste, lui,
+  un vrai écart à trancher.
+
+  **Et il porte un contrôle qui ne dépend d'aucune source** : les **camps
+  entrelacés**. Un homme ne joue pas des deux côtés en alternance. Le
+  critère n'est pas « deux camps la même saison » — le mercato le fait
+  légitimement quatre fois dans la base, Chiocci et Lyon en 2021, Gray et
+  l'UBB en 2025 — mais le **nombre de bascules** : un transfert en fait une,
+  ses feuilles se rangeant en deux blocs ; deux ou plus, c'est un
+  entrelacement, et cela n'arrive pas. Sacha Lotrian en avait deux.
+
+  Ce contrôle-là confronte la base à elle-même, pas à une source : il tourne
+  toujours, et couvre donc **les coupes d'Europe** et les rencontres dont la
+  LNR ne publie aucune composition — deux des quatre feuilles de Lotrian
+  étaient européennes, hors de portée de l'audit des feuilles.
+
+  **ET LE BALAYAGE DES VINGT-TROIS SAISONS A TROUVÉ LE CAS INVERSE**, le
+  26 août 2023 à Clermont : la feuille LNR donne « Mathys Lotrian » au n°17
+  catalan quand c'est **Sacha** qui joue, et cette fois c'est la base qui dit
+  vrai. Trois choses le montrent, et la première est celle que Jérémy a
+  relevée : **le n°17 est le dossard du pilier gauche remplaçant**, or Sacha
+  est pilier gauche et Mathys talonneur — le n°16 de cette même feuille est
+  déjà Victor Montgaillard. La feuille de la J1, une semaine plus tôt, donne
+  Sacha au n°17 : le banc n'a pas changé de pilier entre deux journées. Et
+  Mathys, né en 2004, n'a alors aucune feuille professionnelle, la première
+  étant de janvier 2025.
+
+  **La LNR ne se trompe donc pas seulement de nom : elle pointe la fiche du
+  frère**, `/joueur/1967-mathys-lotrian`, ce qui rend l'erreur invisible à
+  qui se fierait à son identifiant. Sur les deux frères, chaque source s'est
+  trompée une fois et dans un sens opposé — **un identifiant stable n'est
+  pas une preuve d'identité**, c'est une preuve de constance.
+
+  L'anomalie est tue par `COMPOSITIONS_ARBITREES`, qui accepte depuis ce
+  jour-là un **dossard** : seule la ligne du n°17 est écartée, les
+  vingt-deux autres restent confrontées. Taire la composition entière pour
+  un homme aurait été le remède pire que le mal.
 
   **Et un doublon peut en cacher un troisième homme.** « Carlu Johann Sadie »
   portait quatre feuilles : trois fois le pilier droit de l'UBB, que la LNR
@@ -5072,7 +5147,7 @@ for S in 2026-2027 2025-2026 2024-2025 2023-2024 2022-2023 2021-2022 \
          2020-2021 2019-2020 2018-2019 2017-2018 2016-2017 2015-2016 \
          2014-2015 2013-2014 2012-2013 2011-2012 2010-2011 2009-2010 \
          2008-2009 2007-2008 2006-2007 2005-2006 2004-2005; do
-  npx tsx scripts/audit-opponent-lineups.ts "$S"
+  npx tsx scripts/audit-opponent-lineups.ts "$S" --usap
 done
 ```
 

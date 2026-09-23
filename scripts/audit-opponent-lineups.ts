@@ -1,5 +1,6 @@
 /**
- * Confronte les compositions adverses en base aux feuilles officielles LNR.
+ * Confronte les compositions en base aux feuilles officielles LNR —
+ * l'adversaire toujours, le camp catalan sur `--usap`.
  *
  * Trois compositions adverses fabriquées de toutes pièces ont été trouvées
  * jusqu'ici — le J20 2025-2026 contre Toulon, Grenoble au barrage 2024-2025,
@@ -34,14 +35,47 @@
  * Usage :
  *   npx tsx scripts/audit-opponent-lineups.ts                  # toutes les saisons
  *   npx tsx scripts/audit-opponent-lineups.ts 2023-2024        # une seule
+ *   npx tsx scripts/audit-opponent-lineups.ts --usap           # + le camp catalan
  *   npx tsx scripts/audit-opponent-lineups.ts --graves         # MANQUANT et EN TROP
  *   npx tsx scripts/audit-opponent-lineups.ts --variantes      # + les variantes tues
+ *
+ * ------------------------------------------------------------------------
+ * LE CAMP CATALAN N'AVAIT AUCUN AUDIT, ET C'EST PAR LÀ QUE PASSAIT LE RESTE
+ *
+ * Ce script filtrait `isOpponent: true`, sur une seule ligne, et cette ligne
+ * décidait de tout : **14 666 lignes adverses relues, 14 692 lignes
+ * catalanes jamais** — la moitié de la table, et celle qui porte les fiches
+ * joueur, les centurions, les réalisateurs et les records.
+ *
+ * Il existait bien des outils côté catalan — `seed-opponent-sheet --usap`,
+ * `fix-opponent-lineup --usap` — mais ce sont des **correcteurs** : ils
+ * écrivent, on les lance quand on soupçonne déjà quelque chose, et ils ne
+ * disent rien tant qu'on ne les lance pas. Il manquait un témoin.
+ *
+ * Le projet l'a payé deux fois. Les quatre saisons de 2022-2023 à 2025-2026
+ * avaient été écrites **sans `--usap`** — 1 279 lignes catalanes fausses, que
+ * seul le contrôle des minutes a fini par trahir. Et le 22 septembre 2026,
+ * quatre feuilles catalanes de 2025-2026 portaient **Sacha Lotrian** quand
+ * c'était son frère Mathys : les scores retombaient, les minutes aussi, les
+ * points par joueur également, et c'est Jérémy qui l'a vu en relisant une
+ * liste de joueurs sans portrait.
+ *
+ * **Auditer les deux camps ne coûte rien de plus.** La page `/compositions`
+ * de la LNR porte les vingt-trois de chaque côté : le script la téléchargeait
+ * déjà en entier et jetait la moitié. Mesuré le 23 septembre 2026 sur
+ * 2025-2026 — 27 matchs, 44 s pour le seul camp adverse, 33 s pour les deux.
+ * Le surcoût est dans le bruit de mesure ; c'est la raison pour laquelle ce
+ * contrôle vit ici et non dans un script à part, qui retéléchargerait tout.
  *
  * **Zéro anomalie est l'état attendu**, et c'est tout l'intérêt de la table de
  * variantes : le total redevient un signal, tout écart nouveau se remarque.
  *
  * Ne couvre que ce que la LNR publie — championnat et phases finales des deux
  * divisions, barrages compris. Les coupes d'Europe relèvent de l'EPCR.
+ *
+ * **Sauf le contrôle des camps entrelacés**, qui ne confronte pas la base à
+ * une source mais à elle-même : il tourne toujours, et couvre donc aussi les
+ * coupes d'Europe et les rencontres dont la LNR ne publie rien.
  *
  * DEUX ANGLES MORTS, CORRIGÉS LE 30 AOÛT 2026, et ils étaient graves pour un
  * script dont c'est le seul métier. Il cherchait toutes ses feuilles sur
@@ -85,6 +119,7 @@ const ARGS = process.argv.slice(2);
 const SAISON_DEMANDEE = ARGS.find((a) => /^\d{4}-\d{4}$/.test(a));
 const GRAVES_SEULEMENT = ARGS.includes("--graves");
 const VARIANTES_VISIBLES = ARGS.includes("--variantes");
+const AVEC_USAP = ARGS.includes("--usap");
 
 
 const VARIANTES = new Set(
@@ -95,6 +130,63 @@ const VARIANTES = new Set(
 function varianteConnue(nom: string, officielNom: string): boolean {
   return VARIANTES.has(`${normalize(nom)}|${normalize(officielNom)}`);
 }
+
+/** Le camp confronté. La feuille LNR porte les deux sur la même page. */
+type Camp = "adversaire" | "usap";
+
+/**
+ * Compositions que la base porte **délibérément** autrement que la feuille,
+ * et qu'il ne faut donc pas compter en anomalie.
+ *
+ * Y inscrire une ligne, c'est affirmer que **la source se trompe et qu'on l'a
+ * démontré** — jamais qu'on n'a pas eu le temps de regarder. Les deux
+ * rencontres ci-dessous sont documentées dans CLAUDE.md, avec leur preuve.
+ *
+ * Sans cette table, elles rendraient six anomalies à chaque exécution, pour
+ * toujours. C'est exactement le sinistre que ce script est censé prévenir :
+ * un total qu'on apprend à ignorer ne signale plus rien.
+ */
+const COMPOSITIONS_ARBITREES: Record<
+  string,
+  { camp: Camp; numero?: number; pourquoi: string }
+> = {
+  // La feuille se contredit sur les deux camps : ses changements font entrer
+  // deux joueurs absents des vingt-trois qu'elle publie, et sortir un joueur
+  // jamais entré. Le banc catalan y est décalé d'un cran. C'est le seul match
+  // que `fix-opponent-lineup.ts --usap --identites` doit épargner.
+  "2026-02-22": {
+    camp: "usap",
+    pourquoi: "feuille LNR contradictoire sur les deux camps, banc décalé d'un cran",
+  },
+  // La LNR a gardé l'équipe *annoncée* : elle met Bruce Devaux au n°1 quand
+  // *L'Indépendant* et allrugby donnent Enzo Forletta titulaire, et que sa
+  // propre page de faits fait entrer Forletta à la 72e — un homme absent de
+  // ses vingt-trois. `fix-titulaire-2026-09-12.ts` a rendu le dossard.
+  "2026-09-12": {
+    camp: "usap",
+    pourquoi: "la LNR publie l'équipe annoncée, non l'équipe alignée (n°1 Forletta)",
+  },
+  // LA LNR POINTE LA FICHE DU FRÈRE. Sa feuille donne « Mathys Lotrian » au
+  // n°17 catalan ; c'est **Sacha** qui joue, et trois choses le disent. Le
+  // n°17 est le dossard du **pilier gauche remplaçant** — Sacha est pilier
+  // gauche, Mathys est talonneur, et le n°16 de cette même feuille est déjà
+  // Victor Montgaillard. La feuille de la J1, une semaine plus tôt, donne
+  // Sacha au n°17 : le banc n'a pas changé de pilier entre les deux
+  // journées. Et Mathys, né en 2004, n'a alors aucune feuille
+  // professionnelle — la première est de janvier 2025.
+  //
+  // C'est donc l'inverse du cas de 2025-2026, où la base avait pris Sacha
+  // pour Mathys : ici la base dit vrai et la source se trompe. Arbitré par
+  // Jérémy le 23 septembre 2026, sur le dossard.
+  //
+  // Seule la ligne du n°17 est tue, non la composition entière : les
+  // vingt-deux autres restent confrontées.
+  "2023-08-26": {
+    camp: "usap",
+    numero: 17,
+    pourquoi: "la LNR pointe la fiche de Mathys Lotrian au n°17 ; c'est Sacha, pilier gauche",
+  },
+};
 
 type Gravite =
   | "MANQUANT"
@@ -201,10 +293,11 @@ async function auditerMatch(
   matchId: string,
   officielle: LnrTitulaire[],
   jour: string,
+  camp: Camp,
 ): Promise<Bilan> {
-  const enBase = await avecReconnexion(`la composition du ${jour}`, () =>
+  const enBase = await avecReconnexion(`la composition ${camp} du ${jour}`, () =>
     prisma.matchPlayer.findMany({
-      where: { matchId, isOpponent: true },
+      where: { matchId, isOpponent: camp === "adversaire" },
       select: {
         shirtNumber: true,
         isStarter: true,
@@ -298,7 +391,7 @@ async function auditerMatch(
     // Un joueur que la feuille officielle omet et qu'on a rendu à son dossard
     // depuis une autre source n'est pas « en trop » : il est absent parce que
     // la LNR l'a oublié. `lib/feuilles.ts` porte la table et sa démonstration.
-    if (estAjoutHorsFeuille(jour, "adversaire", ligne.shirtNumber ?? 0)) {
+    if (estAjoutHorsFeuille(jour, camp === "adversaire" ? "adversaire" : "usap", ligne.shirtNumber ?? 0)) {
       variantes.push(
         `n°${ligne.shirtNumber} ${ligne.player?.firstName} ${ligne.player?.lastName} — ` +
           "ajouté depuis une autre source, la LNR ne le publie pas",
@@ -315,9 +408,93 @@ async function auditerMatch(
   return { anomalies: anomalies.sort((a, b) => a.numero - b.numero), variantes };
 }
 
+/**
+ * Les joueurs qui passent d'un camp à l'autre **et reviennent**, sur une
+ * même saison.
+ *
+ * UN HOMME NE JOUE PAS DES DEUX CÔTÉS EN MÊME TEMPS, et c'est le seul
+ * contrôle du projet qui n'ait besoin d'aucune source : il ne confronte pas
+ * la base à la LNR, il confronte la base à elle-même. Il est donc gratuit,
+ * et il couvre ce que l'audit des feuilles ne couvre pas — les coupes
+ * d'Europe, et les rencontres dont la LNR ne publie pas de composition.
+ *
+ * **Mais « deux camps la même saison » ne suffit pas comme critère.** Le
+ * mercato le fait légitimement, quatre fois dans la base : Xavier Chiocci
+ * affronte l'USAP avec Lyon en septembre 2021 puis y signe en décembre,
+ * Jonathan Gray avec l'UBB en octobre 2025 avant d'arriver en avril. Les
+ * signaler serait apprendre à ignorer le total.
+ *
+ * Ce qui distingue le transfert de l'erreur, c'est le **nombre de
+ * bascules** : un joueur qui change de club en change une fois, et ses
+ * feuilles se rangent en deux blocs. Deux bascules ou plus, c'est un
+ * entrelacement — le même homme des deux côtés en alternance —, et cela ne
+ * se produit pas.
+ *
+ * LE CAS FONDATEUR EST SACHA LOTRIAN, le 22 septembre 2026. La base lui
+ * donnait quatre feuilles catalanes de 2025-2026 qui sont celles de son
+ * frère Mathys, talonneur, et il figurait par ailleurs dans le camp de
+ * Clermont le 20 décembre 2025 — au milieu. Deux bascules. Aucun autre
+ * contrôle ne pouvait le voir : les scores retombaient, les minutes aussi,
+ * et `audit-opponent-lineups` ne lisait que l'adversaire. C'est Jérémy qui
+ * l'a trouvé, en relisant une liste de joueurs sans portrait.
+ */
+async function campsEntrelaces(saison: Prisma.MatchWhereInput): Promise<string[]> {
+  const lignes = await avecReconnexion("les lignes des deux camps", () =>
+    prisma.matchPlayer.findMany({
+      where: { playerId: { not: null }, match: { ...MATCH_JOUE, ...saison } },
+      select: {
+        isOpponent: true,
+        playerId: true,
+        player: { select: { firstName: true, lastName: true } },
+        match: {
+          select: {
+            date: true,
+            seasonId: true,
+            season: { select: { label: true } },
+            opponent: { select: { name: true, shortName: true } },
+          },
+        },
+      },
+    }),
+  );
+
+  const parJoueurEtSaison = new Map<string, typeof lignes>();
+  for (const l of lignes) {
+    const cle = `${l.playerId}|${l.match.seasonId}`;
+    if (!parJoueurEtSaison.has(cle)) parJoueurEtSaison.set(cle, []);
+    parJoueurEtSaison.get(cle)!.push(l);
+  }
+
+  const signales: string[] = [];
+  for (const groupe of parJoueurEtSaison.values()) {
+    groupe.sort((a, b) => a.match.date.getTime() - b.match.date.getTime());
+    let bascules = 0;
+    for (let i = 1; i < groupe.length; i++) {
+      if (groupe[i].isOpponent !== groupe[i - 1].isOpponent) bascules++;
+    }
+    if (bascules < 2) continue;
+    const joueur = groupe[0].player!;
+    const suite = groupe
+      .map((l) => {
+        const jour = l.match.date.toISOString().slice(0, 10);
+        const ou = l.isOpponent
+          ? (l.match.opponent.shortName ?? l.match.opponent.name)
+          : "USAP";
+        return `${jour} ${ou}`;
+      })
+      .join("  →  ");
+    signales.push(
+      `${groupe[0].match.season.label}  ${joueur.firstName} ${joueur.lastName} — ` +
+        `${bascules} bascules\n      ${suite}`,
+    );
+  }
+  return signales;
+}
+
 async function main() {
   console.log(
-    `=== Compositions adverses confrontées aux feuilles LNR${SAISON_DEMANDEE ? ` — ${SAISON_DEMANDEE}` : ""} ===\n`,
+    `=== Compositions ${AVEC_USAP ? "des deux camps" : "adverses"} confrontées aux ` +
+      `feuilles LNR${SAISON_DEMANDEE ? ` — ${SAISON_DEMANDEE}` : ""} ===\n`,
   );
 
   const saison = SAISON_DEMANDEE ? { season: { label: SAISON_DEMANDEE } } : {};
@@ -340,12 +517,17 @@ async function main() {
     }),
   );
 
+  /** Les camps confrontés. Le catalan n'entre que sur `--usap`. */
+  const camps: Camp[] = AVEC_USAP ? ["adversaire", "usap"] : ["adversaire"];
+
   let examines = 0;
   let sains = 0;
   const horsPerimetre: string[] = [];
   /** Rencontres dont la base n'a aucune composition adverse : rien à auditer. */
   const sansCompositionEnBase: string[] = [];
   const illisibles: string[] = [];
+  /** Compositions délibérément divergentes, tues mais comptées. */
+  const arbitrees: string[] = [];
   const parGravite = new Map<Gravite, number>();
   const variantesTues: string[] = [];
 
@@ -373,7 +555,13 @@ async function main() {
       continue;
     }
 
-    let officielle: LnrTitulaire[] | null = null;
+    // **UNE SEULE LECTURE POUR LES DEUX CAMPS.** La page `/compositions` de
+    // la LNR porte les vingt-trois de chaque côté : auditer le camp catalan
+    // ne coûte donc pas une requête de plus, seulement une lecture Prisma et
+    // un appariement. C'est la raison pour laquelle ce contrôle vit ici et
+    // non dans un script à part, qui téléchargerait les mêmes feuilles une
+    // seconde fois.
+    let compositions: { adversaire: LnrTitulaire[]; usap: LnrTitulaire[] } | null = null;
     let dernierEchec = "";
     for (const phase of phases) {
       try {
@@ -382,42 +570,69 @@ async function main() {
           dernierEchec = `feuille introuvable pour ${phase}`;
           continue;
         }
-        officielle = (await lireCompositions(url)).adversaire;
+        const lues = await lireCompositions(url);
+        compositions = { adversaire: lues.adversaire, usap: lues.usap };
         break;
       } catch (erreur) {
         dernierEchec = (erreur as Error).message;
       }
     }
-    if (!officielle) {
+    if (!compositions) {
       illisibles.push(`${etiquette} : ${dernierEchec}`);
       continue;
     }
 
-    const { anomalies, variantes, sansComposition } = await auditerMatch(
-      match.id,
-      officielle,
-      jour,
-    );
-    if (sansComposition) {
-      sansCompositionEnBase.push(etiquette);
-      continue;
-    }
+    for (const camp of camps) {
+      const officielle = compositions[camp];
+      const marque = camp === "usap" ? "USAP    " : "adverse ";
 
-    examines++;
-    const retenues = GRAVES_SEULEMENT
-      ? anomalies.filter((a) => GRAVES.includes(a.gravite))
-      : anomalies;
+      const arbitree = COMPOSITIONS_ARBITREES[jour];
+      // Sans dossard, c'est la composition entière qui est écartée ; avec,
+      // seule la ligne de ce dossard est tue et le reste reste confronté.
+      if (arbitree && arbitree.camp === camp && arbitree.numero === undefined) {
+        arbitrees.push(`${etiquette} ${marque} — ${arbitree.pourquoi}`);
+        continue;
+      }
+      const { anomalies, variantes, sansComposition } = await auditerMatch(
+        match.id,
+        officielle,
+        jour,
+        camp,
+      );
+      if (sansComposition) {
+        sansCompositionEnBase.push(`${etiquette} ${marque}`);
+        continue;
+      }
 
-    if (anomalies.length === 0) sains++;
-    for (const a of anomalies) {
-      parGravite.set(a.gravite, (parGravite.get(a.gravite) ?? 0) + 1);
-    }
-    for (const v of variantes) variantesTues.push(`${etiquette} ${v}`);
-    if (retenues.length === 0) continue;
+      // La ligne arbitrée sort des anomalies, mais elle est comptée et dite.
+      if (arbitree && arbitree.camp === camp && arbitree.numero !== undefined) {
+        const avant = anomalies.length;
+        for (let i = anomalies.length - 1; i >= 0; i--) {
+          if (anomalies[i].numero === arbitree.numero) anomalies.splice(i, 1);
+        }
+        if (avant !== anomalies.length) {
+          arbitrees.push(
+            `${etiquette} ${marque} n°${arbitree.numero} — ${arbitree.pourquoi}`,
+          );
+        }
+      }
 
-    console.log(`${etiquette} — ${retenues.length} anomalie(s)`);
-    for (const a of retenues) {
-      console.log(`    ${a.gravite.padEnd(9)} n°${String(a.numero).padStart(2)} ${a.detail}`);
+      examines++;
+      const retenues = GRAVES_SEULEMENT
+        ? anomalies.filter((a) => GRAVES.includes(a.gravite))
+        : anomalies;
+
+      if (anomalies.length === 0) sains++;
+      for (const a of anomalies) {
+        parGravite.set(a.gravite, (parGravite.get(a.gravite) ?? 0) + 1);
+      }
+      for (const v of variantes) variantesTues.push(`${etiquette} ${marque} ${v}`);
+      if (retenues.length === 0) continue;
+
+      console.log(`${etiquette} ${marque}— ${retenues.length} anomalie(s)`);
+      for (const a of retenues) {
+        console.log(`    ${a.gravite.padEnd(9)} n°${String(a.numero).padStart(2)} ${a.detail}`);
+      }
     }
   }
 
@@ -444,8 +659,22 @@ async function main() {
     );
     for (const ligne of sansCompositionEnBase) console.log(`  · ${ligne}`);
   }
+  if (arbitrees.length > 0) {
+    console.log(`\n${arbitrees.length} composition(s) délibérément divergente(s), non auditée(s) :`);
+    for (const a of arbitrees) console.log(`  · ${a}`);
+  }
   if (horsPerimetre.length > 0) {
     console.log(`\n${horsPerimetre.length} match(s) hors périmètre LNR (coupes d'Europe).`);
+  }
+
+  // Ce contrôle-là ne dépend d'aucune source : il tourne toujours, y compris
+  // sur les rencontres que la LNR ne couvre pas.
+  const entrelaces = await campsEntrelaces(saison);
+  if (entrelaces.length > 0) {
+    console.log(`\n${entrelaces.length} joueur(s) des deux camps en alternance — à vérifier :`);
+    for (const e of entrelaces) console.log(`  ⚠ ${e}`);
+  } else {
+    console.log("\nAucun joueur des deux camps en alternance.");
   }
   // Ce compte-là est le plus exposé de tous : il tombe après la moisson
   // entière, quand la connexion est restée inutilisée le plus longtemps.
