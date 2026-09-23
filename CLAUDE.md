@@ -5146,10 +5146,21 @@ c'est sous cette forme que le plafonnement se manifeste.
 for S in 2026-2027 2025-2026 2024-2025 2023-2024 2022-2023 2021-2022 \
          2020-2021 2019-2020 2018-2019 2017-2018 2016-2017 2015-2016 \
          2014-2015 2013-2014 2012-2013 2011-2012 2010-2011 2009-2010 \
-         2008-2009 2007-2008 2006-2007 2005-2006 2004-2005; do
+         2008-2009 2007-2008 2006-2007 2005-2006 2004-2005 \
+         1924-1925 1913-1914; do
   npx tsx scripts/audit-opponent-lineups.ts "$S" --usap
 done
 ```
+
+**ET ELLE S'EST OUBLIÉE UNE SECONDE FOIS, LE 23 SEPTEMBRE 2026** : elle
+listait vingt-trois saisons quand **vingt-cinq** portent des matchs joués.
+Les deux finales d'avant-guerre venues de Gallica — 1913-1914 et 1924-1925,
+trente lignes de composition chacune — n'y étaient pas, personne ne les
+ayant ajoutées en les écrivant. Leurs rencontres sortent en « hors périmètre
+LNR », ce qui est attendu, mais le **contrôle des camps entrelacés** ne
+tournait pas sur elles. La liste se compare à la base, elle ne se recopie
+pas : `season.findMany({ where: { matches: { some: MATCH_JOUE } } })` la
+donne en une requête.
 
 **LA BOUCLE S'OUBLIE, ET ELLE A COÛTÉ QUATRE FAUX HOMMES.** Elle s'arrêtait à
 2008-2009 quand 2007-2008 et 2006-2007 étaient entrées en base : ces deux
