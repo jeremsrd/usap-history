@@ -10,6 +10,7 @@ import { liensAlternatifs } from "@/lib/seo";
 import Signalement from "@/components/Signalement";
 import Ecusson from "@/components/Ecusson";
 import { unstable_cache } from "next/cache";
+import { TAG_CONTENU } from "@/lib/cache";
 
 /**
  * La liste des rencontres, refaite le 6 septembre 2026 dans l'identité
@@ -87,7 +88,9 @@ const selection = unstable_cache(
     return { matches, total, bilan, parResultat };
   },
   ["matchs-selection"],
-  { revalidate: 3600 },
+  // Sept jours et le tag de purge : cf. `HISTORIQUE` et `TAG_CONTENU`
+  // de `@/lib/cache`. Un cache plus court que la page la plafonne.
+  { revalidate: 604800, tags: [TAG_CONTENU] },
 );
 
 /** Les repères communs à toute sélection : l'étendue de la base et les menus. */
@@ -107,7 +110,9 @@ const reperes = unstable_cache(
     return { premiere, derniere, totalBase, seasons, competitions, opponents };
   },
   ["matchs-reperes"],
-  { revalidate: 3600 },
+  // Sept jours et le tag de purge : cf. `HISTORIQUE` et `TAG_CONTENU`
+  // de `@/lib/cache`. Un cache plus court que la page la plafonne.
+  { revalidate: 604800, tags: [TAG_CONTENU] },
 );
 
 const PAR_PAGE = 50;

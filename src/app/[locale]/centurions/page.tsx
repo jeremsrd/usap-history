@@ -23,7 +23,10 @@ import Signalement from "@/components/Signalement";
  * encadré gris, un tableau bordé et arrondi.
  */
 
-export const revalidate = 3600;
+// Sept jours : cf. `HISTORIQUE` de `@/lib/cache`, qui porte la démonstration.
+// La valeur est en dur parce que Next.js exige un littéral ici — il refuse
+// une constante importée, « Unknown identifier at revalidate ».
+export const revalidate = 604800;
 
 /** Nombre de matchs à partir duquel un joueur entre au tableau. */
 const SEUIL = 100;

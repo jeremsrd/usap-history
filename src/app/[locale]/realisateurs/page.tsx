@@ -32,7 +32,10 @@ const SEUIL_POINTS = 50;
 const SEUIL_ESSAIS = 10;
 const SEUIL_AU_PIED = 50;
 
-export const revalidate = 3600;
+// Sept jours : cf. `HISTORIQUE` de `@/lib/cache`, qui porte la démonstration.
+// La valeur est en dur parce que Next.js exige un littéral ici — il refuse
+// une constante importée, « Unknown identifier at revalidate ».
+export const revalidate = 604800;
 
 type Props = { params: Promise<{ locale: Langue }> };
 

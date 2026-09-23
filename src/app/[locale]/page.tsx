@@ -56,6 +56,8 @@ import Signalement from "@/components/Signalement";
  * plus court pour le joueur au hasard et « ce jour dans l'histoire », qui
  * change à minuit.
  */
+// Dix minutes : cf. `ACCUEIL` de `@/lib/cache`. En dur, Next.js exigeant
+// un littéral — il refuse une constante importée.
 export const revalidate = 600;
 
 type Props = { params: Promise<{ locale: Langue }> };
