@@ -45,3 +45,7 @@ next-env.d.ts
 
 # Planche contact des portraits, instrument de relecture local
 scripts/.planche-portraits.html
+
+# Claude Code : notes et réglages personnels
+CLAUDE.local.md
+.claude/settings.local.json
