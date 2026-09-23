@@ -15,7 +15,6 @@ import Link from "@/components/Lien";
 import Image from "next/image";
 import { deleteMatch } from "./actions";
 import MatchForm from "./MatchForm";
-import { MATCH_RESULTS } from "@/lib/constants";
 
 // --- Interfaces ---
 

@@ -1,7 +1,21 @@
 "use client";
 
-import { useMemo } from "react";
+import { useCallback, useMemo } from "react";
 import type { Bareme } from "@/lib/scoring";
+
+/** Dimensions du SVG, en unités de son `viewBox` — elles ne varient jamais. */
+const W = 800;
+const H = 300;
+const PAD_LEFT = 45;
+const PAD_RIGHT = 15;
+const PAD_TOP = 25;
+const PAD_BOTTOM = 35;
+const chartW = W - PAD_LEFT - PAD_RIGHT;
+const chartH = H - PAD_TOP - PAD_BOTTOM;
+
+/** L'abscisse d'une minute. Le match vaut 80 minutes de largeur, un fait plus
+ *  tardif débordant à droite — la transformation de Giral, à la 81e en 1914. */
+const x = (minute: number) => PAD_LEFT + (minute / 80) * chartW;
 
 type MatchEvent = {
   id: string;
@@ -93,18 +107,17 @@ export default function ScoreEvolution({
 
   const maxScore = Math.max(finalScoreUsap, finalScoreOpponent, 10);
 
-  // Dimensions SVG
-  const W = 800;
-  const H = 300;
-  const PAD_LEFT = 45;
-  const PAD_RIGHT = 15;
-  const PAD_TOP = 25;
-  const PAD_BOTTOM = 35;
-  const chartW = W - PAD_LEFT - PAD_RIGHT;
-  const chartH = H - PAD_TOP - PAD_BOTTOM;
-
-  const x = (minute: number) => PAD_LEFT + (minute / 80) * chartW;
-  const y = (score: number) => PAD_TOP + chartH - (score / maxScore) * chartH;
+  // L'abscisse ne dépend que de constantes ; l'ordonnée dépend de `maxScore`,
+  // et elle seule est donc mémoïsée. Les deux vivaient dans le corps du
+  // composant, recréées à chaque rendu : `react-hooks/exhaustive-deps` les
+  // réclamait alors dans les dépendances des `useMemo` ci-dessous, où elles
+  // auraient annulé la mémoïsation qu'on y cherche. Les sortir dit la même
+  // chose plus simplement — ce qui ne varie pas n'a pas à être une
+  // dépendance.
+  const y = useCallback(
+    (score: number) => PAD_TOP + chartH - (score / maxScore) * chartH,
+    [maxScore],
+  );
 
   // Générer les paths en step (escalier)
   const pathUsap = useMemo(() => {
@@ -121,7 +134,7 @@ export default function ScoreEvolution({
       }
     }
     return d;
-  }, [scoringEvents, maxScore]);
+  }, [scoringEvents, y]);
 
   const pathOpp = useMemo(() => {
     let d = "";
@@ -136,7 +149,7 @@ export default function ScoreEvolution({
       }
     }
     return d;
-  }, [scoringEvents, maxScore]);
+  }, [scoringEvents, y]);
 
   // Graduations Y
   const yTicks = useMemo(() => {
