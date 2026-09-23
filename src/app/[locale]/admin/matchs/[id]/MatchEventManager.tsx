@@ -4,7 +4,6 @@ import { useState, useActionState, useEffect, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import { Plus, Trash2, X } from "lucide-react";
 import { addMatchEvent, removeMatchEvent } from "./actions";
-import type { ActionResult } from "./actions";
 
 // --- Types ---
 
