@@ -19,6 +19,13 @@
  * les trois endroits : `Player.position`, les `SeasonPlayer` du joueur, et
  * les `MatchPlayer` **de remplaçant**.
  *
+ * IL NE REPREND QUE LES LIGNES QUI TENAIENT LEUR POSTE DE LA FICHE, c'est-à-
+ * dire celles qui portent l'ancien poste de référence, ou aucun. Une ligne de
+ * banc qui porte autre chose a été posée par une source qui savait — Hugo
+ * Reus entre au centre le 21 mars 2026, à la place du n°12 —, et l'écraser
+ * ferait passer une correction de fiche pour une autorité sur la feuille.
+ * Les lignes épargnées sont nommées au relevé, jamais tues.
+ *
  * IL NE TOUCHE PAS AUX TITULAIRES. Leur `positionPlayed` se déduit du numéro
  * de maillot — un joueur fiché troisième ligne qui porte le 4 a bien tenu la
  * deuxième ligne ce jour-là, et c'est un fait de la feuille, pas une
@@ -96,7 +103,30 @@ async function main() {
   for (const s of saisons) {
     console.log(`    ${s.season.label}  ${s.position ?? "aucun"} → ${cible}`);
   }
-  const aReprendre = remplacements.filter((m) => m.positionPlayed !== cible);
+  // ON NE REPREND QUE CE QUI VENAIT DU REPLI, et c'est tout le sujet : une
+  // ligne de banc qui porte **l'ancien poste de référence** l'a hérité de la
+  // fiche, et suit donc la correction ; une ligne qui porte autre chose a
+  // été posée par quelqu'un qui savait, et elle en dit davantage que le
+  // repli n'en dirait.
+  //
+  // Le cas fondateur est Hugo Reus, le 22 septembre 2026. Sa fiche le disait
+  // demi de mêlée quand il est ouvreur, et deux de ses six lignes de banc
+  // divergeaient : le n°21 du 29 décembre 2024 portait `DEMI_DE_MELEE`,
+  // repli de la fiche fausse, à corriger ; le n°21 du 21 mars 2026 portait
+  // `CENTRE`, parce qu'il y est entré à la 66ᵉ **à la place de Diego
+  // Mascarenc, n°12, centre**. Le premier filtre écrasait les deux, et
+  // faisait de ce joueur un ouvreur là où la feuille le donne au centre.
+  //
+  // La règle générale du projet est déjà celle-là — `positionPlayed` est le
+  // poste **réellement tenu ce jour-là** —, et une correction de fiche n'a
+  // aucune autorité sur lui. Les lignes épargnées sont donc **nommées**
+  // plutôt que tues : si l'une d'elles est fausse, elle relève d'une reprise
+  // de sa feuille, pas de ce script.
+  const heritees = remplacements.filter(
+    (m) => m.positionPlayed === fiche.position || m.positionPlayed === null,
+  );
+  const aReprendre = heritees.filter((m) => m.positionPlayed !== cible);
+  const epargnees = remplacements.filter((m) => !heritees.includes(m));
   console.log(
     `  remplacements  : ${remplacements.length} ligne(s), ${aReprendre.length} à reprendre`,
   );
@@ -107,6 +137,17 @@ async function main() {
     );
   }
   if (aReprendre.length > 12) console.log(`    … et ${aReprendre.length - 12} autres`);
+  if (epargnees.length) {
+    console.log(
+      `  épargnées      : ${epargnees.length} ligne(s) qui ne tenaient pas leur poste de la fiche`,
+    );
+    for (const m of epargnees) {
+      console.log(
+        `    ${m.match.date.toISOString().slice(0, 10)}  n°${m.shirtNumber ?? "?"}  ` +
+          `${m.positionPlayed ?? "aucun"} — laissé tel quel`,
+      );
+    }
+  }
 
   if (simulation) {
     console.log("\nSimulation — relancer sans --dry pour appliquer.");
