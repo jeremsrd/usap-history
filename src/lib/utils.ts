@@ -6,7 +6,13 @@ export function cn(...inputs: ClassValue[]) {
 }
 
 /**
- * Formate une date ISO en DD/MM/YYYY
+ * Formate une date ISO en DD/MM/YYYY, **à l'heure de Paris**.
+ *
+ * Sans fuseau, la date se lisait à l'heure du serveur — l'UTC chez Vercel —,
+ * et une rencontre à venir sans horaire, posée à minuit de Paris, soit 22 h
+ * ou 23 h UTC la veille, s'affichait un jour trop tôt : la J6 de 2026-2027
+ * au 09/10 au lieu du 10/10, vu le 4 octobre 2026. Le reste de la base est
+ * enregistré entre minuit et le soir UTC, et ne bouge pas.
  */
 export function formatDateFR(date: string | Date): string {
   const d = new Date(date);
@@ -14,6 +20,7 @@ export function formatDateFR(date: string | Date): string {
     day: "2-digit",
     month: "2-digit",
     year: "numeric",
+    timeZone: "Europe/Paris",
   });
 }
 
