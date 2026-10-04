@@ -152,6 +152,30 @@ export default async function MatchDetailPage({ params }: Props) {
     match.halfTimeUsap != null && match.halfTimeOpponent != null && t("match.miTemps", { usap: match.halfTimeUsap, adversaire: match.halfTimeOpponent }),
   ].filter(Boolean) as string[];
 
+  // Les rencontres voisines, toutes compétitions confondues et par-delà les
+  // saisons : le fil de l'histoire du club, à venir compris. L'identifiant
+  // départage deux rencontres datées au même instant.
+  const voisinSelect = {
+    slug: true,
+    date: true,
+    isHome: true,
+    scoreUsap: true,
+    scoreOpponent: true,
+    opponent: { select: { name: true, shortName: true } },
+  } as const;
+  const [precedent, suivant] = await Promise.all([
+    prisma.match.findFirst({
+      where: { OR: [{ date: { lt: match.date } }, { date: match.date, id: { lt: match.id } }] },
+      orderBy: [{ date: "desc" }, { id: "desc" }],
+      select: voisinSelect,
+    }),
+    prisma.match.findFirst({
+      where: { OR: [{ date: { gt: match.date } }, { date: match.date, id: { gt: match.id } }] },
+      orderBy: [{ date: "asc" }, { id: "asc" }],
+      select: voisinSelect,
+    }),
+  ]);
+
   const scoringEvents = match.matchEvents.filter((e) => ["ESSAI", "TRANSFORMATION", "PENALITE", "DROP", "ESSAI_PENALITE"].includes(e.type));
   const detailScore = match.triesUsap != null || match.triesOpponent != null;
 
@@ -354,10 +378,52 @@ export default async function MatchDetailPage({ params }: Props) {
         </section>
       )}
 
+      {(precedent || suivant) && (
+        <nav aria-label={t("match.voisinsAria")} className="mb-10 grid gap-4 border-t border-border pt-4 text-sm sm:grid-cols-2">
+          {precedent ? <Voisin m={precedent} sens="precedent" t={t} /> : <span />}
+          {suivant && <Voisin m={suivant} sens="suivant" t={t} />}
+        </nav>
+      )}
+
       {/* D'où vient ce que la page affirme, quand ce n'est pas de la feuille */}
       <Provenance entite="Match" id={match.id} langue={locale} />
       <Signalement langue={locale} sujet={affiche} />
     </div>
+  );
+}
+
+type MatchVoisin = {
+  slug: string;
+  date: Date;
+  isHome: boolean;
+  scoreUsap: number | null;
+  scoreOpponent: number | null;
+  opponent: { name: string; shortName: string | null };
+};
+
+/**
+ * Le lien vers la rencontre d'avant ou d'après, dit en entier — la date,
+ * l'affiche et le score, dans l'ordre du recevant comme partout ailleurs —
+ * pour qu'on sache où l'on va avant de cliquer.
+ */
+function Voisin({ m, sens, t }: { m: MatchVoisin; sens: "precedent" | "suivant"; t: Traduire }) {
+  const opp = m.opponent.shortName || m.opponent.name;
+  const affiche = m.isHome ? `USAP – ${opp}` : `${opp} – USAP`;
+  const score = estJoue(m)
+    ? m.isHome
+      ? `${m.scoreUsap}-${m.scoreOpponent}`
+      : `${m.scoreOpponent}-${m.scoreUsap}`
+    : t("match.aVenir").toLowerCase();
+  const suivant = sens === "suivant";
+  return (
+    <Link href={`/matchs/${m.slug}`} className={`group block ${suivant ? "sm:text-right" : ""}`}>
+      <span className="block text-xs text-muted-foreground">
+        {suivant ? `${t("match.suivant")} →` : `← ${t("match.precedent")}`}
+      </span>
+      <span className="text-foreground group-hover:text-usap-sang">
+        {formatDateFR(m.date)}, {affiche}, <span className="tabular-nums">{score}</span>
+      </span>
+    </Link>
   );
 }
 

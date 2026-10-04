@@ -226,3 +226,21 @@ rapprochement avec `Trophy` se fait sur l'**année de fin de saison** et la
 compétition ; l'expression est ancrée au début du libellé de tour, faute de
 quoi une demi-finale en hériterait. Il n'y a pas de clé étrangère entre un
 match et un titre : le jour où il en faudrait une, c'est là qu'elle irait.
+
+**Fiche de match — la rencontre d'avant et celle d'après**, depuis le
+4 octobre 2026 à la demande de Jérémy. Deux liens au pied de la fiche, au-dessus
+de `Provenance`, dans la voix discrète du lien « saison suivante » : pas de
+bouton. Quatre choses arbitrées :
+
+- **l'ordre est celui de l'histoire du club**, toutes compétitions confondues
+  — une coupe d'Europe s'intercale entre deux journées — et **par-delà les
+  saisons** : avant la J1 de 2026-2027 vient le barrage d'accession de juin ;
+- **une rencontre à venir est un voisin comme un autre**, sa fiche existant
+  déjà : le lien dit « à venir » à la place du score ;
+- **le lien se dit en entier** — date, affiche, score dans l'ordre du
+  recevant, comme dans les listes —, pour qu'on sache où l'on va ;
+- deux rencontres datées au même instant se départagent par leur
+  identifiant, faute de quoi le fil sauterait l'une des deux.
+
+Le cache de sept jours vaut ici comme ailleurs : le lien « suivant » de la
+veille ne bouge qu'à la purge, que `purger-cache.ts` fait après chaque saisie.
