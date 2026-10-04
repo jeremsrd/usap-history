@@ -120,6 +120,7 @@ doublons.
 | `fix-arbitres-challenge-2022-2023.ts` | les deux arbitres faux de la poule de Challenge 2022-2023 — Christophe Berdos, retraité depuis mai 2015, sur le Perpignan-Bristol du 9 décembre 2022, et Evan Urruzmendi, arbitre français, sur le Perpignan-Glasgow du 14 janvier 2023 —, remplacés par Chris Busby et Craig Evans d'après Wikipédia et rugbyreferee.net, concordants ; attestation `CONCORDANT` sur `Match.refereeId`. Déjà appliqué ; `--dry` |
 | `fix-carton-rouge-dragons-2025.ts` | la minute du carton rouge de Paia'aua, 35ᵉ pour 14ᵉ, dans la chronologie du 7 décembre 2025 ; porte les trois preuves concordantes |
 | `fix-titulaire-2026-09-12.ts` | le n°1 catalan du Perpignan-Castres du 12 septembre 2026, **Enzo Forletta** et non Bruce Devaux : la page de composition de la LNR a gardé l'équipe annoncée, *L'Indépendant* et allrugby concordent contre elle. Rend le dossard et atteste la ligne `CONCORDANT`. Déjà appliqué ; `--dry` |
+| `fix-stade-2026-10-03.ts` | le Racing 92 – USAP du 3 octobre 2026 **joué à Créteil, au stade Dominique-Duvauchelle**, que le calendrier plaçait au Paris La Défense Arena : crée le stade, applique `TERRAINS_PARTICULIERS` et pose l'attestation de presse. `seed-calendrier-2026-2027.ts` passe désormais par `terrainDuMatch`, sans quoi une relance l'aurait défait |
 
 `fix-duplicate-players.ts` existe aussi mais apparie les prénoms par préfixe et
 par inclusion : trop large pour être lancé sans revue préalable.

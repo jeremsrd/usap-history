@@ -14,7 +14,7 @@
  * mêmes journées, mêmes terrains.
  *
  * Ce que le script écrit : la rencontre — date et heure, journée, adversaire,
- * lieu — et rien d'autre. Les scores s'ajouteront au fil de la saison.
+ * lieu, déduit par `terrainDuMatch` — et rien d'autre. Les scores s'ajouteront au fil de la saison.
  *
  * **Seules les premières journées ont un horaire.** La LNR ne cale les coups
  * d'envoi qu'au fil des désignations télévisées : pour les autres, sa feuille
@@ -34,6 +34,7 @@ import { PrismaClient, Division, Prisma } from "@prisma/client";
 import { chercherFeuille, lireCoupDEnvoi } from "./lib/lnr";
 import { CLUBS_LNR } from "./lib/clubs";
 import { generateMatchSlug } from "../src/lib/slugs";
+import { terrainDuMatch } from "./lib/stades";
 
 const prisma = new PrismaClient();
 
@@ -114,10 +115,6 @@ async function main() {
   const competition = await prisma.competition.findFirstOrThrow({
     where: { shortName: "Top 14" },
   });
-  const aimeGiral = await prisma.venue.findFirstOrThrow({
-    where: { name: "Stade Aimé-Giral" },
-  });
-
   let crees = 0;
   let majs = 0;
 
@@ -127,7 +124,7 @@ async function main() {
     const jour = r.date.toLocaleDateString("fr-CA", { timeZone: "Europe/Paris" });
     const adversaire = await prisma.opponent.findFirst({
       where: { OR: [{ shortName: r.opponentNom }, { name: r.opponentNom }] },
-      select: { id: true, venueId: true },
+      select: { id: true },
     });
     if (!adversaire) {
       echecs.push(`J${r.matchday} : adversaire « ${r.opponentNom} » introuvable en base`);
@@ -158,7 +155,14 @@ async function main() {
       competitionId: competition.id,
       matchday: r.matchday,
       isHome: r.isHome,
-      venueId: r.isHome ? aimeGiral.id : adversaire.venueId,
+      // Par `terrainDuMatch`, seul endroit où la règle est écrite : une relance
+      // ramenait au Paris La Défense Arena le match délocalisé à Créteil.
+      venueId: await terrainDuMatch(prisma, {
+        opponentId: adversaire.id,
+        isHome: r.isHome,
+        startYear: 2026,
+        jour,
+      }),
       opponentId: adversaire.id,
     };
 

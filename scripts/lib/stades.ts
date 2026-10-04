@@ -121,6 +121,12 @@ export const TERRAINS_PARTICULIERS: Record<string, string | null> = {
   // désigne Biarritz recevant et ne publie ni composition ni fait sur cette
   // rencontre.
   "2006-06-02": "Stade de la Mosson",
+  // J5 du Top 14 2026-2027, Racing 92 55-25 Perpignan du 3 octobre 2026,
+  // reçue au **stade Dominique-Duvauchelle de Créteil** et non au Paris La
+  // Défense Arena. Source : *L'Indépendant* du lendemain, qui donne le stade
+  // et 4 535 spectateurs, et dont le score, la mi-temps et l'évolution du
+  // score concordent avec la feuille de la LNR. Cf. fix-stade-2026-10-03.ts.
+  "2026-10-03": "Stade Dominique-Duvauchelle",
 };
 
 /** Stade de l'USAP, seul terrain qu'elle ait connu sur la période couverte. */
