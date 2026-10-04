@@ -117,6 +117,29 @@ scripts et `pg_dump` ont besoin du mode session, et il est désormais à eux.
 La variable est passée en « Secret » dans Vercel par la même occasion, elle
 était lisible en clair.
 
+**ET UNE CONNEXION PAR PROCESSUS NE SUFFIT PAS AU BUILD, AVEC DIX SECONDES
+D'ATTENTE.** Du 23 septembre au 4 octobre 2026, **trois déploiements de
+suite ont échoué sans que personne ne le voie** — le site restait servi par
+le dernier bon, `c8d2fed`, et les données, lues en base, continuaient de
+paraître. Chaque fois `P2024`, « Timed out fetching a new connection from
+the connection pool », sur une page différente : `/fr/entraineurs`,
+`/fr/confidentialite`, `/ca/presidents`. Le build de Vercel tourne à
+Washington (`iad1`), la base est à Francfort, et il pré-rend soixante-dix
+pages en parallèle : chaque requête traverse l'Atlantique, une page lourde
+tient la seule connexion de son processus, et la suivante abandonne au bout
+des dix secondes de `pool_timeout` par défaut. **Le build local, lui,
+passait**, à quelques millisecondes de la base.
+
+La correction est dans `src/lib/prisma.ts` : **`pool_timeout=60` pendant le
+build seulement**, reconnu à `NEXT_PHASE`, que `next build` pose et que ses
+processus de pré-rendu héritent. `connection_limit=1` ne bouge pas — le
+pooler tient la charge, c'est l'attente côté Prisma qui était trop courte —,
+et hors build la valeur par défaut reste : une requête qui attend dix
+secondes en production a un autre problème. Découvert en cherchant pourquoi
+la navigation entre rencontres n'était pas en ligne : **un déploiement se
+vérifie sur le site, ou à son statut sur GitHub** (`gh api
+repos/jeremsrd/usap-history/commits/<sha>/statuses`), pas à la poussée.
+
 **La base est sur le plan Pro de Supabase depuis le 20 septembre 2026**,
 pris pour les **sauvegardes quotidiennes** — sept jours de rétention,
 restaurables depuis le tableau de bord —, que le plan gratuit ne fait pas.
