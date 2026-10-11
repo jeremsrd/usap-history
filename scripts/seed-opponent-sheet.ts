@@ -56,6 +56,7 @@
  */
 
 import { PrismaClient } from "@prisma/client";
+import { jourDeParis } from "./lib/dates";
 import { estCouperet } from "../src/lib/matchs";
 import { baremeDeMatch } from "../src/lib/scoring";
 import {
@@ -612,7 +613,7 @@ async function main(cible: "adverse" | "usap") {
   const divergences: string[] = [];
 
   for (const match of matchs) {
-    const jour = match.date.toISOString().slice(0, 10);
+    const jour = jourDeParis(match.date);
     if (SEUL && jour !== SEUL) continue;
     const adversaire = match.opponent.shortName ?? match.opponent.name;
     const etiquette = `${jour} ${adversaire.padEnd(16)} ${match.scoreUsap}-${match.scoreOpponent}`;

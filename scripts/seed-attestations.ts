@@ -43,6 +43,7 @@
  */
 
 import { PrismaClient } from "@prisma/client";
+import { journeeDeParis } from "./lib/dates";
 import { attester, type Attestation } from "./lib/attestations";
 
 const prisma = new PrismaClient();
@@ -51,9 +52,7 @@ const DRY = process.argv.includes("--dry");
 const WIKI = (page: string) => `https://fr.wikipedia.org/wiki/${encodeURIComponent(page.replace(/ /g, "_"))}`;
 
 async function matchDuJour(jour: string): Promise<string> {
-  const debut = new Date(`${jour}T00:00:00Z`);
-  const fin = new Date(debut.getTime() + 86_400_000);
-  const m = await prisma.match.findMany({ where: { date: { gte: debut, lt: fin } }, select: { id: true } });
+  const m = await prisma.match.findMany({ where: { date: journeeDeParis(jour) }, select: { id: true } });
   if (m.length !== 1) throw new Error(`${jour} : ${m.length} rencontre(s), il en faut une`);
   return m[0].id;
 }

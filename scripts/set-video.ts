@@ -35,6 +35,7 @@
  */
 
 import { PrismaClient } from "@prisma/client";
+import { journeeDeParis } from "./lib/dates";
 
 const prisma = new PrismaClient();
 const CHAINE_ATTENDUE = "TOP 14 - Officiel";
@@ -68,11 +69,9 @@ async function main() {
   }
   const propre = `https://www.youtube.com/watch?v=${id}`;
 
-  // La rencontre : la journée entière en UTC, une seule attendue.
-  const debut = new Date(`${date}T00:00:00Z`);
-  const fin = new Date(debut.getTime() + 24 * 3600 * 1000);
+  // La rencontre : la journée entière à l'heure de Paris, une seule attendue.
   const matchs = await prisma.match.findMany({
-    where: { date: { gte: debut, lt: fin } },
+    where: { date: journeeDeParis(date) },
     include: { opponent: { select: { name: true } }, season: { select: { label: true } } },
   });
   if (matchs.length !== 1) {

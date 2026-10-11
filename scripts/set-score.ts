@@ -37,6 +37,7 @@
 
 import { trouverOuCreerArbitre } from "./lib/arbitres";
 import { PrismaClient, MatchResult } from "@prisma/client";
+import { journeeDeParis } from "./lib/dates";
 import { lireCalendrier, lireCompositions, lireFeuille, realisationsDepuisFaits, utiliserDivision, type Camp } from "./lib/lnr";
 
 const prisma = new PrismaClient();
@@ -54,10 +55,8 @@ async function main() {
     console.error("Usage : npx tsx scripts/set-score.ts --match=AAAA-MM-JJ [--dry] [--force]");
     process.exit(1);
   }
-  const debut = new Date(`${jour}T00:00:00Z`);
-  const fin = new Date(debut.getTime() + 86_400_000);
   const matchs = await prisma.match.findMany({
-    where: { date: { gte: debut, lt: fin } },
+    where: { date: journeeDeParis(jour) },
     include: { season: true, opponent: { select: { name: true, shortName: true } } },
   });
   if (matchs.length !== 1) {

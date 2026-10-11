@@ -23,6 +23,7 @@
  */
 
 import { PrismaClient } from "@prisma/client";
+import { journeeDeParis } from "./lib/dates";
 import { trouverOuCreerArbitre } from "./lib/arbitres";
 
 const prisma = new PrismaClient();
@@ -44,13 +45,10 @@ async function main() {
     process.exit(1);
   }
 
-  // La date en base est un instant ; on prend la journée entière en UTC,
-  // large d'un jour de chaque côté pour les coups d'envoi tardifs, puis on
-  // exige que la date civile locale corresponde.
-  const debut = new Date(`${date}T00:00:00Z`);
-  const fin = new Date(debut.getTime() + 24 * 3600 * 1000);
+  // La date en base est un instant ; on prend la journée entière à l'heure
+  // de Paris, celle qu'affiche le site.
   const matchs = await prisma.match.findMany({
-    where: { date: { gte: debut, lt: fin } },
+    where: { date: journeeDeParis(date) },
     include: {
       opponent: { select: { name: true } },
       referee: { select: { firstName: true, lastName: true } },

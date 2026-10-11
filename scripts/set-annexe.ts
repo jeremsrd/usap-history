@@ -21,6 +21,7 @@
  */
 
 import { PrismaClient } from "@prisma/client";
+import { journeeDeParis } from "./lib/dates";
 import { attester } from "./lib/attestations";
 
 const prisma = new PrismaClient();
@@ -43,10 +44,8 @@ async function main() {
     );
     process.exit(1);
   }
-  const debut = new Date(`${jour}T00:00:00Z`);
-  const fin = new Date(debut.getTime() + 86_400_000);
   const matchs = await prisma.match.findMany({
-    where: { date: { gte: debut, lt: fin } },
+    where: { date: journeeDeParis(jour) },
     include: { opponent: { select: { name: true } }, matchEvents: { orderBy: { minute: "asc" } } },
   });
   if (matchs.length !== 1) {

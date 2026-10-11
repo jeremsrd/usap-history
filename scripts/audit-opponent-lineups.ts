@@ -102,6 +102,7 @@
  */
 
 import { Prisma, PrismaClient } from "@prisma/client";
+import { jourDeParis } from "./lib/dates";
 import { estAjoutHorsFeuille } from "./lib/feuilles";
 import {
   chercherFeuille,
@@ -476,7 +477,7 @@ async function campsEntrelaces(saison: Prisma.MatchWhereInput): Promise<string[]
     const joueur = groupe[0].player!;
     const suite = groupe
       .map((l) => {
-        const jour = l.match.date.toISOString().slice(0, 10);
+        const jour = jourDeParis(l.match.date);
         const ou = l.isOpponent
           ? (l.match.opponent.shortName ?? l.match.opponent.name)
           : "USAP";
@@ -532,7 +533,7 @@ async function main() {
   const variantesTues: string[] = [];
 
   for (const match of matchs) {
-    const jour = match.date.toISOString().slice(0, 10);
+    const jour = jourDeParis(match.date);
     const adversaire = match.opponent.shortName ?? match.opponent.name;
     const etiquette = `${match.season.label} ${jour} ${adversaire.padEnd(16)}`;
 

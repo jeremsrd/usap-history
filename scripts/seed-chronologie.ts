@@ -31,6 +31,7 @@
  */
 
 import { EventType, PrismaClient } from "@prisma/client";
+import { journeeDeParis } from "./lib/dates";
 import {
   chercherFeuille,
   lireFeuille,
@@ -94,7 +95,7 @@ async function main() {
 
   const match = await prisma.match.findFirstOrThrow({
     where: {
-      date: { gte: new Date(`${DATE}T00:00:00Z`), lt: new Date(`${DATE}T23:59:59Z`) },
+      date: journeeDeParis(DATE!),
     },
     include: {
       opponent: { select: { name: true, shortName: true } },

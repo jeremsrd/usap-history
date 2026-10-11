@@ -44,6 +44,9 @@ que le schéma ne porte pas.
   porte le fuseau depuis le 4 octobre 2026. Une rencontre à venir sans horaire
   (`kickoffTime` nul) est posée à minuit de Paris, soit 22 h ou 23 h UTC la
   veille — lue sans fuseau sur les serveurs de Vercel, elle reculait d'un jour.
+  Les scripts la cherchent de même par le jour de Paris (`journeeDeParis()`
+  de `scripts/lib/dates.ts`) depuis le 11 octobre 2026 : la journée UTC
+  manquait ces rencontres le lendemain du match.
 
 ## Provenance
 
