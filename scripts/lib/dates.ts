@@ -47,6 +47,15 @@ function minuitDeParis(jour: string): Date {
 }
 
 /**
+ * L'instant d'une heure de Paris, le jour donné : « samedi 11 octobre 2003,
+ * 19 h 30 » d'un calendrier se pose `instantDeParis("2003-10-11", "19:30")`.
+ */
+export function instantDeParis(jour: string, heure: string): Date {
+  const naif = new Date(`${jour}T${heure}:00Z`);
+  return new Date(naif.getTime() - decalageDeParis(naif));
+}
+
+/**
  * Les bornes d'un jour de Paris, à passer telles quelles à Prisma :
  * `{ date: journeeDeParis(jour) }`. Fin exclue, et les jours de changement
  * d'heure font 23 ou 25 heures.
