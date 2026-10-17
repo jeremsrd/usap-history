@@ -12,6 +12,7 @@
  * | Racing 92, 23 mars 2013 | Paris La Défense Arena | Colombes |
  * | Racing 92, 8 septembre 2013 | Paris La Défense Arena | Colombes |
  * | Stade Français, 22 septembre 2012 | Jean-Bouin | Charléty |
+ * | Stade Français, 4 mars 2005, 11 mars 2006, 8 mars 2008 | Charléty | Jean-Bouin |
  * | Lyon, 31 mars 2016 | Gerland | Matmut Stadium (Vénissieux) |
  * | Grenoble, 26 novembre 2004 | Stade des Alpes | Lesdiguières |
  * | Montpellier, 9 avril 2005, 12 novembre 2005, 11 novembre 2006 | GGL Stadium | Sabathé |
@@ -29,6 +30,14 @@
  * Carcassonne ou le Maurice-Trélut de Tarbes, déjà en base à ce compte.
  *
  * Le détail figure sur chaque ligne du tableau `HISTORIQUE`.
+ *
+ * **UNE PÉRIODE A DEUX BORNES.** La ligne de Charléty a d'abord été écrite
+ * sans début — « jusqu'en 2012-2013 » —, alors que sa source dit « de
+ * 2010-2011 à 2012-2013 » : tous les déplacements d'avant 2010 tombaient à
+ * Charléty. Vu le 17 octobre 2026 en reprenant 2002-2003, dont le calendrier
+ * de l'ancienne LNR nomme « Jean Bouin ». `from` porte désormais le début, et
+ * une ligne déjà écrite est remise à ses bornes. Les matchs sont corrigés par
+ * `fix-stades-stade-francais.ts`.
  *
  * CE QUI N'EST PAS ICI, ET POURQUOI BORDEAUX N'Y EST PAS. L'UBB a eu **deux
  * terrains à la fois** jusqu'en 2015, et non l'un après l'autre : il recevait
@@ -132,7 +141,7 @@ const STADES_A_CREER = [
  * Les bornes sont des **années de début de saison** : 2012 pour 2012-2013.
  * `until` est la dernière saison où le club recevait là, incluse.
  */
-const HISTORIQUE = [
+const HISTORIQUE: Array<{ club: string; stade: string; from?: number; until: number; source: string }> = [
   {
     club: "Racing 92",
     stade: "Stade Olympique Yves-du-Manoir",
@@ -145,6 +154,7 @@ const HISTORIQUE = [
   {
     club: "Stade Français",
     stade: "Stade Sébastien-Charléty",
+    from: 2010,
     until: 2012,
     source:
       "Jean-Bouin a été reconstruit de 2010 à 2013 et rouvert le 30 août 2013 ; " +
@@ -234,27 +244,38 @@ async function main() {
       console.log(`  ⚠ stade « ${h.stade} » introuvable${DRY_RUN ? " (créé hors simulation)" : ""}`);
       continue;
     }
+    const periode = `${h.from != null ? `de ${h.from}-${h.from + 1} ` : ""}jusqu'en ${h.until}-${h.until + 1}`;
     const deja = await prisma.opponentVenue.findFirst({
       where: { opponentId: club.id, venueId: stade.id },
     });
     if (deja) {
-      console.log(`  ${h.club} → ${h.stade} : déjà écrit`);
+      if (deja.fromSeason === (h.from ?? null) && deja.untilSeason === h.until && deja.source === h.source) {
+        console.log(`  ${h.club} → ${h.stade} : déjà écrit`);
+        continue;
+      }
+      console.log(`  ${h.club} → ${h.stade} : bornes ${deja.fromSeason ?? "…"}-${deja.untilSeason} → ${periode}${DRY_RUN ? " (à corriger)" : " : corrigé"}`);
+      if (!DRY_RUN) {
+        await prisma.opponentVenue.update({
+          where: { id: deja.id },
+          data: { fromSeason: h.from ?? null, untilSeason: h.until, source: h.source },
+        });
+      }
       continue;
     }
     if (DRY_RUN) {
-      console.log(`  ${h.club} → ${h.stade} jusqu'en ${h.until}-${h.until + 1} : à écrire`);
+      console.log(`  ${h.club} → ${h.stade} ${periode} : à écrire`);
       continue;
     }
     await prisma.opponentVenue.create({
       data: {
         opponentId: club.id,
         venueId: stade.id,
-        fromSeason: null,
+        fromSeason: h.from ?? null,
         untilSeason: h.until,
         source: h.source,
       },
     });
-    console.log(`  ${h.club} → ${h.stade} jusqu'en ${h.until}-${h.until + 1} : écrit`);
+    console.log(`  ${h.club} → ${h.stade} ${periode} : écrit`);
   }
 
   if (DRY_RUN) console.log("\nSimulation — relancer sans --dry pour appliquer.");

@@ -23,6 +23,19 @@
  * Perpignan-Toulouse au samedi 24 avril, celle de janvier 2005 au « Match
  * reporté au Mercredi 28 avril ». La plus tardive fait donc foi.
  *
+ * **MÊMES ADRESSES, AUTRES MOTS, D'UNE SAISON À L'AUTRE.** Sans `Cle=`,
+ * `CSR=16375` et `CSR=16378` rendent les résultats et le calendrier de la
+ * saison en cours au jour de la capture : 2001-2002 en 2002, 2002-2003 en
+ * 2003. Mais les phases n'y portent pas le même nom — « Match Aller »,
+ * « Play-offs », « Play-downs » en 2001-2002 ; « Phase régulière », « Phase
+ * de qualification », « Phases finales » en 2002-2003 — et `PHASES` les
+ * ramène aux quatre de 2003-2004.
+ *
+ * **AVANT 2003-2004, LE CALENDRIER NE NOMME QUE LE JOUR DE LA SEMAINE** :
+ * « Samedi (19h30), Aimé Giral ». Le quantième se retrouve dans l'en-tête
+ * de journée (`jourDeLaSemaine`) — « Vendredi » sous « 5/6 Avril 2003 »
+ * vaut le 4 avril —, et la date reste exacte : le jour est nommé.
+ *
  * **L'EN-TÊTE DE JOURNÉE N'EST PAS FIABLE POUR L'ANNÉE** : la Pro D2 de
  * 2003-2004 y écrit « 15ème Journée : 10/11 Janvier 2003 ». L'année se
  * déduit du mois et de la saison (`anneeDuMois`), jamais de l'en-tête.
@@ -124,6 +137,14 @@ export interface EntreeAncienne {
  * la page. Les doublons — la page des résultats répète parfois deux lignes
  * en fin de journée — sont retirés.
  */
+/** Les intitulés de phase de chaque saison, ramenés aux quatre de 2003-2004. */
+const PHASES: Array<[RegExp, PhaseAncienne]> = [
+  [/^(Phase (préliminaire|régulière)|Match (Aller|Retour))$/i, "préliminaire"],
+  [/^(Phase (qualificative|de qualification)|Play-offs)$/i, "qualificative"],
+  [/^Phases? finales?$/i, "finale"],
+  [/^(Phase de maintien|Play-downs)$/i, "maintien"],
+];
+
 export function lireTableau(brutes: string[]): EntreeAncienne[] {
   // La paire est parfois coupée en deux éléments : « Agen » puis « / Pau »
   // sur les résultats de 2003-2004, « Béziers / » puis « Dax » sur le
@@ -146,11 +167,13 @@ export function lireTableau(brutes: string[]): EntreeAncienne[] {
 
   for (let i = 0; i < lignes.length; i++) {
     const l = lignes[i];
-    const p = /^Phase (préliminaire|qualificative|finale|de maintien)$/i.exec(l);
-    if (p) {
-      const nouvelle = p[1].toLowerCase().replace("de maintien", "maintien") as PhaseAncienne;
+    const nouvelle = PHASES.find(([re]) => re.test(l))?.[1];
+    if (nouvelle) {
       // Les résultats répètent « Phase finale » sous « Finale : 26 Juin
-      // 2004 » : la répétition ne doit pas effacer le tour.
+      // 2004 », et 2001-2002 « Play-downs » avant chaque rencontre du
+      // maintien : la répétition ne doit effacer ni le tour ni la journée.
+      // « Match Aller » puis « Match Retour » restent une seule phase, dont
+      // les journées se suivent de 1 à 14.
       if (nouvelle !== phase) {
         phase = nouvelle;
         journee = null;
@@ -167,15 +190,19 @@ export function lireTableau(brutes: string[]): EntreeAncienne[] {
       poules = [];
       continue;
     }
-    const t = /^(Demi finales|Finale)\s*:\s*(.*)$/i.exec(l);
-    if (t) {
+    // « Demi finales : … », « Demi-finales: 31 mai 2003 », « Finale: 7 Juin
+    // 2003. », et en 2001-2002 « Demi finale » ou « Finale » tout court.
+    const t = /^(Demi[- ]finales?|Finale)\s*(?::\s*(.*?)\.?)?$/i.exec(l);
+    if (t && phase === "finale") {
       journee = null;
       tour = /^demi/i.test(t[1]) ? "Demi-finale" : "Finale";
-      enTete = t[2];
+      enTete = t[2] ?? "";
       poules = [];
       continue;
     }
-    const pl = /Poule ([A-Z0-9])\)?$/.exec(l);
+    // « Poule 1 », « Top 16 - Poule 2 », « Phase qualificative (Poule A) »,
+    // « Play-offs poule B ».
+    const pl = /poule ([A-Z0-9])\)?$/i.exec(l);
     if (pl) {
       poules.push(pl[1]);
       continue;
@@ -234,17 +261,75 @@ const deux = (n: number) => String(n).padStart(2, "0");
 export function lireCreneau(
   suite: string,
   startYear: number,
+  enTete?: string,
 ): { jour: string; heure: string | null; texte: string } | null {
   const d = new RegExp(
     `(?:lundi|mardi|mercredi|jeudi|vendredi|samedi|dimanche)\\s+(\\d{1,2})(?:er)?\\s+(${MOIS.join("|")})`,
     "i",
   ).exec(suite);
-  if (!d) return null;
-  const mois = MOIS.indexOf(d[2].toLowerCase()) + 1;
-  const jour = `${anneeDuMois(mois, startYear)}-${deux(mois)}-${deux(Number(d[1]))}`;
+  let jour: string | null = null;
+  if (d) {
+    const mois = MOIS.indexOf(d[2].toLowerCase()) + 1;
+    jour = `${anneeDuMois(mois, startYear)}-${deux(mois)}-${deux(Number(d[1]))}`;
+  } else if (enTete != null) {
+    // « Samedi (19h30), Aimé Giral » : le jour de la semaine seul.
+    const s = new RegExp(`^(?:match reporté au )?(${SEMAINE.join("|")})\\b`, "i").exec(suite);
+    if (s) jour = jourDeLaSemaine(enTete, SEMAINE.indexOf(s[1].toLowerCase()), startYear);
+  }
+  if (!jour) return null;
   const h = /(\d{1,2})\s*h\s*(\d{2})?|(\d{1,2}) heures/i.exec(suite);
   const heure = h ? `${deux(Number(h[1] ?? h[3]))}:${h[2] ?? "00"}` : null;
   return { jour, heure, texte: suite };
+}
+
+/** Dans l'ordre de `Date.getUTCDay()`. */
+const SEMAINE = ["dimanche", "lundi", "mardi", "mercredi", "jeudi", "vendredi", "samedi"];
+
+/**
+ * Les jours qu'un en-tête de journée nomme, en ISO : « 5/6 Avril 2003 »,
+ * « 1er / 2 mars 2003 », « 30 novembre / 1er décembre 2002 », « 31 Mai au
+ * 1er juin 2003 », « 23/24 et 28 Avril 2004 ». Chaque quantième prend le
+ * premier mois qui le suit.
+ */
+export function joursDeLEnTete(enTete: string, startYear: number): string[] {
+  const jetons = [...enTete.toLowerCase().matchAll(new RegExp(`(?<!\\d)(\\d{1,2})(?:er)?(?!\\d)|(${MOIS.join("|")})`, "g"))];
+  const jours: string[] = [];
+  let attente: number[] = [];
+  for (const j of jetons) {
+    if (j[1]) {
+      attente.push(Number(j[1]));
+      continue;
+    }
+    const mois = MOIS.indexOf(j[2]) + 1;
+    const annee = anneeDuMois(mois, startYear);
+    jours.push(...attente.map((q) => `${annee}-${deux(mois)}-${deux(q)}`));
+    attente = [];
+  }
+  return jours;
+}
+
+/**
+ * Le jour de la semaine `jourSemaine` (0 = dimanche) le plus proche des jours
+ * de l'en-tête, à trois jours au plus : « Vendredi » sous « 5/6 Avril 2003 »
+ * donne le 4 avril. `null` s'il n'y en a pas, ou s'il y en a deux à égale
+ * distance — on ne choisit pas au hasard.
+ */
+export function jourDeLaSemaine(enTete: string, jourSemaine: number, startYear: number): string | null {
+  const nommes = joursDeLEnTete(enTete, startYear).map((iso) => Date.parse(`${iso}T12:00:00Z`));
+  if (nommes.length === 0) return null;
+  const premier = Math.min(...nommes);
+  const dernier = Math.max(...nommes);
+  const JOUR = 86_400_000;
+  const candidats: Array<{ iso: string; ecart: number }> = [];
+  for (let t = premier - 3 * JOUR; t <= dernier + 3 * JOUR; t += JOUR) {
+    if (new Date(t).getUTCDay() !== jourSemaine) continue;
+    const ecart = t < premier ? premier - t : t > dernier ? t - dernier : 0;
+    candidats.push({ iso: new Date(t).toISOString().slice(0, 10), ecart });
+  }
+  candidats.sort((a, b) => a.ecart - b.ecart);
+  if (candidats.length === 0) return null;
+  if (candidats.length > 1 && candidats[0].ecart === candidats[1].ecart) return null;
+  return candidats[0].iso;
 }
 
 /**
@@ -255,11 +340,92 @@ export function lireCreneau(
  * **une date probable, jamais certaine**, à attester `PROBABLE`.
  */
 export function samediDeLEnTete(enTete: string, startYear: number): string | null {
-  const m = new RegExp(`^([\\d/ etr]+?)\\s+(${MOIS.join("|")})`, "i").exec(enTete.replace(/1er/g, "1"));
-  if (!m) return null;
-  const mois = MOIS.indexOf(m[2].toLowerCase()) + 1;
-  const annee = anneeDuMois(mois, startYear);
-  const jours = m[1].split(/[^\d]+/).filter(Boolean).map(Number);
-  const isos = jours.map((j) => `${annee}-${deux(mois)}-${deux(j)}`);
+  const isos = joursDeLEnTete(enTete, startYear);
   return isos.find((iso) => new Date(`${iso}T12:00:00Z`).getUTCDay() === 6) ?? isos[0] ?? null;
+}
+
+/**
+ * Les rencontres de la page de résultats de 2000-2001, `championnat/
+ * resultats2000_d1.shtm` — d'une tout autre forme que celles de `Menus.asp`.
+ *
+ * **AUCUNE DATE** : « 1ère » puis « Journée » sur deux lignes, et rien
+ * d'autre. Les deux poules y sont mêlées sous un même numéro de journée, la
+ * poule 2 (onze clubs, vingt-deux journées) portant une ligne « exempt X ».
+ * **Les noms sont coupés n'importe où** — « Perpignan / Stade » puis
+ * « Français », « Castres / Mont de » puis « Marsan », « Bègles Bordeaux/ »
+ * puis « Mont de Marsan » — : on recolle tout jusqu'à la ligne du score. La
+ * phase finale s'écrit « 1/4 », « de finale », « 1/2 », « finale », puis
+ * « Matchs de barrage » pour le maintien.
+ *
+ * Deux coquilles de la page sont redressées : « Pergignan » (5e journée) et
+ * « Stade-Français » (quart de finale).
+ */
+export function lireResultats2000(brutes: string[]): EntreeAncienne[] {
+  const entrees: EntreeAncienne[] = [];
+  const debut = brutes.indexOf("Matchs Aller");
+  if (debut < 0) throw new Error("LNR 2000-2001 : « Matchs Aller » introuvable");
+  let phase: PhaseAncienne = "préliminaire";
+  let journee: number | null = null;
+  let tour: string | null = null;
+  let morceaux: string[] = [];
+  const nom = (n: string) =>
+    n.replace(/\s+/g, " ").trim().replace(/^Pergignan$/, "Perpignan").replace(/^Stade-Français$/, "Stade Français");
+
+  for (let i = debut + 1; i < brutes.length; i++) {
+    const l = brutes[i];
+    const suivante = brutes[i + 1] ?? "";
+    const n = /^(\d+)(?:ère|ème|e)$/.exec(l);
+    if (n && suivante === "Journée") {
+      journee = Number(n[1]);
+      morceaux = [];
+      i++;
+      continue;
+    }
+    if (l === "Phase Finale") {
+      phase = "finale";
+      journee = null;
+      morceaux = [];
+      continue;
+    }
+    if (l === "1/4" && suivante === "de finale") {
+      tour = "Quart de finale";
+      morceaux = [];
+      i++;
+      continue;
+    }
+    if (l === "1/2" && suivante === "finale") {
+      tour = "Demi-finale";
+      morceaux = [];
+      i++;
+      continue;
+    }
+    if (l === "finale" && phase === "finale") {
+      tour = "Finale";
+      morceaux = [];
+      continue;
+    }
+    if (l === "Matchs de barrage") break;
+    if (/^(Matchs (Aller|Retour)|Poule \d|exempt .*)$/.test(l)) {
+      morceaux = [];
+      continue;
+    }
+    if (/^\d{1,3}-\d{1,3}$/.test(l)) {
+      const paire = /^(.+?)\s*\/\s*(.+)$/.exec(morceaux.join(" "));
+      morceaux = [];
+      if (!paire) continue;
+      entrees.push({
+        phase,
+        journee: phase === "préliminaire" ? journee : null,
+        tour: phase === "finale" ? tour : null,
+        poule: null,
+        enTete: "",
+        recevant: nom(paire[1]),
+        visiteur: nom(paire[2]),
+        suite: l,
+      });
+      continue;
+    }
+    morceaux.push(l);
+  }
+  return entrees;
 }

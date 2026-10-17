@@ -128,6 +128,17 @@ export const TERRAINS_PARTICULIERS: Record<string, string | null> = {
   // Wikipédia, concordants sur le lieu, la date et le score.
   "2004-06-20": "Stade de la Mosson",
   "2004-06-26": "Stade de France",
+  // **LE STADE FRANÇAIS A REÇU L'USAP TROIS FOIS AU STADE DE FRANCE**, en
+  // championnat, alors que son terrain était Jean-Bouin : le 13 mai 2007
+  // (12-11, 69 805 spectateurs), le 31 janvier 2009 (13-13, 79 122) et le
+  // 24 octobre 2009 (14-20, 76 972). Source : stades-spectateurs.com,
+  // « Records de spectateurs, Stade de France », que citent les pages de
+  // saison de la Wikipédia anglaise ; signalé par Jérémy le 17 octobre 2026
+  // pour 2009. Les scores concordent tous trois avec la base. Cf.
+  // fix-stades-stade-francais.ts.
+  "2007-05-13": "Stade de France",
+  "2009-01-31": "Stade de France",
+  "2009-10-24": "Stade de France",
   // J5 du Top 14 2026-2027, Racing 92 55-25 Perpignan du 3 octobre 2026,
   // reçue au **stade Dominique-Duvauchelle de Créteil** et non au Paris La
   // Défense Arena. Source : *L'Indépendant* du lendemain, qui donne le stade
