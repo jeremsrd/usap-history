@@ -2,7 +2,7 @@ import Link from "@/components/Lien";
 import Image from "next/image";
 import { JoueurCellule } from "@/components/JoueurCellule";
 import { prisma } from "@/lib/prisma";
-import { MATCH_JOUE, estJoue, lettreResultat } from "@/lib/matchs";
+import { MATCH_JOUE, estCouperet, estJoue, lettreResultat } from "@/lib/matchs";
 import { matchPoints } from "@/lib/scoring";
 import { PALMARES } from "@/lib/constants";
 import { formatDateFR } from "@/lib/utils";
@@ -183,6 +183,7 @@ export default async function Home({ params }: Props) {
           id: true,
           result: true,
           matchday: true,
+          round: true,
           scoreUsap: true,
           scoreOpponent: true,
           triesUsap: true,
@@ -196,12 +197,12 @@ export default async function Home({ params }: Props) {
   });
   // **LE BILAN CHIFFRÉ DE LA SAISON EN COURS**, à la demande de Jérémy le
   // 11 septembre 2026, à la place de la frise des lettres qu'il n'aimait pas
-  // ici. Sur le **championnat seul, phase régulière** — les rencontres de
-  // type CHAMPIONNAT qui portent une journée —, comme l'en-tête de la page de
-  // saison et le classement officiel. Les essais ne sont donnés que si la
-  // source les a dits sur chaque rencontre ; les points de classement
-  // viennent de `matchPoints()`, jamais d'un `4 × victoires` en dur.
-  const championnat = saison ? saison.matches.filter((m) => m.competition.type === "CHAMPIONNAT" && m.matchday != null) : [];
+  // ici. Sur le **championnat seul, hors phase finale** — les rencontres de
+  // type CHAMPIONNAT qui ne sont pas des couperets (`estCouperet`) —, comme
+  // l'en-tête de la page de saison et le classement officiel. Les essais ne
+  // sont donnés que si la source les a dits sur chaque rencontre ; les points
+  // de classement viennent de `matchPoints()`, jamais d'un `4 × victoires` en dur.
+  const championnat = saison ? saison.matches.filter((m) => m.competition.type === "CHAMPIONNAT" && !estCouperet(m)) : [];
   const jouesSaison = championnat.filter(estJoue);
   const bilanSaison = saison && {
     joues: jouesSaison.length,

@@ -286,9 +286,12 @@ export default async function SaisonDetailPage({ params }: Props) {
   );
   const classementPhrase = rang ? t("saison.classement", { division, rang }) : division;
 
-  // ---- Le bandeau de chiffres : championnat seul, phase régulière ----
-  // Les rencontres de type CHAMPIONNAT qui portent une journée, jouées —
-  // le périmètre du classement officiel et de l'en-tête de l'accueil. Tout
+  // ---- Le bandeau de chiffres : championnat seul, hors phase finale ----
+  // Les rencontres de type CHAMPIONNAT jouées qui ne sont pas des couperets
+  // (`estCouperet`) — le périmètre du classement officiel et de l'en-tête de
+  // l'accueil. La deuxième phase du Top 16 (2001-2004), des poules sans
+  // journée, en fait partie : ce sont des matchs de championnat, pas des
+  // éliminations directes, tranché par Jérémy le 17 octobre 2026. Tout
   // est compté sur les rencontres, non lu dans les agrégats de `Season` : la
   // saison en cours n'a pas encore les siens, et pour les saisons closes le
   // garde-fou de leur script a vérifié que les deux concordent. Deux
@@ -297,8 +300,8 @@ export default async function SaisonDetailPage({ params }: Props) {
   // classement, quand la saison n'a pas de total écrit — 2004-2005, dont
   // les neuf bonus offensifs sont introuvables, afficherait sinon un 0/3 et
   // un total faux avec le même aplomb que les autres.
-  const championnat = joues.filter((m) => m.competition.type === "CHAMPIONNAT" && m.matchday != null);
-  const aVenir = season.matches.filter((m) => !estJoue(m) && m.competition.type === "CHAMPIONNAT" && m.matchday != null).length;
+  const championnat = joues.filter((m) => m.competition.type === "CHAMPIONNAT" && !estCouperet(m));
+  const aVenir = season.matches.filter((m) => !estJoue(m) && m.competition.type === "CHAMPIONNAT" && !estCouperet(m)).length;
   const compter = (matchs: typeof championnat) => ({
     joues: matchs.length,
     victoires: matchs.filter((m) => m.result === "VICTOIRE").length,

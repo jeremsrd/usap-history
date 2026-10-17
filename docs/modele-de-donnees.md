@@ -40,6 +40,9 @@ que le schéma ne porte pas.
   terrains neutres et délocalisations. Un stade porte son **nom courant**.
 - Agrégats de `Season` : championnat seul, phase régulière, confrontés au
   classement officiel avant écriture.
+- Le bandeau de chiffres (page de saison, accueil) compte le championnat hors
+  couperets (`!estCouperet()`) : la deuxième phase du Top 16 (2001-2004), des
+  poules sans journée, y entre ; demi-finales et finales n'y entrent pas.
 - `date` est un instant UTC, et **se lit à l'heure de Paris** : `formatDateFR()`
   porte le fuseau depuis le 4 octobre 2026. Une rencontre à venir sans horaire
   (`kickoffTime` nul) est posée à minuit de Paris, soit 22 h ou 23 h UTC la
