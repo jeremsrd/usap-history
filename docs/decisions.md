@@ -49,3 +49,4 @@ le fichier de `docs/` indiqué.
 | 2026-10-17 | Faute de jour au calendrier de l'ancienne LNR : le samedi de la journée, attesté `PROBABLE` sur `Match.date` | scripts |
 | 2026-10-17 | 2000-2001, sans aucune date : date de journée estimée (page de saison de Biarritz), attestée `PROBABLE`, à corriger sur les vraies feuilles | scripts |
 | 2026-10-17 | Le CA Bordeaux-Bègles Gironde (2001-2003) est un adversaire distinct de l'UBB, née de sa fusion en 2006 | scripts |
+| 2026-10-17 | Le Top 16 commence en 2001-2002 ; 2000-2001 est en `PREMIERE_DIVISION`, compétition « 1ère division » | scripts |

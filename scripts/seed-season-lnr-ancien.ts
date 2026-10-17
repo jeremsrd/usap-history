@@ -50,6 +50,11 @@
  * était exempt : c'est le samedi à mi-chemin des deux journées voisines, plus
  * fragile encore. Le quart de finale prend la date de la Wikipédia française.
  *
+ * **LA DIVISION ET LA COMPÉTITION SUIVENT LE NOM D'ALORS.** Le Top 16 naît
+ * en 2001-2002 : avant, c'est la première division, en deux poules. Chaque
+ * fiche porte donc sa `division` — reposée sur la saison à chaque passage —
+ * et sa compétition, créée si la base ne la connaît pas.
+ *
  * **BARÈME 3/2/1, SANS BONUS** jusqu'en 2003-2004 : les classements de
  * Wikipédia portent `bonus=non`.
  *
@@ -59,7 +64,7 @@
  *
  * Usage : npx tsx scripts/seed-season-lnr-ancien.ts --saison=AAAA-AAAA [--dry]
  */
-import { PrismaClient, MatchResult, Prisma } from "@prisma/client";
+import { PrismaClient, MatchResult, Prisma, Division, CompetitionType } from "@prisma/client";
 import { mkdirSync, existsSync, readFileSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
 import {
@@ -104,6 +109,8 @@ interface Totaux {
 
 interface FicheSaison {
   startYear: number;
+  division: Division;
+  competition: { shortName: string; name: string };
   /** La forme de la page de résultats : `Menus.asp` (2001-2004) ou celle de 2000-2001. */
   lecteur?: "2000";
   resultats: Capture;
@@ -120,9 +127,13 @@ interface FicheSaison {
 
 const MENUS = "http://www.lnr.fr/Menus.asp?CR=16354";
 
+const TOP_16 = { shortName: "Top 16", name: "Championnat de France Top 16" };
+
 const SAISONS: Record<string, FicheSaison> = {
   "2003-2004": {
     startYear: 2003,
+    division: Division.TOP_16,
+    competition: TOP_16,
     resultats: { url: "http://lnr.fr/Menus.asp?CR=16354&CSR=16375&Cle=45654", instantane: "20051015164146" },
     calendriers: [
       { url: `${MENUS}&CSR=16378&Cle=45356`, instantane: "20031106232245" },
@@ -138,6 +149,8 @@ const SAISONS: Record<string, FicheSaison> = {
   // Sans `Cle=`, l'adresse rend la saison en cours au jour de la capture.
   "2002-2003": {
     startYear: 2002,
+    division: Division.TOP_16,
+    competition: TOP_16,
     resultats: { url: `${MENUS}&CSR=16375`, instantane: "20030826111837" },
     calendriers: [
       { url: `${MENUS}&CSR=16378`, instantane: "20021017172327" },
@@ -153,6 +166,8 @@ const SAISONS: Record<string, FicheSaison> = {
   },
   "2001-2002": {
     startYear: 2001,
+    division: Division.TOP_16,
+    competition: TOP_16,
     resultats: { url: `${MENUS}&CSR=16375`, instantane: "20020701013431" },
     calendriers: [
       { url: "http://www.lnr.fr/championnat/calendrier.asp", instantane: "20011122154931" },
@@ -167,6 +182,8 @@ const SAISONS: Record<string, FicheSaison> = {
   },
   "2000-2001": {
     startYear: 2000,
+    division: Division.PREMIERE_DIVISION,
+    competition: { shortName: "1ère division", name: "Championnat de France de 1ère division" },
     lecteur: "2000",
     resultats: { url: "http://www.lnr.fr/championnat/resultats2000_d1.shtm", instantane: "20011224134443" },
     calendriers: [],
@@ -653,7 +670,19 @@ async function main() {
   console.log(`=== Saison ${SAISON}${DRY_RUN ? " (simulation)" : ""} ===\n`);
 
   const saison = await prisma.season.findFirstOrThrow({ where: { label: SAISON } });
-  const competition = await prisma.competition.findFirstOrThrow({ where: { shortName: "Top 16" } });
+  if (saison.division !== FICHE.division) {
+    console.log(`  [saison] division ${saison.division} → ${FICHE.division}${DRY_RUN ? " (à corriger)" : ""}`);
+    if (!DRY_RUN) await prisma.season.update({ where: { id: saison.id }, data: { division: FICHE.division } });
+  }
+  let competition = await prisma.competition.findFirst({ where: { shortName: FICHE.competition.shortName } });
+  if (!competition) {
+    console.log(`  [compétition] à créer : ${FICHE.competition.name}${DRY_RUN ? "" : " — créée"}`);
+    competition = DRY_RUN
+      ? { id: "", name: FICHE.competition.name, shortName: FICHE.competition.shortName, type: CompetitionType.CHAMPIONNAT, isActive: false, createdAt: new Date() }
+      : await prisma.competition.create({
+          data: { ...FICHE.competition, type: CompetitionType.CHAMPIONNAT, isActive: false },
+        });
+  }
 
   const echecs: string[] = [];
   const wiki = await wikitexte(FICHE.wikipedia);
@@ -699,7 +728,7 @@ async function main() {
 
     const isKnockout = r.matchday == null && !(r.round ?? "").startsWith("Poule");
     const bonus = computeBonuses({
-      competitionShortName: "Top 16",
+      competitionShortName: FICHE.competition.shortName,
       seasonStartYear: START_YEAR,
       isKnockout,
       scoreUsap: r.scoreUsap,
