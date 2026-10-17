@@ -88,6 +88,34 @@ npx tsx scripts/set-video.ts --match=AAAA-MM-JJ --url="…"          #   quand l
 npx tsx scripts/purger-cache.ts                                    # SANS QUOI RIEN NE PARAÎT AVANT
 ```                                                                #   sept jours — cf. « Le cache des pages »
 
+**Pour une rencontre de coupe d'Europe**, la chaîne est la même, à la
+source près : l'EPCR au lieu de la LNR, et `seed-cup-sheet.ts` à la place de
+`seed-opponent-sheet.ts`. La composition n'entre pas la veille — l'EPCR ne
+la publie qu'avec la feuille —, `seed-lineup` passe donc toujours :
+
+```bash
+npx tsx scripts/set-score.ts --match=AAAA-MM-JJ [--dry]            # score, compteurs, arbitre — l'EPCR
+npx tsx scripts/seed-lineup.ts AAAA-MM-JJ [--dry]                  # les 46 lignes
+npx tsx scripts/seed-cup-sheet.ts --match=AAAA-MM-JJ [--dry]       # réalisations, minutes, affluence, mi-temps
+npx tsx scripts/seed-chronologie.ts AAAA-MM-JJ [--dry]
+```
+
+`set-annexe.ts` n'a rien à faire ici : l'affluence et la mi-temps viennent de
+la feuille officielle, et le journal ne sert qu'à les recouper.
+`set-score.ts` ne connaissait que les journées du championnat jusqu'au
+17 octobre 2026 : la J1 de Challenge 2026-2027, à Newport, a attendu son
+score faute de quoi l'écrire, et `seed-cup-sheet` refuse une feuille qu'il
+ne peut confronter à aucun score. **Avant d'écrire la composition, regarder
+les fiches à créer** : l'EPCR y écrivait « Fine Inisi » quand la base, depuis
+décembre 2025, portait « Fili Inisi » — même identifiant Opta, 214615 ; la
+fiche a été renommée par `rename-player.ts` avant `seed-lineup`, sans quoi
+un doublon naissait. **Et relire la fiche publiée, nom à nom** : le même
+soir, « Wyn Jones », pilier n°17 des Dragons, s'est rattaché à « Alun Wyn
+Jones », deuxième-ligne de l'Ospreys en 2008-2009, par la règle du second
+prénom ajouté — rien ne l'a signalé, seule la fiche le montrait.
+`reassign-match-player.ts` a rendu le dossard à une fiche « Wyn Jones »,
+dont le nom exact passe désormais en premier.
+
 **`set-score.ts` écrit aussi les compteurs de réalisations** — `triesUsap`,
 `conversionsUsap` et les leurs, des deux camps —, lus sur les faits de la
 feuille comme le font les scripts de saison, et seulement quand ils

@@ -215,6 +215,11 @@ const DISTINCTS: [string, string][] = [
   //             source, et rien ne permet de les réunir.
   ["Nicolas Mas", "Ugo Mas"],
   ["Kevin Boulogne", "Jordan Boulogne"],
+  // Venue avec la J1 de Challenge 2026-2027, arbitrée le 17 octobre 2026 sur
+  // les feuilles : deux n°21 des Dragons à dix-huit ans d'écart. Andy, une
+  // feuille, le 19 janvier 2008 ; Rhodri, demi de mêlée, identifiant Opta
+  // 224767 à l'EPCR sur ses deux feuilles, le 7 décembre 2025 et à Newport.
+  ["Rhodri Williams", "Andy Williams"],
 ];
 
 const ARBITREES = new Set(

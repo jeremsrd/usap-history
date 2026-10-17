@@ -75,6 +75,9 @@ npx tsx scripts/set-video.ts --match=… --url="…" [--dry]
 npx tsx scripts/purger-cache.ts
 ```
 
+Coupe d'Europe : `set-score` lit alors l'EPCR, `seed-lineup` passe toujours,
+et `seed-cup-sheet.ts --match=…` remplace `seed-opponent-sheet` et `set-annexe`.
+
 Un échec de ces scripts est presque toujours un garde-fou qui a raison :
 lire `docs/saisie/reprendre-une-saison.md` (« Ce qui casse ») avant de forcer.
 
