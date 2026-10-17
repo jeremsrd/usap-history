@@ -4,8 +4,8 @@
  *
  * POURQUOI. `Opponent.venueId` ne porte qu'un terrain, celui d'aujourd'hui, et
  * la déduction du lieu d'un déplacement s'en trouve fausse dès qu'on remonte.
- * Trois clubs sont concernés sur les quarante-trois que l'USAP a visités, et
- * quatre matchs en tout :
+ * Cinq clubs sont concernés sur les quarante-trois que l'USAP a visités, et
+ * huit matchs en tout :
  *
  * | Match | En base avant | En réalité |
  * |---|---|---|
@@ -13,6 +13,14 @@
  * | Racing 92, 8 septembre 2013 | Paris La Défense Arena | Colombes |
  * | Stade Français, 22 septembre 2012 | Jean-Bouin | Charléty |
  * | Lyon, 31 mars 2016 | Gerland | Matmut Stadium (Vénissieux) |
+ * | Grenoble, 26 novembre 2004 | Stade des Alpes | Lesdiguières |
+ * | Montpellier, 9 avril 2005, 12 novembre 2005, 11 novembre 2006 | GGL Stadium | Sabathé |
+ *
+ * Les quatre derniers ont été vus le 17 octobre 2026 en reprenant 2003-2004 :
+ * le calendrier de l'ancienne LNR y nomme « Lesdiguières » et « Sabathé » là
+ * où la base déduisait deux stades qui n'existaient pas encore. Ils sont
+ * appliqués par `fix-stades-sabathe-lesdiguieres.ts`, `fix-match-venues.ts`
+ * ne complétant que les matchs sans lieu.
  *
  * LES SOURCES, ET CE QU'ELLES VALENT. Aucune n'est officielle au sens du
  * projet : ni la LNR ni l'EPCR ne donnent le stade d'une rencontre, et le
@@ -31,9 +39,12 @@
  * s'écartent du terrain d'aujourd'hui. Le stade Moga est créé ici pour
  * qu'elles aient où pointer.
  *
- * Deux clubs ont **changé de nom de stade sans déménager**, et n'ont rien à
- * faire ici non plus : Montpellier (Yves-du-Manoir, puis Altrad Stadium, puis
- * GGL Stadium) et Castres (Pierre-Antoine, puis Pierre-Fabre).
+ * Deux clubs ont **changé de nom de stade sans déménager** : Castres
+ * (Pierre-Antoine, puis Pierre-Fabre) et Béziers (la Méditerranée, puis
+ * Raoul-Barrière) n'ont rien à faire ici. Montpellier, lui, a les deux : son
+ * stade d'aujourd'hui a été Yves-du-Manoir, puis Altrad Stadium, puis GGL
+ * Stadium — un seul terrain, ouvert en 2007 —, mais il recevait **avant** à
+ * Sabathé, et c'est un déménagement.
  *
  * Usage :
  *   npx tsx scripts/seed-stades-historiques.ts --dry
@@ -97,6 +108,22 @@ const STADES_A_CREER = [
       "Terrain du LOU de 2011 à 2016-2017, avant le Matmut Stadium de Gerland, " +
       "occupé à partir de la saison 2017-2018.",
   },
+  {
+    nom: "Stade Lesdiguières",
+    ville: "Grenoble",
+    pays: "FR",
+    notes:
+      "Terrain du FC Grenoble de 1921 à 2014, ouvert en 1911 ; le club reçoit " +
+      "au Stade des Alpes depuis 2014, et y jouait certaines affiches depuis 2011.",
+  },
+  {
+    nom: "Stade Sabathé",
+    ville: "Montpellier",
+    pays: "FR",
+    notes:
+      "Terrain du rugby à XV montpelliérain jusqu'en 2006-2007, inauguré le " +
+      "11 novembre 1930 ; dernier match du MHR en Top 14 contre Biarritz, 39-29.",
+  },
 ];
 
 /**
@@ -130,6 +157,29 @@ const HISTORIQUE = [
     source:
       "Le LOU a pris possession du Matmut Stadium de Gerland pour la saison " +
       "2017-2018 ; il recevait au Matmut Stadium de Vénissieux depuis 2011.",
+  },
+  {
+    // Borné à 2007-2008 et non à 2013-2014, dernière saison de résident : le
+    // Stade des Alpes n'existait pas avant février 2008, mais le FCG y a joué
+    // des affiches de 2011 à 2014 (premier match le 27 novembre 2011). Ces
+    // saisons-là, comme l'UBB, sont un fait par match : les déplacements de
+    // l'USAP du 6 octobre 2012 et du 25 janvier 2014 restent à vérifier.
+    club: "Grenoble",
+    stade: "Stade Lesdiguières",
+    until: 2007,
+    source:
+      "Wikipédia, « Stade Lesdiguières » (club résident de 1921 à 2014) et « Stade des Alpes » " +
+      "(inauguré en février 2008, FCG résident depuis 2014) ; le calendrier 2003-2004 de " +
+      "l'ancienne LNR place Grenoble-Perpignan du 24 octobre 2003 à Lesdiguières.",
+  },
+  {
+    club: "Montpellier",
+    stade: "Stade Sabathé",
+    until: 2006,
+    source:
+      "Wikipédia, « Stade Sabathé » (le MHR rejoint Yves-du-Manoir en 2007) et « Septeo Stadium » " +
+      "(premier match officiel le 27 octobre 2007, Montpellier-USAP 19-12, d'après Midi libre) ; " +
+      "le calendrier 2003-2004 de l'ancienne LNR place Montpellier-Perpignan du 29 novembre 2003 à Sabathé.",
   },
 ];
 

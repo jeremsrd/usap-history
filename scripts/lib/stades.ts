@@ -121,6 +121,13 @@ export const TERRAINS_PARTICULIERS: Record<string, string | null> = {
   // désigne Biarritz recevant et ne publie ni composition ni fait sur cette
   // rencontre.
   "2006-06-02": "Stade de la Mosson",
+  // Demi-finale du 20 juin 2004, Perpignan 18-16 Toulouse, au stade de la
+  // Mosson de Montpellier ; finale du 26 juin 2004, Perpignan 20-38 Stade
+  // français, au Stade de France. Sources : le calendrier 2003-2004 de
+  // l'ancienne LNR (« La Mosson, Montpellier », « Stade de France ») et
+  // Wikipédia, concordants sur le lieu, la date et le score.
+  "2004-06-20": "Stade de la Mosson",
+  "2004-06-26": "Stade de France",
   // J5 du Top 14 2026-2027, Racing 92 55-25 Perpignan du 3 octobre 2026,
   // reçue au **stade Dominique-Duvauchelle de Créteil** et non au Paris La
   // Défense Arena. Source : *L'Indépendant* du lendemain, qui donne le stade
