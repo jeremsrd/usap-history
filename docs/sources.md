@@ -222,7 +222,7 @@ rapprochement de noms, donc aucune erreur d'identité possible.
 #### L'ERC, dans la Wayback Machine — coupes d'Europe d'avant 2014
 
 `ercrugby.com` a disparu avec l'ERC ; l'archive en garde une part. Lecteurs
-dans `scripts/lib/erc.ts`, dont l'en-tête décrit les quatre formes de page.
+dans `scripts/lib/erc.ts`, dont l'en-tête décrit les cinq formes de page.
 
 - **2004-2005 : `cup/25_NNNN.php`**, atteintes par les liens
   `cup/matchpage.php?fixid=N` du calendrier, que l'archive garde en 302.
@@ -239,6 +239,15 @@ dans `scripts/lib/erc.ts`, dont l'en-tête décrit les quatre formes de page.
   (`siteclosed`) ; le site Vignette qui suit (`vsite/…`) n'a presque pas été
   capturé. Les archives de l'EPCR gardent en revanche de nombreux comptes
   rendus USAP de 1997 à 2003, au score dans le slug (`neath-33-51-perpignan`).
+- **2001-2002 : `english/fixturesresultspage/NNNNN.html`**, l'ancien site,
+  lu par `lireCompteRendu2001`. Quatre rencontres USAP sur six archivées
+  (11044, 11018, 11055, 11077) ; 11348 et 11351 (janvier 2002) sont en 404.
+  La liste des résultats : `english/jspfiles/fixturesresultslist.jsp?season=
+  2001/2002&tournament=Heineken+Cup&pagetype=resultspage`. **Les remplaçants
+  n'ont pas de numéro**, seuls les entrés figurent, entre parenthèses après
+  le remplacé ; les prénoms sont des initiales, avec des coquilles (« T
+  Lacrois », « J Danielli », « M Koniek ») ; jour, stade et arbitre, ni heure
+  ni affluence — l'heure se prend au calendrier de l'ERC.
 - **La CDX d'abord** : elle dit en une requête si une page a jamais été
   capturée. Résoudre les redirections sans elle a fait refuser l'archive
   après une cinquantaine de requêtes le 18 octobre 2026.

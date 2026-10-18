@@ -12,8 +12,14 @@
  * centaine de requêtes rapprochées. D'où quatre secondes entre deux pages, et
  * un cache sur disque : une page archivée ne change plus.
  *
- * Quatre formats, selon l'époque du site :
+ * Cinq formats, selon l'époque du site :
  *
+ *   - **2001-2002, les pages `english/fixturesresultspage/NNNNN.html`** de
+ *     l'ancien site, en latin-1 et presque toutes en prose : réalisations par
+ *     camp sans nom de club, deux quinze dans l'ordre 15 ; 14 à 11 ; 10, 9 ;
+ *     1 à 8, les entrants **sans numéro** entre parenthèses, prénoms en
+ *     initiales. Jour, stade et arbitre, mais ni heure ni affluence : cf.
+ *     `lireCompteRendu2001` ;
  *   - **2004-2005, les pages `cup/25_NNNN.php`**, sous un autre répertoire
  *     que `eng/`, vers lesquelles renvoient les `cup/matchpage.php?fixid=N`
  *     du calendrier : un titre, le score, « Stade, Friday 22nd October
@@ -56,6 +62,8 @@ import { baremeDeMatch, pointsDesRealisations } from "../../src/lib/scoring";
 
 /** Les pages de l'ERC vont de 2007 à 2013 : le barème d'aujourd'hui, écrit une seule fois. */
 const BAREME_ERC = baremeDeMatch(2007);
+/** Celui de 2001-2002 : le même, mais demandé pour sa saison. */
+const BAREME_2001 = baremeDeMatch(2001);
 
 const RACINE = "http://www.ercrugby.com/eng/";
 const ARCHIVE = "http://web.archive.org/web/";
@@ -73,8 +81,9 @@ export async function lirePageArchivee(page: string, instantane: string): Promis
   const fichier = join(CACHE, `${instantane}-${page.replace(/[^\w.-]/g, "_")}`);
   if (existsSync(fichier)) return readFileSync(fichier);
 
-  // Les pages de 2004-2005 sont sous `cup/`, et s'écrivent ainsi dans `page`.
-  const url = page.startsWith("cup/")
+  // Les pages de 2004-2005 sont sous `cup/`, celles de 2001-2002 sous
+  // `english/`, et s'écrivent ainsi dans `page`.
+  const url = page.startsWith("cup/") || page.startsWith("english/")
     ? `${ARCHIVE}${instantane}id_/http://www.ercrugby.com/${page}`
     : `${ARCHIVE}${instantane}id_/${RACINE}${page}`;
   let derniere = "";
@@ -644,6 +653,270 @@ export function lireCompteRendu2004(brut: Buffer): ErcCompteRendu2004 {
     domicile: equipe(nomDomicile, domicile, score?.[1]),
     exterieur: equipe(nomExterieur, exterieur, score?.[2]),
   };
+}
+
+// =============================================================================
+// LES COMPTES RENDUS DE 2001-2002
+// =============================================================================
+
+export interface ErcJoueur2001 extends Omit<EspnJoueur, "numero"> {
+  /** Dossard des titulaires, de 1 à 15 ; `null` pour un remplaçant, que la page ne numérote pas. */
+  numero: number | null;
+  /** Le dossard du titulaire dont il prend la place, pour un remplaçant. */
+  remplace: number | null;
+  /** Minute d'entrée d'un remplaçant. */
+  entree: number | null;
+  /** Minute de sortie : remplacé à demeure, ou fin d'un remplacement temporaire. */
+  sortie: number | null;
+  /** Minute de chaque exclusion temporaire. */
+  minutesJaunes: number[];
+}
+
+export interface ErcEquipe2001 {
+  nom: string;
+  score: number;
+  essaisSansAuteur: number;
+  joueurs: ErcJoueur2001[];
+}
+
+export interface ErcCompteRendu2001 {
+  titre: string;
+  /** « 29 September 2001 » : le jour ISO. La page ne donne pas l'heure. */
+  jour: string;
+  stade: string | null;
+  /** « A Ireland (Scotland) » : l'initiale et le nom, et la fédération à part. */
+  arbitre: string | null;
+  arbitrePays: string | null;
+  domicile: ErcEquipe2001;
+  exterieur: ErcEquipe2001;
+}
+
+/** L'ordre dans lequel la page écrit un quinze : arrière, trois-quarts, demis, avants. */
+const ORDRE_2001 = [15, 14, 13, 12, 11, 10, 9, 1, 2, 3, 4, 5, 6, 7, 8];
+const GROUPES_2001 = [1, 4, 2, 8];
+
+const ETIQUETTES_2001: Record<string, "essais" | "transformations" | "penalites" | "drops"> = {
+  "Tries": "essais",
+  "Conversions": "transformations",
+  "Penalties": "penalites",
+  "Drop Goals": "drops",
+};
+
+/** Pour rapprocher deux écritures d'un nom : sans accents, sans casse, sans ponctuation. */
+function cle(nom: string): string {
+  return nom.normalize("NFD").replace(/[̀-ͯ]/g, "").toLowerCase().replace(/[^a-z]/g, "");
+}
+
+/** Coupe sur un séparateur hors parenthèses : « A (B 64-71, C 78), D ». */
+function couperHorsParentheses(s: string, separateur: string): string[] {
+  const morceaux: string[] = [];
+  let profondeur = 0;
+  let courant = "";
+  for (const c of s) {
+    if (c === "(") profondeur++;
+    if (c === ")") profondeur--;
+    if (c === separateur && profondeur === 0) {
+      morceaux.push(courant.trim());
+      courant = "";
+    } else courant += c;
+  }
+  morceaux.push(courant.trim());
+  return morceaux.filter((m) => m !== "");
+}
+
+/** « J-M Souverbie », « G le Corvec » : l'initiale, puis tout le reste fait le nom. */
+function initialeEtNom(s: string): { firstName: string; lastName: string } {
+  const [prenom, ...reste] = s.trim().split(/\s+/);
+  return { firstName: prenom, lastName: reste.join(" ") };
+}
+
+function joueur2001(nom: string, numero: number | null): ErcJoueur2001 {
+  return {
+    id: 0,
+    ...initialeEtNom(nom),
+    numero,
+    isStarter: numero != null,
+    isCaptain: false,
+    posteEspn: null,
+    essais: 0,
+    transformations: 0,
+    penalites: 0,
+    drops: 0,
+    points: 0,
+    jaunes: 0,
+    rouges: 0,
+    remplace: null,
+    entree: null,
+    sortie: null,
+    minutesJaunes: [],
+  };
+}
+
+/**
+ * « J-M Souverbie (F Cermeno 69); F Sid, …; R Peillard, …, S Derouex (capt)
+ * (G le Corvec 65), R Jechoux (N Mas 64-71, G le Corvec 78), … » : le quinze
+ * dans l'ordre 15 ; 14 à 11 ; 10, 9 ; 1 à 8, chaque entrant entre parenthèses
+ * après le joueur dont il prend la place.
+ *
+ * Un entrant « 64-71 » est temporaire : le titulaire revient, et ne sort pas.
+ * Un entrant à demeure remplace l'occupant du moment, titulaire ou entrant
+ * avant lui.
+ */
+function lireListe2001(liste: string, titre: string): ErcJoueur2001[] {
+  const groupes = couperHorsParentheses(liste, ";");
+  const tailles = groupes.map((g) => couperHorsParentheses(g, ",").length);
+  if (tailles.join() !== GROUPES_2001.join()) {
+    throw new Error(`${titre} : un quinze en groupes de ${tailles.join("/")}, et non 1/4/2/8`);
+  }
+  const joueurs: ErcJoueur2001[] = [];
+  couperHorsParentheses(liste.replace(/;/g, ","), ",").forEach((entree, i) => {
+    const numero = ORDRE_2001[i];
+    const parentheses = [...entree.matchAll(/\(([^)]*)\)/g)].map((m) => m[1].trim());
+    const titulaire = joueur2001(entree.replace(/\([^)]*\)/g, " "), numero);
+    joueurs.push(titulaire);
+    let occupant = titulaire;
+    for (const p of parentheses) {
+      if (/^capt$/i.test(p)) {
+        titulaire.isCaptain = true;
+        continue;
+      }
+      for (const m of couperHorsParentheses(p, ",")) {
+        const r = /^(.+?)\s+(\d+)(?:\s*-\s*(\d+))?$/.exec(m);
+        if (!r) throw new Error(`${titre} : remplacement illisible « ${m} »`);
+        const entrant = joueur2001(r[1], null);
+        entrant.remplace = numero;
+        entrant.entree = Number(r[2]);
+        joueurs.push(entrant);
+        if (r[3] != null) {
+          entrant.sortie = Number(r[3]);
+        } else {
+          occupant.sortie = entrant.entree;
+          occupant = entrant;
+        }
+      }
+    }
+  });
+  return joueurs;
+}
+
+/** Le joueur d'une liste que désigne « J Orengo », « Pascal Meya » : l'initiale et le nom, ou le nom seul s'il est unique. */
+function retrouver(joueurs: ErcJoueur2001[], nom: string): ErcJoueur2001 | undefined {
+  const { firstName, lastName } = initialeEtNom(nom);
+  const memeNom = joueurs.filter((j) => cle(j.lastName) === cle(lastName));
+  const memeInitiale = memeNom.filter((j) => cle(j.firstName)[0] === cle(firstName)[0]);
+  if (memeInitiale.length === 1) return memeInitiale[0];
+  return memeNom.length === 1 ? memeNom[0] : undefined;
+}
+
+/**
+ * Le compte rendu de 2001-2002, `english/fixturesresultspage/NNNNN.html`, sur
+ * l'ancien site de l'ERC. La page est en latin-1 et s'écrit presque toute en
+ * prose :
+ *
+ *   - un bandeau « Perpignan / 56 - 3 / Ghial Amatori &Calvisano » ;
+ *   - les réalisations, un bloc par camp, **le recevant à gauche**, sans nom
+ *     de club : « Tries: J Orengo 2, L Loustau, …, Pen Try », puis
+ *     « Conversions: », « Penalties: », « Drop Goals: » ;
+ *   - le jour, le stade, et l'arbitre avec sa fédération ; ni heure, ni
+ *     affluence, ni mi-temps ;
+ *   - les deux quinze, recevant d'abord, cf. `lireListe2001` : **les
+ *     remplaçants n'ont pas de numéro**, et seuls ceux qui sont entrés
+ *     figurent ;
+ *   - parfois « Sin-Binned: Pascal Meya 61, Robbie MacDonald 75 », en noms
+ *     complets et sans camp.
+ *
+ * Les prénoms ne sont que des initiales, et la page a ses coquilles — « T
+ * Lacrois » pour Lacroix, « J Danielli » pour Daniell : le rapprochement
+ * avec la base est à l'appelant.
+ *
+ * **Contrôle** : les points des réalisations doivent retomber sur le score
+ * des deux camps, et chaque buteur ou exclu se retrouver dans un quinze ou
+ * parmi les entrants. Sinon, la lecture lève.
+ */
+export function lireCompteRendu2001(brut: Buffer): ErcCompteRendu2001 {
+  const html = brut.toString("latin1");
+  const bandeau = [...html.matchAll(/class="white_txt">([^<]*)</g)].map((m) => texte(m[1]));
+  if (bandeau.length < 3) throw new Error("aucun bandeau de score sur la page");
+  const [nomDomicile, scoreTexte, nomExterieur] = bandeau;
+  const score = /^(\d+)\s*-\s*(\d+)$/.exec(scoreTexte);
+  if (!score) throw new Error(`score illisible « ${scoreTexte} »`);
+  const titre = `${nomDomicile} ${score[1]}-${score[2]} ${nomExterieur}`;
+
+  // Les deux blocs de réalisations sont les cellules `MainBody` de la table
+  // de 555 pixels, le recevant puis le visiteur ; les deux autres n'y portent
+  // qu'un `div` d'espacement. Un camp qui n'a rien marqué garde sa cellule.
+  const tableRealisations = /<table[^>]*width="555">([\s\S]*?)<\/table>/.exec(html)?.[1] ?? "";
+  const blocs = [...tableRealisations.matchAll(/<td[^>]*class="MainBody"[^>]*>([\s\S]*?)<\/td>/g)]
+    .map((m) => m[1])
+    .filter((b) => !/<div/.test(b));
+  if (blocs.length !== 2) throw new Error(`${titre} : ${blocs.length} bloc(s) de réalisations, et non deux`);
+
+  const ligneDate = texte(/<b>Date:\s*<img[^>]*><\/b>[\s\S]*?<span class="MainHeader">([\s\S]*?)<\/span>/.exec(html)?.[1] ?? "");
+  const date = /^(\d{1,2})\s+(\w+)\s+(\d{4})$/.exec(ligneDate ?? "");
+  if (!date || !MOIS.includes(date[2])) throw new Error(`${titre} : date illisible « ${ligneDate} »`);
+  const jour = `${date[3]}-${String(MOIS.indexOf(date[2]) + 1).padStart(2, "0")}-${date[1].padStart(2, "0")}`;
+  // Le stade et l'arbitre sont dans un `div`, après une image d'espacement.
+  const cellule = (etiquette: string) =>
+    texte(new RegExp(`${etiquette}:\\s*<img[^>]*></b></span>\\s*</div>\\s*</td><td[^>]*>\\s*<div[^>]*>([\\s\\S]*?)</div>`).exec(html)?.[1] ?? "") || null;
+  const stade = cellule("Venue");
+  const ligneArbitre = cellule("Referee");
+  const arbitreLu = /^(.*?)\s*(?:\(([^)]*)\))?$/.exec(ligneArbitre ?? "");
+  const arbitre = arbitreLu?.[1] || null;
+  const arbitrePays = arbitreLu?.[2] ?? null;
+
+  // « Perpignan :</b>: F Cermeno … » — le deux-points peut être doublé.
+  const listes = [...html.matchAll(/<span class="MainBody"><b>([^<]*?)\s*:<\/b>([\s\S]*?)(?:<br>|<\/span>)/g)].map((m) => ({
+    club: texte(m[1]),
+    liste: texte(m[2]).replace(/^[:\s]+/, ""),
+  })).filter((l) => l.club !== "Sin-Binned");
+  if (listes.length !== 2) throw new Error(`${titre} : ${listes.length} composition(s), et non deux`);
+  if (listes[0].club !== nomDomicile || listes[1].club !== nomExterieur) {
+    throw new Error(`${titre} : compositions de « ${listes[0].club} » et « ${listes[1].club} »`);
+  }
+  const joueursDomicile = lireListe2001(listes[0].liste, titre);
+  const joueursExterieur = lireListe2001(listes[1].liste, titre);
+
+  const equipe = (nom: string, joueurs: ErcJoueur2001[], bloc: string, scoreEquipe: number): ErcEquipe2001 => {
+    let essaisSansAuteur = 0;
+    for (const [, etiquette, contenu] of bloc.matchAll(/<b>([^<]*?):<\/b>([^<]*)/g)) {
+      const champ = ETIQUETTES_2001[etiquette.trim()];
+      if (!champ) throw new Error(`${titre} : réalisation inconnue « ${etiquette} »`);
+      for (const morceau of contenu.split(",").map((s) => texte(s)).filter(Boolean)) {
+        const m = /^(.+?)(?:\s+(\d+))?$/.exec(morceau)!;
+        const nombreDe = m[2] != null ? Number(m[2]) : 1;
+        if (champ === "essais" && /^pen(?:alty)? try$/i.test(m[1])) {
+          essaisSansAuteur += nombreDe;
+          continue;
+        }
+        const j = retrouver(joueurs, m[1]);
+        if (!j) throw new Error(`${titre} : « ${m[1]} » marque pour ${nom} sans figurer dans sa composition`);
+        j[champ] += nombreDe;
+      }
+    }
+    for (const j of joueurs) j.points = pointsDesRealisations(j, BAREME_2001);
+    const marques = joueurs.reduce((s, j) => s + j.points, 0) + essaisSansAuteur * BAREME_2001.essai;
+    if (marques !== scoreEquipe) throw new Error(`${titre} : ${nom} marque ${marques} points pour un score de ${scoreEquipe}`);
+    return { nom, score: scoreEquipe, essaisSansAuteur, joueurs };
+  };
+  const domicile = equipe(nomDomicile, joueursDomicile, blocs[0], Number(score[1]));
+  const exterieur = equipe(nomExterieur, joueursExterieur, blocs[1], Number(score[2]));
+
+  // « Sin-Binned: Pascal Meya 61, Robbie MacDonald 75 », sur fond jaune.
+  for (const [, contenu] of html.matchAll(/<td bgcolor="#FFFF33"[^>]*>([\s\S]*?)<\/td>/g)) {
+    const t = texte(contenu);
+    const exclus = /^Sin-Binned:\s*(.*)$/.exec(t);
+    if (!exclus) throw new Error(`${titre} : encart inconnu « ${t} »`);
+    for (const morceau of exclus[1].split(",").map((s) => s.trim()).filter(Boolean)) {
+      const m = /^(.+?)\s+(\d+)$/.exec(morceau);
+      if (!m) throw new Error(`${titre} : exclusion illisible « ${morceau} »`);
+      const candidats = [retrouver(domicile.joueurs, m[1]), retrouver(exterieur.joueurs, m[1])].filter((j) => j != null);
+      if (candidats.length !== 1) throw new Error(`${titre} : « ${m[1]} » exclu, retrouvé ${candidats.length} fois`);
+      candidats[0].jaunes++;
+      candidats[0].minutesJaunes.push(Number(m[2]));
+    }
+  }
+
+  return { titre, jour, stade, arbitre, arbitrePays, domicile, exterieur };
 }
 
 function echapper(s: string): string {
