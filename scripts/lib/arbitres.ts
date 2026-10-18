@@ -46,6 +46,12 @@ export function separerNom(complet: string): { firstName: string; lastName: stri
  * français aligne assez d'Adrien pour qu'un rapprochement au prénom confonde
  * Adrien Marbot et Adrien Descottes.
  *
+ * **Le patronyme seul rapproche deux frères** : les jumeaux écossais Malcolm
+ * et David Changleng, l'un à Calvisano le 22 octobre 2005, l'autre à
+ * Aimé-Giral le 22 janvier 2006, d'après l'ERC, ont ainsi fini sur une même
+ * fiche le 18 octobre 2026. Les deux fiches existent désormais, et le nom
+ * exact, qui passe en premier, les départage.
+ *
  * Renvoie `null` en simulation quand la fiche serait à créer : l'appelant n'a
  * alors rien à écrire. Lève si plusieurs fiches se disputent le nom — deux
  * arbitres homonymes demandent un arbitrage, sans jeu de mots.

@@ -87,6 +87,13 @@ confrontations avec l'USAP, et de gérer les joueurs passés par les deux camps
   Vuidravuwalu) ou prénom d'usage sans lettre commune avec l'état civil
   (« Paddy » pour Patrick, « Richie » pour Richard). L'abréviation ordinaire
   n'a pas besoin de la table, le préfixe suffit.
+
+  Et deux hommes au **même nom complet** — John Kelly, ailier de Munster en
+  2006 et deuxième ligne de Newcastle en 2024 — relèvent de
+  `HOMONYMES_PARFAITS` de `joueurs.ts` : chacun y est désigné par ses clubs,
+  la feuille est rattachée à la fiche de son club ou en reçoit une neuve, et
+  `chercherJoueur` lève si l'appelant ne donne pas le club.
+  `detect-duplicate-players.ts` lit la même table.
 - `players` contient donc majoritairement des adversaires : 3 516 fiches ont
   joué **contre** l'USAP, 325 sous son maillot — 161 des deux côtés. C'est
   normal. Les pages de liste filtrent déjà sur `isOpponent: false`.

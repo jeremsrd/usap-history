@@ -79,6 +79,11 @@ export const TERRAINS_PARTICULIERS: Record<string, string | null> = {
   // au **Stadium MK** de Milton Keynes, terrain neutre choisi par l'ERC.
   // Sources : Wikipédia et ESPN.
   "2011-05-01": "Stadium MK",
+  // Quart de finale de Heineken Cup 2006, Munster-Perpignan du 1er avril
+  // 2006, reçu par Munster à **Lansdowne Road**, à Dublin, et non à Thomond
+  // Park, trop petit pour 48 500 spectateurs. Sources : le compte rendu de
+  // l'ERC et Wikipédia, qui donnent le même stade et la même affluence.
+  "2006-04-01": "Lansdowne Road",
   // Finale de Pro D2 2018, Perpignan-Grenoble. Source : Jérémy, présent au
   // stade. La feuille de la LNR désigne un recevant et ne nomme aucun lieu.
   "2018-05-06": "Stade Ernest-Wallon",

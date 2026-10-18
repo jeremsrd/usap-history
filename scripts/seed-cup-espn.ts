@@ -36,7 +36,12 @@
  * adversaire, score —, et les comptes rendus de l'ERC sont la seule source
  * des feuilles. Le score de Wikipédia sert de contrôle à celui de l'ERC, la
  * poule à tous les deux. Une rencontre sans compte rendu s'écrit avec son
- * jour et son score, attestée `CONCORDANT`. C'est le cas de 2006-2007.
+ * jour et son score, attestée `CONCORDANT`. C'est le cas de 2006-2007 ;
+ * 2005-2006 a ses sept comptes rendus.
+ *
+ * Un joueur dont le nom complet est celui d'un autre homme déjà en base se
+ * départage par le club de la feuille : `HOMONYMES_PARFAITS` de
+ * `lib/joueurs.ts`.
  *
  * Usage :
  *   npx tsx scripts/seed-cup-espn.ts 2008-2009 --dry
@@ -164,6 +169,92 @@ interface Campagne {
 }
 
 const CAMPAGNES: Record<string, Campagne> = {
+  /**
+   * Heineken Cup 2005-2006, poule 2 : Perpignan, Leeds Tykes, Cardiff
+   * Blues, Calvisano. **Première de poule** avec 23 points, deux bonus
+   * offensifs et un défensif, la seule défaite d'un point à Headingley ;
+   * quart de finale perdu 10-19 contre Munster, reçu à Lansdowne Road.
+   * Classement et calendrier d'après la Wikipédia francophone, « Coupe
+   * d'Europe de rugby à XV 2005-2006 » ; arbitre et affluence du quart
+   * d'après l'anglophone, « 2005–06 Heineken Cup », que l'ERC redonne.
+   *
+   * **Les sept comptes rendus de l'ERC sont archivés**, de la forme de
+   * 2006-2007 (`lireCompteRendu2006`), avec leur chronologie complète.
+   * Leurs adresses ne viennent pas de la CDX, hors service le 18 octobre
+   * 2026, mais du tableau « Results so far » de Cardiff-Perpignan
+   * (12_4626), qui renvoie à la page de chaque rencontre des deux clubs.
+   *
+   * Stades : l'Arms Park, 12 125 places aujourd'hui, est le terrain des
+   * Blues hors 2009-2012 ; Headingley, 19 700 places pour sa tribune de
+   * rugby ; San Michele, 5 000 places. Tous trois d'après Wikipédia, sous le
+   * nom que l'ERC écrit.
+   */
+  "2005-2006": {
+    ligue: "champions-cup",
+    competition: "H-Cup",
+    nouveauxAdversaires: [
+      { name: "Leeds Tykes", shortName: "Leeds", city: "Leeds", pays: "ENG" },
+      { name: "Rugby Calvisano", shortName: "Calvisano", city: "Calvisano", pays: "IT" },
+    ],
+    terrains: [
+      { club: "Cardiff", stade: "Cardiff Arms Park", ville: "Cardiff", capacite: 12125 },
+      { club: "Leeds", stade: "Headingley Stadium", ville: "Leeds", capacite: 19700 },
+      { club: "Calvisano", stade: "Centro Sportivo San Michele", ville: "Calvisano", capacite: 5000 },
+    ],
+    // Lansdowne Road, démoli en 2007 : 48 000 places d'après Wikipédia.
+    terrainsNeutres: [{ stade: "Lansdowne Road", ville: "Dublin", capacite: 48000 }],
+    poule: {
+      joues: 6,
+      victoires: 5,
+      nuls: 0,
+      defaites: 1,
+      essaisPour: 20,
+      essaisContre: 5,
+      pour: 160,
+      contre: 52,
+      bonusOffensifs: 2,
+      bonusDefensifs: 1,
+      points: 23,
+    },
+    phaseFinale: [
+      {
+        tour: "Quart de finale",
+        adversaire: "Munster",
+        scoreUsap: 10,
+        scoreOpponent: 19,
+        arbitre: "Nigel Whitehouse",
+        affluence: 48500,
+      },
+    ],
+    calendrier: [
+      { jour: "2005-10-22", tour: "Poule J1", adversaire: "Calvisano", isHome: false, scoreUsap: 25, scoreOpponent: 6 },
+      { jour: "2005-10-28", tour: "Poule J2", adversaire: "Cardiff Blues", isHome: true, scoreUsap: 37, scoreOpponent: 14 },
+      { jour: "2005-12-11", tour: "Poule J3", adversaire: "Leeds Tykes", isHome: false, scoreUsap: 20, scoreOpponent: 21, decalage: -1 },
+      { jour: "2005-12-17", tour: "Poule J4", adversaire: "Leeds Tykes", isHome: true, scoreUsap: 12, scoreOpponent: 8 },
+      { jour: "2006-01-14", tour: "Poule J5", adversaire: "Cardiff Blues", isHome: false, scoreUsap: 21, scoreOpponent: 3, decalage: -1 },
+      { jour: "2006-01-22", tour: "Poule J6", adversaire: "Calvisano", isHome: true, scoreUsap: 45, scoreOpponent: 0 },
+      { jour: "2006-04-01", tour: "Quart de finale", adversaire: "Munster", isHome: false, scoreUsap: 10, scoreOpponent: 19, decalage: -1 },
+    ],
+    identites: {
+      // Le deuxième ligne de Leeds, n°5 les 11 et 17 décembre 2005, passé aux
+      // Wasps l'été suivant : la fiche que 2006-2007 lui a déjà donnée.
+      "Tom Palmer": { firstName: "Thomas Philip", lastName: "Palmer" },
+      // Une lettre de trop chez l'ERC : « Fredericio » n'est pas un prénom.
+      // Federico Pucciariello, pilier international italien, seul de ce nom
+      // en base, que la LNR écrit en toutes lettres à Bourgoin en 2004.
+      "Fredericio Pucciariello": { firstName: "Federico", lastName: "Pucciariello" },
+    },
+    erc: {
+      "2005-10-22": { page: "12_1108.php", instantane: "20060618" },
+      "2005-10-28": { page: "12_1119.php", instantane: "20060618" },
+      "2005-12-11": { page: "12_1135.php", instantane: "20060618" },
+      "2005-12-17": { page: "12_4691.php", instantane: "20060618" },
+      "2006-01-14": { page: "12_4626.php", instantane: "20060618" },
+      "2006-01-22": { page: "12_4820.php", instantane: "20060618" },
+      "2006-04-01": { page: "12_4920.php", instantane: "20060618" },
+    },
+    note: "Heineken Cup, poule 2 — première, quart de finaliste",
+  },
   /**
    * Heineken Cup 2006-2007, poule 1 : Wasps, Perpignan, Castres, Trévise.
    * **Deuxième**, à cinq points des Wasps, futurs vainqueurs : pas de phase
@@ -1311,7 +1402,7 @@ async function resoudreCamp(
   for (const j of equipe.joueurs) {
     const playerId = await trouverOuCreerJoueur(
       prisma,
-      { firstName: j.firstName, lastName: j.lastName, numero: j.numero },
+      { firstName: j.firstName, lastName: j.lastName, numero: j.numero, club: isOpponent ? camp : "USAP" },
       { dryRun: DRY_RUN || !creer, journal: creer ? (m) => console.log(m) : () => {} },
     );
     // Le poste du banc ne se déduit pas du numéro : on reprend celui de la

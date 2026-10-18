@@ -101,7 +101,9 @@ export const CLUBS_ESPN: Record<string, string> = {
   "Benetton Treviso": "Benetton",
   "Bizkaia Gernika RT": "Gernika",
   "Bordeaux Begles": "UBB",
-  // Les noms de l'ERC en 2006-2007, faute d'ESPN : cf. `seed-cup-espn.ts`.
+  // Les noms de l'ERC en 2005-2006 et 2006-2007, faute d'ESPN : cf. `seed-cup-espn.ts`.
+  Calvisano: "Calvisano",
+  "Cardiff Blues": "Cardiff",
   "Castres Olympique": "Castres",
   "Cavalieri Prato": "Cavalieri Prato",
   Connacht: "Connacht",
@@ -109,6 +111,7 @@ export const CLUBS_ESPN: Record<string, string> = {
   Edinburgh: "Edinburgh",
   "Exeter Chiefs": "Exeter",
   "Gloucester Rugby": "Gloucester",
+  "Leeds Tykes": "Leeds",
   "Leicester Tigers": "Leicester",
   "London Irish": "London Irish",
   "London Wasps": "Wasps",

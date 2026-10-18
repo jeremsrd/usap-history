@@ -14,8 +14,12 @@
  *
  * Trois formats, selon l'époque du site :
  *
- *   - **2006-2007, les comptes rendus `eng/12_NNNN.php`** déjà, mais d'une
- *     autre forme : cf. `lireCompteRendu2006`, plus bas ;
+ *   - **2005-2006 et 2006-2007, les comptes rendus `eng/12_NNNN.php`** déjà,
+ *     mais d'une autre forme : cf. `lireCompteRendu2006`, plus bas. En
+ *     2005-2006, l'en-tête écrit le nom des clubs sans lien, et le drop se
+ *     dit « Drop kick ». Les adresses de 2005-2006 se retrouvent sans la CDX :
+ *     le tableau « Results so far » d'un compte rendu renvoie à la page de
+ *     chaque rencontre des deux clubs ;
  *   - **2007-2008, les comptes rendus `eng/12_NNNN.php`** : une table
  *     `matchteams` où chaque ligne porte un joueur de chaque camp sous le
  *     même numéro — le recevant à gauche avec ses colonnes P D C T, le
@@ -404,6 +408,8 @@ const TYPES_2006: Record<string, ErcTypeEvenement> = {
   "Penalty kick": "penalite",
   "Drop goal": "drop",
   "Drop Goal": "drop",
+  // 2005-2006
+  "Drop kick": "drop",
 };
 
 const MOIS = ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"];
@@ -435,8 +441,9 @@ export function lireCompteRendu2006(brut: Buffer): ErcCompteRendu2006 {
   const titre = texte(/<td class="headline"[^>]*>([\s\S]*?)<\/td>/.exec(article)?.[1] ?? "");
 
   const info =/<table class="matchinfo[\s\S]*?<\/table>/.exec(html)?.[0] ?? "";
-  const nomDomicile = texte(/<td class="homelogo">[\s\S]*?<br \/><a[^>]*>([^<]*)<\/a>/.exec(info)?.[1] ?? "");
-  const nomExterieur = texte(/<td class="awaylogo">[\s\S]*?<br \/><a[^>]*>([^<]*)<\/a>/.exec(info)?.[1] ?? "");
+  // En 2005-2006, le nom du club suit le logo sans lien vers sa fiche.
+  const nomDomicile = texte(/<td class="homelogo">[\s\S]*?<br \/>(?:<a[^>]*>)?([^<]*)/.exec(info)?.[1] ?? "");
+  const nomExterieur = texte(/<td class="awaylogo">[\s\S]*?<br \/>(?:<a[^>]*>)?([^<]*)/.exec(info)?.[1] ?? "");
   const score = /<td class="score"[^>]*>\s*(\d+)\s*-\s*(\d+)/.exec(info);
   const lignesInfo = [...info.matchAll(/<td class="info"[^>]*>([\s\S]*?)<\/td>/g)].map((m) => m[1]);
   let stade: string | null = null;

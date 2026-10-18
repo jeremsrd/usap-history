@@ -54,5 +54,7 @@ le fichier de `docs/` indiqué.
 | 2026-10-18 | Agrégats de saison du Top 16 à deux phases (2001-2004) : les deux classements additionnés, points compris, sans la phase finale | modele-de-donnees |
 | 2026-10-18 | Coupe d'Europe sans ESPN (avant 2007-2008) : calendrier de Wikipédia, feuilles de l'ERC ; un match sans compte rendu s'écrit avec son score seul, attesté `CONCORDANT` | scripts |
 | 2026-10-18 | Wasps : un seul adversaire, nom d'aujourd'hui, à Adams Park (High Wycombe) pour 2006-2007 | scripts |
+| 2026-10-18 | Homonymes parfaits (même nom complet, deux hommes) : fiches distinctes, départagées par le club de la feuille (`HOMONYMES_PARFAITS`) ; John Kelly et Chris Jones les premiers | saisie/identites |
+| 2026-10-18 | Malcolm et David Changleng, jumeaux, sont deux arbitres ; Lansdowne Road est un terrain particulier (quart 2006 reçu par Munster) | scripts |
 | 2026-10-18 | `finalRanking` de 2001-2004 : rang dans la poule qualificative (2000-2001 : poule de la phase régulière) | modele-de-donnees |
 | 2026-10-18 | 2004-2005 : agrégats écrits sans les bonus offensifs (`null`), points repris du classement si les neuf manquants expliquent l'écart | modele-de-donnees |

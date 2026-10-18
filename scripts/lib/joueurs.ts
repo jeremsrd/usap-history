@@ -43,6 +43,39 @@ export interface JoueurOfficiel {
   lastName: string;
   /** Numéro de maillot, seulement pour fabriquer un slug provisoire unique. */
   numero?: number;
+  /**
+   * Le club de la feuille, « USAP » ou le `shortName` de l'adversaire. Ne
+   * sert qu'à départager les `HOMONYMES_PARFAITS`.
+   */
+  club?: string;
+}
+
+/**
+ * **Deux hommes, un même nom complet** : le rapprochement sur le nom exact,
+ * d'ordinaire le plus sûr qui soit, les réunirait. Chacun est désigné ici par
+ * les clubs où il a joué contre l'USAP — `shortName`, ou « USAP » —, et une
+ * feuille qui porte ce nom est rattachée à la fiche de son club, ou en reçoit
+ * une neuve. `detect-duplicate-players.ts` lit la même table.
+ *
+ * Vérifiée à la main comme `NOMS_DUSAGE` : y ajouter un nom, c'est affirmer
+ * que ce sont deux personnes, et que les clubs les séparent.
+ *
+ *   John Kelly   l'ailier n°14 de Munster au quart de finale de Heineken Cup
+ *                du 1er avril 2006, d'après l'ERC, et le deuxième ligne de
+ *                Newcastle du 21 janvier 2024 : dix-huit ans, deux postes.
+ *   Chris Jones  le centre n°12 de Leeds les 11 et 17 décembre 2005, d'après
+ *                l'ERC, et le deuxième ligne de Worcester de décembre 2012,
+ *                d'après ESPN, que la base a toujours vu en deuxième ligne.
+ */
+export const HOMONYMES_PARFAITS: Record<string, string[][]> = {
+  "John Kelly": [["Munster"], ["Newcastle"]],
+  "Chris Jones": [["Leeds"], ["Worcester"]],
+};
+
+/** L'homonyme parfait que désigne ce nom complet, une fois normalisé. */
+export function homonymeParfait(nomComplet: string): string[][] | null {
+  const cle = Object.keys(HOMONYMES_PARFAITS).find((n) => normalize(n) === normalize(nomComplet));
+  return cle ? HOMONYMES_PARFAITS[cle] : null;
 }
 
 /**
@@ -72,6 +105,38 @@ export async function chercherJoueur(
   journal: (message: string) => void = (m) => console.log(m),
 ): Promise<string | null> {
   const nomCherche = `${officiel.firstName} ${officiel.lastName}`;
+
+  // Un homonyme parfait se départage par le club de la feuille, et par lui
+  // seul : la fiche du même nom qui a joué pour l'un des clubs de cet homme,
+  // ou aucune — l'appelant en crée une.
+  const groupes = homonymeParfait(nomCherche);
+  if (groupes) {
+    const groupe = groupes.find((g) => officiel.club != null && g.includes(officiel.club));
+    if (!groupe) {
+      throw new Error(
+        `« ${nomCherche} » est un homonyme parfait (HOMONYMES_PARFAITS) : ` +
+          `le club de la feuille, « ${officiel.club ?? "non donné"} », ne désigne aucun des deux hommes`,
+      );
+    }
+    const fiches = await prisma.player.findMany({
+      select: {
+        id: true,
+        firstName: true,
+        lastName: true,
+        matchAppearances: { select: { isOpponent: true, match: { select: { opponent: { select: { shortName: true } } } } } },
+      },
+      where: { lastName: { equals: officiel.lastName, mode: "insensitive" } },
+    });
+    const siennes = fiches.filter(
+      (f) =>
+        normalize(`${f.firstName} ${f.lastName}`) === normalize(nomCherche) &&
+        f.matchAppearances.some((l) => groupe.includes(l.isOpponent ? (l.match.opponent.shortName ?? "") : "USAP")),
+    );
+    if (siennes.length > 1) throw new Error(`« ${nomCherche} » : ${siennes.length} fiches pour le même homme`);
+    if (siennes.length === 0) journal(`    [homonyme parfait] « ${nomCherche} » de ${groupe.join(", ")} : pas encore de fiche`);
+    return siennes[0]?.id ?? null;
+  }
+
   const tous = await prisma.player.findMany({
     select: { id: true, firstName: true, lastName: true },
   });

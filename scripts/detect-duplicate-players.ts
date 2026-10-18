@@ -21,7 +21,8 @@
  * **Sur quoi il s'appuie**, dans l'ordre de force :
  *
  *   CERTAIN   deux fiches au nom complet identique une fois normalisé. Rien à
- *             arbitrer : c'est le même nom écrit deux fois
+ *             arbitrer : c'est le même nom écrit deux fois — sauf les
+ *             `HOMONYMES_PARFAITS` de `lib/joueurs.ts`, que leurs clubs séparent
  *   FORT      même patronyme, jamais sur la même feuille, **même club**, et
  *             même dossard ou même poste. C'est la signature du doublon né
  *             d'un import : un homme, deux écritures de son prénom
@@ -50,6 +51,7 @@
 
 import { PrismaClient } from "@prisma/client";
 import { normalize } from "./lib/noms";
+import { homonymeParfait } from "./lib/joueurs";
 
 const prisma = new PrismaClient();
 
@@ -220,6 +222,10 @@ const DISTINCTS: [string, string][] = [
   // feuille, le 19 janvier 2008 ; Rhodri, demi de mêlée, identifiant Opta
   // 224767 à l'EPCR sur ses deux feuilles, le 7 décembre 2025 et à Newport.
   ["Rhodri Williams", "Andy Williams"],
+  // Venue avec la H Cup 2005-2006, le 18 octobre 2026 : deux n°22 de Cardiff
+  // à vingt ans d'écart, chacun écrit en toutes lettres par sa feuille — Lee
+  // par l'ERC en octobre 2005 et janvier 2006, Ben par l'EPCR en janvier 2025.
+  ["Ben Thomas", "Lee Thomas"],
 ];
 
 const ARBITREES = new Set(
@@ -266,6 +272,10 @@ async function main() {
       match: { select: { opponentId: true } },
     },
   });
+
+  const clubsParId = new Map(
+    (await prisma.opponent.findMany({ select: { id: true, shortName: true } })).map((o) => [o.id, o.shortName ?? o.id]),
+  );
 
   const fiches = new Map<string, Fiche>(
     joueurs.map((j) => [
@@ -315,6 +325,15 @@ async function main() {
         const nomComplet = (f: Fiche) => normalize(`${f.firstName} ${f.lastName}`);
         if (ARBITREES.has(`${nomComplet(a)}|${nomComplet(b)}`)) continue;
         if (nomComplet(a) === nomComplet(b)) {
+          // Un homonyme parfait arbitré : deux fiches dont chacune ne joue
+          // que pour les clubs d'un seul des deux hommes, et pas du même.
+          const groupes = homonymeParfait(`${a.firstName} ${a.lastName}`);
+          const groupeDe = (f: Fiche) => {
+            const clubs = [...f.clubs].map((c) => (c === "USAP" ? c : (clubsParId.get(c) ?? c)));
+            const g = groupes?.findIndex((g) => clubs.length > 0 && clubs.every((c) => g.includes(c)));
+            return g == null || g < 0 ? null : g;
+          };
+          if (groupes && groupeDe(a) != null && groupeDe(b) != null && groupeDe(a) !== groupeDe(b)) continue;
           paires.push({ force: "CERTAIN", a, b, preuve: "nom complet identique une fois normalisé" });
           continue;
         }
