@@ -52,4 +52,5 @@ le fichier de `docs/` indiqué.
 | 2026-10-17 | Le Top 16 commence en 2001-2002 ; 2000-2001 est en `PREMIERE_DIVISION`, compétition « 1ère division » | scripts |
 | 2026-10-17 | Le bandeau de saison compte la deuxième phase du Top 16 (poules sans journée), pas la phase finale | pages |
 | 2026-10-18 | Agrégats de saison du Top 16 à deux phases (2001-2004) : les deux classements additionnés, points compris, sans la phase finale | modele-de-donnees |
+| 2026-10-18 | `finalRanking` de 2001-2004 : rang dans la poule qualificative (2000-2001 : poule de la phase régulière) | modele-de-donnees |
 | 2026-10-18 | 2004-2005 : agrégats écrits sans les bonus offensifs (`null`), points repris du classement si les neuf manquants expliquent l'écart | modele-de-donnees |

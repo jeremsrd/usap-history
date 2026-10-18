@@ -121,6 +121,11 @@ interface FicheSaison {
   pouleQualificative: string;
   /** Totaux de l'USAP selon les classements de Wikipédia, barème 3/2/1. */
   classements: { préliminaire: Totaux; qualificative?: Totaux };
+  /**
+   * Rang de l'USAP dans la poule de sa dernière phase avant les couperets —
+   * la qualificative s'il y en a une —, selon Wikipédia : c'est `finalRanking`.
+   */
+  rang: number;
   /** Faute de calendrier : la page Wikipédia d'un club qui date ses journées. */
   datesDeJournee?: string;
 }
@@ -145,6 +150,7 @@ const SAISONS: Record<string, FicheSaison> = {
       préliminaire: { wins: 9, draws: 0, losses: 5, pointsFor: 357, pointsAgainst: 284, points: 32 },
       qualificative: { wins: 5, draws: 0, losses: 1, pointsFor: 169, pointsAgainst: 75, points: 16 },
     },
+    rang: 1,
   },
   // Sans `Cle=`, l'adresse rend la saison en cours au jour de la capture.
   "2002-2003": {
@@ -163,6 +169,7 @@ const SAISONS: Record<string, FicheSaison> = {
       préliminaire: { wins: 8, draws: 0, losses: 6, pointsFor: 326, pointsAgainst: 208, points: 30 },
       qualificative: { wins: 2, draws: 0, losses: 4, pointsFor: 119, pointsAgainst: 136, points: 10 },
     },
+    rang: 3,
   },
   "2001-2002": {
     startYear: 2001,
@@ -179,6 +186,7 @@ const SAISONS: Record<string, FicheSaison> = {
       préliminaire: { wins: 11, draws: 0, losses: 3, pointsFor: 413, pointsAgainst: 313, points: 36 },
       qualificative: { wins: 2, draws: 0, losses: 4, pointsFor: 127, pointsAgainst: 154, points: 10 },
     },
+    rang: 3,
   },
   "2000-2001": {
     startYear: 2000,
@@ -192,6 +200,7 @@ const SAISONS: Record<string, FicheSaison> = {
     classements: {
       préliminaire: { wins: 11, draws: 0, losses: 7, pointsFor: 492, pointsAgainst: 452, points: 40 },
     },
+    rang: 3,
     datesDeJournee: "Saison_2000-2001_du_Biarritz_olympique",
   },
 };
@@ -835,8 +844,20 @@ async function main() {
       `${agregats.pointsFor}-${agregats.pointsAgainst}, ${agregats.totalPoints} pts` +
       (DRY_RUN ? " (à écrire)" : echecs.length ? " — non écrits" : ""),
   );
+  // Le rang se confronte quand Wikipédia écrit son classement en modèle
+  // `Cls Rugby` (2001-2004) : une ligne de l'USAP à ce rang, avec les points
+  // de la dernière phase. Le tableau en HTML de 2000-2001 ne se lit pas ainsi.
+  const lignesCls = [...wiki.matchAll(/\{\{Cls Rugby \| p=(\d+) \| club=ru Perpignan[^}]*?pts=(\d+)/g)];
+  if (lignesCls.length > 0) {
+    const ok = lignesCls.some((l) => Number(l[1]) === FICHE.rang && Number(l[2]) === phases[phases.length - 1].points);
+    if (!ok) echecs.push(`rang ${FICHE.rang} : absent des classements de Wikipédia`);
+  }
+  console.log(
+    `  [saison] ${FICHE.rang}e de sa dernière poule` +
+      (lignesCls.length > 0 ? " — confronté à Wikipédia" : " — non confronté (tableau HTML)"),
+  );
   if (!DRY_RUN && echecs.length === 0) {
-    await prisma.season.update({ where: { id: saison.id }, data: agregats });
+    await prisma.season.update({ where: { id: saison.id }, data: { ...agregats, finalRanking: FICHE.rang } });
     await attester(prisma, {
       entite: "Season",
       entiteId: saison.id,
@@ -846,7 +867,7 @@ async function main() {
       sourceUrl: `https://fr.wikipedia.org/wiki/${FICHE.wikipedia}`,
       note:
         phases.length > 1
-          ? "Somme des deux phases, phase finale exclue ; chacune retombe sur les rencontres de la LNR."
+          ? "Somme des deux phases, phase finale exclue ; chacune retombe sur les rencontres de la LNR. Rang : celui de la poule qualificative."
           : "Phase préliminaire, phase finale exclue ; elle retombe sur les rencontres de la LNR.",
       decidePar: "Jérémy",
     });

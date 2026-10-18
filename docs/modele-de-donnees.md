@@ -42,7 +42,9 @@ que le schéma ne porte pas.
   classement officiel avant écriture. Le Top 16 à deux phases (2001-2004)
   additionne les deux classements, points compris ; la phase finale n'entre
   jamais. En 2004-2005, `bonusOffensif` est `null` (aucune source) et
-  `totalPoints` est repris du classement.
+  `totalPoints` est repris du classement. `finalRanking` est le rang de la
+  phase régulière, avant les couperets ; de 2000 à 2004, un rang de poule —
+  celle de la phase qualificative s'il y en a une.
 - Le bandeau de chiffres (page de saison, accueil) compte le championnat hors
   couperets (`!estCouperet()`) : la deuxième phase du Top 16 (2001-2004), des
   poules sans journée, y entre ; demi-finales et finales n'y entrent pas.
