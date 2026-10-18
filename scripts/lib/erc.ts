@@ -12,8 +12,10 @@
  * centaine de requêtes rapprochées. D'où quatre secondes entre deux pages, et
  * un cache sur disque : une page archivée ne change plus.
  *
- * Deux formats, selon l'époque du site :
+ * Trois formats, selon l'époque du site :
  *
+ *   - **2006-2007, les comptes rendus `eng/12_NNNN.php`** déjà, mais d'une
+ *     autre forme : cf. `lireCompteRendu2006`, plus bas ;
  *   - **2007-2008, les comptes rendus `eng/12_NNNN.php`** : une table
  *     `matchteams` où chaque ligne porte un joueur de chaque camp sous le
  *     même numéro — le recevant à gauche avec ses colonnes P D C T, le
@@ -384,6 +386,160 @@ export function lireMatchCentre(brut: Buffer): ErcMatchCentre {
     exterieur: equipe(nomExterieur, exterieurJoueurs, score?.[2], false),
     evenements,
     essaisDePenaliteMinutes: [orphelines(true), orphelines(false)],
+  };
+}
+
+// =============================================================================
+// LES COMPTES RENDUS DE 2006-2007
+// =============================================================================
+
+export interface ErcCompteRendu2006 extends ErcMatchCentre {
+  /** « Saturday 21st October 2006, 14:00 » : le jour ISO et l'heure locale du stade. */
+  coupDEnvoi: { jour: string; heure: string } | null;
+}
+
+const TYPES_2006: Record<string, ErcTypeEvenement> = {
+  Try: "essai",
+  Conversion: "transformation",
+  "Penalty kick": "penalite",
+  "Drop goal": "drop",
+  "Drop Goal": "drop",
+};
+
+const MOIS = ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"];
+
+/**
+ * Le compte rendu de 2006-2007, `eng/12_NNNN.php` comme en 2007-2008 mais
+ * d'une autre forme : un en-tête `matchinfo` — équipes, score, stade et
+ * affluence, arbitre, jour et heure —, une table `matchteams` à treize
+ * colonnes, une ligne par numéro de 1 à 22, et une chronologie
+ * `matchtimeline` où chaque fait s'écrit en clair : « Try - S Meyer »,
+ * « Penalty kick - S Meyer ». La page est en latin-1.
+ *
+ * **La chronologie peut manquer, et elle n'est pas toujours complète** :
+ * Perpignan-Castres du 15 décembre 2006 n'en a aucune. Elle n'est rendue que
+ * si ses points retombent sur le score des deux camps ; la mi-temps, que la
+ * page n'écrit pas, ne s'en déduit qu'à cette condition.
+ *
+ * **L'arbitre peut manquer aussi** : Wasps-Perpignan du 13 janvier 2007 ne
+ * le nomme pas.
+ *
+ * L'heure est celle du stade, et l'ERC l'écrit à l'heure locale : 15:30 à
+ * High Wycombe est 16:30 à Paris. C'est à l'appelant de la convertir.
+ */
+export function lireCompteRendu2006(brut: Buffer): ErcCompteRendu2006 {
+  const html = brut.toString("latin1");
+  // Le premier `headline` de la page est celui d'un sondage, en marge : le
+  // titre est celui de l'article de match.
+  const article = html.slice(Math.max(0, html.indexOf('class="std_matchartd"')));
+  const titre = texte(/<td class="headline"[^>]*>([\s\S]*?)<\/td>/.exec(article)?.[1] ?? "");
+
+  const info =/<table class="matchinfo[\s\S]*?<\/table>/.exec(html)?.[0] ?? "";
+  const nomDomicile = texte(/<td class="homelogo">[\s\S]*?<br \/><a[^>]*>([^<]*)<\/a>/.exec(info)?.[1] ?? "");
+  const nomExterieur = texte(/<td class="awaylogo">[\s\S]*?<br \/><a[^>]*>([^<]*)<\/a>/.exec(info)?.[1] ?? "");
+  const score = /<td class="score"[^>]*>\s*(\d+)\s*-\s*(\d+)/.exec(info);
+  const lignesInfo = [...info.matchAll(/<td class="info"[^>]*>([\s\S]*?)<\/td>/g)].map((m) => m[1]);
+  let stade: string | null = null;
+  let affluence: number | null = null;
+  let arbitre: string | null = null;
+  let coupDEnvoi: ErcCompteRendu2006["coupDEnvoi"] = null;
+  for (const ligne of lignesInfo) {
+    const t = texte(ligne);
+    const att = /^(.*?)\s+Att:\s*([\d,]+)/.exec(t);
+    const ref = /^Referee:\s*(.+)$/.exec(t);
+    const jour = /(\d{1,2})(?:st|nd|rd|th)\s+(\w+)\s+(\d{4}),\s*(\d{1,2}):(\d{2})/.exec(t);
+    if (att) {
+      stade = att[1].trim() || null;
+      affluence = Number(att[2].replace(/,/g, "")) || null;
+    } else if (ref) {
+      arbitre = ref[1].trim();
+    } else if (jour && MOIS.includes(jour[2])) {
+      const mm = String(MOIS.indexOf(jour[2]) + 1).padStart(2, "0");
+      coupDEnvoi = { jour: `${jour[3]}-${mm}-${jour[1].padStart(2, "0")}`, heure: `${jour[4].padStart(2, "0")}:${jour[5]}` };
+    }
+  }
+
+  const table = /<table\s+class="matchteams[\s\S]*?<\/table>/.exec(html)?.[0];
+  if (!table) throw new Error(`${titre} : aucune composition sur la page`);
+  const domicile: EspnJoueur[] = [];
+  const exterieur: EspnJoueur[] = [];
+  for (const [, ligne] of table.matchAll(/<tr class="line_result">([\s\S]*?)<\/tr>/g)) {
+    const cellules = [...ligne.matchAll(/<td[^>]*>([\s\S]*?)<\/td>/g)].map((m) => m[1]);
+    if (cellules.length !== 13) throw new Error(`${titre} : ligne de composition à ${cellules.length} cellules`);
+    // [0] icônes A, [1] P, [2] D, [3] C, [4] T, [5] nom A, [6] numéro,
+    // [7] nom B, [8] T, [9] C, [10] D, [11] P, [12] icônes B
+    const numero = nombre(cellules[6]);
+    const faire = (nom: string, t: number, c: number, d: number, p: number, icones: string): EspnJoueur => ({
+      id: 0,
+      ...separerNom(nom),
+      numero,
+      isStarter: numero <= 15,
+      posteEspn: null,
+      essais: t,
+      transformations: c,
+      drops: d,
+      penalites: p,
+      points: pointsDesRealisations({ essais: t, transformations: c, drops: d, penalites: p }, BAREME_ERC),
+      jaunes: (icones.match(/yellow\.gif/g) ?? []).length,
+      rouges: (icones.match(/red\.gif/g) ?? []).length,
+    });
+    if (texte(cellules[5])) {
+      domicile.push(faire(cellules[5], nombre(cellules[4]), nombre(cellules[3]), nombre(cellules[2]), nombre(cellules[1]), cellules[0]));
+    }
+    if (texte(cellules[7])) {
+      exterieur.push(faire(cellules[7], nombre(cellules[8]), nombre(cellules[9]), nombre(cellules[10]), nombre(cellules[11]), cellules[12]));
+    }
+  }
+  // « Penalty Tries », puis une ligne : le compte du recevant, celui du visiteur.
+  const apres = table.slice(table.indexOf("Penalty Tries"));
+  const penaltyTries = [...apres.matchAll(/<td colspan="6"[^>]*>([\s\S]*?)<\/td>/g)].map((m) => nombre(m[1]));
+
+  // La chronologie : chaque fait sous l'intitulé de sa mi-temps.
+  const chrono = /<table\s+class="matchtimeline[\s\S]*?<\/table>/.exec(html)?.[0] ?? "";
+  const evenements: Array<ErcEvenement & { premiereMiTemps: boolean }> = [];
+  let premiereMiTemps = true;
+  for (const [, ligne] of chrono.matchAll(/<tr[^>]*>([\s\S]*?)<\/tr>/g)) {
+    if (/Second half/i.test(ligne)) premiereMiTemps = false;
+    const minute = Number(/<td class="time">\s*(\d+)/.exec(ligne)?.[1]);
+    const equipe = texte(/<td class="team">([\s\S]*?)<\/td>/.exec(ligne)?.[1] ?? "");
+    const fait = /<div class="event">([^<]*?)\s+-\s+([^<]*)<\/div>/.exec(ligne);
+    const type = fait ? TYPES_2006[fait[1].trim()] : undefined;
+    if (!type || !Number.isFinite(minute)) continue;
+    evenements.push({ minute, type, nom: texte(fait![2]), domicile: equipe === nomDomicile, premiereMiTemps });
+  }
+  const POINTS = { essai: 5, transformation: 2, penalite: 3, drop: 3 } as const;
+  const somme = (domicileSeul: boolean, premiere?: boolean) =>
+    evenements
+      .filter((e) => e.domicile === domicileSeul && (premiere == null || e.premiereMiTemps === premiere))
+      .reduce((s, e) => s + POINTS[e.type], 0);
+  // Les essais de pénalité ne sont pas dans la chronologie : ils comblent l'écart.
+  const complete =
+    score != null &&
+    evenements.length > 0 &&
+    somme(true) + 5 * (penaltyTries[0] ?? 0) === Number(score[1]) &&
+    somme(false) + 5 * (penaltyTries[1] ?? 0) === Number(score[2]) &&
+    (penaltyTries[0] ?? 0) + (penaltyTries[1] ?? 0) === 0;
+  const miTemps = complete ? { domicile: somme(true, true), exterieur: somme(false, true) } : null;
+
+  const equipe = (nom: string, joueurs: EspnJoueur[], scoreEquipe: string | undefined, ep: number | undefined, mt: number | null): EspnEquipe => ({
+    id: 0,
+    nom,
+    score: scoreEquipe != null ? Number(scoreEquipe) : null,
+    miTemps: mt,
+    essaisSansAuteur: ep ?? 0,
+    joueurs: joueurs.sort((a, b) => a.numero - b.numero),
+  });
+  return {
+    titre,
+    stade,
+    affluence,
+    arbitre,
+    coupDEnvoi,
+    miTemps,
+    domicile: equipe(nomDomicile, domicile, score?.[1], penaltyTries[0], miTemps?.domicile ?? null),
+    exterieur: equipe(nomExterieur, exterieur, score?.[2], penaltyTries[1], miTemps?.exterieur ?? null),
+    evenements: complete ? evenements.map(({ premiereMiTemps: _, ...e }) => e).sort((a, b) => a.minute - b.minute) : [],
+    essaisDePenaliteMinutes: [[], []],
   };
 }
 

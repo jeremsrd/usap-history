@@ -31,6 +31,13 @@
  * classement dit s'il en manque un. Pour 2008-2009, il n'en manque pas :
  * Wikipédia en compte un, celui du 48-16 à Trévise, huit essais.
  *
+ * **Avant 2007-2008, sans ESPN.** ESPN ne remonte pas plus haut. Une
+ * campagne porte alors son `calendrier`, d'après Wikipédia — jour, tour,
+ * adversaire, score —, et les comptes rendus de l'ERC sont la seule source
+ * des feuilles. Le score de Wikipédia sert de contrôle à celui de l'ERC, la
+ * poule à tous les deux. Une rencontre sans compte rendu s'écrit avec son
+ * jour et son score, attestée `CONCORDANT`. C'est le cas de 2006-2007.
+ *
  * Usage :
  *   npx tsx scripts/seed-cup-espn.ts 2008-2009 --dry
  *   npx tsx scripts/seed-cup-espn.ts 2008-2009
@@ -46,14 +53,18 @@ import {
   chercherMatchsUsap,
   lireMatch,
   USAP_ESPN,
+  LIGUES,
   type EspnEquipe,
+  type EspnResume,
   type EspnJoueur,
   type EspnMatch,
   type Ligue,
 } from "./lib/espn";
 import { CLUBS_ESPN } from "./lib/clubs";
 import { baremeDeMatch, pointsDesRealisations, type Bareme } from "../src/lib/scoring";
-import { lirePageArchivee, lireCompteRendu2007, lireMatchCentre, type ErcEvenement } from "./lib/erc";
+import { lirePageArchivee, lireCompteRendu2006, lireCompteRendu2007, lireMatchCentre, type ErcCompteRendu2006, type ErcEvenement } from "./lib/erc";
+import { instantDeParis } from "./lib/dates";
+import { attester } from "./lib/attestations";
 import { normalize } from "./lib/noms";
 import { POSTE_PAR_NUMERO, trouverOuCreerJoueur } from "./lib/joueurs";
 import { trouverOuCreerArbitre } from "./lib/arbitres";
@@ -123,11 +134,98 @@ interface Campagne {
    * d'ESPN : c'est l'organisateur lui-même. Cf. `lib/erc.ts`.
    */
   erc?: Record<string, { page: string; instantane: string }>;
+  /**
+   * **Faute d'ESPN, le calendrier de Wikipédia.** ESPN ne remonte pas avant
+   * 2007-2008 ; une campagne plus ancienne donne ici ses rencontres, avec
+   * le nom du club tel que l'ERC l'écrit. Le score est celui de Wikipédia,
+   * contrôlé par la poule, et le compte rendu de l'ERC, quand il existe,
+   * doit le redonner. Sans compte rendu, la rencontre s'écrit avec son
+   * score seul.
+   */
+  calendrier?: Array<{
+    jour: string;
+    tour: string;
+    adversaire: string;
+    isHome: boolean;
+    scoreUsap: number;
+    scoreOpponent: number;
+    /** Décalage de l'heure locale du stade sur Paris, en heures : −1 au Royaume-Uni. */
+    decalage?: number;
+  }>;
+  /**
+   * Les noms de l'ERC à corriger avant le rapprochement, « Prénom Nom » tel
+   * que la page l'écrit → l'identité de la base. Une ligne n'entre ici qu'avec
+   * sa démonstration en commentaire : c'est affirmer que la source se trompe,
+   * ou qu'elle écrit le surnom d'une fiche déjà connue.
+   */
+  identites?: Record<string, { firstName: string; lastName: string }>;
   /** Ce qu'on sait de la campagne, pour le journal et pour la relecture. */
   note: string;
 }
 
 const CAMPAGNES: Record<string, Campagne> = {
+  /**
+   * Heineken Cup 2006-2007, poule 1 : Wasps, Perpignan, Castres, Trévise.
+   * **Deuxième**, à cinq points des Wasps, futurs vainqueurs : pas de phase
+   * finale. Classement et calendrier d'après la Wikipédia francophone,
+   * « Coupe d'Europe de rugby à XV 2006-2007 ».
+   *
+   * **La première campagne sans ESPN**, qui ne remonte pas avant 2007-2008.
+   * Les comptes rendus de l'ERC de cette saison ont leur propre forme
+   * (`lireCompteRendu2006`) : arbitre, affluence, coup d'envoi, et une
+   * chronologie quand elle est complète. Cinq sur six sont archivés. **Le
+   * Perpignan-Trévise du 20 janvier 2007 manque** : sa page n'est sous aucun
+   * des identifiants voisins de sa journée gardés par l'archive (12_5704 à
+   * 12_5772, lus le 18 octobre 2026). Il s'écrit avec son score seul.
+   *
+   * Adams Park d'après la Wikipédia francophone, 10 137 places : les Wasps
+   * y ont reçu de 2002 à 2014.
+   */
+  "2006-2007": {
+    ligue: "champions-cup",
+    competition: "H-Cup",
+    nouveauxAdversaires: [{ name: "Wasps", shortName: "Wasps", city: "High Wycombe", pays: "ENG" }],
+    terrains: [{ club: "Wasps", stade: "Adams Park", ville: "High Wycombe", capacite: 10137 }],
+    poule: {
+      joues: 6,
+      victoires: 4,
+      nuls: 0,
+      defaites: 2,
+      essaisPour: 19,
+      essaisContre: 9,
+      pour: 161,
+      contre: 108,
+      bonusOffensifs: 2,
+      bonusDefensifs: 0,
+      points: 18,
+    },
+    calendrier: [
+      { jour: "2006-10-21", tour: "Poule J1", adversaire: "Benetton Treviso", isHome: false, scoreUsap: 25, scoreOpponent: 10 },
+      { jour: "2006-10-28", tour: "Poule J2", adversaire: "London Wasps", isHome: true, scoreUsap: 19, scoreOpponent: 12 },
+      { jour: "2006-12-09", tour: "Poule J3", adversaire: "Castres Olympique", isHome: false, scoreUsap: 28, scoreOpponent: 36 },
+      { jour: "2006-12-15", tour: "Poule J4", adversaire: "Castres Olympique", isHome: true, scoreUsap: 30, scoreOpponent: 3 },
+      { jour: "2007-01-13", tour: "Poule J5", adversaire: "London Wasps", isHome: false, scoreUsap: 14, scoreOpponent: 22, decalage: -1 },
+      { jour: "2007-01-20", tour: "Poule J6", adversaire: "Benetton Treviso", isHome: true, scoreUsap: 45, scoreOpponent: 25 },
+    ],
+    identites: {
+      // Deux lettres interverties par l'ERC le 15 décembre 2006 : Gerhard
+      // Vosloo est le troisième ligne aile de Castres que la LNR porte dès le
+      // 18 novembre 2006, même club, même saison, même poste, n° 6 ici aussi.
+      "Gerhard Vooslo": { firstName: "Gerhard", lastName: "Vosloo" },
+      // Le deuxième ligne anglais des Wasps, que la base connaît sous son état
+      // civil depuis ses années au Stade Français (2008-2012) : Tom est son
+      // diminutif, et la base n'a pas d'autre Palmer deuxième ligne.
+      "Tom Palmer": { firstName: "Thomas Philip", lastName: "Palmer" },
+    },
+    erc: {
+      "2006-10-21": { page: "12_5648.php", instantane: "20061030" },
+      "2006-10-28": { page: "12_5663.php", instantane: "20061111" },
+      "2006-12-09": { page: "12_5686.php", instantane: "20070502" },
+      "2006-12-15": { page: "12_5710.php", instantane: "20070503" },
+      "2007-01-13": { page: "12_5740.php", instantane: "20070218" },
+    },
+    note: "Heineken Cup, poule 1 — deuxième, éliminée en poule",
+  },
   /**
    * Heineken Cup 2008-2009, poule 3 : Leicester, Ospreys, Perpignan, Trévise.
    * Troisième, à deux points des Ospreys : pas de phase finale. Classement
@@ -614,7 +712,7 @@ interface Rencontre {
   feuille: EspnMatch;
   jour: string;
   date: Date;
-  kickoffTime: string;
+  kickoffTime: string | null;
   isHome: boolean;
   opponentNom: string;
   usap: EspnEquipe;
@@ -630,8 +728,42 @@ interface Rencontre {
   campsSansComposition: Set<boolean>;
   /** L'arbitre selon l'ERC, quand sa page le donne. */
   arbitre: string | null;
+  /** La page de l'ERC dont viennent les compositions, quand il y en a une. */
+  pageErc: string | null;
   /** La chronologie selon l'ERC, quand sa page en a une ; `[domicile, extérieur]` pour les essais de pénalité. */
   chronologie: { evenements: ErcEvenement[]; essaisDePenalite: [number[], number[]] } | null;
+}
+
+/**
+ * Les rencontres d'une campagne sans ESPN, telles que son calendrier les
+ * donne : la forme d'un résumé ESPN, l'USAP reconnue par son identifiant.
+ */
+function resumesDuCalendrier(campagne: Campagne): EspnResume[] {
+  return campagne.calendrier!.map((c, i) => {
+    const usap = { id: USAP_ESPN, nom: "Perpignan", score: c.scoreUsap };
+    const adverse = { id: -1 - i, nom: c.adversaire, score: c.scoreOpponent };
+    return {
+      id: -1 - i,
+      // Midi de Paris : le jour se relit sans ambiguïté de fuseau.
+      date: instantDeParis(c.jour, "12:00").toISOString(),
+      tour: c.tour,
+      domicile: c.isHome ? usap : adverse,
+      exterieur: c.isHome ? adverse : usap,
+    };
+  });
+}
+
+/** La feuille d'une rencontre du calendrier, avant que l'ERC n'y verse ses joueurs. */
+function feuilleSansJoueurs(resume: EspnResume, campagne: Campagne): EspnMatch {
+  const equipe = (e: EspnResume["domicile"]) => ({ ...e, miTemps: null, essaisSansAuteur: 0, joueurs: [] });
+  return {
+    ...resume,
+    ligue: LIGUES[campagne.ligue],
+    stade: null,
+    affluence: null,
+    domicile: equipe(resume.domicile),
+    exterieur: equipe(resume.exterieur),
+  };
 }
 
 async function lireCampagne(
@@ -639,7 +771,7 @@ async function lireCampagne(
   campagne: Campagne,
   echecs: string[],
 ): Promise<Rencontre[]> {
-  const resumes = await chercherMatchsUsap(saison, campagne.ligue);
+  const resumes = campagne.calendrier ? resumesDuCalendrier(campagne) : await chercherMatchsUsap(saison, campagne.ligue);
   const rencontres: Rencontre[] = [];
   const startYear = Number(saison.slice(0, 4));
   const bareme = baremeDeMatch(startYear);
@@ -653,7 +785,7 @@ async function lireCampagne(
     console.log("  tours numérotés par la date : ESPN ne les libelle pas sur cette saison");
   }
   for (const resume of resumes) {
-    const feuille = await lireMatch(campagne.ligue, resume.id);
+    const feuille = campagne.calendrier ? feuilleSansJoueurs(resume, campagne) : await lireMatch(campagne.ligue, resume.id);
     // Le tour vient du calendrier, la feuille ne le porte pas toujours.
     feuille.tour = resume.tour || feuille.tour;
     const isHome = feuille.domicile.id === USAP_ESPN;
@@ -677,9 +809,19 @@ async function lireCampagne(
     const archive = campagne.erc?.[jour];
     let arbitre: string | null = null;
     let chronologie: Rencontre["chronologie"] = null;
+    let pageErc: string | null = null;
+    let kickoffTime: string | null = campagne.calendrier
+      ? null
+      : date.toLocaleTimeString("fr-FR", { timeZone: "Europe/Paris", hour: "2-digit", minute: "2-digit" });
     if (archive) {
       const brut = await lirePageArchivee(archive.page, archive.instantane);
-      const centre = archive.page.startsWith("matchcentre/") ? lireMatchCentre(brut) : null;
+      // Trois formes de page, selon l'époque du site : cf. `lib/erc.ts`.
+      const de2006 = brut.toString("latin1").includes('<tr class="line_result">');
+      const centre = archive.page.startsWith("matchcentre/")
+        ? lireMatchCentre(brut)
+        : de2006
+          ? lireCompteRendu2006(brut)
+          : null;
       const erc = centre ?? lireCompteRendu2007(brut);
       const ercUsap = isHome ? erc.domicile : erc.exterieur;
       const ercAdverse = isHome ? erc.exterieur : erc.domicile;
@@ -694,17 +836,37 @@ async function lireCampagne(
         );
         continue;
       } else {
+        pageErc = archive.page;
+        for (const j of [...ercUsap.joueurs, ...ercAdverse.joueurs]) {
+          const juste = campagne.identites?.[`${j.firstName} ${j.lastName}`];
+          if (juste) Object.assign(j, juste);
+        }
         usap.joueurs = harmoniserPrenoms(ercUsap.joueurs, usap.joueurs, `${etiquette} USAP`);
         usap.essaisSansAuteur = ercUsap.essaisSansAuteur;
         adverse.joueurs = harmoniserPrenoms(ercAdverse.joueurs, adverse.joueurs, `${etiquette} ${adverse.nom}`);
         adverse.essaisSansAuteur = ercAdverse.essaisSansAuteur;
         if (erc.affluence) feuille.affluence = erc.affluence;
         if (centre) {
-          // Le Match Centre donne la mi-temps, l'arbitre et la chronologie.
+          // Le Match Centre donne la mi-temps, l'arbitre et la chronologie ;
+          // le compte rendu de 2006, l'arbitre, et les deux autres quand sa
+          // chronologie est complète.
           usap.miTemps = ercUsap.miTemps;
           adverse.miTemps = ercAdverse.miTemps;
           arbitre = centre.arbitre;
-          chronologie = { evenements: centre.evenements, essaisDePenalite: centre.essaisDePenaliteMinutes };
+          if (centre.evenements.length > 0) {
+            chronologie = { evenements: centre.evenements, essaisDePenalite: centre.essaisDePenaliteMinutes };
+          }
+        }
+        // L'heure de l'ERC est celle du stade : ramenée à celle de Paris.
+        const coupDEnvoi = (erc as Partial<ErcCompteRendu2006>).coupDEnvoi;
+        if (coupDEnvoi && campagne.calendrier) {
+          if (coupDEnvoi.jour !== jour) {
+            echecs.push(`${etiquette} : l'ERC date la rencontre du ${coupDEnvoi.jour}`);
+            continue;
+          }
+          const decalage = campagne.calendrier.find((c) => c.jour === jour)?.decalage ?? 0;
+          const [h, m] = coupDEnvoi.heure.split(":").map(Number);
+          kickoffTime = `${String(h - decalage).padStart(2, "0")}:${String(m).padStart(2, "0")}`;
         }
         console.log(
           `  ERC ${archive.page} : « ${erc.titre} »` +
@@ -749,7 +911,7 @@ async function lireCampagne(
       [opponentNom, adverse, true],
     ] as const) {
       if (equipe.joueurs.length === 0) {
-        alertes.push(`${camp} : aucune composition chez ESPN`);
+        alertes.push(`${camp} : aucune composition dans la source`);
         campsSansComposition.add(isOpponent);
         continue;
       }
@@ -796,12 +958,9 @@ async function lireCampagne(
     rencontres.push({
       feuille,
       jour,
-      date,
-      kickoffTime: date.toLocaleTimeString("fr-FR", {
-        timeZone: "Europe/Paris",
-        hour: "2-digit",
-        minute: "2-digit",
-      }),
+      // Sans heure connue, minuit de Paris : cf. `docs/modele-de-donnees.md`.
+      date: campagne.calendrier ? instantDeParis(jour, kickoffTime ?? "00:00") : date,
+      kickoffTime,
       isHome,
       opponentNom,
       usap,
@@ -820,6 +979,7 @@ async function lireCampagne(
       alertes,
       campsSansComposition,
       arbitre,
+      pageErc,
       chronologie,
     });
   }
@@ -1208,7 +1368,7 @@ async function main() {
   }
   const campagne = CAMPAGNES[SAISON];
   console.log(
-    `=== Coupe d'Europe ${SAISON} depuis ESPN${DRY_RUN ? " (simulation)" : ""} ===\n` +
+    `=== Coupe d'Europe ${SAISON} depuis ${campagne.calendrier ? "Wikipédia et l'ERC" : "ESPN"}${DRY_RUN ? " (simulation)" : ""} ===\n` +
       `${campagne.note}\n`,
   );
 
@@ -1235,7 +1395,7 @@ async function main() {
             .join(" ") || "0"
         : "?";
     console.log(
-      `${r.jour} ${r.kickoffTime} ${r.feuille.tour.padEnd(15)} ${r.isHome ? "H" : "A"} ` +
+      `${r.jour} ${r.kickoffTime ?? "  :  "} ${r.feuille.tour.padEnd(15)} ${r.isHome ? "H" : "A"} ` +
         `${r.opponentNom.padEnd(12)} ${r.usap.score}-${r.adverse.score}` +
         ` (mt ${r.usap.miTemps ?? "?"}-${r.adverse.miTemps ?? "?"})` +
         `${r.bonusOffensif ? " BO" : ""}${r.bonusDefensif ? " BD" : ""}${r.bonusIndecidable ? " BO?" : ""}` +
@@ -1422,6 +1582,30 @@ async function main() {
       data: lignesRetenues.map((l) => ({ ...l, matchId })),
     });
     lignesEcrites += lignesRetenues.length;
+
+    // Une campagne sans ESPN porte sa provenance ici ; les autres sont
+    // attestées par `seed-attestations.ts`.
+    if (campagne.calendrier) {
+      await attester(
+        prisma,
+        r.pageErc
+          ? {
+              entite: "Match",
+              entiteId: matchId,
+              degre: "OFFICIEL",
+              source: "ERC, compte rendu officiel, par la Wayback Machine",
+              sourceUrl: `http://web.archive.org/web/${campagne.erc![r.jour].instantane}/http://www.ercrugby.com/eng/${r.pageErc}`,
+              note: "L'organisateur, dont le site n'existe plus qu'en archive ; score contrôlé par le classement de poule de Wikipédia. Minutes de jeu non publiées. Cf. lib/erc.ts.",
+            }
+          : {
+              entite: "Match",
+              entiteId: matchId,
+              degre: "CONCORDANT",
+              source: `Wikipédia, « Coupe d'Europe de rugby à XV ${SAISON} »`,
+              note: "Compte rendu de l'ERC introuvable dans l'archive : le jour et le score seuls, contrôlés par le classement de poule. Ni composition, ni heure.",
+            },
+      );
+    }
 
     if (r.chronologie) {
       const evenements = chronologieDeLaBase(r, lignesRetenues);

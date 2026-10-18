@@ -226,7 +226,11 @@ rapprochement de noms, donc aucune erreur d'identité possible.
   **espoirs**, que la LNR ne publie pas, et pour les **postes précis**, sous
   réserve de sa fraîcheur.
 - **ESPN** (`site.api.espn.com/apis/site/v2/sports/rugby/{league}/summary`,
-  Top 14 = 270559) — **n'a plus d'emploi**, et son script a été supprimé
+  Top 14 = 270559) — **ne remonte pas avant 2007-2008 en coupe d'Europe**, et
+  **refuse les intervalles de dates depuis octobre 2026** : `scoreboard?dates=
+  20081001-20090531` rend HTTP 400, `dates=2008` passe. `chercherMatchsUsap`
+  de `lib/espn.ts` est donc cassé tant qu'on ne l'a pas réécrit (constaté le
+  18 octobre 2026). Pour le championnat, **n'a plus d'emploi**, et son script a été supprimé
   plutôt que laissé à portée de main. Le passage d'ESPN à la LNR sur
   2024-2025 a corrigé quatre erreurs de fond en 26 matchs : ESPN attribue les
   essais au frère célèbre, invente des cartons, oublie les essais de pénalité
