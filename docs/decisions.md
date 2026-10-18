@@ -18,7 +18,7 @@ le fichier de `docs/` indiqué.
 | 2026-09-03 | allrugby.com admis pour les bonus anciens, par sa concordance avec les feuilles lisibles | sources |
 | 2026-09-04 | Sélecteur de langue en drapeaux dessinés (tricolore et senyera) | i18n |
 | 2026-09-04 | Réalisateurs : une seule page, trois classements par ancres, seuils et non top N | pages |
-| 2026-09-04 | 2004-2005 : agrégats de saison non écrits tant que les neuf bonus offensifs sont introuvables | regles-du-jeu |
+| 2026-09-04 | 2004-2005 : agrégats de saison non écrits tant que les neuf bonus offensifs sont introuvables — levé le 2026-10-18 | regles-du-jeu |
 | 2026-09-05 | Une seule audace visuelle par page, jetons sémantiques seulement, pas de cartes ni d'icônes décoratives | design |
 | 2026-09-06 | Un carton jaune retire dix minutes au joueur et à l'attendu de l'équipe — ne pas rouvrir | regles-du-jeu |
 | 2026-09-06 | Troisième état : la table `attestations` porte la provenance de tout fait hors feuille officielle | modele-de-donnees |
@@ -51,3 +51,5 @@ le fichier de `docs/` indiqué.
 | 2026-10-17 | Le CA Bordeaux-Bègles Gironde (2001-2003) est un adversaire distinct de l'UBB, née de sa fusion en 2006 | scripts |
 | 2026-10-17 | Le Top 16 commence en 2001-2002 ; 2000-2001 est en `PREMIERE_DIVISION`, compétition « 1ère division » | scripts |
 | 2026-10-17 | Le bandeau de saison compte la deuxième phase du Top 16 (poules sans journée), pas la phase finale | pages |
+| 2026-10-18 | Agrégats de saison du Top 16 à deux phases (2001-2004) : les deux classements additionnés, points compris, sans la phase finale | modele-de-donnees |
+| 2026-10-18 | 2004-2005 : agrégats écrits sans les bonus offensifs (`null`), points repris du classement si les neuf manquants expliquent l'écart | modele-de-donnees |

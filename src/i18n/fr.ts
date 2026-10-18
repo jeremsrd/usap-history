@@ -700,7 +700,7 @@ export const fr = {
       "Toutes les saisons de l'USA Perpignan depuis 1902 : division, classement, bilan, entraîneur, et les rencontres saisies.",
     chapeau: "{n} saisons depuis 1902, dont {documentees} avec leurs rencontres saisies.",
     reserve:
-      "Les bilans sont ceux du championnat, comme le classement officiel. Avant 2004-2005, les saisons n'ont pas encore leurs rencontres, hors les finales de 1914 et de 1925 reconstituées depuis la presse.",
+      "Les bilans sont ceux du championnat, comme le classement officiel ; de 2001-2002 à 2003-2004, les deux phases du Top 16 s'additionnent, sans la phase finale. Avant 2000-2001, les saisons n'ont pas encore leurs rencontres, hors les finales de 1914 et de 1925 reconstituées depuis la presse.",
     indexAria: "Aller à la décennie",
     decennie: "Années {n}",
     colSaison: "Saison",

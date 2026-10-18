@@ -809,6 +809,49 @@ async function main() {
     }
   }
 
+  // Les agrégats de la saison : les deux phases additionnées, sans la phase
+  // finale, comme l'a tranché Jérémy le 18 octobre 2026. Chacune a été
+  // confrontée plus haut au classement de Wikipédia ; ce sont ses chiffres
+  // qui s'écrivent. Les points s'additionnent aussi, bien que chaque phase
+  // reparte de zéro : c'est le total des deux classements, non un classement.
+  const phases = [FICHE.classements.préliminaire, FICHE.classements.qualificative].filter(
+    (p): p is Totaux => p != null,
+  );
+  const somme = (k: keyof Totaux) => phases.reduce((s, p) => s + p[k], 0);
+  const agregats = {
+    matchesPlayed: somme("wins") + somme("draws") + somme("losses"),
+    wins: somme("wins"),
+    draws: somme("draws"),
+    losses: somme("losses"),
+    pointsFor: somme("pointsFor"),
+    pointsAgainst: somme("pointsAgainst"),
+    totalPoints: somme("points"),
+    // Barème sans bonus : zéro, et non « inconnu ».
+    bonusOffensif: 0,
+    bonusDefensif: 0,
+  };
+  console.log(
+    `\n  [saison] ${agregats.matchesPlayed} J, ${agregats.wins}V ${agregats.draws}N ${agregats.losses}D, ` +
+      `${agregats.pointsFor}-${agregats.pointsAgainst}, ${agregats.totalPoints} pts` +
+      (DRY_RUN ? " (à écrire)" : echecs.length ? " — non écrits" : ""),
+  );
+  if (!DRY_RUN && echecs.length === 0) {
+    await prisma.season.update({ where: { id: saison.id }, data: agregats });
+    await attester(prisma, {
+      entite: "Season",
+      entiteId: saison.id,
+      champ: "agregats",
+      degre: "CONCORDANT",
+      source: `Wikipédia, « ${FICHE.wikipedia.replaceAll("_", " ")} »`,
+      sourceUrl: `https://fr.wikipedia.org/wiki/${FICHE.wikipedia}`,
+      note:
+        phases.length > 1
+          ? "Somme des deux phases, phase finale exclue ; chacune retombe sur les rencontres de la LNR."
+          : "Phase préliminaire, phase finale exclue ; elle retombe sur les rencontres de la LNR.",
+      decidePar: "Jérémy",
+    });
+  }
+
   console.log(
     `\n=== ${rencontres.length} rencontre(s) lue(s)` +
       (DRY_RUN ? "" : `, ${crees} créée(s), ${majs} mise(s) à jour`) +

@@ -27,9 +27,10 @@
  * annoncés se retrouvent exactement. L'offensif, lui, se compte en essais, et
  * la LNR n'en publie aucun ; allrugby.com, qui marque le bonus match par match
  * à partir de 2006-2007, ne couvre de cette saison que les rencontres de
- * Clermont. Aucune source ne place donc les neuf, et le script **refuse
- * d'écrire les agrégats de la saison** — comme 2006-2007 l'a fait jusqu'à ce
- * qu'une source revienne en ligne. Les trente rencontres, elles, sont écrites.
+ * Clermont. Aucune source ne place donc les neuf. Le script a longtemps
+ * refusé d'écrire les agrégats de la saison ; depuis le 18 octobre 2026, il
+ * les écrit sans eux : bonus offensifs à `null`, points repris du classement,
+ * pourvu que les neuf manquants expliquent l'écart au point près.
  *
  * ET LA LNR SE TROMPE SUR UN SCORE. Elle donne 29-23 au Bourgoin-Perpignan de
  * la seizième journée ; Wikipédia donne 33-23. Deux démonstrations
@@ -63,7 +64,8 @@
  *
  * Ce que le script écrit : la rencontre elle-même — date et heure,
  * compétition, journée, adversaire, lieu, score, résultat, bonus défensif et
- * arbitre. **Ni réalisations, ni agrégats, ni compositions, ni chronologies.**
+ * arbitre ; et les agrégats de la saison, sans bonus offensif. **Ni
+ * réalisations, ni compositions, ni chronologies.**
  *
  * Sources : LNR (calendrier, feuilles, compositions) ; Wikipédia pour le
  * classement de la phase de classement et le score de la seizième journée.
@@ -87,6 +89,7 @@ import { generateMatchSlug, generateOpponentSlug } from "../src/lib/slugs";
 import { completerRealisations } from "./lib/feuilles";
 import { preserverAnnexes } from "./lib/saison";
 import { terrainDuMatch } from "./lib/stades";
+import { attester } from "./lib/attestations";
 
 const prisma = new PrismaClient();
 
@@ -391,13 +394,18 @@ async function cloreLaSaison(seasonId: string, startYear: number) {
   // **LES NEUF BONUS OFFENSIFS N'ONT AUCUNE SOURCE, ET LE SCRIPT LE DIT.**
   // Ils se comptent en essais, la LNR n'en publie aucun sur cette saison, et
   // allrugby.com — qui marque le bonus match par match à partir de 2006-2007 —
-  // ne couvre de 2004-2005 que les rencontres de Clermont. Le contrôle
-  // échouera donc toujours sur cette ligne, et les agrégats ne seront pas
-  // écrits : c'est l'état voulu, et il ne se lèvera qu'avec une source.
+  // ne couvre de 2004-2005 que les rencontres de Clermont. Le compte des
+  // rencontres n'en trouve donc aucun, et ses points restent court d'autant.
+  //
+  // Jérémy a tranché le 18 octobre 2026 : la ligne s'écrit quand même, sans
+  // eux. Le bonus offensif de la saison reste `null`, et les points sont ceux
+  // du classement — à condition que les neuf bonus manquants expliquent
+  // l'écart **au point près**, ce qui est le contrôle à leur place.
   //
   // Tout le reste est vérifié au passage, et le vérifier a servi : c'est ce
   // contrôle qui a démontré le score faux de la seizième journée, sur les
   // points encaissés comme sur le compte des bonus défensifs.
+  const boManquants = OFFICIEL.bonusOffensif - agregats.bonusOffensif;
   const ecarts = [
     agregats.wins !== OFFICIEL.wins ? `${agregats.wins}V pour ${OFFICIEL.wins}` : null,
     agregats.draws !== OFFICIEL.draws ? `${agregats.draws}N pour ${OFFICIEL.draws}` : null,
@@ -406,9 +414,8 @@ async function cloreLaSaison(seasonId: string, startYear: number) {
       ? `${agregats.pointsFor} marqués pour ${OFFICIEL.pointsFor}` : null,
     agregats.pointsAgainst !== OFFICIEL.pointsAgainst
       ? `${agregats.pointsAgainst} encaissés pour ${OFFICIEL.pointsAgainst}` : null,
-    points !== OFFICIEL.points ? `${points} points pour ${OFFICIEL.points}` : null,
-    agregats.bonusOffensif !== OFFICIEL.bonusOffensif
-      ? `${agregats.bonusOffensif} BO pour ${OFFICIEL.bonusOffensif}` : null,
+    points + boManquants !== OFFICIEL.points
+      ? `${points} points + ${boManquants} BO manquants pour ${OFFICIEL.points}` : null,
     agregats.bonusDefensif !== OFFICIEL.bonusDefensif
       ? `${agregats.bonusDefensif} BD pour ${OFFICIEL.bonusDefensif}` : null,
   ].filter(Boolean);
@@ -416,13 +423,35 @@ async function cloreLaSaison(seasonId: string, startYear: number) {
     console.log(`  ⚠ écart avec le classement de référence : ${ecarts.join(", ")} — agrégats non écrits`);
     return;
   }
-  console.log("  ✔ conforme au classement de la phase régulière (Wikipédia)");
+  console.log(
+    `  ✔ conforme au classement de la phase régulière (Wikipédia), ` +
+      `${boManquants} bonus offensifs sans source : ${OFFICIEL.points} points, BO inconnus`,
+  );
 
   if (!DRY_RUN) {
     await prisma.season.update({
       where: { id: seasonId },
       // Cinquième : ni championne, ni promue, ni reléguée.
-      data: { ...agregats, totalPoints: points, champion: false, promoted: false, relegated: false },
+      data: {
+        ...agregats,
+        bonusOffensif: null,
+        totalPoints: OFFICIEL.points,
+        champion: false,
+        promoted: false,
+        relegated: false,
+      },
+    });
+    await attester(prisma, {
+      entite: "Season",
+      entiteId: seasonId,
+      champ: "agregats",
+      degre: "CONCORDANT",
+      source: "Wikipédia, « Championnat de France de rugby à XV 2004-2005 »",
+      sourceUrl: "https://fr.wikipedia.org/wiki/Championnat_de_France_de_rugby_à_XV_2004-2005",
+      note:
+        "Les trente journées retombent sur le classement, bonus défensifs compris ; " +
+        "les points totaux sont repris du classement, les bonus offensifs n'ayant aucune source.",
+      decidePar: "Jérémy",
     });
   }
 }
@@ -461,8 +490,8 @@ async function main() {
     // **Le bonus se calcule quand même, et il n'est juste qu'à moitié.** Sans
     // essai connu, `computeBonuses` rend un bonus offensif toujours faux et un
     // bonus défensif toujours juste, celui-ci ne dépendant que du score. C'est
-    // exactement la moitié qu'on sait établir, et c'est pourquoi les agrégats
-    // ne sont pas écrits.
+    // exactement la moitié qu'on sait établir, et c'est pourquoi le bonus
+    // offensif de la saison reste `null`.
     const bonus = computeBonuses({
       competitionShortName: r.competitionShortName,
       seasonStartYear: saison.startYear,

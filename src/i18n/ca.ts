@@ -663,7 +663,7 @@ export const ca = {
       "Totes les temporades de la USA Perpinyà des de 1902 : divisió, classificació, balanç, entrenador, i els partits recollits.",
     chapeau: "{n} temporades des de 1902, {documentees} d'elles amb els partits recollits.",
     reserve:
-      "Els balanços són els del campionat, com la classificació oficial. Abans de 2004-2005, les temporades encara no tenen els seus partits, tret de les finals de 1914 i de 1925 reconstituïdes a partir de la premsa.",
+      "Els balanços són els del campionat, com la classificació oficial ; de 2001-2002 a 2003-2004, les dues fases del Top 16 se sumen, sense la fase final. Abans de 2000-2001, les temporades encara no tenen els seus partits, tret de les finals de 1914 i de 1925 reconstituïdes a partir de la premsa.",
     indexAria: "Anar a la dècada",
     decennie: "Anys {n}",
     colSaison: "Temporada",
