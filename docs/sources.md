@@ -229,6 +229,10 @@ dans `scripts/lib/erc.ts`, dont l'en-tête décrit les quatre formes de page.
   **Peu de pages ont survécu** : sur les six rencontres de l'USAP, seul
   Newcastle-Perpignan (25_3020). Les relevés de marqueurs du site (25_3033,
   25_3183) sont archivés et peuvent trancher un bonus.
+- **2003-2004 : pas encore cherchées.** L'archive et
+  `historical-stats.epcrugby.com` étaient hors service le 18 octobre 2026 ;
+  les six rencontres sont en base sur leur score, à compléter par
+  `seed-cup-espn.ts 2003-2004` dès qu'une page est trouvée.
 - **La CDX d'abord** : elle dit en une requête si une page a jamais été
   capturée. Résoudre les redirections sans elle a fait refuser l'archive
   après une cinquantaine de requêtes le 18 octobre 2026.

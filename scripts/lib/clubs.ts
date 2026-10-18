@@ -106,6 +106,7 @@ export const CLUBS_ESPN: Record<string, string> = {
   "Cardiff Blues": "Cardiff",
   "Castres Olympique": "Castres",
   "Cavalieri Prato": "Cavalieri Prato",
+  "Celtic Warriors": "Celtic Warriors",
   Connacht: "Connacht",
   Dragons: "Dragons",
   Edinburgh: "Edinburgh",

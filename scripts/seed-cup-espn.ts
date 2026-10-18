@@ -37,10 +37,10 @@
  * des feuilles. Le score de Wikipédia sert de contrôle à celui de l'ERC, la
  * poule à tous les deux. Une rencontre sans compte rendu s'écrit avec son
  * jour et son score, attestée `CONCORDANT`. C'est le cas de 2006-2007 ;
- * 2005-2006 a ses sept comptes rendus, 2004-2005 un seul sur six. Le bonus
- * offensif d'une rencontre sans feuille peut alors être tranché dans le
- * calendrier, sur une autre source, avant que le classement n'attribue le
- * reste.
+ * 2005-2006 a ses sept comptes rendus, 2004-2005 un seul sur six, 2003-2004
+ * aucun pour l'instant. Le bonus offensif d'une rencontre sans feuille peut
+ * alors être tranché dans le calendrier, sur une autre source, avant que le
+ * classement n'attribue le reste.
  *
  * Un joueur dont le nom complet est celui d'un autre homme déjà en base se
  * départage par le club de la feuille : `HOMONYMES_PARFAITS` de
@@ -80,7 +80,7 @@ import {
   type ErcCompteRendu2006,
   type ErcEvenement,
 } from "./lib/erc";
-import { instantDeParis } from "./lib/dates";
+import { instantDeParis, journeeDeParis } from "./lib/dates";
 import { attester } from "./lib/attestations";
 import { normalize } from "./lib/noms";
 import { POSTE_PAR_NUMERO, trouverOuCreerJoueur } from "./lib/joueurs";
@@ -190,6 +190,63 @@ interface Campagne {
 }
 
 const CAMPAGNES: Record<string, Campagne> = {
+  /**
+   * Heineken Cup 2003-2004, poule 6 : London Wasps, Celtic Warriors,
+   * Perpignan, Calvisano. **Troisième** avec 15 points, deux bonus
+   * offensifs et un défensif ; pas de phase finale. Classement et calendrier
+   * d'après la Wikipédia francophone, « Coupe d'Europe de rugby à XV
+   * 2003-2004 », que l'anglophone redonne (« 2003–04 Heineken Cup pool
+   * stage »).
+   *
+   * **Aucun compte rendu de l'ERC n'est encore lu** : l'archive était hors
+   * service le 18 octobre 2026, et les six rencontres s'écrivent avec leur
+   * score. **Les deux bonus offensifs, le classement les pose seul** : 17,
+   * 15, 7 et 6 points ne peuvent pas porter quatre essais, restent le 26-19
+   * contre les Warriors et le 48-7 contre Calvisano, deux feuilles muettes
+   * pour deux bonus. Le compte rendu « Perpignan v Calvisano » des archives
+   * de l'EPCR semble redonner celui du 48-7 — quatre essais à la
+   * demi-heure, Bourret, Marty, Goutta, Manas, 31-0 à la pause, puis un
+   * retour de Calvisano, ce que le 45-0 de 2006 exclut —, mais il n'a été
+   * vu que par un extrait de moteur de recherche, le site répondant 502.
+   *
+   * Les Celtic Warriors, région de Bridgend et de Pontypridd, n'ont vécu
+   * que la saison 2003-2004 (liquidés le 1er juin 2004) ; ils jouent au
+   * Brewery Field de Bridgend depuis novembre 2003. 8 000 places
+   * aujourd'hui, d'après Wikipédia, qui en donnait 12 000 au temps des
+   * Warriors. Wasps et Calvisano sont déjà en base avec leurs terrains.
+   */
+  "2003-2004": {
+    ligue: "champions-cup",
+    competition: "H-Cup",
+    nouveauxAdversaires: [
+      { name: "Celtic Warriors", shortName: "Celtic Warriors", city: "Bridgend", pays: "WA" },
+    ],
+    terrains: [
+      { club: "Celtic Warriors", stade: "Brewery Field", ville: "Bridgend", capacite: 8000 },
+    ],
+    poule: {
+      joues: 6,
+      victoires: 3,
+      nuls: 0,
+      defaites: 3,
+      essaisPour: 13,
+      essaisContre: 11,
+      pour: 119,
+      contre: 115,
+      bonusOffensifs: 2,
+      bonusDefensifs: 1,
+      points: 15,
+    },
+    calendrier: [
+      { jour: "2003-12-07", tour: "Poule J1", adversaire: "London Wasps", isHome: false, scoreUsap: 7, scoreOpponent: 28, decalage: -1 },
+      { jour: "2003-12-13", tour: "Poule J2", adversaire: "Celtic Warriors", isHome: true, scoreUsap: 26, scoreOpponent: 19 },
+      { jour: "2004-01-10", tour: "Poule J3", adversaire: "Calvisano", isHome: true, scoreUsap: 48, scoreOpponent: 7 },
+      { jour: "2004-01-17", tour: "Poule J4", adversaire: "Calvisano", isHome: false, scoreUsap: 17, scoreOpponent: 11 },
+      { jour: "2004-01-23", tour: "Poule J5", adversaire: "Celtic Warriors", isHome: false, scoreUsap: 15, scoreOpponent: 16, decalage: -1 },
+      { jour: "2004-02-01", tour: "Poule J6", adversaire: "London Wasps", isHome: true, scoreUsap: 6, scoreOpponent: 34 },
+    ],
+    note: "Heineken Cup, poule 6 — troisième",
+  },
   /**
    * Heineken Cup 2004-2005, poule 5 : Newcastle Falcons, Perpignan, Newport
    * Gwent Dragons, Edinburgh. **Deuxième** avec 15 points, à égalité avec
@@ -1752,7 +1809,9 @@ async function main() {
       where: {
         seasonId: saison.id,
         opponentId: opponent.id,
-        date: { gte: new Date(`${r.jour}T00:00:00Z`), lt: new Date(`${r.jour}T23:59:59Z`) },
+        // Le jour de Paris : une rencontre sans heure est posée à minuit de
+        // Paris, la veille en UTC.
+        date: journeeDeParis(r.jour),
       },
       select: {
         id: true,
