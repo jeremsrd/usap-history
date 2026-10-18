@@ -42,6 +42,12 @@
  * alors être tranché dans le calendrier, sur une autre source, avant que le
  * classement n'attribue le reste.
  *
+ * **2001-2002, l'ancien site de l'ERC**, est la seule saison où la feuille
+ * donne les minutes : entrées, sorties et exclusions, d'où un temps effectif
+ * écrit, jaune déduit. Les entrants n'y ont pas de numéro (`shirtNumber`
+ * `null`), et les prénoms n'y sont que des initiales : chaque nom de l'USAP
+ * passe par `identites`, ou la rencontre ne s'écrit pas.
+ *
  * Un joueur dont le nom complet est celui d'un autre homme déjà en base se
  * départage par le club de la feuille : `HOMONYMES_PARFAITS` de
  * `lib/joueurs.ts`.
@@ -72,10 +78,12 @@ import { CLUBS_ESPN } from "./lib/clubs";
 import { baremeDeMatch, pointsDesRealisations, pointsScaleFor, type Bareme, type PointsScale } from "../src/lib/scoring";
 import {
   lirePageArchivee,
+  lireCompteRendu2001,
   lireCompteRendu2004,
   lireCompteRendu2006,
   lireCompteRendu2007,
   lireMatchCentre,
+  type ErcCompteRendu2001,
   type ErcCompteRendu2004,
   type ErcCompteRendu2006,
   type ErcEvenement,
@@ -101,6 +109,20 @@ const ARGS = process.argv.slice(2);
 const DRY_RUN = ARGS.includes("--dry");
 const SAISON = ARGS.find((a) => /^\d{4}-\d{4}$/.test(a));
 const SEUL = ARGS.find((a) => a.startsWith("--match="))?.slice("--match=".length);
+
+/**
+ * Un joueur de feuille : celui d'ESPN ou de l'ERC, ou celui de l'ERC de
+ * 2001-2002 (`ErcJoueur2001`), dont les entrants n'ont pas de numéro et
+ * dont la page donne les minutes des changements et des exclusions.
+ */
+type Joueur = Omit<EspnJoueur, "numero"> & {
+  numero: number | null;
+  entree?: number | null;
+  sortie?: number | null;
+  minutes?: number | null;
+  minutesJaunes?: number[];
+};
+type Equipe = Omit<EspnEquipe, "joueurs"> & { joueurs: Joueur[] };
 
 /** Le classement de poule, tel que Wikipédia le donne pour l'USAP. */
 interface ClassementDePoule {
@@ -169,6 +191,12 @@ interface Campagne {
     /** Décalage de l'heure locale du stade sur Paris, en heures : −1 au Royaume-Uni. */
     decalage?: number;
     /**
+     * L'heure locale du coup d'envoi, quand le compte rendu ne la donne pas
+     * et que le calendrier officiel de l'ERC l'écrit ; ramenée à Paris par
+     * `decalage`.
+     */
+    heure?: string;
+    /**
      * Le bonus offensif d'une rencontre sans feuille, quand une autre source
      * le tranche — jamais déduit du seul score. Sa démonstration en
      * commentaire, comme toute correction. Le classement de poule peut
@@ -185,11 +213,71 @@ interface Campagne {
    * ou qu'elle écrit le surnom d'une fiche déjà connue.
    */
   identites?: Record<string, { firstName: string; lastName: string }>;
+  /**
+   * Les compositions adverses ne s'écrivent pas encore, et la raison : les
+   * réalisations des deux camps comptent toujours au match.
+   */
+  compositionsAdversesDifferees?: string;
   /** Ce qu'on sait de la campagne, pour le journal et pour la relecture. */
   note: string;
 }
 
 const CAMPAGNES: Record<string, Campagne> = {
+  /**
+   * Heineken Cup 2001-2002, poule 1 : Leicester, Llanelli, Perpignan,
+   * Calvisano. **Troisième** à 6 points, trois victoires et trois défaites ;
+   * pas de phase finale. Classement d'après la Wikipédia anglophone,
+   * « 2001–02 Heineken Cup pool stage » : sans bonus, à 2 points la
+   * victoire, comme en 2002-2003.
+   *
+   * **Quatre comptes rendus de l'ERC sur six**, sur l'ancien site
+   * (`english/fixturesresultspage/`, `lireCompteRendu2001`) : les deux
+   * rencontres de janvier 2002, pages 11348 et 11351, ne sont pas archivées
+   * et s'écrivent avec leur score. **Les heures viennent du calendrier
+   * officiel de l'ERC** (`english/jspfiles/fixturesresultslist.jsp`, capture
+   * du 7 octobre 2002), à l'heure du stade : 18:15 à Welford Road le 3
+   * novembre, quand Wikipédia écrit 19:30 — l'organisateur prime.
+   *
+   * **Les compositions adverses attendent** : l'ERC n'écrit que des
+   * initiales, et Leicester, Llanelli et Calvisano alignent une cinquantaine
+   * de noms à rapprocher un par un. Celles de l'USAP passent toutes par
+   * `identites`, cf. `lireCampagne`.
+   */
+  "2001-2002": {
+    ligue: "champions-cup",
+    competition: "H-Cup",
+    nouveauxAdversaires: [],
+    terrains: [],
+    poule: {
+      joues: 6,
+      victoires: 3,
+      nuls: 0,
+      defaites: 3,
+      essaisPour: 19,
+      essaisContre: 11,
+      pour: 182,
+      contre: 136,
+      bonusOffensifs: 0,
+      bonusDefensifs: 0,
+      points: 6,
+    },
+    calendrier: [
+      { jour: "2001-09-29", tour: "Poule J1", adversaire: "Ghial Amatori &Calvisano", isHome: true, scoreUsap: 56, scoreOpponent: 3, heure: "19:30" },
+      { jour: "2001-10-05", tour: "Poule J2", adversaire: "Llanelli", isHome: false, scoreUsap: 6, scoreOpponent: 20, decalage: -1, heure: "18:45" },
+      { jour: "2001-10-27", tour: "Poule J3", adversaire: "Leicester Tigers", isHome: true, scoreUsap: 30, scoreOpponent: 31, heure: "19:30" },
+      { jour: "2001-11-03", tour: "Poule J4", adversaire: "Leicester Tigers", isHome: false, scoreUsap: 15, scoreOpponent: 54, decalage: -1, heure: "18:15" },
+      { jour: "2002-01-04", tour: "Poule J5", adversaire: "Llanelli", isHome: true, scoreUsap: 42, scoreOpponent: 10, heure: "20:05" },
+      { jour: "2002-01-12", tour: "Poule J6", adversaire: "Ghial Amatori & Calvisano", isHome: false, scoreUsap: 33, scoreOpponent: 18, heure: "14:30" },
+    ],
+    erc: {
+      "2001-09-29": { page: "english/fixturesresultspage/11044.html", instantane: "20021008032347" },
+      "2001-10-05": { page: "english/fixturesresultspage/11018.html", instantane: "20020604225636" },
+      "2001-10-27": { page: "english/fixturesresultspage/11055.html", instantane: "20021008032249" },
+      "2001-11-03": { page: "english/fixturesresultspage/11077.html", instantane: "20021008021415" },
+    },
+    compositionsAdversesDifferees: "identités adverses à établir (initiales de l'ERC)",
+    note: "Heineken Cup, poule 1 — troisième, éliminée en poule",
+  },
   /**
    * Heineken Cup 2002-2003, poule 2 : Perpignan, Munster, Gloucester, Arix
    * Viadana. **Première de poule** à 8 points, devant Munster et Gloucester
@@ -998,8 +1086,8 @@ interface Realisations {
  * marque, mais ce serait une inférence, et le camp est alors simplement tenu
  * pour incohérent.
  */
-function realisations(equipe: EspnEquipe, bareme: Bareme): Realisations {
-  const somme = (choix: (j: EspnEquipe["joueurs"][number]) => number) =>
+function realisations(equipe: Equipe, bareme: Bareme): Realisations {
+  const somme = (choix: (j: Joueur) => number) =>
     equipe.joueurs.reduce((s, j) => s + choix(j), 0);
   const r = {
     essais: somme((j) => j.essais),
@@ -1027,8 +1115,8 @@ interface Rencontre {
   kickoffTime: string | null;
   isHome: boolean;
   opponentNom: string;
-  usap: EspnEquipe;
-  adverse: EspnEquipe;
+  usap: Equipe;
+  adverse: Equipe;
   realUsap: Realisations;
   realAdverse: Realisations;
   bonusOffensif: boolean;
@@ -1101,8 +1189,12 @@ async function lireCampagne(
     // Le tour vient du calendrier, la feuille ne le porte pas toujours.
     feuille.tour = resume.tour || feuille.tour;
     const isHome = feuille.domicile.id === USAP_ESPN;
-    const usap = isHome ? feuille.domicile : feuille.exterieur;
-    const adverse = isHome ? feuille.exterieur : feuille.domicile;
+    // Les listes d'ESPN, gardées pour `harmoniserPrenoms` : les équipes
+    // ci-dessous reçoivent celles de l'ERC.
+    const espnUsap = (isHome ? feuille.domicile : feuille.exterieur).joueurs;
+    const espnAdverse = (isHome ? feuille.exterieur : feuille.domicile).joueurs;
+    const usap: Equipe = isHome ? feuille.domicile : feuille.exterieur;
+    const adverse: Equipe = isHome ? feuille.exterieur : feuille.domicile;
     const date = new Date(feuille.date || resume.date);
     const jour = date.toLocaleDateString("fr-CA", { timeZone: "Europe/Paris" });
     const etiquette = `${jour} ${adverse.nom}`;
@@ -1122,20 +1214,26 @@ async function lireCampagne(
     let arbitre: string | null = null;
     let chronologie: Rencontre["chronologie"] = null;
     let pageErc: string | null = null;
+    const duCalendrier = campagne.calendrier?.find((c) => c.jour === jour);
     let kickoffTime: string | null = campagne.calendrier
-      ? null
+      ? duCalendrier?.heure
+        ? heureDeParis(duCalendrier.heure, duCalendrier.decalage)
+        : null
       : date.toLocaleTimeString("fr-FR", { timeZone: "Europe/Paris", hour: "2-digit", minute: "2-digit" });
     if (archive) {
       const brut = await lirePageArchivee(archive.page, archive.instantane);
-      // Quatre formes de page, selon l'époque du site : cf. `lib/erc.ts`.
+      // Cinq formes de page, selon l'époque du site : cf. `lib/erc.ts`.
       const de2006 = brut.toString("latin1").includes('<tr class="line_result">');
       const de2004 = archive.page.startsWith("cup/");
+      const de2001 = archive.page.startsWith("english/") ? lireCompteRendu2001(brut) : null;
       const centre = archive.page.startsWith("matchcentre/")
         ? lireMatchCentre(brut)
         : de2006
           ? lireCompteRendu2006(brut)
           : null;
-      const erc = centre ?? (de2004 ? lireCompteRendu2004(brut) : lireCompteRendu2007(brut));
+      const erc = de2001
+        ? { ...de2001, affluence: null }
+        : centre ?? (de2004 ? lireCompteRendu2004(brut) : lireCompteRendu2007(brut));
       const ercUsap = isHome ? erc.domicile : erc.exterieur;
       const ercAdverse = isHome ? erc.exterieur : erc.domicile;
       if (ercUsap.score == null || ercUsap.joueurs.length === 0) {
@@ -1154,24 +1252,41 @@ async function lireCampagne(
           const juste = campagne.identites?.[`${j.firstName} ${j.lastName}`];
           if (juste) Object.assign(j, juste);
         }
-        usap.joueurs = harmoniserPrenoms(ercUsap.joueurs, usap.joueurs, `${etiquette} USAP`);
+        if (de2001) {
+          // Ni ESPN à harmoniser, ni numéro au banc : les listes telles quelles.
+          usap.joueurs = ercUsap.joueurs;
+          adverse.joueurs = ercAdverse.joueurs;
+          arbitre = de2001.arbitre;
+          // **L'initiale ne fait pas une identité.** « P Murphy » désigne cinq
+          // fiches en base : chaque nom de l'USAP passe par `identites`, avec
+          // sa démonstration, ou la rencontre ne s'écrit pas.
+          const sansIdentite = usap.joueurs.filter((j) => /^[A-Z](?:-[A-Z])?$/.test(j.firstName));
+          if (sansIdentite.length > 0) {
+            echecs.push(
+              `${etiquette} : ${sansIdentite.length} joueur(s) USAP sans identité établie — ` +
+                sansIdentite.map((j) => `${j.firstName} ${j.lastName}`).join(", "),
+            );
+          }
+        } else {
+          usap.joueurs = harmoniserPrenoms(ercUsap.joueurs as EspnJoueur[], espnUsap, `${etiquette} USAP`);
+          adverse.joueurs = harmoniserPrenoms(ercAdverse.joueurs as EspnJoueur[], espnAdverse, `${etiquette} ${adverse.nom}`);
+        }
         usap.essaisSansAuteur = ercUsap.essaisSansAuteur;
-        adverse.joueurs = harmoniserPrenoms(ercAdverse.joueurs, adverse.joueurs, `${etiquette} ${adverse.nom}`);
         adverse.essaisSansAuteur = ercAdverse.essaisSansAuteur;
         if (erc.affluence) feuille.affluence = erc.affluence;
         if (centre) {
           // Le Match Centre donne la mi-temps, l'arbitre et la chronologie ;
           // le compte rendu de 2006, l'arbitre, et les deux autres quand sa
           // chronologie est complète.
-          usap.miTemps = ercUsap.miTemps;
-          adverse.miTemps = ercAdverse.miTemps;
+          usap.miTemps = (isHome ? centre.domicile : centre.exterieur).miTemps;
+          adverse.miTemps = (isHome ? centre.exterieur : centre.domicile).miTemps;
           arbitre = centre.arbitre;
           if (centre.evenements.length > 0) {
             chronologie = { evenements: centre.evenements, essaisDePenalite: centre.essaisDePenaliteMinutes };
           }
         }
-        // La page de 2004-2005 ne donne que le jour : il doit être le nôtre.
-        const jourErc = (erc as Partial<ErcCompteRendu2004>).jour;
+        // Les pages de 2001-2002 et 2004-2005 ne donnent que le jour : il doit être le nôtre.
+        const jourErc = (erc as Partial<ErcCompteRendu2004 | ErcCompteRendu2001>).jour;
         if (jourErc && jourErc !== jour) {
           echecs.push(`${etiquette} : l'ERC date la rencontre du ${jourErc}`);
           continue;
@@ -1183,9 +1298,7 @@ async function lireCampagne(
             echecs.push(`${etiquette} : l'ERC date la rencontre du ${coupDEnvoi.jour}`);
             continue;
           }
-          const decalage = campagne.calendrier.find((c) => c.jour === jour)?.decalage ?? 0;
-          const [h, m] = coupDEnvoi.heure.split(":").map(Number);
-          kickoffTime = `${String(h - decalage).padStart(2, "0")}:${String(m).padStart(2, "0")}`;
+          kickoffTime = heureDeParis(coupDEnvoi.heure, duCalendrier?.decalage);
         }
         console.log(
           `  ERC ${archive.page} : « ${erc.titre} »` +
@@ -1234,16 +1347,23 @@ async function lireCampagne(
         campsSansComposition.add(isOpponent);
         continue;
       }
+      if (isOpponent && campagne.compositionsAdversesDifferees) {
+        alertes.push(`${camp} : composition non écrite — ${campagne.compositionsAdversesDifferees}`);
+        campsSansComposition.add(isOpponent);
+        continue;
+      }
       const titulaires = equipe.joueurs.filter((j) => j.isStarter).length;
-      const numeros = new Set(equipe.joueurs.map((j) => j.numero));
-      if (titulaires !== 15 || numeros.size !== equipe.joueurs.length) {
+      // Les entrants de 2001-2002 n'ont pas de numéro : seuls les numérotés comptent.
+      const numerotes = equipe.joueurs.filter((j) => j.numero != null);
+      const numeros = new Set(numerotes.map((j) => j.numero));
+      if (titulaires !== 15 || numeros.size !== numerotes.length) {
         alertes.push(
           `${camp} : ${titulaires} titulaires` +
-            (numeros.size !== equipe.joueurs.length ? ", un dossard en double" : "") +
+            (numeros.size !== numerotes.length ? ", un dossard en double" : "") +
             " — composition écartée",
         );
         campsSansComposition.add(isOpponent);
-      } else if (equipe.joueurs.length < 22) {
+      } else if (equipe.joueurs.length < 22 && numerotes.length === equipe.joueurs.length) {
         alertes.push(`${camp} : ${equipe.joueurs.length} joueurs sur la feuille`);
       }
     }
@@ -1309,6 +1429,12 @@ async function lireCampagne(
     });
   }
   return rencontres;
+}
+
+/** « 18:15 » au stade, une heure de moins qu'à Paris au Royaume-Uni : « 19:15 ». */
+function heureDeParis(heure: string, decalage = 0): string {
+  const [h, m] = heure.split(":").map(Number);
+  return `${String(h - decalage).padStart(2, "0")}:${String(m).padStart(2, "0")}`;
 }
 
 /**
@@ -1535,7 +1661,7 @@ function chronologieDeLaBase(
 
   // Les noms complets, par camp, pour rendre à « D Mele » sa fiche.
   const nomsParLigne = new Map(lignes.map((l) => [l, l.playerId]));
-  const retrouver = (nom: string, isUsap: boolean, equipe: EspnEquipe) => {
+  const retrouver = (nom: string, isUsap: boolean, equipe: Equipe) => {
     const [initiale, ...reste] = nom.split(/\s+/);
     const patronyme = normalize(reste.join(" "));
     const candidats = equipe.joueurs.filter(
@@ -1602,10 +1728,16 @@ function chronologieDeLaBase(
 interface LigneAEcrire {
   isOpponent: boolean;
   playerId: string;
-  shirtNumber: number;
+  /** `null` pour un entrant de 2001-2002, que l'ERC ne numérote pas. */
+  shirtNumber: number | null;
   isStarter: boolean;
   isCaptain: boolean;
   positionPlayed: Position | null;
+  /** Temps effectif, jaune déduit ; `null` quand la source ne donne pas les changements. */
+  minutesPlayed: number | null;
+  subIn: number | null;
+  subOut: number | null;
+  yellowCardMin: number | null;
   tries: number;
   conversions: number;
   penalties: number;
@@ -1628,7 +1760,7 @@ interface LigneAEcrire {
 async function resoudreCamp(
   camp: string,
   isOpponent: boolean,
-  equipe: EspnEquipe,
+  equipe: Equipe,
   ecrireRealisations: boolean,
   creer: boolean,
 ): Promise<LigneAEcrire[]> {
@@ -1637,12 +1769,12 @@ async function resoudreCamp(
   for (const j of equipe.joueurs) {
     const playerId = await trouverOuCreerJoueur(
       prisma,
-      { firstName: j.firstName, lastName: j.lastName, numero: j.numero, club: isOpponent ? camp : "USAP" },
+      { firstName: j.firstName, lastName: j.lastName, numero: j.numero ?? undefined, club: isOpponent ? camp : "USAP" },
       { dryRun: DRY_RUN || !creer, journal: creer ? (m) => console.log(m) : () => {} },
     );
     // Le poste du banc ne se déduit pas du numéro : on reprend celui de la
     // fiche, faute de mieux — et jamais celui qu'ESPN écrit.
-    let poste: Position | null = j.isStarter ? (POSTE_PAR_NUMERO[j.numero] ?? null) : null;
+    let poste: Position | null = j.isStarter && j.numero != null ? (POSTE_PAR_NUMERO[j.numero] ?? null) : null;
     if (!j.isStarter && playerId) {
       const fiche = await prisma.player.findUnique({
         where: { id: playerId },
@@ -1660,10 +1792,13 @@ async function resoudreCamp(
           .filter(Boolean)
           .join(" ")
       : "";
+    const jaune = j.minutesJaunes?.[0] ?? null;
     if (creer) console.log(
-      `    n°${String(j.numero).padStart(2)} ${j.firstName} ${j.lastName}` +
+      `    n°${String(j.numero ?? "–").padStart(2)} ${j.firstName} ${j.lastName}` +
         `${j.isCaptain ? " (cap)" : ""}${poste ? ` [${poste}]` : ""}` +
-        `${marques ? ` — ${marques}` : ""}${j.jaunes ? " 🟨" : ""}${j.rouges ? " 🟥" : ""}`,
+        `${j.entree != null ? ` ↑${j.entree}` : ""}${j.sortie != null ? ` ↓${j.sortie}` : ""}` +
+        `${j.minutes != null ? ` ${j.minutes}'` : ""}` +
+        `${marques ? ` — ${marques}` : ""}${j.jaunes ? ` 🟨${jaune != null ? jaune : ""}` : ""}${j.rouges ? " 🟥" : ""}`,
     );
     lignes.push({
       isOpponent,
@@ -1672,6 +1807,12 @@ async function resoudreCamp(
       isStarter: j.isStarter,
       isCaptain: j.isCaptain,
       positionPlayed: poste,
+      minutesPlayed: j.minutes ?? null,
+      // Un titulaire remplacé à titre temporaire n'est pas sorti : seule sa
+      // sortie définitive s'écrit, l'entrant temporaire porte la sienne.
+      subIn: j.isStarter ? null : (j.entree ?? null),
+      subOut: j.sortie ?? null,
+      yellowCardMin: jaune,
       tries: ecrireRealisations ? j.essais : 0,
       conversions: ecrireRealisations ? j.transformations : 0,
       penalties: ecrireRealisations ? j.penalites : 0,
@@ -1796,8 +1937,11 @@ async function main() {
     ] as const) {
       if (campsEcartes.has(isOpponent)) continue;
       const titulaires = lignes
-        .filter((l) => l.isOpponent === isOpponent && l.isStarter && l.playerId)
-        .map((l) => ({ playerId: l.playerId, numero: l.shirtNumber }));
+        .flatMap((l) =>
+          l.isOpponent === isOpponent && l.isStarter && l.playerId && l.shirtNumber != null
+            ? [{ playerId: l.playerId, numero: l.shirtNumber }]
+            : [],
+        );
       const bilan = await concordanceDesDossards(prisma, SAISON!, titulaires);
       if (bilan.taux == null) {
         console.log(`  dossards : ${camp} — trop peu de repères en base pour conclure`);
@@ -1927,8 +2071,10 @@ async function main() {
               entiteId: matchId,
               degre: "OFFICIEL",
               source: "ERC, compte rendu officiel, par la Wayback Machine",
-              sourceUrl: `http://web.archive.org/web/${campagne.erc![r.jour].instantane}/http://www.ercrugby.com/${r.pageErc.startsWith("cup/") ? "" : "eng/"}${r.pageErc}`,
-              note: "L'organisateur, dont le site n'existe plus qu'en archive ; score contrôlé par le classement de poule de Wikipédia. Minutes de jeu non publiées. Cf. lib/erc.ts.",
+              sourceUrl: `http://web.archive.org/web/${campagne.erc![r.jour].instantane}/http://www.ercrugby.com/${/^(cup|english)\//.test(r.pageErc) ? "" : "eng/"}${r.pageErc}`,
+              note: r.pageErc.startsWith("english/")
+                ? "L'organisateur, dont le site n'existe plus qu'en archive ; score contrôlé par le classement de poule de Wikipédia. Minutes des changements et des exclusions d'après la page ; heure d'après le calendrier officiel de l'ERC. Cf. lib/erc.ts."
+                : "L'organisateur, dont le site n'existe plus qu'en archive ; score contrôlé par le classement de poule de Wikipédia. Minutes de jeu non publiées. Cf. lib/erc.ts.",
             }
           : {
               entite: "Match",
@@ -1936,7 +2082,8 @@ async function main() {
               degre: "CONCORDANT",
               source: `Wikipédia, « Coupe d'Europe de rugby à XV ${SAISON} »`,
               note:
-                "Compte rendu de l'ERC introuvable dans l'archive : le jour et le score seuls, contrôlés par le classement de poule. Ni composition, ni heure." +
+                "Compte rendu de l'ERC introuvable dans l'archive : le jour et le score seuls, contrôlés par le classement de poule. " +
+                (r.kickoffTime ? "Heure d'après le calendrier officiel de l'ERC ; pas de composition." : "Ni composition, ni heure.") +
                 (campagne.calendrier.find((c) => c.jour === r.jour)?.note ? ` ${campagne.calendrier.find((c) => c.jour === r.jour)!.note}` : ""),
             },
       );

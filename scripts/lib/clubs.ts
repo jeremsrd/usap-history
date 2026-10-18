@@ -103,6 +103,9 @@ export const CLUBS_ESPN: Record<string, string> = {
   "Bordeaux Begles": "UBB",
   // Les noms de l'ERC en 2005-2006 et 2006-2007, faute d'ESPN : cf. `seed-cup-espn.ts`.
   Calvisano: "Calvisano",
+  // Le nom de 2001-2002 sur l'ancien site de l'ERC, avec ou sans espace.
+  "Ghial Amatori &Calvisano": "Calvisano",
+  "Ghial Amatori & Calvisano": "Calvisano",
   "Cardiff Blues": "Cardiff",
   "Castres Olympique": "Castres",
   "Cavalieri Prato": "Cavalieri Prato",

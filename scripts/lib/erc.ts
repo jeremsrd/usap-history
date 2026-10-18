@@ -59,6 +59,7 @@ import { mkdirSync, existsSync, readFileSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
 import type { EspnEquipe, EspnJoueur } from "./espn";
 import { baremeDeMatch, pointsDesRealisations } from "../../src/lib/scoring";
+import { privationDuJaune } from "./feuilles";
 
 /** Les pages de l'ERC vont de 2007 à 2013 : le barème d'aujourd'hui, écrit une seule fois. */
 const BAREME_ERC = baremeDeMatch(2007);
@@ -670,6 +671,10 @@ export interface ErcJoueur2001 extends Omit<EspnJoueur, "numero"> {
   sortie: number | null;
   /** Minute de chaque exclusion temporaire. */
   minutesJaunes: number[];
+  /** Minutes passées hors du terrain, suppléé par un entrant temporaire. */
+  absent: number;
+  /** Temps effectif sur le terrain, jaune déduit : cf. `privationDuJaune`. */
+  minutes: number;
 }
 
 export interface ErcEquipe2001 {
@@ -694,6 +699,8 @@ export interface ErcCompteRendu2001 {
 /** L'ordre dans lequel la page écrit un quinze : arrière, trois-quarts, demis, avants. */
 const ORDRE_2001 = [15, 14, 13, 12, 11, 10, 9, 1, 2, 3, 4, 5, 6, 7, 8];
 const GROUPES_2001 = [1, 4, 2, 8];
+/** Des matchs de poule : quatre-vingts minutes, sans prolongation. */
+const DUREE_2001 = 80;
 
 const ETIQUETTES_2001: Record<string, "essais" | "transformations" | "penalites" | "drops"> = {
   "Tries": "essais",
@@ -749,6 +756,8 @@ function joueur2001(nom: string, numero: number | null): ErcJoueur2001 {
     entree: null,
     sortie: null,
     minutesJaunes: [],
+    absent: 0,
+    minutes: 0,
   };
 }
 
@@ -758,7 +767,8 @@ function joueur2001(nom: string, numero: number | null): ErcJoueur2001 {
  * dans l'ordre 15 ; 14 à 11 ; 10, 9 ; 1 à 8, chaque entrant entre parenthèses
  * après le joueur dont il prend la place.
  *
- * Un entrant « 64-71 » est temporaire : le titulaire revient, et ne sort pas.
+ * Un entrant « 64-71 » est temporaire : l'occupant du poste revient, ne sort
+ * pas, et perd les minutes passées dehors.
  * Un entrant à demeure remplace l'occupant du moment, titulaire ou entrant
  * avant lui.
  */
@@ -789,6 +799,7 @@ function lireListe2001(liste: string, titre: string): ErcJoueur2001[] {
         joueurs.push(entrant);
         if (r[3] != null) {
           entrant.sortie = Number(r[3]);
+          occupant.absent += entrant.sortie - entrant.entree;
         } else {
           occupant.sortie = entrant.entree;
           occupant = entrant;
@@ -914,6 +925,13 @@ export function lireCompteRendu2001(brut: Buffer): ErcCompteRendu2001 {
       candidats[0].jaunes++;
       candidats[0].minutesJaunes.push(Number(m[2]));
     }
+  }
+
+  // Le temps effectif : de l'entrée (ou du coup d'envoi) à la sortie (ou à la
+  // 80ᵉ), moins les minutes suppléé et ce que le jaune a pris.
+  for (const j of [...domicile.joueurs, ...exterieur.joueurs]) {
+    const fin = j.sortie ?? DUREE_2001;
+    j.minutes = fin - (j.entree ?? 0) - j.absent - privationDuJaune(j.minutesJaunes[0], fin);
   }
 
   return { titre, jour, stade, arbitre, arbitrePays, domicile, exterieur };
