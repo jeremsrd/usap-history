@@ -114,6 +114,10 @@ export const CLUBS_ESPN: Record<string, string> = {
   "Gloucester Rugby": "Gloucester",
   "Leeds Tykes": "Leeds",
   "Leicester Tigers": "Leicester",
+  Leinster: "Leinster",
+  // Le Llanelli RFC de 2002-2003, avant la région : les Scarlets, voulu par
+  // Jérémy le 18 octobre 2026 (un seul adversaire, comme les Wasps).
+  Llanelli: "Scarlets",
   "London Irish": "London Irish",
   "London Wasps": "Wasps",
   Munster: "Munster",
@@ -126,5 +130,6 @@ export const CLUBS_ESPN: Record<string, string> = {
   "Stade Francais Paris": "Stade Français",
   "Stade Toulousain": "Toulouse",
   Toulon: "Toulon",
+  Viadana: "Viadana",
   "Worcester Warriors": "Worcester",
 };

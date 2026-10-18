@@ -57,6 +57,8 @@ le fichier de `docs/` indiqué.
 | 2026-10-18 | Homonymes parfaits (même nom complet, deux hommes) : fiches distinctes, départagées par le club de la feuille (`HOMONYMES_PARFAITS`) ; John Kelly et Chris Jones les premiers | saisie/identites |
 | 2026-10-18 | Malcolm et David Changleng, jumeaux, sont deux arbitres ; Lansdowne Road est un terrain particulier (quart 2006 reçu par Munster) | scripts |
 | 2026-10-18 | H Cup 2004-2005 : USAP-Newcastle du 8 janvier 2005 à 33-12 (Wikipédia anglophone et les deux classements), et non 32-12 (francophone) ; bonus offensif exclu du 23-0 contre Édimbourg par le relevé des marqueurs de l'ERC, donc posé sur le 32-9 contre les Dragons | scripts |
+| 2026-10-18 | Coupes d'Europe : 2 / 1 / 0 sans bonus jusqu'en 2002-2003, 4 / 2 / 0 avec bonus dès 2003-2004 (`pointsScaleFor`, `bonusRulesFor`) | regles-du-jeu |
+| 2026-10-18 | Le Llanelli RFC de 2002-2003 est les Scarlets (un seul adversaire), à Stradey Park jusqu'en 2007-2008 ; demi-finale et finale 2003 à Lansdowne Road | scripts |
 | 2026-10-18 | Le slug de match porte le jour de Paris ; les 33 slugs datés d'un autre jour sont renommés, sans redirection | modele-de-donnees |
 | 2026-10-18 | H Cup 2003-2004 : les deux bonus offensifs posés par le classement sur le 26-19 (Celtic Warriors) et le 48-7 (Calvisano), seuls scores à pouvoir porter quatre essais ; Celtic Warriors adversaire distinct (2003-2004), au Brewery Field | scripts |
 | 2026-10-18 | Matthew Burke, arrière de Newcastle (2004) et pilier de Connacht (2018), sont deux hommes (`HOMONYMES_PARFAITS`) ; Tom May de Newcastle est le Thomas May de Toulon | saisie/identites |

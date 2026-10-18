@@ -233,6 +233,12 @@ dans `scripts/lib/erc.ts`, dont l'en-tête décrit les quatre formes de page.
   `historical-stats.epcrugby.com` étaient hors service le 18 octobre 2026 ;
   les six rencontres sont en base sur leur score, à compléter par
   `seed-cup-espn.ts 2003-2004` dès qu'une page est trouvée.
+- **2002-2003 : rien.** Les captures de `ercrugby.com` s'arrêtent en octobre
+  2002, avant les rencontres de l'USAP (`english/fixturesresultspage/`,
+  `hc_02_*` de la saison précédente), et le site ferme en avril 2003
+  (`siteclosed`) ; le site Vignette qui suit (`vsite/…`) n'a presque pas été
+  capturé. Les archives de l'EPCR gardent en revanche de nombreux comptes
+  rendus USAP de 1997 à 2003, au score dans le slug (`neath-33-51-perpignan`).
 - **La CDX d'abord** : elle dit en une requête si une page a jamais été
   capturée. Résoudre les redirections sans elle a fait refuser l'archive
   après une cinquantaine de requêtes le 18 octobre 2026.

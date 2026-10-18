@@ -84,6 +84,14 @@ export const TERRAINS_PARTICULIERS: Record<string, string | null> = {
   // Park, trop petit pour 48 500 spectateurs. Sources : le compte rendu de
   // l'ERC et Wikipédia, qui donnent le même stade et la même affluence.
   "2006-04-01": "Lansdowne Road",
+  // Demi-finale de Heineken Cup 2003, Leinster-Perpignan du 27 avril 2003,
+  // reçue par le Leinster à **Lansdowne Road** et non à Donnybrook, son
+  // terrain d'alors, devant 37 000 spectateurs ; finale du 24 mai 2003,
+  // Toulouse-Perpignan, au même stade, terrain neutre, devant 28 600.
+  // Source : Wikipédia anglophone, « 2002–03 Heineken Cup », qui donne le
+  // stade, l'affluence et le score de chacune.
+  "2003-04-27": "Lansdowne Road",
+  "2003-05-24": "Lansdowne Road",
   // Finale de Pro D2 2018, Perpignan-Grenoble. Source : Jérémy, présent au
   // stade. La feuille de la LNR désigne un recevant et ne nomme aucun lieu.
   "2018-05-06": "Stade Ernest-Wallon",

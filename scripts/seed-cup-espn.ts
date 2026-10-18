@@ -69,7 +69,7 @@ import {
   type Ligue,
 } from "./lib/espn";
 import { CLUBS_ESPN } from "./lib/clubs";
-import { baremeDeMatch, pointsDesRealisations, type Bareme } from "../src/lib/scoring";
+import { baremeDeMatch, pointsDesRealisations, pointsScaleFor, type Bareme, type PointsScale } from "../src/lib/scoring";
 import {
   lirePageArchivee,
   lireCompteRendu2004,
@@ -190,6 +190,72 @@ interface Campagne {
 }
 
 const CAMPAGNES: Record<string, Campagne> = {
+  /**
+   * Heineken Cup 2002-2003, poule 2 : Perpignan, Munster, Gloucester, Arix
+   * Viadana. **Première de poule** à 8 points, devant Munster et Gloucester
+   * à égalité ; quart gagné 26-19 à Llanelli, demi-finale gagnée 21-14 chez
+   * le Leinster, **finale perdue 17-22 contre Toulouse** à Lansdowne Road.
+   * Classement, calendrier et phase finale d'après la Wikipédia anglophone,
+   * « 2002–03 Heineken Cup pool stage » et « 2002–03 Heineken Cup » ;
+   * l'arbitre de la finale, Chris White, y est le seul nommé.
+   *
+   * **Sans bonus, à 2 points la victoire** : le classement n'a pas de
+   * colonne bonus, et quatre victoires y font 8 points. `pointsScaleFor` le
+   * sait depuis le 18 octobre 2026 pour les coupes d'Europe d'avant
+   * 2003-2004.
+   *
+   * **Aucun compte rendu de l'ERC** : les captures du site s'arrêtent en
+   * octobre 2002, avant les rencontres de l'USAP, et il ferme en avril 2003
+   * (`siteclosed`). Les neuf rencontres s'écrivent avec leur score.
+   *
+   * Le Llanelli de 2002-2003 est rattaché aux Scarlets (`CLUBS_ESPN`), à
+   * Stradey Park par `seed-stades-historiques.ts`. Demi-finale et finale à
+   * Lansdowne Road par `TERRAINS_PARTICULIERS`. Stades créés : le
+   * Zaffanella de Viadana, 6 000 places, et le RDS Arena du Leinster,
+   * 20 600 places aujourd'hui, d'après Wikipédia.
+   */
+  "2002-2003": {
+    ligue: "champions-cup",
+    competition: "H-Cup",
+    nouveauxAdversaires: [
+      { name: "Rugby Viadana", shortName: "Viadana", city: "Viadana", pays: "IT" },
+      { name: "Leinster Rugby", shortName: "Leinster", city: "Dublin", pays: "IE" },
+    ],
+    terrains: [
+      { club: "Viadana", stade: "Stadio Luigi Zaffanella", ville: "Viadana", capacite: 6000 },
+      { club: "Leinster", stade: "RDS Arena", ville: "Dublin", capacite: 20600 },
+    ],
+    poule: {
+      joues: 6,
+      victoires: 4,
+      nuls: 0,
+      defaites: 2,
+      essaisPour: 23,
+      essaisContre: 16,
+      pour: 176,
+      contre: 156,
+      bonusOffensifs: 0,
+      bonusDefensifs: 0,
+      points: 8,
+    },
+    phaseFinale: [
+      { tour: "Quart de finale", adversaire: "Scarlets", scoreUsap: 26, scoreOpponent: 19, affluence: 10800 },
+      { tour: "Demi-finale", adversaire: "Leinster", scoreUsap: 21, scoreOpponent: 14, affluence: 37000 },
+      { tour: "Finale", adversaire: "Toulouse", scoreUsap: 17, scoreOpponent: 22, arbitre: "Chris White", affluence: 28600 },
+    ],
+    calendrier: [
+      { jour: "2002-10-12", tour: "Poule J1", adversaire: "Viadana", isHome: true, scoreUsap: 46, scoreOpponent: 27 },
+      { jour: "2002-10-19", tour: "Poule J2", adversaire: "Munster", isHome: false, scoreUsap: 21, scoreOpponent: 30, decalage: -1 },
+      { jour: "2002-12-08", tour: "Poule J3", adversaire: "Gloucester Rugby", isHome: false, scoreUsap: 16, scoreOpponent: 33, decalage: -1 },
+      { jour: "2002-12-14", tour: "Poule J4", adversaire: "Gloucester Rugby", isHome: true, scoreUsap: 31, scoreOpponent: 23 },
+      { jour: "2003-01-11", tour: "Poule J5", adversaire: "Munster", isHome: true, scoreUsap: 23, scoreOpponent: 8 },
+      { jour: "2003-01-18", tour: "Poule J6", adversaire: "Viadana", isHome: false, scoreUsap: 39, scoreOpponent: 35 },
+      { jour: "2003-04-16", tour: "Quart de finale", adversaire: "Llanelli", isHome: false, scoreUsap: 26, scoreOpponent: 19, decalage: -1 },
+      { jour: "2003-04-27", tour: "Demi-finale", adversaire: "Leinster", isHome: false, scoreUsap: 21, scoreOpponent: 14, decalage: -1 },
+      { jour: "2003-05-24", tour: "Finale", adversaire: "Stade Toulousain", isHome: false, scoreUsap: 17, scoreOpponent: 22, decalage: -1 },
+    ],
+    note: "Heineken Cup, poule 2 — première, finaliste",
+  },
   /**
    * Heineken Cup 2003-2004, poule 6 : London Wasps, Celtic Warriors,
    * Perpignan, Calvisano. **Troisième** avec 15 points, deux bonus
@@ -1332,6 +1398,7 @@ function controlerLaPoule(
   rencontres: Rencontre[],
   officiel: ClassementDePoule,
   bareme: Bareme,
+  echelle: PointsScale,
 ): { ecarts: string[]; avertissements: string[] } {
   const poule = rencontres.filter((r) => r.feuille.tour.startsWith("Poule"));
   const v = poule.filter((r) => r.resultat === MatchResult.VICTOIRE).length;
@@ -1369,7 +1436,7 @@ function controlerLaPoule(
     }
   }
   const bo = poule.filter((r) => r.bonusOffensif).length;
-  const points = 4 * v + 2 * n + bo + bd;
+  const points = echelle.win * v + echelle.draw * n + echelle.loss * d + bo + bd;
 
   const ecarts = [
     poule.length !== officiel.joues ? `${poule.length} joués pour ${officiel.joues}` : null,
@@ -1664,7 +1731,12 @@ async function main() {
   }
 
   // ---- Le garde-fou, avant toute écriture --------------------------------
-  const { ecarts, avertissements } = controlerLaPoule(rencontres, campagne.poule, baremeDeMatch(saison.startYear));
+  const { ecarts, avertissements } = controlerLaPoule(
+    rencontres,
+    campagne.poule,
+    baremeDeMatch(saison.startYear),
+    pointsScaleFor(saison.startYear, campagne.competition),
+  );
   ecarts.push(...controlerLaPhaseFinale(rencontres, campagne.phaseFinale ?? []));
   const avertissementsPoule = avertissements.length;
   console.log("");

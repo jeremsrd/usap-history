@@ -21,10 +21,19 @@ français ignorait les bonus **et** comptait les points autrement.
 
 **Coupes d'Europe**
 
-| Période | Bonus offensif | Bonus défensif |
-|---|---|---|
-| jusqu'en 2025-2026 | 4 essais | défaite ≤ 7 pts |
-| depuis 2026-2027 | 3 essais d'écart | défaite ≤ 7 pts |
+| Période | Victoire / Nul / Défaite | Bonus offensif | Bonus défensif |
+|---|---|---|---|
+| jusqu'en 2002-2003 | 2 / 1 / 0 | aucun | aucun |
+| 2003-2004 → 2025-2026 | 4 / 2 / 0 | 4 essais | défaite ≤ 7 pts |
+| depuis 2026-2027 | 4 / 2 / 0 | 3 essais d'écart | défaite ≤ 7 pts |
+
+Les coupes d'Europe passent au 4 / 2 / 0 avec bonus **un an avant** les
+championnats français, en 2003-2004. Attesté le 18 octobre 2026 par les
+classements de poule de la H Cup (Wikipédia anglophone) : en 2002-2003, sans
+colonne bonus, quatre victoires font 8 points ; en 2001-2002, deux victoires
+et un nul en font 5 (Biarritz) ; en 2003-2004, la colonne bonus apparaît et
+3 victoires, 2 BO et 1 BD font les 15 points de l'USAP. Pour une coupe
+d'Europe, `pointsScaleFor` prend la compétition en second argument.
 
 2004-2005 est une bascule complète : abandon du 3/2/1 historique, où une
 défaite rapportait encore un point, au profit du 4/2/0 international avec
@@ -46,8 +55,8 @@ Le seuil défensif de sept points l'est aussi, les trois bonus défensifs du
 classement se retrouvant exactement sur les scores.
 
 Deux réserves subsistent : la **date de la décision** LNR de 2004 n'est
-toujours pas sourcée — seule la saison d'application l'est —, et la date
-d'introduction des bonus dans les coupes d'Europe n'a pas été vérifiée.
+toujours pas sourcée — seule la saison d'application l'est. Celle des
+coupes d'Europe est levée, ci-dessus.
 
 **Aucun bonus sur un match couperet** : phase finale européenne, barrage
 d'accession, finale. Dans le modèle, une rencontre est un couperet si elle n'a

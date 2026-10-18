@@ -4,8 +4,7 @@
  *
  * POURQUOI. `Opponent.venueId` ne porte qu'un terrain, celui d'aujourd'hui, et
  * la déduction du lieu d'un déplacement s'en trouve fausse dès qu'on remonte.
- * Cinq clubs sont concernés sur les quarante-trois que l'USAP a visités, et
- * huit matchs en tout :
+ * Six clubs sont concernés, et douze matchs en tout :
  *
  * | Match | En base avant | En réalité |
  * |---|---|---|
@@ -16,6 +15,7 @@
  * | Lyon, 31 mars 2016 | Gerland | Matmut Stadium (Vénissieux) |
  * | Grenoble, 26 novembre 2004 | Stade des Alpes | Lesdiguières |
  * | Montpellier, 9 avril 2005, 12 novembre 2005, 11 novembre 2006 | GGL Stadium | Sabathé |
+ * | Scarlets (Llanelli), 16 avril 2003 | Parc y Scarlets | Stradey Park |
  *
  * Les quatre derniers ont été vus le 17 octobre 2026 en reprenant 2003-2004 :
  * le calendrier de l'ancienne LNR y nomme « Lesdiguières » et « Sabathé » là
@@ -133,6 +133,14 @@ const STADES_A_CREER = [
       "Terrain du rugby à XV montpelliérain jusqu'en 2006-2007, inauguré le " +
       "11 novembre 1930 ; dernier match du MHR en Top 14 contre Biarritz, 39-29.",
   },
+  {
+    nom: "Stradey Park",
+    ville: "Llanelli",
+    pays: "WA",
+    notes:
+      "Terrain du Llanelli RFC puis des Scarlets de 1879 à octobre 2008, 10 800 places ; " +
+      "Parc y Scarlets l'a remplacé le 15 novembre 2008, et il a été démoli en 2010.",
+  },
 ];
 
 /**
@@ -190,6 +198,19 @@ const HISTORIQUE: Array<{ club: string; stade: string; from?: number; until: num
       "Wikipédia, « Stade Sabathé » (le MHR rejoint Yves-du-Manoir en 2007) et « Septeo Stadium » " +
       "(premier match officiel le 27 octobre 2007, Montpellier-USAP 19-12, d'après Midi libre) ; " +
       "le calendrier 2003-2004 de l'ancienne LNR place Montpellier-Perpignan du 29 novembre 2003 à Sabathé.",
+  },
+  {
+    // Borné à 2007-2008 : les Scarlets ont commencé 2008-2009 à Stradey et
+    // l'ont quitté en novembre 2008, un fait par match comme Grenoble ; l'USAP
+    // ne les a pas rencontrés cette saison-là. Le Llanelli de 2002-2003 est
+    // les Scarlets, voulu par Jérémy le 18 octobre 2026.
+    club: "Scarlets",
+    stade: "Stradey Park",
+    until: 2007,
+    source:
+      "Wikipédia anglophone, « Stradey Park » (dernier match des Scarlets en octobre 2008) et " +
+      "« Parc y Scarlets » (ouvert le 15 novembre 2008) ; « 2002–03 Heineken Cup » place le quart " +
+      "de finale Llanelli-Perpignan du 16 avril 2003 à Stradey Park.",
   },
 ];
 

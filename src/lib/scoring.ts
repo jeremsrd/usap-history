@@ -37,9 +37,13 @@
 //     défensif. C'était bien le standard 4 essais / 7 points, mais une source
 //     primaire demanderait les règlements LNR de ces trois saisons, qui ne
 //     sont plus en ligne.
-//   - la date d'introduction des bonus dans les coupes d'Europe n'a pas été
-//     vérifiée : le barème européen ci-dessous est supposé valable sur toute
-//     la période couverte.
+//   - coupes d'Europe : les bonus et le 4 / 2 / 0 arrivent en 2003-2004, un
+//     an avant les championnats français. Les classements de poule de la
+//     H Cup le montrent (Wikipédia anglophone, « 2002–03 » et « 2003–04
+//     Heineken Cup pool stage ») : en 2002-2003, sans colonne bonus, quatre
+//     victoires font 8 points ; en 2001-2002, Biarritz fait 5 points de deux
+//     victoires et un nul, soit 2 / 1 / 0. En 2003-2004, la colonne bonus
+//     apparaît et la victoire vaut 4.
 //
 // Les matchs couperets (phases finales, barrages d'accession) n'attribuent
 // aucun point de bonus.
@@ -59,6 +63,9 @@ function isEuropean(competitionShortName: string): boolean {
 
 /** Première saison où les championnats français attribuent des bonus. */
 const PREMIERE_SAISON_BONUS_FR = 2004;
+
+/** Première saison où les coupes d'Europe attribuent des bonus. */
+const PREMIERE_SAISON_BONUS_EUROPE = 2003;
 
 /** Compétitions sans points de bonus : matchs couperets par nature. */
 function hasNoBonus(competitionShortName: string): boolean {
@@ -80,6 +87,7 @@ export function bonusRulesFor(
   if (isKnockout || hasNoBonus(competitionShortName)) return null;
 
   if (isEuropean(competitionShortName)) {
+    if (seasonStartYear < PREMIERE_SAISON_BONUS_EUROPE) return null;
     return {
       tryBonus: seasonStartYear >= 2026 ? "DIFFERENTIEL_TROIS" : "QUATRE_ESSAIS",
       losingMargin: 7,
@@ -152,8 +160,15 @@ export interface PointsScale {
 /**
  * Barème de points d'un championnat français. Le 3 / 2 / 1 historique a laissé
  * place au 4 / 2 / 0 en 2004-2005, en même temps que l'arrivée des bonus.
+ * Une coupe d'Europe passe `competitionShortName` : 2 / 1 / 0 avant 2003-2004,
+ * 4 / 2 / 0 ensuite.
  */
-export function pointsScaleFor(seasonStartYear: number): PointsScale {
+export function pointsScaleFor(seasonStartYear: number, competitionShortName?: string): PointsScale {
+  if (competitionShortName && isEuropean(competitionShortName)) {
+    return seasonStartYear < PREMIERE_SAISON_BONUS_EUROPE
+      ? { win: 2, draw: 1, loss: 0 }
+      : { win: 4, draw: 2, loss: 0 };
+  }
   return seasonStartYear < PREMIERE_SAISON_BONUS_FR
     ? { win: 3, draw: 2, loss: 1 }
     : { win: 4, draw: 2, loss: 0 };
