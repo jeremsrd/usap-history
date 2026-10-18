@@ -66,10 +66,14 @@ export interface JoueurOfficiel {
  *   Chris Jones  le centre n°12 de Leeds les 11 et 17 décembre 2005, d'après
  *                l'ERC, et le deuxième ligne de Worcester de décembre 2012,
  *                d'après ESPN, que la base a toujours vu en deuxième ligne.
+ *   Matthew Burke l'arrière australien n°15 de Newcastle du 31 octobre 2004,
+ *                d'après l'ERC, retiré en 2008, et le pilier remplaçant n°17
+ *                de Connacht du 14 décembre 2018.
  */
 export const HOMONYMES_PARFAITS: Record<string, string[][]> = {
   "John Kelly": [["Munster"], ["Newcastle"]],
   "Chris Jones": [["Leeds"], ["Worcester"]],
+  "Matthew Burke": [["Newcastle"], ["Connacht"]],
 };
 
 /** L'homonyme parfait que désigne ce nom complet, une fois normalisé. */

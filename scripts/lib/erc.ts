@@ -12,8 +12,13 @@
  * centaine de requêtes rapprochées. D'où quatre secondes entre deux pages, et
  * un cache sur disque : une page archivée ne change plus.
  *
- * Trois formats, selon l'époque du site :
+ * Quatre formats, selon l'époque du site :
  *
+ *   - **2004-2005, les pages `cup/25_NNNN.php`**, sous un autre répertoire
+ *     que `eng/`, vers lesquelles renvoient les `cup/matchpage.php?fixid=N`
+ *     du calendrier : un titre, le score, « Stade, Friday 22nd October
+ *     2004 », et une table `matchteams` à onze colonnes. Ni affluence, ni
+ *     arbitre, ni heure, ni chronologie : cf. `lireCompteRendu2004` ;
  *   - **2005-2006 et 2006-2007, les comptes rendus `eng/12_NNNN.php`** déjà,
  *     mais d'une autre forme : cf. `lireCompteRendu2006`, plus bas. En
  *     2005-2006, l'en-tête écrit le nom des clubs sans lien, et le drop se
@@ -68,7 +73,10 @@ export async function lirePageArchivee(page: string, instantane: string): Promis
   const fichier = join(CACHE, `${instantane}-${page.replace(/[^\w.-]/g, "_")}`);
   if (existsSync(fichier)) return readFileSync(fichier);
 
-  const url = `${ARCHIVE}${instantane}id_/${RACINE}${page}`;
+  // Les pages de 2004-2005 sont sous `cup/`, et s'écrivent ainsi dans `page`.
+  const url = page.startsWith("cup/")
+    ? `${ARCHIVE}${instantane}id_/http://www.ercrugby.com/${page}`
+    : `${ARCHIVE}${instantane}id_/${RACINE}${page}`;
   let derniere = "";
   for (let essai = 1; essai <= 4; essai++) {
     const attente = Math.max(0, derniereRequete + PAUSE_MS - Date.now());
@@ -547,6 +555,94 @@ export function lireCompteRendu2006(brut: Buffer): ErcCompteRendu2006 {
     exterieur: equipe(nomExterieur, exterieur, score?.[2], penaltyTries[1], miTemps?.exterieur ?? null),
     evenements: complete ? evenements.map(({ premiereMiTemps: _, ...e }) => e).sort((a, b) => a.minute - b.minute) : [],
     essaisDePenaliteMinutes: [[], []],
+  };
+}
+
+// =============================================================================
+// LES COMPTES RENDUS DE 2004-2005
+// =============================================================================
+
+export interface ErcCompteRendu2004 extends ErcMatch {
+  /** « Ravenhill, Friday 22nd October 2004 » : le jour ISO, sans heure. */
+  jour: string | null;
+}
+
+/**
+ * Le compte rendu de 2004-2005, `cup/25_NNNN.php` : un titre `headline`
+ * « Ulster v Cardiff Blues », un en-tête `matchinfo` — score, puis « Stade,
+ * Friday 22nd October 2004 » —, et une table `matchteams` dont la première
+ * ligne porte le nom des deux clubs, puis une ligne par numéro de 1 à 22 à
+ * onze cellules : P D C T, nom du recevant, numéro, nom du visiteur, T C D P.
+ *
+ * La page ne donne ni l'affluence, ni l'arbitre, ni l'heure, ni la
+ * chronologie : ils restent à `null`.
+ */
+export function lireCompteRendu2004(brut: Buffer): ErcCompteRendu2004 {
+  const html = brut.toString("latin1");
+  const titre = texte(/<td class=headline[^>]*>([\s\S]*?)<\/td>/.exec(html)?.[1] ?? "");
+
+  const info = /<table class=matchinfo[\s\S]*?<\/table>/.exec(html)?.[0] ?? "";
+  const score = /<td class=score[^>]*>\s*(\d+)\s*-\s*(\d+)/.exec(info);
+  // « Ravenhill, Friday 22nd October 2004 » : le stade avant la dernière virgule.
+  const ligneInfo = texte(/<td class=info[^>]*>([\s\S]*?)<\/td>/.exec(info)?.[1] ?? "");
+  const date = /^(.*),\s*\w+day\s+(\d{1,2})(?:st|nd|rd|th)\s+(\w+)\s+(\d{4})$/.exec(ligneInfo);
+  const stade = date?.[1].trim() || null;
+  const jour =
+    date && MOIS.includes(date[3])
+      ? `${date[4]}-${String(MOIS.indexOf(date[3]) + 1).padStart(2, "0")}-${date[2].padStart(2, "0")}`
+      : null;
+
+  const table = /<table class=matchteams[\s\S]*?<\/table>/.exec(html)?.[0];
+  if (!table) throw new Error(`${titre} : aucune composition sur la page`);
+  const [entete] = [...table.matchAll(/<tr class=colhead>([\s\S]*?)<\/tr>/g)].map((m) => m[1]);
+  const noms = [...(entete ?? "").matchAll(/<td colspan=5[^>]*>([\s\S]*?)<\/td>/g)].map((m) => texte(m[1]));
+  if (noms.length !== 2) throw new Error(`${titre} : ${noms.length} équipe(s) en tête de table`);
+  const [nomDomicile, nomExterieur] = noms;
+
+  const domicile: EspnJoueur[] = [];
+  const exterieur: EspnJoueur[] = [];
+  for (const [, ligne] of table.matchAll(/<tr>([\s\S]*?)<\/tr>/g)) {
+    const cellules = [...ligne.matchAll(/<td[^>]*>([\s\S]*?)<\/td>/g)].map((m) => m[1]);
+    if (cellules.length !== 11) throw new Error(`${titre} : ligne de composition à ${cellules.length} cellules`);
+    // [0] P, [1] D, [2] C, [3] T, [4] nom A, [5] numéro, [6] nom B, [7] T, [8] C, [9] D, [10] P
+    const numero = nombre(cellules[5]);
+    const faire = (nom: string, t: number, c: number, d: number, p: number): EspnJoueur => ({
+      id: 0,
+      ...separerNom(nom),
+      numero,
+      isStarter: numero <= 15,
+      posteEspn: null,
+      essais: t,
+      transformations: c,
+      drops: d,
+      penalites: p,
+      points: pointsDesRealisations({ essais: t, transformations: c, drops: d, penalites: p }, BAREME_ERC),
+      jaunes: 0,
+      rouges: 0,
+    });
+    if (texte(cellules[4])) {
+      domicile.push(faire(cellules[4], nombre(cellules[3]), nombre(cellules[2]), nombre(cellules[1]), nombre(cellules[0])));
+    }
+    if (texte(cellules[6])) {
+      exterieur.push(faire(cellules[6], nombre(cellules[7]), nombre(cellules[8]), nombre(cellules[9]), nombre(cellules[10])));
+    }
+  }
+
+  const equipe = (nom: string, joueurs: EspnJoueur[], scoreEquipe: string | undefined): EspnEquipe => ({
+    id: 0,
+    nom,
+    score: scoreEquipe != null ? Number(scoreEquipe) : null,
+    miTemps: null,
+    essaisSansAuteur: 0,
+    joueurs: joueurs.sort((a, b) => a.numero - b.numero),
+  });
+  return {
+    titre,
+    stade,
+    affluence: null,
+    jour,
+    domicile: equipe(nomDomicile, domicile, score?.[1]),
+    exterieur: equipe(nomExterieur, exterieur, score?.[2]),
   };
 }
 

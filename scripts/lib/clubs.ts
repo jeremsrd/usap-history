@@ -116,6 +116,7 @@ export const CLUBS_ESPN: Record<string, string> = {
   "London Irish": "London Irish",
   "London Wasps": "Wasps",
   Munster: "Munster",
+  "Newcastle Falcons": "Newcastle",
   "Northampton Saints": "Northampton",
   Ospreys: "Ospreys",
   Rovigo: "Rovigo",

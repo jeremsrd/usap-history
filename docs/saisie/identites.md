@@ -89,7 +89,8 @@ confrontations avec l'USAP, et de gérer les joueurs passés par les deux camps
   n'a pas besoin de la table, le préfixe suffit.
 
   Et deux hommes au **même nom complet** — John Kelly, ailier de Munster en
-  2006 et deuxième ligne de Newcastle en 2024 — relèvent de
+  2006 et deuxième ligne de Newcastle en 2024 ; Matthew Burke, arrière de
+  Newcastle en 2004 et pilier de Connacht en 2018 — relèvent de
   `HOMONYMES_PARFAITS` de `joueurs.ts` : chacun y est désigné par ses clubs,
   la feuille est rattachée à la fiche de son club ou en reçoit une neuve, et
   `chercherJoueur` lève si l'appelant ne donne pas le club.

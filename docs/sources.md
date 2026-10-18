@@ -211,13 +211,32 @@ identifiant Opta, qu'on rattache à la composition **par le dossard** — aucun
 rapprochement de noms, donc aucune erreur d'identité possible.
 
 - **Le flux ne remonte pas avant 2020-2021.** Il ne rend rien sur 2019-2020 et
-  au-delà, et le site de l'EPCR n'offre plus que les saisons récentes : les
-  campagnes européennes antérieures n'ont, à ce jour, aucune source lisible.
+  au-delà : les campagnes antérieures passent par ESPN (dès 2007-2008) et par
+  les comptes rendus de l'ERC, ci-dessous.
 - **La clé d'API se lit dans `EPCR_API_KEY`**, à poser dans `.env` et **non**
   dans `.env.local`, que les scripts ne voient pas. Clé publique du front, sans
   rien de sensible ; elle est sortie du dépôt parce qu'un scanner de secrets la
   signalait à chaque poussée.
 - **Une affluence à zéro veut dire « inconnue »**, pas « aucun spectateur ».
+
+#### L'ERC, dans la Wayback Machine — coupes d'Europe d'avant 2014
+
+`ercrugby.com` a disparu avec l'ERC ; l'archive en garde une part. Lecteurs
+dans `scripts/lib/erc.ts`, dont l'en-tête décrit les quatre formes de page.
+
+- **2004-2005 : `cup/25_NNNN.php`**, atteintes par les liens
+  `cup/matchpage.php?fixid=N` du calendrier, que l'archive garde en 302.
+  **Peu de pages ont survécu** : sur les six rencontres de l'USAP, seul
+  Newcastle-Perpignan (25_3020). Les relevés de marqueurs du site (25_3033,
+  25_3183) sont archivés et peuvent trancher un bonus.
+- **La CDX d'abord** : elle dit en une requête si une page a jamais été
+  capturée. Résoudre les redirections sans elle a fait refuser l'archive
+  après une cinquantaine de requêtes le 18 octobre 2026.
+- **`historical-stats.epcrugby.com`**, les archives de l'EPCR, garde la
+  **prose** des comptes rendus de l'ERC (`/report/<slug>/`), sans tableau de
+  marque, sous une date d'en-tête fausse (« 26/09/1998 ») : à dater par le
+  texte. Joignable seulement par l'archive le 18 octobre 2026 (502 en
+  direct). A donné le bonus offensif de USAP-Newcastle du 8 janvier 2005.
 
 #### Les autres, et ce qu'elles valent
 

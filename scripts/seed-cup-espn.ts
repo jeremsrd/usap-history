@@ -37,7 +37,10 @@
  * des feuilles. Le score de Wikipédia sert de contrôle à celui de l'ERC, la
  * poule à tous les deux. Une rencontre sans compte rendu s'écrit avec son
  * jour et son score, attestée `CONCORDANT`. C'est le cas de 2006-2007 ;
- * 2005-2006 a ses sept comptes rendus.
+ * 2005-2006 a ses sept comptes rendus, 2004-2005 un seul sur six. Le bonus
+ * offensif d'une rencontre sans feuille peut alors être tranché dans le
+ * calendrier, sur une autre source, avant que le classement n'attribue le
+ * reste.
  *
  * Un joueur dont le nom complet est celui d'un autre homme déjà en base se
  * départage par le club de la feuille : `HOMONYMES_PARFAITS` de
@@ -67,7 +70,16 @@ import {
 } from "./lib/espn";
 import { CLUBS_ESPN } from "./lib/clubs";
 import { baremeDeMatch, pointsDesRealisations, type Bareme } from "../src/lib/scoring";
-import { lirePageArchivee, lireCompteRendu2006, lireCompteRendu2007, lireMatchCentre, type ErcCompteRendu2006, type ErcEvenement } from "./lib/erc";
+import {
+  lirePageArchivee,
+  lireCompteRendu2004,
+  lireCompteRendu2006,
+  lireCompteRendu2007,
+  lireMatchCentre,
+  type ErcCompteRendu2004,
+  type ErcCompteRendu2006,
+  type ErcEvenement,
+} from "./lib/erc";
 import { instantDeParis } from "./lib/dates";
 import { attester } from "./lib/attestations";
 import { normalize } from "./lib/noms";
@@ -156,6 +168,15 @@ interface Campagne {
     scoreOpponent: number;
     /** Décalage de l'heure locale du stade sur Paris, en heures : −1 au Royaume-Uni. */
     decalage?: number;
+    /**
+     * Le bonus offensif d'une rencontre sans feuille, quand une autre source
+     * le tranche — jamais déduit du seul score. Sa démonstration en
+     * commentaire, comme toute correction. Le classement de poule peut
+     * ensuite attribuer les bonus qui restent.
+     */
+    bonusOffensif?: boolean;
+    /** Ce que l'attestation doit ajouter sur la provenance du score. */
+    note?: string;
   }>;
   /**
    * Les noms de l'ERC à corriger avant le rapprochement, « Prénom Nom » tel
@@ -169,6 +190,83 @@ interface Campagne {
 }
 
 const CAMPAGNES: Record<string, Campagne> = {
+  /**
+   * Heineken Cup 2004-2005, poule 5 : Newcastle Falcons, Perpignan, Newport
+   * Gwent Dragons, Edinburgh. **Deuxième** avec 15 points, à égalité avec
+   * les Dragons et devant eux à la différence de points ; pas de phase
+   * finale. Classement et calendrier d'après la Wikipédia francophone,
+   * « Coupe d'Europe de rugby à XV 2004-2005 », que l'anglophone redonne.
+   *
+   * Les trois adversaires et leurs terrains sont déjà en base.
+   */
+  "2004-2005": {
+    ligue: "champions-cup",
+    competition: "H-Cup",
+    nouveauxAdversaires: [],
+    terrains: [],
+    poule: {
+      joues: 6,
+      victoires: 3,
+      nuls: 0,
+      defaites: 3,
+      essaisPour: 15,
+      essaisContre: 10,
+      pour: 133,
+      contre: 107,
+      bonusOffensifs: 2,
+      bonusDefensifs: 1,
+      points: 15,
+    },
+    calendrier: [
+      // **Pas de bonus offensif, et c'est le relevé des marqueurs de l'ERC qui
+      // l'établit**, la page du match n'étant pas archivée. Après deux
+      // journées (cup/25_3033, 3 novembre 2004), l'USAP n'a que trois
+      // marqueurs pour ses 37 points : Giannantonio 16, Edmonds 13,
+      // Laharrague 3. Ôté Newcastle-Perpignan, dont la feuille est lue
+      // (Edmonds 8, Giannantonio 3, Laharrague 3), restent pour ce 23-0
+      // Giannantonio 13, Edmonds 5 — un essai —, et cinq points sans auteur
+      // nommé : un essai au plus. Le relevé des essais (cup/25_3183, 4
+      // décembre) ne donne pas deux essais à Giannantonio : ses 13 points
+      // en portent un au plus. Trois essais au plus, donc.
+      { jour: "2004-10-22", tour: "Poule J1", adversaire: "Edinburgh", isHome: true, scoreUsap: 23, scoreOpponent: 0, bonusOffensif: false },
+      { jour: "2004-10-31", tour: "Poule J2", adversaire: "Newcastle Falcons", isHome: false, scoreUsap: 14, scoreOpponent: 19, decalage: -1 },
+      { jour: "2004-12-04", tour: "Poule J3", adversaire: "Dragons", isHome: false, scoreUsap: 14, scoreOpponent: 27, decalage: -1 },
+      { jour: "2004-12-11", tour: "Poule J4", adversaire: "Dragons", isHome: true, scoreUsap: 32, scoreOpponent: 9 },
+      // **33-12, et non 32-12 comme l'écrit la Wikipédia francophone** : le
+      // tableau de match de l'anglophone (« 2004–05 Heineken Cup pool stage »)
+      // donne 33-12, et c'est le seul score que les deux classements
+      // admettent — 133 marqués par l'USAP, 104 encaissés par Newcastle. Le
+      // compte rendu de l'ERC, repris par les archives de l'EPCR, le redonne
+      // par le détail : 9-9 à la pause, trois pénalités par camp, puis quatre
+      // essais pour le bonus — deux d'Alvarez Kairelis — et une pénalité de
+      // Wilkinson. Sa page de 2005 n'est pas archivée. **Le bonus offensif
+      // est dans le même compte rendu** : « the French club secured a crucial
+      // bonus point », Newcastle menant ensuite la poule à 17 points devant
+      // l'USAP et les Dragons à 15.
+      {
+        jour: "2005-01-08",
+        tour: "Poule J5",
+        adversaire: "Newcastle Falcons",
+        isHome: true,
+        scoreUsap: 33,
+        scoreOpponent: 12,
+        bonusOffensif: true,
+        note:
+          "Score de la Wikipédia anglophone, « 2004–05 Heineken Cup pool stage » (la francophone écrit 32-12, que les classements démentent) ; bonus offensif d'après le compte rendu de l'ERC repris par historical-stats.epcrugby.com, « Perpignan v Newcastle Falcons ».",
+      },
+      { jour: "2005-01-16", tour: "Poule J6", adversaire: "Edinburgh", isHome: false, scoreUsap: 17, scoreOpponent: 40, decalage: -1 },
+    ],
+    identites: {
+      // L'ailier de Newcastle, n°14 le 31 octobre 2004, passé à Toulon en
+      // 2009 : la fiche « Thomas May » que Toulon lui a donnée, n°12 le 5
+      // novembre 2009 et n°20 le 4 novembre 2010.
+      "Tom May": { firstName: "Thomas", lastName: "May" },
+    },
+    erc: {
+      "2004-10-31": { page: "cup/25_3020.php", instantane: "20041031203511" },
+    },
+    note: "Heineken Cup, poule 5 — deuxième",
+  },
   /**
    * Heineken Cup 2005-2006, poule 2 : Perpignan, Leeds Tykes, Cardiff
    * Blues, Calvisano. **Première de poule** avec 23 points, deux bonus
@@ -906,14 +1004,15 @@ async function lireCampagne(
       : date.toLocaleTimeString("fr-FR", { timeZone: "Europe/Paris", hour: "2-digit", minute: "2-digit" });
     if (archive) {
       const brut = await lirePageArchivee(archive.page, archive.instantane);
-      // Trois formes de page, selon l'époque du site : cf. `lib/erc.ts`.
+      // Quatre formes de page, selon l'époque du site : cf. `lib/erc.ts`.
       const de2006 = brut.toString("latin1").includes('<tr class="line_result">');
+      const de2004 = archive.page.startsWith("cup/");
       const centre = archive.page.startsWith("matchcentre/")
         ? lireMatchCentre(brut)
         : de2006
           ? lireCompteRendu2006(brut)
           : null;
-      const erc = centre ?? lireCompteRendu2007(brut);
+      const erc = centre ?? (de2004 ? lireCompteRendu2004(brut) : lireCompteRendu2007(brut));
       const ercUsap = isHome ? erc.domicile : erc.exterieur;
       const ercAdverse = isHome ? erc.exterieur : erc.domicile;
       if (ercUsap.score == null || ercUsap.joueurs.length === 0) {
@@ -947,6 +1046,12 @@ async function lireCampagne(
           if (centre.evenements.length > 0) {
             chronologie = { evenements: centre.evenements, essaisDePenalite: centre.essaisDePenaliteMinutes };
           }
+        }
+        // La page de 2004-2005 ne donne que le jour : il doit être le nôtre.
+        const jourErc = (erc as Partial<ErcCompteRendu2004>).jour;
+        if (jourErc && jourErc !== jour) {
+          echecs.push(`${etiquette} : l'ERC date la rencontre du ${jourErc}`);
+          continue;
         }
         // L'heure de l'ERC est celle du stade : ramenée à celle de Paris.
         const coupDEnvoi = (erc as Partial<ErcCompteRendu2006>).coupDEnvoi;
@@ -1045,6 +1150,12 @@ async function lireCampagne(
       triesUsap: realUsap.coherent ? realUsap.essais : null,
       triesOpponent: realAdverse.coherent ? realAdverse.essais : null,
     });
+    const tranche = campagne.calendrier?.find((c) => c.jour === jour)?.bonusOffensif;
+    if (tranche != null && bonus.triesMissing) {
+      bonus.bonusOffensif = tranche;
+      bonus.triesMissing = false;
+      alertes.push(`bonus offensif ${tranche ? "établi" : "exclu"} hors feuille : cf. le calendrier de la campagne`);
+    }
 
     rencontres.push({
       feuille,
@@ -1685,7 +1796,7 @@ async function main() {
               entiteId: matchId,
               degre: "OFFICIEL",
               source: "ERC, compte rendu officiel, par la Wayback Machine",
-              sourceUrl: `http://web.archive.org/web/${campagne.erc![r.jour].instantane}/http://www.ercrugby.com/eng/${r.pageErc}`,
+              sourceUrl: `http://web.archive.org/web/${campagne.erc![r.jour].instantane}/http://www.ercrugby.com/${r.pageErc.startsWith("cup/") ? "" : "eng/"}${r.pageErc}`,
               note: "L'organisateur, dont le site n'existe plus qu'en archive ; score contrôlé par le classement de poule de Wikipédia. Minutes de jeu non publiées. Cf. lib/erc.ts.",
             }
           : {
@@ -1693,7 +1804,9 @@ async function main() {
               entiteId: matchId,
               degre: "CONCORDANT",
               source: `Wikipédia, « Coupe d'Europe de rugby à XV ${SAISON} »`,
-              note: "Compte rendu de l'ERC introuvable dans l'archive : le jour et le score seuls, contrôlés par le classement de poule. Ni composition, ni heure.",
+              note:
+                "Compte rendu de l'ERC introuvable dans l'archive : le jour et le score seuls, contrôlés par le classement de poule. Ni composition, ni heure." +
+                (campagne.calendrier.find((c) => c.jour === r.jour)?.note ? ` ${campagne.calendrier.find((c) => c.jour === r.jour)!.note}` : ""),
             },
       );
     }
