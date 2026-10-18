@@ -136,12 +136,11 @@ export function generateMatchSlug(params: {
     phaseSlug = slugify(params.round);
   }
 
-  // Date au format DD-MM-YYYY
-  const d = new Date(params.date);
-  const day = String(d.getUTCDate()).padStart(2, "0");
-  const month = String(d.getUTCMonth() + 1).padStart(2, "0");
-  const year = d.getUTCFullYear();
-  const dateSlug = `${day}-${month}-${year}`;
+  // Date au format DD-MM-YYYY, le jour de Paris comme à l'écran : une
+  // rencontre sans horaire est posée à minuit de Paris, la veille en UTC.
+  const dateSlug = new Date(params.date)
+    .toLocaleDateString("fr-FR", { day: "2-digit", month: "2-digit", year: "numeric", timeZone: "Europe/Paris" })
+    .replaceAll("/", "-");
 
   // Assemblage selon domicile/extérieur
   const teams = params.isHome

@@ -57,6 +57,7 @@ le fichier de `docs/` indiqué.
 | 2026-10-18 | Homonymes parfaits (même nom complet, deux hommes) : fiches distinctes, départagées par le club de la feuille (`HOMONYMES_PARFAITS`) ; John Kelly et Chris Jones les premiers | saisie/identites |
 | 2026-10-18 | Malcolm et David Changleng, jumeaux, sont deux arbitres ; Lansdowne Road est un terrain particulier (quart 2006 reçu par Munster) | scripts |
 | 2026-10-18 | H Cup 2004-2005 : USAP-Newcastle du 8 janvier 2005 à 33-12 (Wikipédia anglophone et les deux classements), et non 32-12 (francophone) ; bonus offensif exclu du 23-0 contre Édimbourg par le relevé des marqueurs de l'ERC, donc posé sur le 32-9 contre les Dragons | scripts |
+| 2026-10-18 | Le slug de match porte le jour de Paris ; les 33 slugs datés d'un autre jour sont renommés, sans redirection | modele-de-donnees |
 | 2026-10-18 | H Cup 2003-2004 : les deux bonus offensifs posés par le classement sur le 26-19 (Celtic Warriors) et le 48-7 (Calvisano), seuls scores à pouvoir porter quatre essais ; Celtic Warriors adversaire distinct (2003-2004), au Brewery Field | scripts |
 | 2026-10-18 | Matthew Burke, arrière de Newcastle (2004) et pilier de Connacht (2018), sont deux hommes (`HOMONYMES_PARFAITS`) ; Tom May de Newcastle est le Thomas May de Toulon | saisie/identites |
 | 2026-10-18 | `finalRanking` de 2001-2004 : rang dans la poule qualificative (2000-2001 : poule de la phase régulière) | modele-de-donnees |

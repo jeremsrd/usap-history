@@ -54,7 +54,8 @@ que le schéma ne porte pas.
   veille — lue sans fuseau sur les serveurs de Vercel, elle reculait d'un jour.
   Les scripts la cherchent de même par le jour de Paris (`journeeDeParis()`
   de `scripts/lib/dates.ts`) depuis le 11 octobre 2026 : la journée UTC
-  manquait ces rencontres le lendemain du match.
+  manquait ces rencontres le lendemain du match. Le slug de match porte
+  lui aussi le jour de Paris (`generateMatchSlug`) depuis le 18 octobre 2026.
 
 ## Provenance
 
