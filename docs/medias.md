@@ -2,7 +2,7 @@
 
 ## Logos des clubs
 
-Les 61 adversaires ont leur logo, servi par le site lui-même depuis
+Les 69 adversaires ont leur logo, servi par le site lui-même depuis
 `public/images/logos/{club}.{png|webp}` — 3,7 Mo au total. Ils viennent des sources
 officielles, que les scripts lisent déjà : `cdn.lnr.fr/club/{slug}/photo/logo.
 {empreinte}` pour les clubs français, le champ `imageUrl` du flux de l'EPCR
@@ -60,6 +60,17 @@ transparence**, le blason étant blanc cerné de rouge et le blanc faisant
 partie du dessin comme pour Tarbes ; et une licence « **marque déposée** »,
 l'exception d'usage propre à Wikipédia plutôt qu'une publication du club.
 Arbitré par Jérémy le 1er septembre 2026.
+
+**Huit adversaires des années 2000 sont venus le 21 octobre 2026**, avec la
+reprise de la LNR ancienne et des coupes d'Europe de l'ERC. Leinster et les
+Wasps sont dans le flux de l'EPCR : il suffisait de les inscrire dans
+`CLUBS_EPCR`. Les six autres viennent de Wikipédia, sous la réserve d'Auch.
+Pour les clubs disparus, c'est l'écusson d'époque : le CABBG à damiers d'avant
+l'Union (le « Bordeaux-Begles » de l'EPCR est l'UBB), les Leeds Tykes d'avant
+Leeds Carnegie, le corbeau des Celtic Warriors (2003-2004), détouré comme
+celui de Prato. Périgueux a son logo d'avant 2014. Pour les clubs qui vivent
+toujours, c'est la marque d'aujourd'hui : le guerrier de Calvisano, le lion
+de Viadana. Le détail est dans `SOURCES_HORS_LNR`.
 
 Tarbes et Auch sont donc les deux seuls écussons de la base sans
 transparence, depuis que celui de Clermont a été repris à la source.

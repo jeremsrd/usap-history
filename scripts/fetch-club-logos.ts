@@ -202,6 +202,30 @@ const SOURCES_HORS_LNR: Record<string, string> = {
   Rovigo: "https://www.rugbyrovigodelta.it/demo/images/rugby2/logorugby.svg",
   Gernika: "https://upload.wikimedia.org/wikipedia/en/4/47/Gernika_RT.png",
   "Cavalieri Prato": "https://upload.wikimedia.org/wikipedia/en/0/0f/Logo_Cavalieri.jpg",
+  // Six adversaires des années 2000-2006, repris de la LNR ancienne et de
+  // l'ERC, que ni la LNR ni l'EPCR ne servent, cherchés le 21 oct. 2026 :
+  // - **Bordeaux-Bègles**, le CABBG, fondu en 2006 dans l'Union : l'écusson à
+  //   damiers que la Wikipédia francophone donne au club d'alors, en SVG. Le
+  //   « Bordeaux-Begles » du flux de l'EPCR est l'UBB, un autre club.
+  // - **Périgueux** : celui que Wikipédia date d'avant 2014, en SVG, plutôt
+  //   que le logo actuel du club, pour des rencontres de 2000-2001.
+  // - **Celtic Warriors**, la province galloise de la seule saison 2003-2004 :
+  //   l'écusson au corbeau de l'infobox anglophone, JPEG sur fond blanc,
+  //   détouré (`DETOURAGES`) puisqu'un anneau fermé le cerne.
+  // - **Leeds**, les Leeds Tykes de 2005 : le logo de ce nom-là, avant
+  //   Leeds Carnegie (2007).
+  // - **Calvisano** : le guerrier du club d'aujourd'hui, celui de son site
+  //   (`rugbycalvisano.it`), pris à Wikipédia qui le sert plus grand et sans
+  //   les marges.
+  // - **Viadana** : le lion de l'ovale jaune, en SVG ; le site du club
+  //   (`rugbyviadana1970.it`) n'en sert qu'un rond de 100 pixels.
+  // Tous sous « marque déposée » ou « fair use », la réserve d'Auch.
+  "Bordeaux-Bègles": "https://upload.wikimedia.org/wikipedia/fr/7/70/Logo_Club_Athl%C3%A9tique_Bordeaux_B%C3%A8gles_Gironde.svg",
+  Périgueux: "https://upload.wikimedia.org/wikipedia/fr/a/ab/Logo_CA_P%C3%A9rigueux_-_ancien.svg",
+  "Celtic Warriors": "https://upload.wikimedia.org/wikipedia/en/8/8f/CelticWarriors-Logo.jpg",
+  Leeds: "https://upload.wikimedia.org/wikipedia/en/2/2b/Leeds_Tykes_Logo.png",
+  Calvisano: "https://upload.wikimedia.org/wikipedia/en/0/01/Rugby_calvisano_badge.png",
+  Viadana: "https://upload.wikimedia.org/wikipedia/it/0/07/Rugby-viadana.svg",
 };
 
 /**
@@ -216,7 +240,7 @@ const SOURCES_HORS_LNR: Record<string, string> = {
  * jamais le trait. C'est `detourer()`, et il ne vaut que pour les clubs
  * inscrits ici, où l'on a vérifié sur une planche que le trait est fermé.
  */
-const DETOURAGES = new Set(["Cavalieri Prato"]);
+const DETOURAGES = new Set(["Cavalieri Prato", "Celtic Warriors"]);
 
 /**
  * Rend transparent le blanc joignable depuis les bords, et lui seul.
