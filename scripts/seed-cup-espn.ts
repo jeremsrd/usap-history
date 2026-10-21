@@ -91,7 +91,7 @@ import {
 import { instantDeParis, journeeDeParis } from "./lib/dates";
 import { attester } from "./lib/attestations";
 import { normalize } from "./lib/noms";
-import { POSTE_PAR_NUMERO, trouverOuCreerJoueur } from "./lib/joueurs";
+import { POSTE_PAR_NUMERO, chercherJoueur, trouverOuCreerJoueur } from "./lib/joueurs";
 import { trouverOuCreerArbitre } from "./lib/arbitres";
 import { concordanceDesDossards } from "./lib/dossards";
 import { terrainDuMatch } from "./lib/stades";
@@ -121,6 +121,8 @@ type Joueur = Omit<EspnJoueur, "numero"> & {
   sortie?: number | null;
   minutes?: number | null;
   minutesJaunes?: number[];
+  /** Le prénom vient d'ailleurs que la feuille (`identites`) : sa source, attestée si la fiche est créée. */
+  sourceDuPrenom?: string;
 };
 type Equipe = Omit<EspnEquipe, "joueurs"> & { joueurs: Joueur[] };
 
@@ -212,7 +214,7 @@ interface Campagne {
    * sa démonstration en commentaire : c'est affirmer que la source se trompe,
    * ou qu'elle écrit le surnom d'une fiche déjà connue.
    */
-  identites?: Record<string, { firstName: string; lastName: string }>;
+  identites?: Record<string, { firstName: string; lastName: string; sourceDuPrenom?: string }>;
   /**
    * Les compositions adverses ne s'écrivent pas encore, et la raison : les
    * réalisations des deux camps comptent toujours au match.
@@ -221,6 +223,10 @@ interface Campagne {
   /** Ce qu'on sait de la campagne, pour le journal et pour la relecture. */
   note: string;
 }
+
+/** Sources des prénoms que les comptes rendus de 2001-2002 réduisent à l'initiale. */
+const DE_MEMOIRE = "Jérémy, de mémoire (21 oct. 2026)";
+const GUIDE_1999_2000 = "Midi Olympique, guide de la saison 1999-2000, page Perpignan (photo transmise par Jérémy)";
 
 const CAMPAGNES: Record<string, Campagne> = {
   /**
@@ -274,6 +280,49 @@ const CAMPAGNES: Record<string, Campagne> = {
       "2001-10-05": { page: "english/fixturesresultspage/11018.html", instantane: "20020604225636" },
       "2001-10-27": { page: "english/fixturesresultspage/11055.html", instantane: "20021008032249" },
       "2001-11-03": { page: "english/fixturesresultspage/11077.html", instantane: "20021008021415" },
+    },
+    identites: {
+      // Prénoms donnés de mémoire par Jérémy le 21 oct. 2026. Rimas
+      // Alvarez-Kairelis est le talonneur de la fiche USAP de 2004 à 2011.
+      "R Alvarez-Kairelis": { firstName: "Rimas", lastName: "Alvarez-Kairelis", sourceDuPrenom: DE_MEMOIRE },
+      "T Lacroix": { firstName: "Thierry", lastName: "Lacroix", sourceDuPrenom: DE_MEMOIRE },
+      "T Lacrois": { firstName: "Thierry", lastName: "Lacroix", sourceDuPrenom: DE_MEMOIRE },
+      "J-M Souverbie": { firstName: "Jean-Marc", lastName: "Souverbie", sourceDuPrenom: DE_MEMOIRE },
+      "J Orengo": { firstName: "José", lastName: "Orengo", sourceDuPrenom: DE_MEMOIRE },
+      "J Daniell": { firstName: "John", lastName: "Daniell", sourceDuPrenom: DE_MEMOIRE },
+      "J Danielli": { firstName: "John", lastName: "Daniell", sourceDuPrenom: DE_MEMOIRE },
+      "M dal Maso": { firstName: "Marc", lastName: "Dal Maso", sourceDuPrenom: DE_MEMOIRE },
+      "M Dal Maso": { firstName: "Marc", lastName: "Dal Maso", sourceDuPrenom: DE_MEMOIRE },
+      "R MacDonald": { firstName: "Robbie", lastName: "MacDonald", sourceDuPrenom: DE_MEMOIRE },
+      // Fiches déjà en base, que Jérémy reconnaît le 21 oct. 2026 : à l'USAP
+      // après 2004 (Loustau, Le Corvec, Mas), ou passés ensuite ailleurs —
+      // Couttet à Brive, Thion à Biarritz, Murphy aux London Irish.
+      "L Loustau": { firstName: "Ludovic", lastName: "Loustau" },
+      "G le Corvec": { firstName: "Grégory", lastName: "Le Corvec" },
+      "N Mas": { firstName: "Nicolas", lastName: "Mas" },
+      "N Couttet": { firstName: "Nicolas", lastName: "Couttet" },
+      "J Thion": { firstName: "Jerome", lastName: "Thion" },
+      "P Murphy": { firstName: "Phil", lastName: "Murphy" },
+      "P Giordani": { firstName: "Pascal", lastName: "Giordani" },
+      "R Jechoux": { firstName: "Raphael", lastName: "Jechoux" },
+      // Prénoms de l'effectif 1999-2000 (guide du Midi Olympique, cf.
+      // set-naissances-effectif-1999-2000.ts) : même club deux saisons plus
+      // tard, même initiale, aucun homonyme dans l'effectif.
+      "F Cermeno": { firstName: "Frédéric", lastName: "Cermeno", sourceDuPrenom: GUIDE_1999_2000 },
+      "F Sid": { firstName: "Farid", lastName: "Sid", sourceDuPrenom: GUIDE_1999_2000 },
+      "D Plana": { firstName: "Didier", lastName: "Plana", sourceDuPrenom: GUIDE_1999_2000 },
+      "B Bellot": { firstName: "Benoît", lastName: "Bellot", sourceDuPrenom: GUIDE_1999_2000 },
+      "J Basset": { firstName: "Jacques", lastName: "Basset", sourceDuPrenom: GUIDE_1999_2000 },
+      "R Peillard": { firstName: "Renaud", lastName: "Peillard", sourceDuPrenom: GUIDE_1999_2000 },
+      "S de Besombes": { firstName: "Stéphane", lastName: "De Besombes", sourceDuPrenom: GUIDE_1999_2000 },
+      "S De Besombes": { firstName: "Stéphane", lastName: "De Besombes", sourceDuPrenom: GUIDE_1999_2000 },
+      "S Deroeux": { firstName: "Sylvain", lastName: "Deroeux", sourceDuPrenom: GUIDE_1999_2000 },
+      "S Derouex": { firstName: "Sylvain", lastName: "Deroeux", sourceDuPrenom: GUIDE_1999_2000 },
+      "P Meya": { firstName: "Pascal", lastName: "Meya", sourceDuPrenom: GUIDE_1999_2000 },
+      "M Konieckiewicz": { firstName: "Michel", lastName: "Konieckiewicz", sourceDuPrenom: GUIDE_1999_2000 },
+      "M Koniek": { firstName: "Michel", lastName: "Konieckiewicz", sourceDuPrenom: GUIDE_1999_2000 },
+      "O Olibeau": { firstName: "Olivier", lastName: "Olibeau", sourceDuPrenom: GUIDE_1999_2000 },
+      "B Goutta": { firstName: "Bernard", lastName: "Goutta", sourceDuPrenom: GUIDE_1999_2000 },
     },
     compositionsAdversesDifferees: "identités adverses à établir (initiales de l'ERC)",
     note: "Heineken Cup, poule 1 — troisième, éliminée en poule",
@@ -1767,11 +1816,21 @@ async function resoudreCamp(
   const lignes: LigneAEcrire[] = [];
   if (creer) console.log(`\n  --- ${camp} ---`);
   for (const j of equipe.joueurs) {
-    const playerId = await trouverOuCreerJoueur(
-      prisma,
-      { firstName: j.firstName, lastName: j.lastName, numero: j.numero ?? undefined, club: isOpponent ? camp : "USAP" },
-      { dryRun: DRY_RUN || !creer, journal: creer ? (m) => console.log(m) : () => {} },
-    );
+    const officiel = { firstName: j.firstName, lastName: j.lastName, numero: j.numero ?? undefined, club: isOpponent ? camp : "USAP" };
+    // Un prénom pris hors de la feuille s'atteste sur la fiche qu'il fait
+    // naître, et sur elle seule : une fiche existante a déjà le sien.
+    const existait = creer && j.sourceDuPrenom ? await chercherJoueur(prisma, officiel, () => {}) : null;
+    const playerId = await trouverOuCreerJoueur(prisma, officiel, {
+      dryRun: DRY_RUN || !creer,
+      journal: creer ? (m) => console.log(m) : () => {},
+    });
+    if (creer && j.sourceDuPrenom && !existait) {
+      await attester(
+        prisma,
+        { entite: "Player", entiteId: playerId || "(à créer)", champ: "firstName", degre: "PROBABLE", source: j.sourceDuPrenom },
+        DRY_RUN,
+      );
+    }
     // Le poste du banc ne se déduit pas du numéro : on reprend celui de la
     // fiche, faute de mieux — et jamais celui qu'ESPN écrit.
     let poste: Position | null = j.isStarter && j.numero != null ? (POSTE_PAR_NUMERO[j.numero] ?? null) : null;
