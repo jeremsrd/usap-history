@@ -16,6 +16,10 @@
  * USAP avant 2004-05. Leur nom est assez rare pour les retenir sur le nom
  * complet seul, à condition qu'une seule fiche le porte.
  *
+ * **Le prénom suit le guide**, qui l'imprime accentué : une fiche retenue dont
+ * le prénom ne diffère que par les accents prend la graphie du guide. Le nom
+ * de famille, imprimé en capitales sans accent, n'est jamais touché.
+ *
  * Les Pradal sont frères, nés tous deux un 27 août ; Basset et Arenas, nés un
  * 16 juillet, sont deux joueurs distincts : vérifié par Jérémy, pas une coquille.
  *
@@ -116,8 +120,9 @@ async function main() {
     }
 
     const f = siennes[0];
-    const data: { birthDate?: Date; birthPlace?: string } = {};
+    const data: { birthDate?: Date; birthPlace?: string; firstName?: string } = {};
     const remarques: string[] = [];
+    if (f.firstName !== prenom) data.firstName = prenom;
     if (!f.birthDate) data.birthDate = naissance;
     else if (iso(f.birthDate) !== iso(naissance)) remarques.push(`DATE EN BASE ${iso(f.birthDate)} ≠ guide`);
     if (lieu && !f.birthPlace) data.birthPlace = lieu;
@@ -125,7 +130,7 @@ async function main() {
 
     const champs = Object.keys(data);
     console.log(
-      `${champs.length ? "✓" : "="} ${etiquette}${surLeNom ? " [sur le nom]" : ""} — ${champs.length ? `écrit ${champs.join(", ")}` : "rien à écrire"}` +
+      `${champs.length ? "✓" : "="} ${etiquette}${surLeNom ? " [sur le nom]" : ""} — ${champs.length ? `écrit ${champs.join(", ")}` : "rien à écrire"}${data.firstName ? ` (prénom en base « ${f.firstName} »)` : ""}` +
         `${remarques.length ? ` · ${remarques.join(" · ")}` : ""}`,
     );
     if (!champs.length) continue;
