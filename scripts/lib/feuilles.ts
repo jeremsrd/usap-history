@@ -89,6 +89,12 @@ export const TITULAIRES_MANQUANTS: Record<string, TitulaireManquant[]> = {
   "2011-04-23": [{ camp: "adversaire", numero: 7, prenom: "George", nom: "Smith" }],
   // gameId ESPN 143710 — Stade Français 35-31 Perpignan
   "2012-04-21": [{ camp: "adversaire", numero: 6, prenom: "George", nom: "Smith" }],
+  // Toulouse 38-33 Perpignan. Banc toulousain à sept, le n°20 manquant ; les
+  // faits de la LNR font pourtant entrer « Marc Elie KOUASSI » à la 71ᵉ pour
+  // Cros. *L'Indépendant* du 25 octobre 2026 donne « Cros (Kouassi, 71) », et
+  // ses vingt-deux autres Toulousains concordent avec la LNR. Le nom est
+  // celui qu'écrit la feuille de la LNR elle-même.
+  "2026-10-24": [{ camp: "adversaire", numero: 20, prenom: "Marc Elie", nom: "Kouassi" }],
 };
 
 /** Ce joueur-là a-t-il été ajouté à la main sur cette feuille ? */
