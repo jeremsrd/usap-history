@@ -13,7 +13,9 @@
  * - le titre rendu nomme bien cette rencontre : la saison (« 2026-2027 »),
  *   la journée (« J03 ») quand la rencontre en a une, et Perpignan. Un lien
  *   copié de travers — la journée d'à côté, un autre club — est refusé, et
- *   le titre est affiché pour qu'on voie pourquoi ;
+ *   le titre est affiché pour qu'on voie pourquoi. Un titre sans saison —
+ *   ceux de l'EPCR, « Dragons RFC v USAP » — doit nommer l'adversaire, et la
+ *   vidéo avoir été publiée dans les deux semaines suivant le match ;
  * - la chaîne est nommée : « TOP 14 - Officiel » attendue, une autre est
  *   acceptée mais dite.
  *
@@ -52,6 +54,14 @@ function identifiantYoutube(url: string): string | null {
 }
 
 const sansAccents = (s: string) => s.normalize("NFD").replace(/[̀-ͯ]/g, "").toLowerCase();
+
+/** La date de publication, lue sur la page de la vidéo — oembed ne la donne pas. */
+async function datePublication(id: string): Promise<Date | null> {
+  const page = await fetch(`https://www.youtube.com/watch?v=${id}`, { headers: { "User-Agent": "Mozilla/5.0" } });
+  if (!page.ok) return null;
+  const m = (await page.text()).match(/itemprop="uploadDate" content="([^"]+)"/);
+  return m ? new Date(m[1]) : null;
+}
 
 async function main() {
   const dry = process.argv.includes("--dry");
@@ -96,12 +106,24 @@ async function main() {
   const titre = sansAccents(title);
 
   const ecarts: string[] = [];
-  if (!titre.includes(match.season.label)) ecarts.push(`la saison ${match.season.label} n'y est pas`);
-  if (match.matchday != null) {
-    const journee = new RegExp(`\\bj0*${match.matchday}\\b`);
-    if (!journee.test(titre)) ecarts.push(`la journée J${match.matchday} n'y est pas`);
+  if (titre.includes(match.season.label)) {
+    if (match.matchday != null) {
+      const journee = new RegExp(`\\bj0*${match.matchday}\\b`);
+      if (!journee.test(titre)) ecarts.push(`la journée J${match.matchday} n'y est pas`);
+    }
+  } else {
+    // Sans la saison dans le titre — les résumés de l'EPCR, « Dragons RFC v
+    // USAP | EPCR Challenge Cup » —, rien ne distingue la rencontre de celle de
+    // la saison d'avant contre le même club : l'adversaire doit être nommé, et
+    // la vidéo publiée dans les deux semaines qui suivent le match.
+    const mots = sansAccents(match.opponent.name).split(/\W+/).filter((m) => m.length >= 4);
+    if (!mots.some((m) => titre.includes(m))) ecarts.push(`ni la saison ${match.season.label} ni ${match.opponent.name} n'y sont`);
+    const publiee = await datePublication(id);
+    const ecart = publiee ? (publiee.getTime() - match.date.getTime()) / 86_400_000 : null;
+    if (ecart == null) ecarts.push("la saison n'y est pas, et la date de publication est introuvable");
+    else if (ecart < 0 || ecart > 14) ecarts.push(`la saison n'y est pas, et la vidéo est publiée le ${publiee!.toISOString().slice(0, 10)}`);
   }
-  if (!titre.includes("perpignan")) ecarts.push("Perpignan n'y est pas");
+  if (!titre.includes("perpignan") && !/\busap\b/.test(titre)) ecarts.push("ni Perpignan ni l'USAP n'y sont");
   if (ecarts.length > 0) {
     console.error(`${date} ${affiche} : le titre ne concorde pas — ${ecarts.join(", ")}.\n  « ${title} »`);
     process.exit(1);
