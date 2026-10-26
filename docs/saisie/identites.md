@@ -55,6 +55,14 @@ confrontations avec l'USAP, et de gérer les joueurs passés par les deux camps
     240 recherches de fiches à prénom composé, et sur les deux campagnes
     européennes déjà écrites. Corrigé par `reassign-match-player.ts` sur les
     deux lignes de Northampton, le 5 septembre 2026.
+  - **et deux préfixes ne font pas un homme.** « Ben Kay », deuxième ligne
+    de Leicester en 2001, s'est retrouvé le 26 octobre 2026 sur la fiche de
+    Benjamin Kayser, talonneur de Clermont — « Ben » ouvre « Benjamin »,
+    « Kay » ouvre « Kayser » —, et « Will Johnson » sur celle de WillGriff
+    John. Un mot au moins doit être **identique** des deux côtés, ou un nom
+    d'usage arbitré (`motIdentique` de `lib/noms.ts`) ; le préfixe ne sert
+    qu'à rapprocher le second (Matt / Matthew Smith). Vérifié sans création
+    de fiche sur les campagnes européennes 2005-2006 et 2006-2007.
 
   S'y ajoute une quatrième précaution, née des noms sud-africains : **les
   particules ne désignent personne.** `mots()` écarte déjà ce qui fait moins de

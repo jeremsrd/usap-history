@@ -16,7 +16,7 @@
 import type { PrismaClient, Position } from "@prisma/client";
 import { Position as Postes } from "@prisma/client";
 import { generatePlayerSlug } from "../../src/lib/slugs";
-import { memeMot, mots, motsOrphelins, motsUtiles, nomEnBasePour, normalize, proximite } from "./noms";
+import { memeMot, motIdentique, mots, motsOrphelins, motsUtiles, nomEnBasePour, normalize, proximite } from "./noms";
 
 /** Poste tenu par un titulaire, déduit de son numéro de maillot. */
 export const POSTE_PAR_NUMERO: Record<number, Position> = {
@@ -69,11 +69,15 @@ export interface JoueurOfficiel {
  *   Matthew Burke l'arrière australien n°15 de Newcastle du 31 octobre 2004,
  *                d'après l'ERC, retiré en 2008, et le pilier remplaçant n°17
  *                de Connacht du 14 décembre 2018.
+ *   Ollie Smith  l'ailier anglais de Leicester, né en 1982, remplaçant le
+ *                3 novembre 2001 d'après l'ERC (prénom d'après Wikipédia), et
+ *                l'ailier écossais n°11 de Glasgow du 14 janvier 2023.
  */
 export const HOMONYMES_PARFAITS: Record<string, string[][]> = {
   "John Kelly": [["Munster"], ["Newcastle"]],
   "Chris Jones": [["Leeds"], ["Worcester"]],
   "Matthew Burke": [["Newcastle"], ["Connacht"]],
+  "Ollie Smith": [["Leicester"], ["Glasgow"]],
 };
 
 /** L'homonyme parfait que désigne ce nom complet, une fois normalisé. */
@@ -209,10 +213,20 @@ export async function chercherJoueur(
     if (distance(normalize(a), normalize(b)) <= 1) return true;
     return ma.some((x) => mb.some((y) => memeMot(x, y)));
   };
+  // **Et deux préfixes ne font pas un homme.** « Ben Kay », deuxième ligne
+  // de Leicester en 2001, s'est retrouvé sur la fiche de Benjamin Kayser,
+  // talonneur de Clermont : « Ben » ouvre « Benjamin », « Kay » ouvre
+  // « Kayser », et les deux mots communs y étaient. « Will Johnson », le n°8
+  // de la même équipe, est allé de même à WillGriff John. Un mot au moins doit
+  // donc être identique des deux côtés — ou un nom d'usage arbitré —, le
+  // préfixe ne servant qu'à rapprocher le second (Matt / Matthew Smith).
+  const unMotIdentique = (a: string, b: string) =>
+    motsUtiles(a).some((x) => motsUtiles(b).some((y) => motIdentique(x, y)));
   const candidats = tous.filter(
     (j) =>
       memeFamille(j.lastName) &&
       prenomsCompatibles(j.firstName, officiel.firstName) &&
+      unMotIdentique(`${j.firstName} ${j.lastName}`, nomCherche) &&
       proximite(
         sansParticules(`${j.firstName} ${j.lastName}`),
         sansParticules(nomCherche),

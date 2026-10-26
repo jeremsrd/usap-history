@@ -233,8 +233,12 @@ export function nomEnBasePour(nomOfficiel: string): string | null {
  * ou s'il en est le nom d'usage déclaré.
  */
 export function memeMot(a: string, b: string): boolean {
-  if (a === b || a.startsWith(b) || b.startsWith(a)) return true;
-  return NOMS_DUSAGE.some((noms) => noms.includes(a) && noms.includes(b));
+  return motIdentique(a, b) || a.startsWith(b) || b.startsWith(a);
+}
+
+/** Le même mot, ou deux noms d'usage arbitrés (`NOMS_DUSAGE`) — sans préfixe. */
+export function motIdentique(a: string, b: string): boolean {
+  return a === b || NOMS_DUSAGE.some((noms) => noms.includes(a) && noms.includes(b));
 }
 
 /** Mots de `nom` sans correspondant dans `reference`. */
