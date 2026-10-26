@@ -66,3 +66,4 @@ le fichier de `docs/` indiqué.
 | 2026-10-18 | 2004-2005 : agrégats écrits sans les bonus offensifs (`null`), points repris du classement si les neuf manquants expliquent l'écart | modele-de-donnees |
 | 2026-10-26 | L'essai de pénalité vaut ce qu'il valait : avant 2017-2018, un essai (5 points depuis 1992) à transformer, transformation au buteur nommé, sur sa ligne et dans la chronologie ; 7 points d'office ensuite. Toujours rangé dans `penaltyTries`, jamais dans `tries`. Remplace le « 7 à toute époque » | regles-du-jeu |
 | 2026-10-26 | H Cup 2001-2002 : prénoms adverses de Leicester et Llanelli d'après Wikipédia (article qui nomme le club), attestés `PROBABLE` ; « S Morgan » de Llanelli est Scott Morgan, probable seulement ; composition de Calvisano (29/09/2001) différée | sources |
+| 2026-10-26 | « Alesi Finau » (Bourgoin 2006-2007) est Salesi Finau, le Tongien de Llanelli : fiche renommée d'après Wikipédia | saisie/identites |

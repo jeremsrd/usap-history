@@ -96,6 +96,11 @@ async function main() {
       source: "Jérémy, le 6 septembre 2026", decidePar: "Jérémy",
       note: "Fiche fusionnée de deux écritures de la LNR ; ses neuf feuilles vont du 4 au 6 et du 18 au 19, la fiche portait « numéro 8 » sans qu'aucune ne le justifie.",
     },
+    {
+      entite: "Player", entiteId: await joueur("Salesi", "Finau"), champ: "firstName", degre: "CONCORDANT",
+      source: "Wikipédia anglophone, « Salesi Finau »", sourceUrl: "https://en.wikipedia.org/wiki/Salesi_Finau",
+      note: "La fiche s'appelait « Alesi » depuis la reprise de Bourgoin 2006-2007 ; l'article fait passer le Tongien de Llanelli (1998-2005) à Bath puis à Bourgoin, et l'ERC l'aligne à Llanelli en 2001. Renommé le 26 octobre 2026.",
+    },
   );
 
   // --- Ce que Jérémy a donné à la main --------------------------------------
