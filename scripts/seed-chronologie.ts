@@ -14,8 +14,9 @@
  *
  * LE SCORE COURANT EST LA SOURCE. La LNR donne le score après chaque fait,
  * `[recevant, visiteur]`, et c'est de son écart qu'on déduit ce qui vient de
- * se passer — cinq points pour un essai, sept pour un essai transformé ou de
- * pénalité, trois pour une pénalité ou un drop. `conversionPlayer` ne sert
+ * se passer — cinq points pour un essai, sept pour un essai transformé ou un
+ * essai de pénalité d'après 2017 (avant, il vaut cinq et se transforme),
+ * trois pour une pénalité ou un drop. `conversionPlayer` ne sert
  * qu'à nommer le buteur, jamais à décider qu'il y a eu transformation : il
  * désigne parfois un joueur de l'autre équipe.
  *
@@ -41,6 +42,7 @@ import {
   type LnrJoueur,
 } from "./lib/lnr";
 import { normalize, proximite } from "./lib/noms";
+import { baremeDeMatch } from "../src/lib/scoring";
 import {
   USAP,
   chercherMatchUsap,
@@ -63,15 +65,6 @@ if (!DATE) {
   process.exit(1);
 }
 
-/** Points d'un fait, hors transformation. */
-const POINTS: Record<LnrFait["type"], number> = {
-  essai: 5,
-  "essai-de-penalite": 7,
-  penalite: 3,
-  drop: 3,
-  jaune: 0,
-  rouge: 0,
-};
 
 const TYPES: Record<LnrFait["type"], EventType> = {
   essai: EventType.ESSAI,
@@ -114,6 +107,9 @@ async function main() {
   utiliserDivision(match.season.division === "PRO_D2" ? "prod2" : "top14");
 
   const adversaire = match.opponent.shortName ?? match.opponent.name;
+  // L'essai de pénalité vaut un essai à transformer avant 2017-2018, sept
+  // points d'office ensuite.
+  const bareme = baremeDeMatch(Number(match.season.label.slice(0, 4)));
 
   if (match.scoreUsap == null || match.scoreOpponent == null) {
     throw new Error("Rencontre non jouée : pas de chronologie à écrire.");
@@ -132,7 +128,7 @@ async function main() {
   /** Points d'un fait, transformation comprise puisqu'elle est un fait à part. */
   const POINTS_EPCR: Record<EpcrTypeEvenement, number> = {
     essai: 5,
-    "essai-de-penalite": 7,
+    "essai-de-penalite": bareme.essaiDePenalite,
     transformation: 2,
     penalite: 3,
     drop: 3,
@@ -287,6 +283,16 @@ async function main() {
     return { id: retenus[0].player!.id, nom: nomDe(retenus[0]) };
   };
 
+  /** Points d'un fait, hors transformation. */
+  const POINTS: Record<LnrFait["type"], number> = {
+    essai: 5,
+    "essai-de-penalite": bareme.essaiDePenalite,
+    penalite: 3,
+    drop: 3,
+    jaune: 0,
+    rouge: 0,
+  };
+
   const evenements: Evenement[] = [];
   // Score courant, [recevant, visiteur], comme la LNR l'écrit.
   const courant: [number, number] = [0, 0];
@@ -336,7 +342,12 @@ async function main() {
       description:
         attendu > 0 ? `${libelle[fait.type]} ${scoreLisible()}.` : libelle[fait.type],
     });
-    if (fait.type === "essai") aTransformer[cote].push(fait.minute);
+    if (
+      fait.type === "essai" ||
+      (fait.type === "essai-de-penalite" && bareme.essaiDePenaliteSeTransforme)
+    ) {
+      aTransformer[cote].push(fait.minute);
+    }
 
     // Le score courant est la seule donnée sûre de la feuille : tout reliquat
     // de deux points est une transformation que la feuille n'a pas inscrite.

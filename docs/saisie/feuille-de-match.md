@@ -101,19 +101,14 @@ Sur le match : `halfTimeUsap` / `halfTimeOpponent`, `refereeId`, `videoUrl`,
 ### Contrôles à faire systématiquement
 
 - La somme des points par joueur doit retomber sur le score de l'équipe.
-  Un **essai de pénalité** (7 pts) n'a pas de marqueur : le déduire du total
-  attendu et le porter sur `penaltyTriesUsap` / `penaltyTriesOpponent`.
-  **Il n'a valu sept points d'office que depuis 2017** : avant, c'était un
-  essai à cinq points qu'il fallait encore transformer, et les feuilles de la
-  LNR en nomment le buteur. La base le garde malgré tout à sept,
-  transformation comprise et non comptée, pour que la règle ci-dessus vaille
-  sur toute la base — ce qui suppose la transformation réussie. **Un essai de
-  pénalité manqué vaudrait cinq points** : l'arithmétique ne retomberait plus,
-  et les scripts échoueraient bruyamment, ce qui est le comportement voulu.
-  Aucun des huit de 2016-2017 n'est dans ce cas ; c'est en remontant plus haut
-  qu'il faut s'y attendre. Ces
+  Un **essai de pénalité** n'a pas de marqueur : le déduire du total
+  attendu et le porter sur `penaltyTriesUsap` / `penaltyTriesOpponent`,
+  jamais sur `tries`. **Il ne vaut sept points d'office que depuis
+  2017-2018** : avant, c'était un essai à cinq points qu'il fallait encore
+  transformer, et la transformation va au buteur que la feuille nomme
+  (`baremeDeMatch().essaiDePenalite`, cf. `docs/regles-du-jeu.md`). Ces
   compteurs sont **nullables et parfois `null`** (9 matchs à ce jour) : une
-  garde écrite `points <> score - 7 * penaltyTries` ne compare alors rien du
+  garde écrite `points <> score - v * penaltyTries` ne compare alors rien du
   tout et laisse passer la ligne en silence. Traiter le `null` explicitement.
 - **La LNR écrit « n.a. » quand elle ne sait pas qui a marqué**, et pas
   seulement sur un essai de pénalité : le Bayonne-Perpignan du 9 février 2013

@@ -571,14 +571,14 @@ export function momentDuMatch(coupDEnvoi: string): {
  * exactement deux points par essai de pénalité, sur les huit, et la correction
  * fait retomber les sept feuilles sur leur score officiel.
  *
- * **La base, elle, garde l'essai de pénalité à sept points**, transformation
- * comprise et non comptée — la convention de tout le reste du projet, dont
- * dépend la règle d'audit `points = score − 7 × penaltyTries`. C'est légitime
- * tant que la transformation a été réussie, ce qu'elle fut huit fois sur huit
- * en 2016-2017. **Un essai de pénalité manqué vaudrait cinq points**, et
- * l'arithmétique ne retomberait plus : `realisationsDepuisFaits` échouerait
- * bruyamment sur ce match. C'est le comportement voulu, et c'est un cas à
- * attendre en remontant plus haut.
+ * **Après correction, l'essai de pénalité et sa transformation font sept
+ * points, cinq et deux**, comme à l'époque. La base les compte ainsi depuis
+ * le 26 octobre 2026 : `baremeDeMatch` donne cinq points à l'essai de
+ * pénalité d'avant 2017-2018, et ses deux points de transformation vont au
+ * buteur, sur sa ligne et dans la chronologie. Elle les comptait auparavant à
+ * sept, transformation retirée au buteur (cf. `docs/decisions.md`). **Un essai
+ * de pénalité manqué** est donc représentable : cinq points sans
+ * transformation, ce que le reliquat de `realisationsDepuisFaits` voit seul.
  *
  * Pourquoi la borne à 2017-2018, et ce qu'elle vaut. Les saisons 2017-2018 à
  * 2025-2026, déjà en base, ont toutes été reprises avec un score courant lu
@@ -1189,7 +1189,8 @@ export interface Realisations {
  * inscrit pas comme des faits, et `conversionPlayer` ment (cf. plus haut).
  *
  * ELLES SE DÉDUISENT DONC DU SCORE FINAL, ET DE LUI SEUL :
- * `T = (score − 5×E − 7×EP − 3×P − 3×D) / 2`. Rien d'autre n'est nécessaire,
+ * `T = (score − 5×E − v×EP − 3×P − 3×D) / 2`, où l'essai de pénalité vaut
+ * `v` = 7 depuis 2017-2018, et 5 avant, quand il se transformait encore. Rien d'autre n'est nécessaire,
  * cette fonction ne rendant que des **comptes** — attribuer une transformation
  * à son buteur est le travail de `seed-chronologie.ts`, et c'est là que le
  * score courant sert.
@@ -1205,19 +1206,18 @@ export interface Realisations {
  * était déjà celui-ci.
  *
  * Quand le reliquat est impair, négatif, ou demande plus de transformations
- * qu'il n'y a d'essais, on n'invente rien : le bilan est rendu avec le total
- * des seuls faits, et l'appelant, qui compare `total` au score, échoue. C'est
- * ainsi qu'un **essai de pénalité manqué** se signalerait sur une saison
- * d'avant 2017-2018, où il fallait encore le transformer : il vaudrait cinq
- * points quand ce calcul lui en compte sept, et le reliquat tomberait impair
- * (cf. `corrigerEssaisDePenalite`). Aucun des huit de 2016-2017 n'est dans ce
- * cas.
+ * qu'il n'y a d'essais à transformer, on n'invente rien : le bilan est rendu
+ * avec le total des seuls faits, et l'appelant, qui compare `total` au score,
+ * échoue. Avant 2017-2018, l'essai de pénalité est de ceux qu'on transforme.
+ *
+ * **Le barème est celui de la saison**, sans valeur par défaut : l'essai de
+ * pénalité n'y vaut pas la même chose avant et après 2017-2018.
  */
+
 /**
- * L'archive de la LNR s'arrête à 2004-2005 : tout fait qu'elle publie relève
- * du barème d'aujourd'hui, cinq, deux, trois et trois. Le paramètre existe
- * pour que la règle soit écrite une seule fois, dans `baremeDeMatch`, et
- * pour le jour où une autre source passerait par ici.
+ * Le barème des saisons d'archive de la LNR, 2004-2005 à 2016-2017 : cinq,
+ * deux, trois et trois, et l'essai de pénalité à transformer. Les saisons
+ * d'après 2017 passent `baremeDeMatch` de leur année.
  */
 export const BAREME_LNR: Bareme = baremeDeMatch(2004);
 
@@ -1225,7 +1225,7 @@ export function realisationsDepuisFaits(
   faits: LnrFait[],
   camp: Camp,
   score: number,
-  bareme: Bareme = BAREME_LNR,
+  bareme: Bareme,
 ): Realisations {
   const bilan: Realisations = {
     essais: 0,
@@ -1259,7 +1259,8 @@ export function realisationsDepuisFaits(
   }
 
   const reliquat = score - bilan.total;
-  if (reliquat >= 0 && reliquat % 2 === 0 && reliquat / 2 <= bilan.essais) {
+  const aTransformer = bilan.essais + (bareme.essaiDePenaliteSeTransforme ? bilan.essaisDePenalite : 0);
+  if (reliquat >= 0 && reliquat % 2 === 0 && reliquat / 2 <= aTransformer) {
     bilan.transformations = reliquat / 2;
     bilan.total = score;
   }

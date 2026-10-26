@@ -12,7 +12,7 @@ pas ici.
 | Couperet | match à élimination (phase finale, barrage, finale) : pas de bonus |
 | BO / BD | bonus offensif / défensif (barème par époque, `docs/regles-du-jeu.md`) |
 | Carton orange | carton du championnat français : joueur exclu, poste repourvu après 20 min ; équivaut au rouge de 20 min européen |
-| Essai de pénalité | sans auteur ; compté 7 points en base à toute époque (transformation comprise) |
+| Essai de pénalité | sans auteur, dans `penaltyTries` ; avant 2017-2018 un essai à transformer, transformation au buteur ; 7 points d'office ensuite |
 | Essai collectif, « n.a. » | points que la LNR n'attribue à personne : légitimes, la somme des joueurs tombe sous le score |
 | Titulaire / remplaçant | n° 1-15 / 16-23 ; le poste d'un remplaçant reprend `Player.position` |
 | Centurion | joueur à 100 matchs ou plus sous le maillot catalan |

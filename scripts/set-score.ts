@@ -166,12 +166,13 @@ async function depuisLnr(match: Rencontre, jour: string, affiche: string): Promi
   const feuille = await lireFeuille(rencontre.url);
   const campUsap: Camp = match.isHome ? "home" : "away";
   const campAdverse: Camp = match.isHome ? "away" : "home";
+  const bareme = baremeDeMatch(Number(match.season.label.slice(0, 4)));
   return {
     scoreUsap,
     scoreOpponent,
     source: rencontre.url,
-    usap: realisationsDepuisFaits(feuille.faits, campUsap, scoreUsap),
-    adverse: realisationsDepuisFaits(feuille.faits, campAdverse, scoreOpponent),
+    usap: realisationsDepuisFaits(feuille.faits, campUsap, scoreUsap, bareme),
+    adverse: realisationsDepuisFaits(feuille.faits, campAdverse, scoreOpponent, bareme),
     arbitre: async () => (await lireCompositions(rencontre.url)).arbitre ?? null,
   };
 }

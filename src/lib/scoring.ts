@@ -198,15 +198,19 @@ export interface Bareme {
   penalite: number;
   drop: number;
   /**
-   * L'essai de pénalité, tel que la base le compte : **toujours transformé**,
-   * essai plus transformation — sept points aujourd'hui, cinq en 1925. Avant
-   * 2017 il fallait encore le transformer, et les feuilles en nomment le
-   * buteur ; la base le garde malgré tout à ce total, transformation comprise
-   * et non comptée, pour que « la somme des joueurs égale le score » vaille
-   * sur toute la base. Un essai de pénalité manqué ne retombe donc pas, et
-   * c'est voulu : les scripts échouent bruyamment.
+   * L'essai de pénalité, tel qu'il valait à l'époque. **Avant 2017-2018,
+   * c'était un essai comme un autre** : la valeur d'un essai, puis une
+   * transformation à tenter, qu'un buteur nommé pouvait manquer, et qui
+   * s'inscrit sur sa ligne comme toute autre. Depuis la règle de 2017, il est
+   * accordé d'office à sept points, sans coup de pied.
+   *
+   * La base l'a longtemps compté à sept à toute époque, transformation
+   * comprise et retirée au buteur. Jérémy l'a rendu à son époque le
+   * 26 octobre 2026 (cf. `docs/decisions.md`).
    */
   essaiDePenalite: number;
+  /** Vrai tant que l'essai de pénalité se transforme : avant 2017-2018. */
+  essaiDePenaliteSeTransforme: boolean;
 }
 
 /**
@@ -230,6 +234,9 @@ export interface Bareme {
  * | 1948-1949 | 3 | 2 | 3 | 3 |
  * | 1971-1972 | 4 | 2 | 3 | 3 |
  * | 1992-1993 | 5 | 2 | 3 | 3 |
+ *
+ * L'essai de pénalité vaut un essai, à transformer, jusqu'en 2016-2017, et
+ * sept points d'office à partir de 2017-2018 (cf. `Bareme.essaiDePenalite`).
  *
  * **Deux réserves.** Le championnat de France a pu les appliquer avec
  * décalage, et rien ici ne l'établit — la première finale de l'USAP, en
@@ -255,7 +262,9 @@ export function baremeDeMatch(seasonStartYear: number): Bareme {
         : seasonStartYear >= 1948
           ? { essai: 3, transformation: 2, penalite: 3, drop: 3 }
           : { essai: 3, transformation: 2, penalite: 3, drop: 4 };
-  return { ...b, essaiDePenalite: b.essai + b.transformation };
+  return seasonStartYear >= 2017
+    ? { ...b, essaiDePenalite: 7, essaiDePenaliteSeTransforme: false }
+    : { ...b, essaiDePenalite: b.essai, essaiDePenaliteSeTransforme: true };
 }
 
 /** Le total de points d'un décompte de réalisations, sous un barème. */

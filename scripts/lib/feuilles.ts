@@ -165,16 +165,16 @@ export interface RealisationsCompletees {
  * action n'explique, et la feuille est fautive de bout en bout. La fiche
  * d'ESPN (`gameId=99380`) signale **un essai de pénalité à la 26ᵉ**.
  *
- * Il est compté ici comme un **troisième essai transformé**, et non par le
- * champ `essaisDePenalite`, parce que c'est ce qu'il était en 2009 : jusqu'en
- * 2017 l'essai de pénalité valait cinq points et se transformait (cf.
- * `corrigerEssaisDePenalite` dans `lib/lnr.ts`). Trois essais, deux
- * transformations et deux pénalités font bien 25, et la transformation reste
- * au crédit du buteur que la feuille nomme — d'où cinq points sans auteur, et
- * non sept.
+ * Il vaut ce qu'il valait en 2009 : jusqu'en 2017 l'essai de pénalité
+ * valait cinq points et se transformait (cf. `baremeDeMatch`). Deux essais,
+ * un essai de pénalité, deux transformations et deux pénalités font bien 25,
+ * et la transformation reste au crédit du buteur que la feuille nomme — d'où
+ * cinq points sans auteur, et non sept. Il a d'abord été rangé parmi les
+ * essais, faute de convention ; il est un essai de pénalité depuis le
+ * 26 octobre 2026.
  *
- * Ce complément change le bonus offensif : trois essais contre zéro, l'USAP le
- * prend. C'est le **total de bonus de la saison** qui l'atteste — le garde-fou
+ * Ce complément change le bonus offensif : trois essais contre zéro, essai de
+ * pénalité compris, l'USAP le prend. C'est le **total de bonus de la saison** qui l'atteste — le garde-fou
  * du script exige 12, et il ne les atteint qu'avec cet essai-là.
  */
 export const REALISATIONS_COMPLETEES: Record<string, RealisationsCompletees[]> = {
@@ -194,10 +194,8 @@ export const REALISATIONS_COMPLETEES: Record<string, RealisationsCompletees[]> =
   "2009-11-05": [
     {
       camp: "usap",
-      essais: 1,
+      essaisDePenalite: 1,
       transformations: 2,
-      // L'essai lui-même n'a pas d'auteur ; sa transformation, si.
-      essaisSansAuteur: 1,
       source: "Fiche ESPN gameId=99380 : essai de pénalité à la 26e minute.",
     },
   ],
@@ -262,6 +260,13 @@ export function pointsOmisSansAuteur(jour: string, camp: "usap" | "adversaire"):
   return (REALISATIONS_COMPLETEES[jour] ?? [])
     .filter((a) => a.camp === camp)
     .reduce((s, a) => s + (a.pointsSansAuteur ?? 0), 0);
+}
+
+/** Essais de pénalité omis : comme ceux de la feuille, ils n'ont pas d'auteur. */
+export function essaisDePenaliteOmis(jour: string, camp: "usap" | "adversaire"): number {
+  return (REALISATIONS_COMPLETEES[jour] ?? [])
+    .filter((a) => a.camp === camp)
+    .reduce((s, a) => s + (a.essaisDePenalite ?? 0), 0);
 }
 
 /** Essais omis qu'aucun joueur ne porte — comptés comme des essais collectifs. */

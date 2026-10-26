@@ -81,7 +81,7 @@ pas avant 2004-2005. Tous appellent désormais la fonction :
 
 | Où | Ce qui était écrit en dur | Ce qui l'appelle |
 |---|---|---|
-| `scripts/lib/lnr.ts`, `realisationsDepuisFaits` | essai +5, essai de pénalité +7, pénalité +3, drop +3 | `BAREME_LNR`, le barème de 2004 — l'archive de la LNR ne remonte pas plus haut, et c'est écrit là |
+| `scripts/lib/lnr.ts`, `realisationsDepuisFaits` | essai +5, essai de pénalité +7, pénalité +3, drop +3 | le barème de la saison, sans valeur par défaut depuis que l'essai de pénalité change de valeur en 2017 |
 | `scripts/lib/feuilles.ts`, `completerRealisations` | 5, 2, 3, 3, 7 | le même, en paramètre |
 | `scripts/lib/erc.ts` | 5, 2, 3, 3 par joueur | `BAREME_ERC`, le barème de 2007 |
 | `scripts/seed-cup-espn.ts` | 5, 2, 3, 3, et `peutPorterQuatreEssais` | `baremeDeMatch(startYear)` de la campagne |
@@ -91,9 +91,23 @@ pas avant 2004-2005. Tous appellent désormais la fonction :
 | `src/app/[locale]/realisateurs/page.tsx` | `2 * transformations + 3 * (pénalités + drops)` | ligne à ligne, sous le barème de la saison de chaque feuille |
 | `src/components/ScoreEvolution.tsx` | 5, 2, 3, 3, 7 | le barème de la saison, reçu en prop — découvert le jour où la finale de 1914 s'y est affichée en 12-8 |
 
-Le barème porte aussi **l'essai de pénalité tel que la base le compte** —
-essai plus transformation, sept aujourd'hui, cinq en 1925 —, pour que la
-règle « la somme des joueurs égale le score » vaille à toute époque.
+Le barème porte aussi **l'essai de pénalité tel qu'il valait** (décision du
+26 octobre 2026). **Avant 2017-2018, c'est un essai comme un autre** — cinq
+points depuis 1992, trois en 1925 — qu'il faut encore transformer : la
+transformation va au buteur que la feuille nomme, sur sa ligne et dans la
+chronologie, et elle peut être manquée. **Depuis 2017-2018, il vaut sept
+points d'office**, sans coup de pied. Dans les deux cas il n'a pas d'auteur
+et se range dans `penaltyTries`, jamais dans `tries` ; le bonus offensif
+l'additionne aux essais (`fix-bonus-points`). La règle « la somme des
+joueurs égale le score » devient donc `points des lignes + v × penaltyTries
+= score`, `v` lu dans `baremeDeMatch().essaiDePenalite`.
+
+La base comptait auparavant sept points à toute époque, transformation
+retirée au buteur, et quelques rencontres de coupe rangeaient l'essai de
+pénalité parmi les essais : 17 essais de pénalité d'avant 2017 ont été
+repris le 26 octobre 2026, neuf matchs LNR de 2015-2017 par la marche
+ordinaire (`set-score --force`, `seed-opponent-sheet`, `seed-chronologie`),
+sept autres par `fix-essais-de-penalite-avant-2017.ts`.
 
 **Et il est vérifié au point près par *L'Auto* du 4 mai 1914** : « 8 points
 (2 essais, 1 but) à 7 points (1 essai, 1 but sur coup tombé) » ne se

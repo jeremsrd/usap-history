@@ -9,7 +9,7 @@ que le schéma ne porte pas.
 |---|---|
 | `Match.scoreUsap`, `scoreOpponent`, `result` | pas encore joué — jamais « zéro ». Filtrer sur `MATCH_JOUE`, garde de type `estJoue()` |
 | `Match.triesUsap` et les autres compteurs | la source ne le dit pas ; `fix-bonus-points` laisse alors le bonus offensif en l'état |
-| `Match.penaltyTriesUsap/Opponent` | idem — une garde `points <> score - 7 * penaltyTries` ne compare rien sur un `null` : le traiter explicitement |
+| `Match.penaltyTriesUsap/Opponent` | idem — une garde `points <> score - v * penaltyTries` ne compare rien sur un `null` : le traiter explicitement |
 | `MatchPlayer.minutesPlayed` | remplaçant non entré ; **sauf** saisons ou matchs sans changements publiés (2005-2006, coupes d'Europe venues d'ESPN/ERC, presse d'avant-guerre) : « la source ne le dit pas » |
 | `MatchPlayer.subOut` | resté sur le terrain jusqu'au bout (la fin du match n'est pas une sortie) |
 | `MatchPlayer.shirtNumber`, `positionPlayed` | inconnu (rencontres d'avant-guerre, sans numéros) |

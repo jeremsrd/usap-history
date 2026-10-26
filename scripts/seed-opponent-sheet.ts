@@ -61,6 +61,7 @@ import { estCouperet } from "../src/lib/matchs";
 import { baremeDeMatch } from "../src/lib/scoring";
 import {
   privationDuJaune,
+  essaisDePenaliteOmis,
   essaisOmisSansAuteur,
   pointsOmisSansAuteur,
   titulairesManquantsAdmis,
@@ -712,7 +713,9 @@ async function main(cible: "adverse" | "usap") {
 
     const ennuis: string[] = [];
     const inferences: string[] = [];
-    let essaisDePenalite = 0;
+    // Avant 2017-2018, l'essai de pénalité vaut cinq points et se transforme.
+    const bareme = baremeDeMatch(saison.startYear);
+    let essaisDePenalite = essaisDePenaliteOmis(jour, cible === "usap" ? "usap" : "adversaire");
     /** Essais que la feuille n'attribue à personne, hors essais de pénalité. */
     // Un essai que la feuille omet entièrement compte comme un essai
     // collectif : cinq points pour l'équipe, aucun auteur (cf. lib/feuilles.ts).
@@ -802,8 +805,13 @@ async function main(cible: "adverse" | "usap") {
     for (const fait of feuille.faits) {
       if (fait.club === campTraite) {
         if (fait.type === "essai-de-penalite") {
+          // Sans auteur, comme l'essai collectif ; sa transformation d'avant
+          // 2017-2018 va au buteur, comme toute autre.
           essaisDePenalite++;
-          courant += 7;
+          courant += bareme.essaiDePenalite;
+          if (bareme.essaiDePenaliteSeTransforme) {
+            essaisAdverses.push({ minute: fait.minute, ligne: null, transforme: false });
+          }
         } else if (fait.type === "essai" && estCollectif(fait.joueur)) {
           // « Essai collectif » : la LNR n'attribue pas cet essai-là. Il compte
           // pour l'équipe, jamais pour un joueur — comme un essai de pénalité,
@@ -918,7 +926,6 @@ async function main(cible: "adverse" | "usap") {
     // Ni les essais de pénalité, ni les essais collectifs, ni les points que
     // la feuille marque « n.a. » n'ont d'auteur : ils ne figurent sur aucune
     // ligne de joueur.
-    const bareme = baremeDeMatch(saison.startYear);
     const attendu =
       score - bareme.essaiDePenalite * essaisDePenalite - bareme.essai * essaisCollectifs - pointsSansAuteur;
 

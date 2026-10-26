@@ -1120,7 +1120,10 @@ async function assurerAdversaires(campagne: Campagne) {
 // =============================================================================
 
 interface Realisations {
+  /** Essais de pénalité compris : c'est le compte qui ouvre le bonus offensif. */
   essais: number;
+  /** Dont essais de pénalité, que la base range à part, faute d'auteur. */
+  essaisDePenalite: number;
   transformations: number;
   penalites: number;
   drops: number;
@@ -1134,22 +1137,26 @@ interface Realisations {
  * connaît pas l'essai de pénalité : un écart de sept points en serait la
  * marque, mais ce serait une inférence, et le camp est alors simplement tenu
  * pour incohérent.
+ *
+ * Les essais sans auteur des feuilles de l'ERC sont des essais de pénalité :
+ * nommés comme tels de 2001 à 2008, et, sur le Match Centre de 2010-2013,
+ * trahis par la transformation orpheline qui les suit dans la chronologie.
  */
 function realisations(equipe: Equipe, bareme: Bareme): Realisations {
   const somme = (choix: (j: Joueur) => number) =>
     equipe.joueurs.reduce((s, j) => s + choix(j), 0);
   const r = {
     essais: somme((j) => j.essais),
+    essaisDePenalite: equipe.essaisSansAuteur,
     transformations: somme((j) => j.transformations),
     penalites: somme((j) => j.penalites),
     drops: somme((j) => j.drops),
   };
-  // L'essai de pénalité d'avant 2017 vaut cinq points et se transformait :
-  // il compte dans les essais et dans le total, sa transformation est déjà
-  // sur la ligne du buteur.
-  r.essais += equipe.essaisSansAuteur;
-  const total = 5 * r.essais + 2 * r.transformations + 3 * r.penalites + 3 * r.drops;
-  const points = somme((j) => j.points) + 5 * equipe.essaisSansAuteur;
+  // L'essai de pénalité d'avant 2017 vaut cinq points et se transforme : sa
+  // transformation est déjà sur la ligne du buteur, et elle y reste.
+  const total = pointsDesRealisations(r, bareme);
+  const points = somme((j) => j.points) + bareme.essaiDePenalite * r.essaisDePenalite;
+  r.essais += r.essaisDePenalite;
   return {
     ...r,
     total,
@@ -1696,6 +1703,7 @@ function controlerLaPhaseFinale(
 function chronologieDeLaBase(
   r: Rencontre,
   lignes: LigneAEcrire[],
+  bareme: Bareme,
 ): Array<{ minute: number; type: EventType; isUsap: boolean; playerId: string | null; description: string }> | null {
   const { evenements, essaisDePenalite } = r.chronologie!;
   const POINTS = { essai: 5, transformation: 2, penalite: 3, drop: 3 } as const;
@@ -1744,7 +1752,7 @@ function chronologieDeLaBase(
   let adverse = 0;
   const club = (isUsap: boolean) => (isUsap ? "USAP" : r.opponentNom);
   const sortie = faits.map((f) => {
-    const points = f.type === "essai-de-penalite" ? 5 : POINTS[f.type];
+    const points = f.type === "essai-de-penalite" ? bareme.essaiDePenalite : POINTS[f.type];
     if (f.isUsap) usap += points;
     else adverse += points;
     const libelle =
@@ -2068,16 +2076,16 @@ async function main() {
       bonusDefensif: r.bonusDefensif,
       attendance: officiel?.affluence ?? r.feuille.affluence,
       ...(refereeId ? { refereeId } : {}),
-      triesUsap: r.realUsap.coherent ? r.realUsap.essais : null,
+      triesUsap: r.realUsap.coherent ? r.realUsap.essais - r.realUsap.essaisDePenalite : null,
       conversionsUsap: r.realUsap.coherent ? r.realUsap.transformations : null,
       penaltiesUsap: r.realUsap.coherent ? r.realUsap.penalites : null,
       dropGoalsUsap: r.realUsap.coherent ? r.realUsap.drops : null,
-      penaltyTriesUsap: r.realUsap.coherent ? 0 : null,
-      triesOpponent: r.realAdverse.coherent ? r.realAdverse.essais : null,
+      penaltyTriesUsap: r.realUsap.coherent ? r.realUsap.essaisDePenalite : null,
+      triesOpponent: r.realAdverse.coherent ? r.realAdverse.essais - r.realAdverse.essaisDePenalite : null,
       conversionsOpponent: r.realAdverse.coherent ? r.realAdverse.transformations : null,
       penaltiesOpponent: r.realAdverse.coherent ? r.realAdverse.penalites : null,
       dropGoalsOpponent: r.realAdverse.coherent ? r.realAdverse.drops : null,
-      penaltyTriesOpponent: r.realAdverse.coherent ? 0 : null,
+      penaltyTriesOpponent: r.realAdverse.coherent ? r.realAdverse.essaisDePenalite : null,
     };
 
     const existant = await prisma.match.findFirst({
@@ -2149,7 +2157,7 @@ async function main() {
     }
 
     if (r.chronologie) {
-      const evenements = chronologieDeLaBase(r, lignesRetenues);
+      const evenements = chronologieDeLaBase(r, lignesRetenues, baremeDeMatch(saison.startYear));
       if (evenements) {
         await prisma.matchEvent.deleteMany({ where: { matchId } });
         await prisma.matchEvent.createMany({ data: evenements.map((e) => ({ ...e, matchId })) });
