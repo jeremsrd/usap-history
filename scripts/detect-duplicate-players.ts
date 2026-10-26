@@ -226,6 +226,10 @@ const DISTINCTS: [string, string][] = [
   // à vingt ans d'écart, chacun écrit en toutes lettres par sa feuille — Lee
   // par l'ERC en octobre 2005 et janvier 2006, Ben par l'EPCR en janvier 2025.
   ["Ben Thomas", "Lee Thomas"],
+  // Venue avec la H Cup 2001-2002, le 26 octobre 2026 : deux n°12 de Llanelli
+  // à dix ans d'écart. Leigh, né en 1976, le 5 octobre 2001 (initiale de
+  // l'ERC, prénom d'après Wikipédia) ; Jonathan, né en 1988, en 2011.
+  ["Jonathan Davies", "Leigh Davies"],
 ];
 
 const ARBITREES = new Set(

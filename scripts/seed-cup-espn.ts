@@ -216,16 +216,18 @@ interface Campagne {
    */
   identites?: Record<string, { firstName: string; lastName: string; sourceDuPrenom?: string }>;
   /**
-   * Les compositions adverses ne s'écrivent pas encore, et la raison : les
-   * réalisations des deux camps comptent toujours au match.
+   * Les rencontres dont la composition adverse ne s'écrit pas encore, et la
+   * raison : les réalisations des deux camps comptent toujours au match.
    */
-  compositionsAdversesDifferees?: string;
+  compositionsAdversesDifferees?: Record<string, string>;
   /** Ce qu'on sait de la campagne, pour le journal et pour la relecture. */
   note: string;
 }
 
 /** Sources des prénoms que les comptes rendus de 2001-2002 réduisent à l'initiale. */
 const DE_MEMOIRE = "Jérémy, de mémoire (21 oct. 2026)";
+/** Un article de la Wikipédia anglophone qui nomme le club du joueur. */
+const wikipedia = (titre: string) => `Wikipédia anglophone, « ${titre} »`;
 const GUIDE_1999_2000 = "Midi Olympique, guide de la saison 1999-2000, page Perpignan (photo transmise par Jérémy)";
 
 const CAMPAGNES: Record<string, Campagne> = {
@@ -244,10 +246,11 @@ const CAMPAGNES: Record<string, Campagne> = {
    * du 7 octobre 2002), à l'heure du stade : 18:15 à Welford Road le 3
    * novembre, quand Wikipédia écrit 19:30 — l'organisateur prime.
    *
-   * **Les compositions adverses attendent** : l'ERC n'écrit que des
-   * initiales, et Leicester, Llanelli et Calvisano alignent une cinquantaine
-   * de noms à rapprocher un par un. Celles de l'USAP passent toutes par
-   * `identites`, cf. `lireCampagne`.
+   * **Les compositions adverses passent elles aussi par `identites`**,
+   * l'ERC n'écrivant que des initiales : Leicester et Llanelli depuis le
+   * 26 octobre 2026, d'après Wikipédia. Celle de Calvisano attend
+   * (`compositionsAdversesDifferees`) : quatorze de ses vingt-deux noms n'ont
+   * pas de prénom connu.
    */
   "2001-2002": {
     ligue: "champions-cup",
@@ -323,8 +326,73 @@ const CAMPAGNES: Record<string, Campagne> = {
       "M Koniek": { firstName: "Michel", lastName: "Konieckiewicz", sourceDuPrenom: GUIDE_1999_2000 },
       "O Olibeau": { firstName: "Olivier", lastName: "Olibeau", sourceDuPrenom: GUIDE_1999_2000 },
       "B Goutta": { firstName: "Bernard", lastName: "Goutta", sourceDuPrenom: GUIDE_1999_2000 },
+      // **Leicester et Llanelli**, cherchés le 26 oct. 2026 : un nom n'entre
+      // ici que si l'article cité nomme le club, et l'initiale concorde. Les
+      // fiches déjà en base (Geordan Murphy, Goode, Louis Deacon, Moody,
+      // Peter Short, Harry Ellis, Freshwater, Chuter, Stephen Jones, Cooper,
+      // Wyatt, Scott Morgan) sont reprises avec leur prénom ; leurs articles
+      // donnent le même parcours que leurs feuilles.
+      "T Stimpson": { firstName: "Tim", lastName: "Stimpson", sourceDuPrenom: wikipedia("Tim Stimpson") },
+      "G Murphy": { firstName: "Geordan", lastName: "Murphy" },
+      "G Gelderbloom": { firstName: "Glenn", lastName: "Gelderbloom", sourceDuPrenom: wikipedia("Glenn Gelderbloom") },
+      "R Kafer": { firstName: "Rod", lastName: "Kafer", sourceDuPrenom: wikipedia("Rod Kafer") },
+      // Ailier venu du XIII en 2000, quatre saisons à Leicester : aucun article
+      // de Wikipédia, mais sa nécrologie.
+      "S Booth": {
+        firstName: "Steve",
+        lastName: "Booth",
+        sourceDuPrenom: "The Rugby Paper, « Former Leicester Tigers wing Steve Booth has died suddenly aged 42 »",
+      },
+      "A Goode": { firstName: "Andy", lastName: "Goode" },
+      "J Hamilton": { firstName: "Jamie", lastName: "Hamilton", sourceDuPrenom: wikipedia("Jamie Hamilton (rugby union)") },
+      "A Healey": { firstName: "Austin", lastName: "Healey", sourceDuPrenom: wikipedia("Austin Healey") },
+      "G Rowntree": { firstName: "Graham", lastName: "Rowntree", sourceDuPrenom: wikipedia("Graham Rowntree") },
+      "D West": { firstName: "Dorian", lastName: "West", sourceDuPrenom: wikipedia("Dorian West") },
+      "D Garforth": { firstName: "Darren", lastName: "Garforth", sourceDuPrenom: wikipedia("Darren Garforth") },
+      "L Deacon": { firstName: "Louis", lastName: "Deacon" },
+      "B Kay": { firstName: "Ben", lastName: "Kay", sourceDuPrenom: wikipedia("Ben Kay") },
+      "L Moody": { firstName: "Lewis", lastName: "Moody" },
+      "J Kronfeld": { firstName: "Josh", lastName: "Kronfeld", sourceDuPrenom: wikipedia("Josh Kronfeld") },
+      "N Back": { firstName: "Neil", lastName: "Back", sourceDuPrenom: wikipedia("Neil Back") },
+      "P Short": { firstName: "Peter", lastName: "Short" },
+      "O Smith": { firstName: "Ollie", lastName: "Smith", sourceDuPrenom: wikipedia("Ollie Smith (rugby union, born 1982)") },
+      "H Ellis": { firstName: "Harry", lastName: "Ellis" },
+      "P Freshwater": { firstName: "Perry", lastName: "Freshwater" },
+      "G Chuter": { firstName: "George", lastName: "Chuter" },
+      "R Cockerill": { firstName: "Richard", lastName: "Cockerill", sourceDuPrenom: wikipedia("Richard Cockerill") },
+      "D Jelley": { firstName: "Derek", lastName: "Jelley", sourceDuPrenom: wikipedia("Derek Jelley") },
+      // Le frère de Martin, n°8 de Leicester de 1994 à 2004.
+      "W Johnson": { firstName: "Will", lastName: "Johnson", sourceDuPrenom: wikipedia("Will Johnson (rugby union, born 1974)") },
+      "B Davies": { firstName: "Barry", lastName: "Davies", sourceDuPrenom: wikipedia("Barry Davies (rugby union, born 1981)") },
+      "W Proctor": { firstName: "Wayne", lastName: "Proctor", sourceDuPrenom: wikipedia("Wayne Proctor") },
+      "M Cardey": { firstName: "Matt", lastName: "Cardey", sourceDuPrenom: wikipedia("Matt Cardey") },
+      "L Davies": { firstName: "Leigh", lastName: "Davies", sourceDuPrenom: wikipedia("Leigh Davies") },
+      "S Finau": { firstName: "Salesi", lastName: "Finau", sourceDuPrenom: wikipedia("Salesi Finau") },
+      "S Jones": { firstName: "Stephen", lastName: "Jones" },
+      "G Bowen": { firstName: "Gareth", lastName: "Bowen", sourceDuPrenom: wikipedia("Gareth Bowen") },
+      // Le seul Easterby à l'initiale G : le demi de mêlée irlandais. L'infobox
+      // de Wikipédia le tient à Ebbw Vale jusqu'en 2003, l'IRFU le dit « former
+      // Llanelli star » ; la feuille de l'ERC l'aligne à Llanelli.
+      "G Easterby": { firstName: "Guy", lastName: "Easterby", sourceDuPrenom: wikipedia("Guy Easterby") },
+      "M Madden": { firstName: "Martyn", lastName: "Madden", sourceDuPrenom: wikipedia("Martyn Madden") },
+      "R McBryde": { firstName: "Robin", lastName: "McBryde", sourceDuPrenom: wikipedia("Robin McBryde") },
+      "J Davies": { firstName: "John", lastName: "Davies", sourceDuPrenom: wikipedia("John Davies (rugby union, born 1969)") },
+      "V Cooper": { firstName: "Vernon", lastName: "Cooper" },
+      "L Gross": { firstName: "Luke", lastName: "Gross", sourceDuPrenom: wikipedia("Luke Gross") },
+      "C Wyatt": { firstName: "Christopher", lastName: "Wyatt" },
+      "D Jones": { firstName: "Dafydd", lastName: "Jones", sourceDuPrenom: wikipedia("Dafydd Jones") },
+      "D Hodges": { firstName: "Dave", lastName: "Hodges", sourceDuPrenom: wikipedia("Dave Hodges (rugby union)") },
+      // **Probable seulement** : il remplace le n°8 de la 55ᵉ à la 67ᵉ, et
+      // Scott Morgan, deuxième ligne ou flanker, est passé de Neath à Llanelli
+      // avant Bristol et Leeds — sans date. Fiche existante (Leeds, Dragons).
+      "S Morgan": { firstName: "Scott", lastName: "Morgan" },
     },
-    compositionsAdversesDifferees: "identités adverses à établir (initiales de l'ERC)",
+    compositionsAdversesDifferees: {
+      "2001-09-29":
+        "quatorze Calvisanais sur vingt-deux sans prénom connu (Dragotto, Zitelli, Arboit, Scanziani, Bordes, Merli, " +
+        "Castiglia, Macri, Davo, Mastrodomenico, Lanzi, Scotuzzi, Cairo, Ricciardo) ; Wikipédia ne les cite que par " +
+        "leur nom — à chercher dans La Gazzetta dello Sport",
+    },
     note: "Heineken Cup, poule 1 — troisième, éliminée en poule",
   },
   /**
@@ -1316,10 +1384,12 @@ async function lireCampagne(
           // **L'initiale ne fait pas une identité.** « P Murphy » désigne cinq
           // fiches en base : chaque nom de l'USAP passe par `identites`, avec
           // sa démonstration, ou la rencontre ne s'écrit pas.
-          const sansIdentite = usap.joueurs.filter((j) => /^[A-Z](?:-[A-Z])?$/.test(j.firstName));
+          // Même règle pour l'adversaire, sauf composition différée.
+          const sansIdentite = [...usap.joueurs, ...(campagne.compositionsAdversesDifferees?.[jour] ? [] : adverse.joueurs)]
+            .filter((j) => /^[A-Z](?:-[A-Z])?$/.test(j.firstName));
           if (sansIdentite.length > 0) {
             echecs.push(
-              `${etiquette} : ${sansIdentite.length} joueur(s) USAP sans identité établie — ` +
+              `${etiquette} : ${sansIdentite.length} joueur(s) sans identité établie — ` +
                 sansIdentite.map((j) => `${j.firstName} ${j.lastName}`).join(", "),
             );
           }
@@ -1403,8 +1473,9 @@ async function lireCampagne(
         campsSansComposition.add(isOpponent);
         continue;
       }
-      if (isOpponent && campagne.compositionsAdversesDifferees) {
-        alertes.push(`${camp} : composition non écrite — ${campagne.compositionsAdversesDifferees}`);
+      const differee = campagne.compositionsAdversesDifferees?.[jour];
+      if (isOpponent && differee) {
+        alertes.push(`${camp} : composition non écrite — ${differee}`);
         campsSansComposition.add(isOpponent);
         continue;
       }

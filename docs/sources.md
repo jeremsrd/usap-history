@@ -247,7 +247,13 @@ dans `scripts/lib/erc.ts`, dont l'en-tête décrit les cinq formes de page.
   n'ont pas de numéro**, seuls les entrés figurent, entre parenthèses après
   le remplacé ; les prénoms sont des initiales, avec des coquilles (« T
   Lacrois », « J Danielli », « M Koniek ») ; jour, stade et arbitre, ni heure
-  ni affluence — l'heure se prend au calendrier de l'ERC.
+  ni affluence — l'heure se prend au calendrier de l'ERC. **Les initiales
+  adverses se résolvent par Wikipédia** (26 octobre 2026) : un article qui
+  nomme le club, une initiale qui concorde ; Leicester et Llanelli sont
+  écrits ainsi, Calvisano attend (quatorze noms sans prénom connu, à
+  chercher dans *La Gazzetta dello Sport*). Les comptes rendus archivés
+  d'`historical-stats.epcrugby.com` de cette saison ne portent que le
+  gabarit du site, sans texte.
 - **La CDX d'abord** : elle dit en une requête si une page a jamais été
   capturée. Résoudre les redirections sans elle a fait refuser l'archive
   après une cinquantaine de requêtes le 18 octobre 2026.
