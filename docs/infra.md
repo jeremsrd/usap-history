@@ -378,6 +378,40 @@ Deux choses à en retenir, et la seconde a coûté une soirée :
   et ne peut que nommer l'état, puis vérifier le site plutôt que le
   journal, comme pour un écusson ou un portrait.
 
+### Lire les stats de Google — Search Console
+
+**Branché le 27 octobre 2026.** La propriété `sc-domain:usaphistoria.cat`
+est ouverte en lecture (« utilisateur restreint ») au compte de service
+`lecture-stats@millorem-402010.iam.gserviceaccount.com`, le même que pour
+les sites Millorem, dont la clé est dans
+`~/.config/claude-seo/millorem-search-console.json` — hors du dépôt, et
+qu'on ne recopie nulle part. Rien dans le site n'en dépend : c'est un outil
+de poste, pour faire le point à la demande.
+
+L'outil est le plugin **claude-seo** de Claude Code, et son runtime Python
+est installé sous **Python 3.13** : la 3.15 de la machine ne trouve pas de
+version de `google-ads` qui lui convienne, et l'installation échoue. Le
+lanceur doit tourner sous le même Python que l'environnement, d'où
+`CLAUDE_SEO_PYTHON=/usr/local/bin/python3.13` dans le bloc `env` de
+`~/.claude/settings.json`. Si Homebrew retire la 3.13, refaire
+`claude-seo setup` sous un Python plus ancien que la 3.14.
+
+```bash
+"$CLAUDE_PLUGIN_ROOT/scripts/claude-seo" run gsc_query.py --property sc-domain:usaphistoria.cat --json
+"$CLAUDE_PLUGIN_ROOT/scripts/claude-seo" run gsc_inspect.py <url> --json     # indexation d'une page
+"$CLAUDE_PLUGIN_ROOT/scripts/claude-seo" run gsc_query.py sitemaps --property sc-domain:usaphistoria.cat --json
+```
+
+Les données s'arrêtent trois jours avant la date du jour, et Google n'en
+garde que seize mois. Premier relevé, du 27 septembre au 24 octobre 2026 :
+33 clics pour 2 409 impressions, position moyenne 14,5 ; la fiche arbitre de
+Julien Castaignède en tête des impressions.
+
+**Piste ouverte, non tranchée** : Google connaît des adresses sans langue
+(`/joueurs/thomas-toevalu-…`). Le middleware les renvoie bien vers `/fr/`,
+mais en **307**, une redirection temporaire, que Google peut garder sous
+l'ancienne adresse ; une 308 dirait que la page a déménagé.
+
 Ce qui reste de la phase 5 : les performances et le PWA.
 
 ## Le cache des pages — et ce que coûtait de ne pas en avoir

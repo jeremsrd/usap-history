@@ -93,7 +93,7 @@ lire `docs/saisie/reprendre-une-saison.md` (« Ce qui casse ») avant de forcer.
 | LNR, EPCR, ERC, ESPN, allrugby, Gallica | `docs/sources.md` |
 | Table des scripts de maintenance | `docs/scripts.md` |
 | Sens des champs et des `null` | `docs/modele-de-donnees.md` |
-| Commandes détaillées, pooler, cache, SEO, admin | `docs/infra.md` |
+| Commandes détaillées, pooler, cache, SEO, stats Search Console, admin | `docs/infra.md` |
 | Identité visuelle et thème | `docs/design.md` · pages : `docs/pages.md` |
 | Bilingue | `docs/i18n.md` · écussons et portraits : `docs/medias.md` |
 | Avant 2006, presse ancienne | `docs/avant-guerre.md` · vocabulaire : `docs/glossaire.md` |
