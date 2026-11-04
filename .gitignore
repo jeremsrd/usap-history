@@ -49,3 +49,6 @@ scripts/.planche-portraits.html
 # Claude Code : notes et réglages personnels
 CLAUDE.local.md
 .claude/settings.local.json
+
+# visuels Instagram, fabriqués par scripts/visuel-instagram.ts
+/visuels/

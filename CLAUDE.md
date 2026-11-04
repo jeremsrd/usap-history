@@ -72,6 +72,7 @@ npx tsx scripts/set-annexe.ts --match=… --affluence=N --mi-temps=U-A --source=
 npx tsx scripts/audit-opponent-lineups.ts AAAA-AAAA --usap    # 0 anomalie attendue
 npx tsx scripts/detect-duplicate-players.ts                   # 0 / 0 / 0 attendu
 npx tsx scripts/set-video.ts --match=… --url="…" [--dry]
+npx tsx scripts/visuel-instagram.ts --bilan=AAAA-MM-JJ [--dry]  # image et légende dans visuels/
 npx tsx scripts/purger-cache.ts
 ```
 
