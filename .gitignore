@@ -52,3 +52,6 @@ CLAUDE.local.md
 
 # visuels Instagram, fabriqués par scripts/visuel-instagram.ts
 /visuels/
+
+# PDF de presse ancienne (Gallica), trop lourds pour le dépôt
+/sources/

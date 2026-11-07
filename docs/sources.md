@@ -352,7 +352,15 @@ Ce qu'il faut savoir avant de s'en servir :
 - **Gallica plafonne à quelques requêtes par minute** : trente secondes
   entre deux, cache sur disque, balayages en arrière-plan ;
 - et **tout ce qui en sort est attesté `PROBABLE`**, l'image relue pour
-  adresse, Jérémy pour relecteur — cf. « Le troisième état ».
+  adresse, Jérémy pour relecteur — cf. « Le troisième état » ;
+- **Gallica refuse désormais les requêtes de ce poste** (Cloudflare, 403, le
+  7 novembre 2026, sur IIIF) : ne pas chercher à passer. Jérémy télécharge le
+  PDF, rangé dans `sources/<journal>/` hors de git, et Claude lit les JPEG
+  embarqués, page par page ; `numeroLuSurPDF` dans `seed-match-gallica.ts`
+  porte ce cas ;
+- ***L'Équipe* y est aussi**, au moins pour 1955 : c'est la première source
+  trouvée entre 1944 et 2000, avec des minutes de jeu. Elle se cite elle-même
+  dans Wikipédia : ne pas les compter pour deux.
 
 Le détail des API, des numéros lus et de ce que chacun rend est dans
 « Remonter avant 2006 », plus bas ; la marche à suivre pour la prochaine

@@ -169,6 +169,44 @@ dans ses récits, et c'est là que vivent les six premiers titres. Entre
 1944 et 2000, rien de lu par machine n'a été trouvé : c'est le trou, et il
 est large de cinquante-six ans.
 
+**Le trou n'est plus sans fond depuis le 7 novembre 2026** : *L'Équipe* est
+dans Gallica, et son numéro du 23 mai 1955 (n° 2839, `bd6t599047n`) donne la
+finale USAP 11-6 Lourdes **mieux qu'aucune autre** : les deux XV, les
+minutes de chaque réalisation, un déroulé minute par minute, l'affluence, la
+recette, et le palmarès de la saison en 19 scores, dont la somme retombe
+exactement sur les « 267 points pour, 95 contre » imprimés. Elle est en base,
+la troisième rencontre d'avant 2000, et 1954-1955 n'a que ce match. Cela
+reste une lecture à l'œil et non « par machine » : Gallica refuse les
+requêtes de ce poste, c'est Jérémy qui télécharge le PDF
+(`sources/l-equipe/`, exclu de git). Wikipédia cite ce numéro comme sa source
+et ne vaut donc pas confirmation : tout est `PROBABLE`, sans `CONCORDANT`. La
+composition imprime « Moni » et « Leaury », le même numéro Monié et Llaury ;
+Jérémy a tranché pour ces dernières, en première division comme l'écrit le
+journal (non en 1ère série), et pour 45 000 spectateurs, dont 39 764 payants.
+Reste à lire pour cette saison le lendemain de la finale du Du Manoir du
+29 mai.
+
+**Le numéro du 25 mai 1955** (n° 2841, `bd6t599049b`, p. 12) rassemble les
+**six XV champions de 1914 à 1955**, avec les demis marqués « (o) » et
+« (m) », le capitaine de 1914, et les sept de 1914 tombés à la guerre. Il
+donne ainsi une piste pour 1921, 1938 et 1944, dont la page de *L'Auto* est
+abîmée ou non lue. Mais c'est une rétrospective, à quarante ans de distance,
+et elle a ses coquilles : Cayrel, Daillette, Cubzach, Talat, Treilles. Elle
+aide à lire les numéros du lendemain, elle ne les remplace pas.
+`seed-apports-equipe-1955.ts` en a tiré trois faits sur les finales déjà en
+base, le 7 novembre 2026 : Barbe capitaine en 1914, Pascot ouvreur et Carbonne
+demi de mêlée en 1925, et une phrase sur les fiches des six tombés de 1914 qui
+n'avaient rien, sans date de mort puisque le journal n'en donne pas.
+
+**Pour 1921, 1938 et 1944, Wikipédia a le XV, le score, la mi-temps, les
+marqueurs, l'arbitre et l'affluence**, et cet encadré confirme les hommes à
+l'orthographe près. Toutes trois sont recomptées sous le barème de l'époque :
+5-0, 11-6, 20-5. Il manque la relecture du journal du lendemain, qui reste la
+règle : *L'Auto* du 18 avril 1921 (`bpt6k4628527n`), du 9 mai 1938
+(`bpt6k4635109p`), du 27 mars 1944 (`bpt6k4649660g`), d'après les renvois de
+Wikipédia. `finalesrugby.fr` y est cité : à sonder, c'est un autre domaine que
+le `finalesrugby.com` parqué.
+
 C'est exactement la situation que la réflexion ci-dessous anticipait : les
 sources qui restent sont des récits et des tableaux, non des feuilles, et
 c'est le **troisième état** — « probable, d'après telle source » — qu'il

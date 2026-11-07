@@ -42,6 +42,12 @@
  * avants lisibles ; 1925, deux XV dont un à quatorze — l'image le complète —,
  * l'arbitre ; 1938, le score et la mi-temps du titre, la page des équipes
  * illisible. **1914 et 1925 sont écrites**, relues sur l'image et validées.
+ *
+ * **1955, écrite le 7 novembre 2026, ne ressemble à aucune** : *L'Équipe* du
+ * lendemain, lue sur un PDF téléchargé par Jérémy (`numeroLuSurPDF`), Gallica
+ * refusant ce poste. Pas d'OCR : la simulation donne les garde-fous et chaque
+ * fiche rapprochée. Le journal imprime les minutes : la chronologie les reprend
+ * telles quelles, sans horloge. Le club adverse manquait : `adversaireACreer`.
  */
 
 import { PrismaClient, EventType, MatchResult, type DegreAttestation, type Position } from "@prisma/client";
@@ -62,7 +68,7 @@ import { chercherJoueur, trouverOuCreerJoueur } from "./lib/joueurs";
 import { trouverOuCreerArbitre } from "./lib/arbitres";
 import { attester, type Attestation } from "./lib/attestations";
 import { baremeDeMatch, pointsDesRealisations } from "../src/lib/scoring";
-import { generateMatchSlug, generateVenueSlug } from "../src/lib/slugs";
+import { generateMatchSlug, generateOpponentSlug, generateVenueSlug } from "../src/lib/slugs";
 
 const prisma = new PrismaClient();
 
@@ -77,9 +83,9 @@ interface Realisation {
 }
 
 interface FaitDeChronologie {
-  /** L'heure du journal, en clair. */
-  horloge: string;
-  /** La minute de jeu déduite — cf. l'en-tête. */
+  /** L'heure du journal, en clair, quand il raconte à l'horloge ; rien quand il donne la minute. */
+  horloge?: string;
+  /** La minute de jeu : déduite de l'horloge, ou imprimée telle quelle — cf. l'en-tête. */
   minute: number;
   type: EventType;
   camp: "usap" | "adversaire";
@@ -93,9 +99,19 @@ interface MatchDeJournal {
   /** D'après Wikipédia : le garde-fou. */
   scoreUsap: number;
   scoreOpponent: number;
-  journal: Periodique;
+  journal: Periodique | "L'Équipe";
   /** Le numéro qui rend compte du match, en général celui du lendemain. */
   numero: string;
+  /**
+   * Le numéro lu sur un PDF téléchargé par Jérémy, faute d'OCR à interroger :
+   * Gallica refuse ces requêtes depuis ce poste, et *L'Équipe* n'est pas dans
+   * `PERIODIQUES`. La simulation ne lit alors que la relecture.
+   */
+  numeroLuSurPDF?: { ark: string; page: number; fichier: string };
+  /** Le club à créer s'il manque, faute de quoi l'adversaire doit exister. */
+  adversaireACreer?: { nom: string; ville: string; source: string };
+  /** Ce qui justifie la chronologie, dans son attestation. */
+  noteChronologie?: string;
   note: string;
   stade: { nom: string; ville: string; source: string; degre: DegreAttestation };
   arbitre: { nom: string; source: string; degre: DegreAttestation } | null;
@@ -198,6 +214,54 @@ const MATCHS: Record<string, MatchDeJournal> = {
     realisations: [],
     chronologie: null,
   },
+  "1955-05-22": {
+    competition: "1ère division",
+    tour: "Finale",
+    adversaire: "Lourdes",
+    scoreUsap: 11,
+    scoreOpponent: 6,
+    journal: "L'Équipe",
+    numero: "1955-05-23",
+    numeroLuSurPDF: { ark: "bd6t599047n", page: 9, fichier: "sources/l-equipe/l-equipe-n2839-1955-05-23-bd6t599047n.pdf" },
+    adversaireACreer: { nom: "FC Lourdes", ville: "Lourdes", source: "L'Équipe du 23 mai 1955, page 9 — « F.C. Lourdes »" },
+    noteChronologie:
+      "Minutes imprimées par le journal, en tête de son compte rendu et à sa chronologie, et reprises par Wikipédia. " +
+      "La transformation de Serre n'a pas de minute à elle : elle suit l'essai de la 38e.",
+    note:
+      "Sixième titre de l'USAP. Le journal écrit « Championnat de France, première division », 11-6 (5-6). " +
+      "Wikipédia, « Championnat de France de rugby à XV 1954-1955 », concorde mais cite ce même numéro : ce n'est pas une seconde source. " +
+      "Le déroulé imprime « U.S.A.P. 6 ; Lourdes 5 » après le 38e : coquille, l'en-tête, la légende de la une et le récit disent 5-6.",
+    stade: {
+      nom: "Stade Chaban-Delmas",
+      ville: "Bordeaux",
+      source: "L'Équipe du 23 mai 1955 — « Parc des Sports », « stade municipal » de Bordeaux — et Wikipédia, qui le rapporte au stade Chaban-Delmas",
+      degre: "PROBABLE",
+    },
+    arbitre: { nom: "Georges Laffitte", source: "L'Équipe du 23 mai 1955 — « M. Laffitte », « M. Laffite » en en-tête — et Wikipédia pour le prénom", degre: "PROBABLE" },
+    affluence: {
+      valeur: 45000,
+      source: "L'Équipe du 23 mai 1955 — « 45.000 spectateurs, dont 39.764 entrées payantes », recette 17.293.700 fr. Wikipédia ne retient que les 39.764",
+      degre: "PROBABLE",
+    },
+    miTemps: { usap: 5, adversaire: 6, source: "L'Équipe du 23 mai 1955 — « 11-6 (5-6) », et Wikipédia", degre: "PROBABLE" },
+    coupDEnvoi: null,
+    realisations: [
+      { camp: "usap", nom: "Gauby", essais: 1 },
+      { camp: "usap", nom: "Torreilles", essais: 1 },
+      { camp: "usap", nom: "Garrigue", essais: 1 },
+      { camp: "usap", nom: "Serre", transformations: 1 },
+      { camp: "adversaire", nom: "F. Labazuy", drops: 1 },
+      { camp: "adversaire", nom: "Jean Prat", drops: 1 },
+    ],
+    chronologie: [
+      { minute: 13, type: EventType.DROP, camp: "adversaire", nom: "F. Labazuy" },
+      { minute: 19, type: EventType.DROP, camp: "adversaire", nom: "Jean Prat" },
+      { minute: 38, type: EventType.ESSAI, camp: "usap", nom: "Gauby" },
+      { minute: 38, type: EventType.TRANSFORMATION, camp: "usap", nom: "Serre" },
+      { minute: 56, type: EventType.ESSAI, camp: "usap", nom: "Torreilles" },
+      { minute: 62, type: EventType.ESSAI, camp: "usap", nom: "Garrigue" },
+    ],
+  },
 };
 
 /**
@@ -251,6 +315,9 @@ const RELECTURES: Record<string, Relecture> = {
       {
         club: "Perpignan",
         capitaine: "",
+        // L'Auto ne le marque pas : L'Équipe du 25 mai 1955 écrit « Barbe (cap.) »,
+        // et Wikipédia légende la photo des deux capitaines.
+        capitaineWikipedia: "Barbe",
         lignes: [
           { ligne: "arrière", noms: ["Couffe"] },
           { ligne: "trois-quarts", noms: ["Amillat", "Courregé", "Barbe", "Serres"] },
@@ -331,6 +398,53 @@ const RELECTURES: Record<string, Relecture> = {
       },
     ],
   },
+  // La composition imprime « Moni » et « Leaury », le même numéro écrit
+  // « Monié » deux fois au récit et « Llaury » au déroulé et chez Lalanne :
+  // c'est le journal qui se corrige lui-même, comme « Du-four » en 1914. Le
+  // bloc ne titre pas ses lignes : l'ordre arrière, trois-quarts, demis,
+  // troisième, deuxième, première est celui de ses points-virgules, et Lalanne
+  // confirme « troisième ligne Mestres-Llaury-Doutres » et « le pilier Gimenez ».
+  "1955-05-22": {
+    reluPar: "Claude, sur l'image du PDF, confronté au wikitexte de Wikipédia « Championnat de France de rugby à XV 1954-1955 »",
+    reluLe: "2026-11-07",
+    image: "https://gallica.bnf.fr/ark:/12148/bd6t599047n/f9.item.zoom",
+    valide: true,
+    validePar: "Jérémy, le 7 novembre 2026 — les graphies de Wikipédia, Monié et Llaury ; première division ; 45 000 spectateurs",
+    equipes: [
+      {
+        club: "Perpignan",
+        capitaine: "Sanac",
+        lignes: [
+          { ligne: "arrière", noms: ["Sagols"] },
+          { ligne: "trois-quarts", noms: ["Torreilles", "Moni", "Rous", "Garrigue"] },
+          { ligne: "demis", noms: ["Serre", "Gauby"] },
+          { ligne: "troisième ligne", noms: ["Doutres", "Leaury", "Mestres"] },
+          { ligne: "deuxième ligne", noms: ["Sanac", "Roucariès"] },
+          { ligne: "première ligne", noms: ["Capell", "Pallach", "Gimenez"] },
+        ],
+        wikipedia: [
+          "Jacques Sagols", "Serge Torreilles", "René Monié", "Gaston Rous", "René Garrigue", "Jean Serre", "Georges Gauby",
+          "Henri Doutres", "Gérard Llaury", "Vincent Mestres", "André Sanac", "Gérard Roucariès", "Roger Capell", "Richard Pallach", "François Gimenez",
+        ],
+      },
+      {
+        club: "Lourdes",
+        capitaine: "Jean Prat",
+        lignes: [
+          { ligne: "arrière", noms: ["Lacaze"] },
+          { ligne: "trois-quarts", noms: ["Rancoule", "Maurice Prat", "Martine", "Calvo"] },
+          { ligne: "demis", noms: ["A. Labazuy", "F. Labazuy"] },
+          { ligne: "troisième ligne", noms: ["C. Domec", "Manterola", "Jean Prat"] },
+          { ligne: "deuxième ligne", noms: ["Guinle", "Barthe"] },
+          { ligne: "première ligne", noms: ["Saint-Pastous", "Abadie", "Laffont"] },
+        ],
+        wikipedia: [
+          "Pierre Lacaze", "Henri Rancoule", "Maurice Prat", "Roger Martine", "Guy Calvo", "Antoine Labazuy", "François Labazuy",
+          "Célestin Domec", "Thomas Manterola", "Jean Prat", "Louis Guinle", "Jean Barthe", "Daniel Saint-Pastous", "André Abadie", "André Laffont",
+        ],
+      },
+    ],
+  },
 };
 
 /**
@@ -360,13 +474,101 @@ function memeNomDeJournal(journal: string, wikipedia: string): "identique" | "va
  * peut être ailier ou centre, un troisième ligne aile ou numéro 8, un
  * premier ligne pilier ou talonneur : le journal ne le dit pas, la base non
  * plus. Les demis le disent quand le journal écrit « (ouverture) » et
- * « (mêlée) » — c'est le cas de 1914, dans l'ordre du journal.
+ * « (mêlée) » — c'est le cas de 1914, dans l'ordre du journal — ou « (o) » et
+ * « (m) », dans le même ordre, en 1955. Pour 1925, L'Auto ne les distingue
+ * pas : c'est L'Équipe du 25 mai 1955 qui le fait, dans ce même ordre.
  */
+const DEMIS_ANNOTES = ["1914-05-03", "1925-05-03", "1955-05-22"];
+
 function posteDeLaLigne(ligne: LigneDuXV, rang: number, jour: string): Position | null {
   if (ligne === "arrière") return "ARRIERE";
   if (ligne === "deuxième ligne") return "DEUXIEME_LIGNE";
-  if (ligne === "demis" && jour === "1914-05-03") return rang === 0 ? "DEMI_OUVERTURE" : "DEMI_DE_MELEE";
+  if (ligne === "demis" && DEMIS_ANNOTES.includes(jour)) return rang === 0 ? "DEMI_OUVERTURE" : "DEMI_DE_MELEE";
   return null;
+}
+
+/** Le fascicule : celui du PDF lu quand il y en a un, sinon celui que Gallica rend pour ce jour-là. */
+async function arkDuNumero(match: MatchDeJournal): Promise<string | null> {
+  if (match.numeroLuSurPDF) return match.numeroLuSurPDF.ark;
+  return fasciculeDuJour(match.journal as Periodique, match.numero);
+}
+
+/**
+ * La simulation d'un numéro lu sur PDF : pas d'OCR à interroger, mais tout ce
+ * que l'écriture ferait, et d'abord chaque garde-fou et chaque rapprochement.
+ * Une fiche retrouvée s'affiche avec son nom : c'est là qu'un homonyme moderne
+ * se verrait, et il faut le voir avant d'écrire.
+ */
+async function simulerSurPDF(jour: string, match: MatchDeJournal): Promise<string[]> {
+  const pdf = match.numeroLuSurPDF!;
+  const avertissements: string[] = [];
+  const label = saisonDe(jour);
+  const bareme = baremeDeMatch(Number(label.slice(0, 4)));
+  console.log(`  PDF ${pdf.fichier}, page ${pdf.page} ; pas d'OCR interrogé`);
+  console.log(`  barème ${label} : essai ${bareme.essai}, transformation ${bareme.transformation}, pénalité ${bareme.penalite}, drop ${bareme.drop}`);
+
+  for (const camp of ["usap", "adversaire"] as const) {
+    const r = match.realisations.filter((x) => x.camp === camp);
+    const total = r.reduce((s, x) => s + pointsDesRealisations(x, bareme), 0);
+    const score = camp === "usap" ? match.scoreUsap : match.scoreOpponent;
+    console.log(`  ${total === score ? "✓" : "✗"} ${camp} : ${r.map((x) => x.nom).join(", ")} = ${total} pour ${score}`);
+    if (total !== score) avertissements.push(`${camp} : ${total} points pour ${score}`);
+  }
+
+  const saison = await prisma.season.findFirst({ where: { label }, select: { id: true } });
+  const competition = await prisma.competition.findFirst({ where: { shortName: match.competition }, select: { id: true, name: true } });
+  const adversaire = await prisma.opponent.findFirst({ where: { shortName: match.adversaire }, select: { id: true, name: true } });
+  const stade = await prisma.venue.findFirst({ where: { name: match.stade.nom, city: match.stade.ville }, select: { id: true } });
+  const arbitre = match.arbitre ? await prisma.referee.findFirst({ where: { lastName: separer(match.arbitre.nom).lastName }, select: { firstName: true, lastName: true } }) : null;
+  console.log(`\n  saison ${label} : ${saison ? "en base" : "ABSENTE"}`);
+  console.log(`  compétition « ${match.competition} » : ${competition ? competition.name : "ABSENTE"}`);
+  console.log(`  adversaire « ${match.adversaire} » : ${adversaire ? adversaire.name : match.adversaireACreer ? `à créer, ${match.adversaireACreer.nom}` : "ABSENT"}`);
+  console.log(`  stade ${match.stade.nom}, ${match.stade.ville} : ${stade ? "en base" : "à créer"}`);
+  console.log(`  arbitre ${match.arbitre?.nom ?? "—"} : ${arbitre ? `fiche ${arbitre.firstName} ${arbitre.lastName}` : "à créer"}`);
+  if (!saison) avertissements.push(`saison ${label} absente`);
+  if (!competition) avertissements.push(`compétition ${match.competition} absente`);
+  if (!adversaire && !match.adversaireACreer) avertissements.push(`adversaire ${match.adversaire} absent`);
+
+  if (saison && competition && adversaire) {
+    const deja = await prisma.match.findFirst({ where: { seasonId: saison.id, competitionId: competition.id, opponentId: adversaire.id, round: match.tour }, select: { slug: true } });
+    if (deja) console.log(`  rencontre déjà en base, reprise : ${deja.slug}`);
+  }
+
+  const relecture = RELECTURES[jour];
+  if (relecture) {
+    console.log("\n  Rapprochement des fiches :");
+    for (const xv of relecture.equipes) {
+      for (const nom of xv.wikipedia) {
+        const officiel = separer(nom);
+        try {
+          const id = await chercherJoueur(prisma, officiel, () => {});
+          if (id) {
+            const f = await prisma.player.findUnique({ where: { id }, select: { firstName: true, lastName: true, _count: { select: { matchAppearances: true } } } });
+            console.log(`    ⚠ ${xv.club.padEnd(10)} ${nom.padEnd(24)} → fiche ${f?.firstName} ${f?.lastName}, ${f?._count.matchAppearances} match(s)`);
+            avertissements.push(`${nom} rapproché d'une fiche existante : vérifier que ce n'est pas un homonyme`);
+          } else {
+            console.log(`      ${xv.club.padEnd(10)} ${nom.padEnd(24)} à créer`);
+          }
+        } catch (e) {
+          console.log(`    ✗ ${xv.club.padEnd(10)} ${nom.padEnd(24)} ${(e as Error).message}`);
+          avertissements.push(`${nom} : ${(e as Error).message}`);
+        }
+      }
+    }
+  }
+  if (match.chronologie) {
+    let su = 0;
+    let sa = 0;
+    console.log("\n  Chronologie :");
+    for (const f of match.chronologie) {
+      const p = f.type === EventType.ESSAI ? bareme.essai : f.type === EventType.TRANSFORMATION ? bareme.transformation : f.type === EventType.PENALITE ? bareme.penalite : bareme.drop;
+      if (f.camp === "usap") su += p;
+      else sa += p;
+      console.log(`    ${String(f.minute).padStart(2)}e  ${f.type.padEnd(14)} ${f.nom.padEnd(12)} ${su}-${sa}`);
+    }
+    if (su !== match.scoreUsap || sa !== match.scoreOpponent) avertissements.push(`chronologie : ${su}-${sa} pour ${match.scoreUsap}-${match.scoreOpponent}`);
+  }
+  return avertissements;
 }
 
 function saisonDe(jour: string): string {
@@ -393,18 +595,19 @@ async function simuler(jour: string, match: MatchDeJournal): Promise<void> {
   console.log(`=== ${jour} ${match.tour} — USAP ${match.scoreUsap}-${match.scoreOpponent} ${match.adversaire} (simulation) ===`);
   console.log(`  source : ${match.journal} du ${match.numero}, dans Gallica\n`);
 
-  const ark = await fasciculeDuJour(match.journal, match.numero);
-  if (!ark) {
+  const avertissements: string[] = match.numeroLuSurPDF ? await simulerSurPDF(jour, match) : [];
+  const ark = match.numeroLuSurPDF ? null : await arkDuNumero(match);
+  if (!ark && !match.numeroLuSurPDF) {
     console.log(`  ⚠ aucun numéro de ${match.journal} au ${match.numero} dans Gallica.`);
     return;
   }
-  const pages = await pagesContenant(ark, "Perpignan");
-  console.log(`  fascicule ${ark}, Perpignan nommé en page${pages.length > 1 ? "s" : ""} ${pages.join(", ") || "aucune"}`);
+  const pages = ark ? await pagesContenant(ark, "Perpignan") : [];
+  if (ark) console.log(`  fascicule ${ark}, Perpignan nommé en page${pages.length > 1 ? "s" : ""} ${pages.join(", ") || "aucune"}`);
 
-  const avertissements: string[] = [];
-  let equipesTrouvees = false;
+  // Un numéro lu sur PDF n'a pas d'OCR : c'est l'image qui fait foi, d'emblée.
+  let equipesTrouvees = !!match.numeroLuSurPDF;
   for (const page of pages) {
-    const lignes = await lirePage(ark, page);
+    const lignes = await lirePage(ark!, page);
     const illisibles = lignes.filter((l) => /\[texte (illisible|non reconnu)\]/.test(l)).length;
     console.log(`\n  — page ${page} : ${lignes.length} lignes d'OCR${illisibles ? `, ${illisibles} illisibles` : ""}`);
 
@@ -538,7 +741,18 @@ async function ecrire(jour: string, match: MatchDeJournal, relecture: Relecture)
   // ---- Les entités autour de la rencontre ---------------------------------
   const saison = await prisma.season.findFirstOrThrow({ where: { label } });
   const competition = await prisma.competition.findFirstOrThrow({ where: { shortName: match.competition } });
-  const adversaire = await prisma.opponent.findFirstOrThrow({ where: { shortName: match.adversaire } });
+  let adversaire = await prisma.opponent.findFirst({ where: { shortName: match.adversaire } });
+  if (!adversaire) {
+    const aCreer = match.adversaireACreer;
+    if (!aCreer) throw new Error(`adversaire « ${match.adversaire} » absent, et rien ne dit de le créer`);
+    const france = await prisma.opponent.findFirstOrThrow({ where: { shortName: "Tarbes" }, select: { countryId: true } });
+    const cree = await prisma.opponent.create({
+      data: { name: aCreer.nom, shortName: match.adversaire, city: aCreer.ville, countryId: france.countryId, slug: `temp-${Date.now()}` },
+    });
+    adversaire = await prisma.opponent.update({ where: { id: cree.id }, data: { slug: generateOpponentSlug(aCreer.nom, cree.id) } });
+    console.log(`  [adversaire] créé : ${aCreer.nom}`);
+    await attester(prisma, { entite: "Opponent", entiteId: adversaire.id, degre: "PROBABLE", source: aCreer.source, note: "Club créé pour cette rencontre." });
+  }
 
   let stade = await prisma.venue.findFirst({ where: { name: match.stade.nom, city: match.stade.ville }, select: { id: true } });
   if (!stade) {
@@ -724,7 +938,7 @@ async function ecrire(jour: string, match: MatchDeJournal, relecture: Relecture)
           type: f.type,
           playerId: j.playerId,
           isUsap: f.camp === "usap",
-          description: `${libelle} de ${j.nomWikipedia} (${f.camp === "usap" ? "USAP" : match.adversaire}), ${f.horloge} à l'horloge. ${su}-${sa}.`,
+          description: `${libelle} de ${j.nomWikipedia} (${f.camp === "usap" ? "USAP" : match.adversaire})${f.horloge ? `, ${f.horloge} à l'horloge` : ""}. ${su}-${sa}.`,
         },
       });
     }
@@ -733,7 +947,7 @@ async function ecrire(jour: string, match: MatchDeJournal, relecture: Relecture)
   }
 
   // ---- Les attestations de la rencontre ------------------------------------
-  const ark = await fasciculeDuJour(match.journal, match.numero);
+  const ark = await arkDuNumero(match);
   const fascicule = ark ? `https://gallica.bnf.fr/ark:/12148/${ark}` : null;
   const attestations: Attestation[] = [
     {
@@ -769,9 +983,11 @@ async function ecrire(jour: string, match: MatchDeJournal, relecture: Relecture)
       entiteId: matchId,
       champ: "chronologie",
       degre: "PROBABLE",
-      source: `${match.journal} du ${match.numero}, chronologie à l'heure de l'horloge`,
+      source: match.noteChronologie ? `${match.journal} du ${match.numero}, minutes imprimées` : `${match.journal} du ${match.numero}, chronologie à l'heure de l'horloge`,
       sourceUrl: fascicule,
-      note: "Minutes déduites de l'horloge du journal : reprise à 4 h 00, la minute de jeu vaut 40 plus les minutes écoulées, ce qui suppose que l'horloge ne s'arrête pas. Chaque fait garde son heure en clair.",
+      note:
+        match.noteChronologie ??
+        "Minutes déduites de l'horloge du journal : reprise à 4 h 00, la minute de jeu vaut 40 plus les minutes écoulées, ce qui suppose que l'horloge ne s'arrête pas. Chaque fait garde son heure en clair.",
     });
   }
   for (const xv of relecture.equipes) {
@@ -788,6 +1004,14 @@ async function ecrire(jour: string, match: MatchDeJournal, relecture: Relecture)
   for (const a of attestations) await attester(prisma, a);
   const crees = alignes.flatMap((a) => a.joueurs).filter((j) => j.cree).length;
   console.log(`  [attestations] ${attestations.length} sur la rencontre, ${crees} sur des fiches créées`);
+
+  // ---- Compter ce qui est écrit, plutôt que lire un code de sortie ---------
+  const ecrit = await prisma.match.findUniqueOrThrow({ where: { id: matchId }, select: { slug: true, _count: { select: { players: true, matchEvents: true } } } });
+  const eventsAttendus = match.chronologie?.length ?? 0;
+  if (ecrit._count.players !== 30 || ecrit._count.matchEvents !== eventsAttendus) {
+    throw new Error(`${ecrit.slug} : ${ecrit._count.players} lignes pour 30, ${ecrit._count.matchEvents} faits pour ${eventsAttendus}`);
+  }
+  console.log(`  [contrôle] ${ecrit.slug} : 30 lignes, ${eventsAttendus} faits`);
 }
 
 async function main() {

@@ -67,3 +67,6 @@ le fichier de `docs/` indiqué.
 | 2026-10-26 | L'essai de pénalité vaut ce qu'il valait : avant 2017-2018, un essai (5 points depuis 1992) à transformer, transformation au buteur nommé, sur sa ligne et dans la chronologie ; 7 points d'office ensuite. Toujours rangé dans `penaltyTries`, jamais dans `tries`. Remplace le « 7 à toute époque » | regles-du-jeu |
 | 2026-10-26 | H Cup 2001-2002 : prénoms adverses de Leicester et Llanelli d'après Wikipédia (article qui nomme le club), attestés `PROBABLE` ; « S Morgan » de Llanelli est Scott Morgan, probable seulement ; composition de Calvisano (29/09/2001) différée | sources |
 | 2026-10-26 | « Alesi Finau » (Bourgoin 2006-2007) est Salesi Finau, le Tongien de Llanelli : fiche renommée d'après Wikipédia | saisie/identites |
+| 2026-11-07 | Finale de 1955 : Monié et Llaury (le journal se corrige lui-même), compétition « 1ère division » comme le journal, 45 000 spectateurs (39 764 payants en attestation) | avant-guerre |
+| 2026-11-07 | Morts de 14-18 sans date connue : une phrase attestée dans `biography`, `deathDate` reste vide | avant-guerre |
+| 2026-11-07 | Gallica bloque ce poste : Jérémy télécharge les PDF, rangés dans `sources/` hors de git ; ne pas chercher à passer | sources |
