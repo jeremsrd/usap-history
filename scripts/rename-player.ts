@@ -10,15 +10,21 @@
  * Sert aux arbitrages d'identité — choisir sous quel nom d'usage une personne
  * figure au site — là où `merge-players.ts` traite les doublons.
  *
+ * `--source="…"` pose une attestation sur le nom (`Player.nom`, `PROBABLE`) :
+ * toute orthographe venue d'ailleurs que la feuille officielle en porte une —
+ * un accent que la LNR retire et que la presse rend, par exemple.
+ *
  * Usage :
  *   npx tsx scripts/rename-player.ts --id=<id> --nom="Waisea|Nayacalevu" --dry
- *   npx tsx scripts/rename-player.ts --id=<id> --nom="Waisea|Nayacalevu"
+ *   npx tsx scripts/rename-player.ts --id=<id> --nom="Clément|Paul" --source="L'Indépendant du 8 novembre 2026"
  *
- * Idempotent : une fiche déjà au bon nom n'est pas réécrite.
+ * Idempotent : une fiche déjà au bon nom n'est pas réécrite ; l'attestation
+ * est posée ou remplacée.
  */
 
 import { PrismaClient } from "@prisma/client";
 import { generatePlayerSlug } from "../src/lib/slugs";
+import { attester } from "./lib/attestations";
 
 const prisma = new PrismaClient();
 
@@ -26,6 +32,7 @@ const DRY_RUN = process.argv.includes("--dry");
 const ID = process.argv.find((a) => a.startsWith("--id="))?.slice("--id=".length);
 const NOM = process.argv.find((a) => a.startsWith("--nom="))?.slice("--nom=".length);
 const nom = NOM?.split("|").map((x) => x.trim());
+const SOURCE = process.argv.find((a) => a.startsWith("--source="))?.slice("--source=".length);
 
 if (!ID || !nom || nom.length !== 2 || !nom[0] || !nom[1]) {
   console.error(
@@ -40,6 +47,16 @@ async function main() {
   if (!joueur) throw new Error(`Fiche introuvable : ${ID}`);
 
   const [firstName, lastName] = nom!;
+  const attestation = SOURCE
+    ? {
+        entite: "Player" as const,
+        entiteId: ID!,
+        champ: "nom",
+        degre: "PROBABLE" as const,
+        source: SOURCE,
+        note: `Nom retenu : ${firstName} ${lastName} ; la fiche portait « ${joueur.firstName} ${joueur.lastName} ».`,
+      }
+    : null;
   if (joueur.firstName === firstName && joueur.lastName === lastName) {
     console.log(`${firstName} ${lastName} : déjà au bon nom, rien à faire.`);
     return;
@@ -52,6 +69,7 @@ async function main() {
   const feuilles = await prisma.matchPlayer.count({ where: { playerId: ID } });
   console.log(`  ${feuilles} feuille(s) de match concernée(s)`);
 
+  if (attestation) await attester(prisma, attestation, DRY_RUN);
   if (DRY_RUN) {
     console.log("\nSimulation — relancer sans --dry pour appliquer.");
     return;
