@@ -70,3 +70,4 @@ le fichier de `docs/` indiqué.
 | 2026-11-07 | Finale de 1955 : Monié et Llaury (le journal se corrige lui-même), compétition « 1ère division » comme le journal, 45 000 spectateurs (39 764 payants en attestation) | avant-guerre |
 | 2026-11-07 | Morts de 14-18 sans date connue : une phrase attestée dans `biography`, `deathDate` reste vide | avant-guerre |
 | 2026-11-07 | Gallica bloque ce poste : Jérémy télécharge les PDF, rangés dans `sources/` hors de git ; ne pas chercher à passer | sources |
+| 2026-11-08 | Carton que la LNR n'inscrit pas : corrigé dans `TEMPS_DE_JEU_CORRIGES` (minutes et carton, orange compris) sur deux sources concordantes, minutes du journal quand il suit l'horloge de la LNR ; Le Corvec à Pau le 7 novembre 2026 | scripts |

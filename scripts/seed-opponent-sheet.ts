@@ -262,10 +262,32 @@ const CARTONS_HORS_COMPOSITION: Record<string, Array<{ minute: number; nom: stri
  * lignes sont confrontées : sans elle le contrôle réclamerait 1 200 et
  * signalerait la correction comme un défaut à chaque passage. Une table
  * corrige les lignes, l'autre la règle à laquelle on les mesure.
+ *
+ * **Le carton lui-même est porté ici aussi**, `jaune` et `orange`, depuis le
+ * 8 novembre 2026 : la ligne est réécrite à chaque passage, et un carton posé
+ * par un autre script serait effacé par le suivant. Le carton orange de
+ * Malolo, écrit par `seed-access-match-2026.ts`, l'est donc désormais ici.
+ *
+ * **Pau-Perpignan du 7 novembre 2026.** Mattéo Le Corvec, n°6 et capitaine,
+ * prend un **jaune à la 25ᵉ** puis un **carton orange à la 51ᵉ** ; la LNR
+ * n'inscrit ni l'un ni l'autre et lui donne 80 minutes. Deux sources
+ * indépendantes d'elle le disent, et concordent : *L'Indépendant* du
+ * lendemain — « Cartons jaunes : Le Corvec (25, 51) », « Carton orange : Le
+ * Corvec (51) », « Le Corvec (cap.) (Velarte, 72) » — et allrugby, match
+ * 26067 — jaune 24', rouge 50', « LE CORVEC remplacé par VELARTE » à 72'.
+ * Velarte, sorti à la 62ᵉ pour Tanguy, revient donc à la 72ᵉ : le poste est
+ * repourvu vingt et une minutes après le carton. Les minutes sont celles du
+ * journal, qui suit l'horloge de la LNR là où allrugby s'en écarte (Gray à la
+ * 49ᵉ, Velarte sorti à la 62ᵉ, chez les deux) ; arbitré par Jérémy le
+ * 8 novembre 2026. Le Corvec : 25 + (51 − 35) = 41 minutes. Velarte :
+ * 62 + 8 = 70. L'équipe, avec le jaune de Gray : 1 200 − 10 − 10 − 21 = 1 159.
  */
 const PRIVATIONS_SUR_CARTON: Record<string, Array<{ club: Camp; minutes: number }>> = {
   // Le carton orange de Sama Malolo à la 33ᵉ, cf. `TEMPS_DE_JEU_CORRIGES`.
   "2026-06-14": [{ club: "away", minutes: 20 }],
+  // Le carton orange de Mattéo Le Corvec à la 51ᵉ, poste repourvu à la 72ᵉ.
+  // Son jaune de la 25ᵉ est compté par la règle ordinaire, une fois posé.
+  "2026-11-07": [{ club: "away", minutes: 21 }],
 };
 
 const TEMPS_DE_JEU_CORRIGES: Record<
@@ -276,11 +298,18 @@ const TEMPS_DE_JEU_CORRIGES: Record<
     minutes: number;
     subIn: number | null;
     subOut: number | null;
+    /** Le carton que la LNR n'inscrit pas, à sa minute. */
+    jaune?: number;
+    orange?: number;
   }>
 > = {
   "2026-06-14": [
-    { club: "away", dossard: 2, minutes: 33, subIn: null, subOut: 33 },
+    { club: "away", dossard: 2, minutes: 33, subIn: null, subOut: 33, orange: 33 },
     { club: "away", dossard: 14, minutes: 61, subIn: 53, subOut: 34 },
+  ],
+  "2026-11-07": [
+    { club: "away", dossard: 6, minutes: 41, subIn: null, subOut: 51, jaune: 25, orange: 51 },
+    { club: "away", dossard: 8, minutes: 70, subIn: 72, subOut: 62 },
   ],
 };
 
@@ -337,6 +366,8 @@ interface Bilan {
   points: number;
   jaune: number | null;
   rouge: number | null;
+  /** La LNR n'inscrit jamais le carton orange : il ne vient que de `TEMPS_DE_JEU_CORRIGES`. */
+  orange: number | null;
 }
 
 const bilanVide = (): Bilan => ({
@@ -350,6 +381,7 @@ const bilanVide = (): Bilan => ({
   points: 0,
   jaune: null,
   rouge: null,
+  orange: null,
 });
 
 /**
@@ -555,6 +587,8 @@ function calculerTempsDeJeu(
     bilan.minutes = c.minutes;
     bilan.subIn = c.subIn;
     bilan.subOut = c.subOut;
+    if (c.jaune !== undefined) bilan.jaune = c.jaune;
+    if (c.orange !== undefined) bilan.orange = c.orange;
   }
 }
 
@@ -580,6 +614,7 @@ const CHAMPS: (keyof Bilan)[] = [
   "points",
   "jaune",
   "rouge",
+  "orange",
 ];
 
 /** Écarts entre la feuille et la base, sous forme « champ base→feuille ». */
@@ -684,6 +719,7 @@ async function main(cible: "adverse" | "usap") {
           totalPoints: true,
           yellowCardMin: true,
           redCardMin: true,
+          orangeCardMin: true,
           player: { select: { firstName: true, lastName: true } },
         },
       })
@@ -706,6 +742,7 @@ async function main(cible: "adverse" | "usap") {
           points: l.totalPoints,
           jaune: l.yellowCardMin,
           rouge: l.redCardMin,
+          orange: l.orangeCardMin,
         },
       }));
 
@@ -1008,7 +1045,7 @@ async function main(cible: "adverse" | "usap") {
     });
     lignesModifiees += modifiees.length;
 
-    const joueurs = lignes.filter(([, b]) => b.points > 0 || b.jaune != null || b.rouge != null);
+    const joueurs = lignes.filter(([, b]) => b.points > 0 || b.jaune != null || b.rouge != null || b.orange != null);
     const entres = lignes.filter(([, b]) => b.subIn != null).length;
     console.log(
       `${etiquette} → ${essais} essai(s), ${points} pts, ${entres} entrée(s), ` +
@@ -1023,6 +1060,7 @@ async function main(cible: "adverse" | "usap") {
         b.drops ? `${b.drops}D` : null,
         b.jaune != null ? `🟨${b.jaune}'` : null,
         b.rouge != null ? `🟥${b.rouge}'` : null,
+        b.orange != null ? `🟧${b.orange}'` : null,
       ]
         .filter(Boolean)
         .join(" ");
@@ -1062,6 +1100,8 @@ async function main(cible: "adverse" | "usap") {
           yellowCardMin: b.jaune,
           redCard: b.rouge != null,
           redCardMin: b.rouge,
+          orangeCard: b.orange != null,
+          orangeCardMin: b.orange,
         },
       });
     }

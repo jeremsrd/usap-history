@@ -230,6 +230,12 @@ const DISTINCTS: [string, string][] = [
   // à dix ans d'écart. Leigh, né en 1976, le 5 octobre 2001 (initiale de
   // l'ERC, prénom d'après Wikipédia) ; Jonathan, né en 1988, en 2011.
   ["Jonathan Davies", "Leigh Davies"],
+  // Venue avec Pau-Perpignan du 7 novembre 2026 : deux n°22 catalans. Nicolas,
+  // le demi de mêlée aux 169 feuilles ; Martin, entré à la 69ᵉ pour Mascarenc,
+  // un centre, « pour sa première apparition » selon L'Indépendant du
+  // lendemain. Le prénom vient des faits de la LNR, « Martin DURAND », et la
+  // fiche existait déjà dans l'effectif 2026-2027.
+  ["Martin Durand", "Nicolas Durand"],
 ];
 
 const ARBITREES = new Set(

@@ -95,6 +95,13 @@ export const TITULAIRES_MANQUANTS: Record<string, TitulaireManquant[]> = {
   // ses vingt-deux autres Toulousains concordent avec la LNR. Le nom est
   // celui qu'écrit la feuille de la LNR elle-même.
   "2026-10-24": [{ camp: "adversaire", numero: 20, prenom: "Marc Elie", nom: "Kouassi" }],
+  // Pau 63-26 Perpignan. Banc catalan à sept, le n°22 manquant ; les faits de
+  // la LNR font pourtant entrer « Martin DURAND » à la 69ᵉ pour Mascarenc, et
+  // lui donnent l'essai de la 83ᵉ. *L'Indépendant* du 8 novembre 2026 donne
+  // « Mascarenc (Durand, 69) » et « Durand (80+2) », « pour sa première
+  // apparition » ; ses vingt-deux autres Catalans concordent avec la LNR. Le
+  // journal ne numérote pas le banc : le 22 est le seul dossard libre.
+  "2026-11-07": [{ camp: "usap", numero: 22, prenom: "Martin", nom: "Durand" }],
 };
 
 /** Ce joueur-là a-t-il été ajouté à la main sur cette feuille ? */
